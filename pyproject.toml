@@ -1,0 +1,26 @@
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | __pycache__
+  | build
+  | dist
+)/
+'''
+
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+tag_format = "$version"
+[semantic_release]
+version_variable = 3.8 # or where your version is defined
+# repository_user_var = TWINE_USERNAME
+# repository_pass_var = TWINE_PASSWORD
