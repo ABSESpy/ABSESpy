@@ -6,7 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 from collections.abc import Iterable
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from agentpy import Model
@@ -22,16 +22,16 @@ from .tools.read_files import redirect_if_yaml
 
 
 class Module(Component, BaseObj):
-    def __init__(self, model, name=None):
+    def __init__(self, model: Model, name: Optional[str] = None):
         Component.__init__(self, name=name)
         BaseObj.__init__(self, model, observer=True)
-        self._model = model
-        self._open = True
-        self.arguments = ["open", "record", "report"]
-        self._recording_vars = []
-        self._reporting_vars = []
+        self._model: Model = model
+        self._open: bool = True
+        self.arguments: List[str] = ["open", "record", "report"]
+        self._recording_vars: List[str] = []
+        self._reporting_vars: List[str] = []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.opening:
             flag = "open"
         else:
@@ -43,16 +43,16 @@ class Module(Component, BaseObj):
         return self.model.agents
 
     @agents.setter
-    def agents(self, agents: BaseAgentList):
+    def agents(self, agents: BaseAgentList) -> None:
         agents = make_list(agents)
         self.agents.add(agents)
 
     @property
-    def opening(self):
+    def opening(self) -> bool:
         return self._open
 
     @property
-    def _rec_vars(self):
+    def _rec_vars(self) -> List[str]:
         return self._recording_vars
 
     @_rec_vars.setter
@@ -76,11 +76,11 @@ class Module(Component, BaseObj):
         self._rep_vars = my_params.pop("report", [])
 
     @broadcast
-    def record_vars(self):
+    def record_vars(self) -> None:
         self.record(self._rec_vars)
         self.record(self.glob_vars)
 
-    def parse(self, parameter: str) -> dict:
+    def parse(self, parameter: str) -> any:
         """
         Generate settings dictionary from setting files.
 
@@ -91,13 +91,14 @@ class Module(Component, BaseObj):
             AB_EGMpyError: not correctly formatted settings.
 
         Returns:
-            dict: parsed settings dictionary.
+            any: parsed settings.
         """
         value = self.params.get(parameter)
         if not isinstance(value, str):
             return value
         else:
-            return redirect_if_yaml(value)
+            redirected = redirect_if_yaml(value)
+            return self.parse(redirected)
 
     def switch_open_to(self, _open: bool) -> bool:
         if _open is None:
@@ -131,20 +132,20 @@ class CompositeModule(Module, MainComponent, Creator):
     def modules(self) -> List[Module]:
         return self._modules
 
-    def _initialize_all(self):
+    def _initialize_all(self) -> None:
         self._initialize()
         for module in self.modules:
             module._initialize()
         self.state = 1
 
-    def summary_modules(self):
+    def summary_modules(self) -> PrettyTable:
         table = PrettyTable()
         table.field_names = ["Name", "Opening", "Params"]
         for module in self.modules:
             table.add_row([module.name, module.opening, len(module.params)])
         return table
 
-    def create_module(self, module_class: Module, *args, **kwargs):
+    def create_module(self, module_class: Module, *args, **kwargs) -> Module:
         module = module_class(model=self.model, *args, **kwargs)
         if not issubclass(module.__class__, Module):
             raise TypeError("Must inherited from a module.")

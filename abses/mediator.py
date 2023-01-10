@@ -5,8 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from .agents import BaseAgent
 from .log import Log
+from .objects import BaseAgent
 
 LENGTH = 40  # session fill
 

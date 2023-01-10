@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
-        "georef"
-    ]
+        "georef",
+        "ndimage",
+        "rioxarray"
+    ],
+    "workbench.colorTheme": "Ayu Mirage"
 }

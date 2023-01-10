@@ -11,38 +11,16 @@ from typing import Iterable, Tuple
 
 import networkx as nx
 import numpy as np
-from agentpy.model import Model
 from prettytable import PrettyTable
 
+from .agent_list import BaseAgentList
 from .base_human import BaseHuman
 from .base_nature import BaseNature
-from .container import BaseAgentList
-from .evolution import EvolutionEntry
 from .mediator import MainMediator
-from .objects import BaseObj
+from .objects import BaseAgent
 from .patch import Patch
 
 logger = logging.getLogger("__name__")
-
-
-class BaseAgent(BaseObj):
-    def __init__(self, model: Model, observer: bool = False):
-        BaseObj.__init__(self, model, observer)
-        self.mediator: MainMediator = model.mediator
-        self.human: BaseHuman = model.human
-        self.nature: BaseNature = model.nature
-        self.setup()
-
-    def setup(self):
-        pass
-
-    @property
-    def breed(self) -> str:
-        return self.__class__.__name__.lower()
-
-    @property
-    def population(self):
-        return self.model.agents[self.breed]
 
 
 class Actor(BaseAgent):
@@ -51,11 +29,18 @@ class Actor(BaseAgent):
         """Initiate agent attributes."""
         # self._metrics = Metrics(self)
         # self._decision = Decisions(self)
-        self.tutor = EvolutionEntry()
+        # self.tutor = EvolutionEntry()
         self._on_earth = False
+        self.mediator: MainMediator = self.model.mediator
+        self.human: BaseHuman = self.model.human
+        self.nature: BaseNature = self.model.nature
 
     def __repr__(self):
         return f"{self.__class__.__name__}: {self.id}"
+
+    @property
+    def population(self):
+        return self.model.agents[self.breed]
 
     @property
     def decision(self):

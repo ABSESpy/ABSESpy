@@ -5,10 +5,13 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from __future__ import annotations
+
 import logging
 from abc import ABCMeta
 from typing import List, Optional
 
+from agentpy.model import Model
 from agentpy.objects import Object, make_list
 
 logger = logging.getLogger(__name__)
@@ -17,7 +20,11 @@ logger = logging.getLogger(__name__)
 class Creator:
     def __init__(self):
         self.created: List[Creation] = []
-        self._inheritance: list = []
+        self._inheritance: List[str] = []
+
+    def _check_creation(self, creation: Creation):
+        if not isinstance(creation, Creation):
+            raise TypeError("Only creation can be added.")
 
     @property
     def inheritance(self) -> list:
@@ -28,7 +35,8 @@ class Creator:
         self.inheritance.extend(make_list(attrs))
         self.notify()
 
-    def add_creation(self, obj: object):
+    def add_creation(self, obj: Creation):
+        self._check_creation(creation=obj)
         self.created.append(obj)
         setattr(obj, "creator", self)
         self.notify()
@@ -37,7 +45,8 @@ class Creator:
         for obj in self.created:
             obj.refresh(self)
 
-    def remove_creation(self, obj: object):
+    def remove_creation(self, obj: Creation):
+        self._check_creation(creation=obj)
         self.created.remove(obj)
 
 
@@ -49,7 +58,7 @@ class Creation:
 
 
 class Notice:
-    def __init__(self, observer: Optional[object] = None):
+    def __init__(self, observer: Optional[Observer] = None):
         self.observers: List[Observer] = []
         self._glob_vars: List[str] = []
         if observer is not None:
@@ -67,11 +76,11 @@ class Notice:
         self._glob_vars.extend(make_list(value))
         self.notify()
 
-    def attach(self, observer: object):
+    def attach(self, observer: Observer):
         self.observers.extend(make_list(observer))
         observer.notification(self)
 
-    def detach(self, observer: object):
+    def detach(self, observer: Observer):
         self.observers.remove(observer)
 
     def notify(self, *args: str):
@@ -102,8 +111,21 @@ class Observer(metaclass=ABCMeta):
 
 
 class BaseObj(Observer, Object):
-    def __init__(self, model, observer=True):
+    def __init__(self, model: Model, observer: bool = True):
         Object.__init__(self, model=model)
         self.glob_vars: List[str] = []
         if observer:
             model.attach(self)
+
+
+class BaseAgent(BaseObj):
+    def __init__(self, model: Model, observer: bool = False):
+        BaseObj.__init__(self, model, observer)
+        self.setup()
+
+    def setup(self):
+        pass
+
+    @property
+    def breed(self) -> str:
+        return self.__class__.__name__.lower()

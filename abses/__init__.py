@@ -25,6 +25,7 @@ __all__ = [
     "BaseAgentList",
     "AgentsContainer" "MyExperiment",
 ]
+__version__ = "0.0.1"
 
 from .agents import Actor
 from .base_human import BaseHuman
@@ -32,3 +33,4 @@ from .base_nature import BaseNature
 from .container import AgentsContainer, BaseAgentList
 from .main import MainModel
 from .modules import HumanModule, PatchModule
+from .objects import *

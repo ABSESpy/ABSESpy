@@ -9,7 +9,8 @@ import logging
 
 from agentpy import Model
 
-from .. import __version__
+from abses import __version__
+
 from .base_human import BaseHuman
 from .base_nature import BaseNature
 from .components import MainComponent
@@ -34,8 +35,8 @@ class MainModel(Folder, MainComponent, Model, Notice):
         **kwargs,
     ) -> None:
         Model.__init__(self, _run_id=_run_id)
-        MainComponent.__init__(self)
-        Folder.__init__(self, base)
+        MainComponent.__init__(self, name=name)
+        Folder.__init__(self, base=base)
         Notice.__init__(self)
         self.arguments = ["steps", "settings_file"]
 
