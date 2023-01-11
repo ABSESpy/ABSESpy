@@ -13,7 +13,6 @@ from agentpy.tools import AttrDict
 from .log import Log
 from .mediator import MainMediator
 from .tools.func import make_list
-from .tools.read_files import parse_yaml
 
 
 def broadcast(func):
@@ -42,16 +41,9 @@ class Component(Log):
     """
 
     def __init__(self, name: Optional[str] = None):
-        if name is None:
-            name = self.__class__.__name__.lower()
-        Log.__init__(self, name)
+        Log.__init__(self, name=name)
         self._arguments: List[str] = []
-        self._name: str = name
         self._parameters: dict = AttrDict()
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def params(self) -> dict:
@@ -69,12 +61,6 @@ class Component(Log):
     def arguments(self, args: "str|Iterable[str]") -> None:
         arg_lst = make_list(args)
         self._arguments.extend(arg_lst)
-
-    def parse_yaml_path(self, path: Optional[str]) -> dict:
-        if path is None:
-            return dict()
-        else:
-            return parse_yaml(path, nesting=True)
 
     def init_arguments(self) -> None:
         arguments = getattr(self.__class__, "args", [])

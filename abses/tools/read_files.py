@@ -9,40 +9,42 @@ import os
 from typing import Iterable, Optional
 
 import yaml
-from numpy import ndarray
+
+from .func import make_list
 
 
-def make_list(element, keep_none=False):
-    """Turns element into a list of itself
-    if it is not of type list or tuple."""
+def is_valid_yaml(path: any) -> bool:
+    """
+    Judge if the input is a valid yaml file path.
 
-    if element is None and not keep_none:
-        element = []  # Convert none to empty list
-    if not isinstance(element, (list, tuple, set, ndarray)):
-        element = [element]
-    elif isinstance(element, (tuple, set)):
-        element = list(element)
+    Args:
+        path (any): element to judge.
 
-    return element
-
-
-def redirect_if_yaml(param: str, nesting: bool = True) -> dict:
-    if not type(param) is str:
-        return
-    if not os.path.isfile(param):
-        return param
-    if param.endswith(".yaml"):
-        settings = parse_yaml(param, nesting)
+    Returns:
+        bool: if is a valid yaml file path, returns True.
+    """
+    if not isinstance(path, str):
+        return False
+    elif not path.endswith(".yaml"):
+        return False
+    elif not os.path.isfile(path):
+        return False
     else:
-        settings = param
-    return settings
+        return True
 
 
-def parse_yaml(path: Optional[str] = None, nesting: bool = False) -> dict:
-    if not path or not path.endswith(".yaml"):
-        raise ValueError("Invalid YAML file path: %s" % path)
-    else:
-        return read_yaml(path, nesting)
+def redirect_yaml(param: dict) -> None:
+    """
+    Clean dictionary, if valid-yaml file path exists, replace it with a new dictionary.
+
+    Args:
+        param (dict): dictionary to clean.
+    """
+    for key, val in param.items():
+        if isinstance(val, dict):
+            redirect_yaml(val)
+        elif is_valid_yaml(val):
+            param[key] = read_yaml(val, True)
 
 
 def read_yaml(path: str, nesting: bool = True) -> dict:
@@ -58,16 +60,12 @@ def read_yaml(path: str, nesting: bool = True) -> dict:
     """
     # Read yaml file
     with open(path, "r", encoding="utf-8") as file:
+        print(f"Reading {path}")
         yaml_data = file.read()
         params = yaml.load(yaml_data, Loader=yaml.FullLoader)
         file.close()
     if nesting:
-        to_update = {}
-        for key, value in params.items():
-            new_params = redirect_if_yaml(value, nesting=nesting)
-            if isinstance(new_params, dict) and new_params:
-                to_update[key] = new_params
-        params.update(to_update)
+        redirect_yaml(params)
     return params
 
 
