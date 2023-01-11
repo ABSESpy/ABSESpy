@@ -147,3 +147,4 @@ docs/.obsidian
 # model ouput data
 analysis/**/results
 docs/assets
+docs/design
