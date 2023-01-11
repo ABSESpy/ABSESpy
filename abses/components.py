@@ -11,27 +11,39 @@ from typing import Iterable, List, Optional
 from agentpy.tools import AttrDict
 
 from .log import Log
-from .mediator import MainMediator
+from .objects import Mediator
 from .tools.func import make_list
 
+STATES = {
+    -1: "Waiting",
+    0: "new",
+    1: "init",
+    2: "ready",
+    3: "complete",
+}
 
-def broadcast(func):
+
+def iter_func(elements: str) -> callable:
     """
-    A decorator broadcasting MainComponent function to Component if available.
+    A decorator broadcasting function to all elements if available.
 
-    Args:
-        func (callable): function bound in a Component Object.
+    elements:
+        elements (str): attribute name where object store iterable elements.
+        All element in this iterable object will call the decorated function.
     """
 
-    def broadcast_func(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        if not hasattr(self, "modules"):
+    def broadcast(func: callable) -> callable:
+        def broadcast_func(self, *args, **kwargs):
+            result = func(self, *args, **kwargs)
+            if not hasattr(self, elements):
+                return result
+            for element in getattr(self, elements):
+                getattr(element, func.__name__)(*args, **kwargs)
             return result
-        for module in getattr(self, "modules"):
-            getattr(module, func.__name__)(*args, **kwargs)
-        return result
 
-    return broadcast_func
+        return broadcast_func
+
+    return broadcast
 
 
 class Component(Log):
@@ -63,7 +75,7 @@ class Component(Log):
         self._arguments.extend(arg_lst)
         self._arguments = sorted(list(set(self.arguments)))
 
-    @broadcast
+    @iter_func("modules")
     def _init_arguments(self) -> None:
         """
         Initialize arguments of the component then delete from param dictionary.
@@ -73,20 +85,25 @@ class Component(Log):
         """
         arguments = getattr(self.__class__, "args", [])
         self.arguments = arguments
-        for arg in arguments:
+        for arg in self.arguments:
             try:
                 value = self.params[arg]
                 self.__setattr__(arg, value)
                 del self.params[arg]
             except KeyError:
-                raise KeyError(f"Argument {arg} not found in settings.")
+                raise KeyError(f"arg '{arg}' not found in parameters.")
 
-    @broadcast
-    def close_log(self):
-        super().close_log()
+    @iter_func("modules")
+    def _parsing_params(self, params: dict) -> dict:
+        """
+        Parsing parameters belongs to this component.
 
-    @broadcast
-    def _parsing_params(self, params):
+        Args:
+            params (dict): input settings.
+
+        Returns:
+            dict: unsolved parameters.
+        """
         # select my params
         self.params = params.pop(self.name, {})
         # retrieve specific parameters and update
@@ -94,34 +111,34 @@ class Component(Log):
             if key in self.params:
                 self.params[key] = params.pop(key)
                 self.logger.debug(f"Parameter [{key}] updated.")
+        # setup arguments
+        self._init_arguments()
         # handle parameters
         self.handle_params()
         return params
 
     @abstractmethod
     def handle_params(self):
+        """
+        Handle parameters after loading.
+        """
         pass
 
     @abstractmethod
-    def initialize(self, *args, **kwargs):
+    def initialize(self):
         pass
 
 
 class MainComponent(Component):
-    VALID_STATE = {
-        -1: "Waiting",
-        0: "new",
-        1: "init",
-        2: "ready",
-        3: "complete",
-    }
+    _states = STATES
 
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self._state = -1  # init state waiting
+        self._mediator = Mediator()
 
     @property
-    def mediator(self) -> MainMediator:
+    def mediator(self) -> Mediator:
         return self._mediator
 
     @mediator.setter
@@ -130,19 +147,17 @@ class MainComponent(Component):
 
     @property
     def state(self) -> str:
-        return self.VALID_STATE[self._state]
+        return self._states[self._state]
 
     @state.setter
     def state(self, code):
-        if code not in self.VALID_STATE:
-            raise ValueError(
-                f"Invalid state {code}, valid: {self.VALID_STATE}."
-            )
+        if code not in self._states:
+            raise ValueError(f"Invalid state {code}, valid: {self._states}!")
         elif code == self._state:
-            self.logger.warning(f"STATE set repeated: {self.state}!")
+            raise ValueError(f"Setting state repeat: {self.state}!")
         elif code < self._state:
-            self.logger.critical(
-                f"Fallback state: setting {self.VALID_STATE[code]} to {self.state}"
+            raise ValueError(
+                f"State cannot retreat from {self._states[code]} to {self.state}!"
             )
         else:
             self._state = code
@@ -151,3 +166,12 @@ class MainComponent(Component):
     def _parsing_params(self, params: dict):
         self.mediator.transfer_parsing(self, params)
         return super()._parsing_params(params)
+
+    # TODO: refactor this to log
+    @iter_func("modules")
+    def close_log(self):
+        super().close_log()
+
+    @iter_func("modules")
+    def initialize(self):
+        self.state = 1
