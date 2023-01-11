@@ -61,32 +61,34 @@ class Component(Log):
     def arguments(self, args: "str|Iterable[str]") -> None:
         arg_lst = make_list(args)
         self._arguments.extend(arg_lst)
+        self._arguments = sorted(list(set(self.arguments)))
 
-    def init_arguments(self) -> None:
+    @broadcast
+    def _init_arguments(self) -> None:
+        """
+        Initialize arguments of the component then delete from param dictionary.
+
+        Raises:
+            KeyError: cannot find argument in parameters.
+        """
         arguments = getattr(self.__class__, "args", [])
+        self.arguments = arguments
         for arg in arguments:
-            self.arguments = arg
-            value = self.params[arg]
-            setattr(self, arg, value)
+            try:
+                value = self.params[arg]
+                self.__setattr__(arg, value)
+                del self.params[arg]
+            except KeyError:
+                raise KeyError(f"Argument {arg} not found in settings.")
 
     @broadcast
     def close_log(self):
         super().close_log()
 
-    def _parsing_args(self, params):
-        self.init_arguments()
-        for arg in self.arguments:
-            if arg in params:
-                self.params[arg] = params.pop(arg)
-            # else:
-            # self.logger.warning(f"Expected argument {arg} is not in params.")
-
     @broadcast
     def _parsing_params(self, params):
         # select my params
         self.params = params.pop(self.name, {})
-        # parsing arguments
-        self._parsing_args(params)
         # retrieve specific parameters and update
         for key in list(params.keys()):
             if key in self.params:
