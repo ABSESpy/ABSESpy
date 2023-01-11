@@ -5,12 +5,15 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import logging
 import os
-from typing import Iterable, Optional
+from typing import Iterable
 
 import yaml
 
 from .func import make_list
+
+logger = logging.getLogger(__name__)
 
 
 def is_valid_yaml(path: any) -> bool:
@@ -28,7 +31,9 @@ def is_valid_yaml(path: any) -> bool:
     elif not path.endswith(".yaml"):
         return False
     elif not os.path.isfile(path):
-        return False
+        raise ValueError(
+            f"{path} contains '.yaml' but is not a valid yaml file path."
+        )
     else:
         return True
 

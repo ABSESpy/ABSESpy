@@ -20,3 +20,8 @@ def test_parse_yaml():
     assert isinstance(params_all["world"], dict)
     assert isinstance(params_all["groundwater"]["world"], dict)
     assert isinstance(params_all["groundwater"]["nesting"]["world"], dict)
+    # testing parse a invalid yaml file path.
+    try:
+        is_valid_yaml("bad_file.yaml")
+    except ValueError as e:
+        assert "bad_file.yaml" in e.__str__()
