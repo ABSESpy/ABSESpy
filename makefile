@@ -35,3 +35,4 @@ install-mkdocs:
 	pip install mkdocs-bibtex
 	pip install mkdocs-macros-plugin
 	pip install mkdocs-jupyter
+	pip install mkdocs-callouts

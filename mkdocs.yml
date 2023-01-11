@@ -67,6 +67,7 @@ plugins:
         bib_file: "docs/refs.bib"
     - macros
     - mkdocs-jupyter
+    - callouts
 
 extra:
   alternate:
