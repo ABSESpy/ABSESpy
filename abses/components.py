@@ -115,7 +115,7 @@ class Component(Log):
         pass
 
     @abstractmethod
-    def _initialize(self, *args, **kwargs):
+    def initialize(self, *args, **kwargs):
         pass
 
 

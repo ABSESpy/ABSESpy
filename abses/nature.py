@@ -53,7 +53,7 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         else:
             raise ValueError(f"Unknown patch {attr}.")
 
-    def _initialize(self):
+    def initialize(self):
         settings = self.parse("boundary")
         if settings:
             boundary = self.generate_boundary(settings)

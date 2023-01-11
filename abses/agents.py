@@ -14,9 +14,9 @@ import numpy as np
 from prettytable import PrettyTable
 
 from .agent_list import BaseAgentList
-from .base_human import BaseHuman
-from .base_nature import BaseNature
+from .human import BaseHuman
 from .mediator import MainMediator
+from .nature import BaseNature
 from .objects import BaseAgent
 from .patch import Patch
 
@@ -24,35 +24,19 @@ logger = logging.getLogger("__name__")
 
 
 class Actor(BaseAgent):
-    # TODO: cannot identify the agent class in container, waiting for fix
-    def setup(self):
-        """Initiate agent attributes."""
-        # self._metrics = Metrics(self)
-        # self._decision = Decisions(self)
-        # self.tutor = EvolutionEntry()
-        self._on_earth = False
+    def __init__(self, *args, **kwargs):
+        self._on_earth: bool = False
         self.mediator: MainMediator = self.model.mediator
         self.human: BaseHuman = self.model.human
         self.nature: BaseNature = self.model.nature
+        super().__init__(*args, **kwargs)
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}: {self.id}"
+    def __repr__(self) -> str:
+        return f"<{self.breed}[{self.id}]>"
 
     @property
-    def population(self):
+    def population(self) -> BaseAgentList:
         return self.model.agents[self.breed]
-
-    @property
-    def decision(self):
-        return self._decision
-
-    @decision.setter
-    def decision(self, decision):
-        self.decision.update(decision)
-
-    @property
-    def metrics(self):
-        return self._metrics
 
     @property
     def on_earth(self) -> bool:
@@ -65,8 +49,8 @@ class Actor(BaseAgent):
         else:
             return None
 
-    def require(self, patch, **kwargs):
-        patch_obj = self.mediator.transfer_require(self, patch, **kwargs)
+    def require(self, var: str, **kwargs):
+        patch_obj = self.mediator.transfer_require(self, var, **kwargs)
         return patch_obj
 
     def loc(self, patch, **kwargs):
@@ -105,9 +89,6 @@ class Actor(BaseAgent):
         table.title = f"{self.type} {self.id}:"
         table.float_format = f".{decimal}"
         return table
-
-    def update_scores(self):
-        pass
 
     def update(self, attr: str, val: any) -> None:
         if attr in self.metrics:

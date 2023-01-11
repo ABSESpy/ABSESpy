@@ -4,6 +4,7 @@
 # @Contact   : SongshGeo@gmail.com
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
+from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import List, Optional
@@ -132,10 +133,10 @@ class CompositeModule(Module, MainComponent, Creator):
     def modules(self) -> List[Module]:
         return self._modules
 
-    def _initialize_all(self) -> None:
-        self._initialize()
+    def initialize_all(self) -> None:
+        self.initialize()
         for module in self.modules:
-            module._initialize()
+            module.initialize()
         self.state = 1
 
     def summary_modules(self) -> PrettyTable:

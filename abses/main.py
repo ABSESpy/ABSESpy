@@ -11,11 +11,11 @@ from agentpy import Model
 
 from abses import __version__
 
-from .base_human import BaseHuman
-from .base_nature import BaseNature
 from .components import MainComponent
 from .container import AgentsContainer
+from .human import BaseHuman
 from .mediator import MainMediator
+from .nature import BaseNature
 from .objects import Notice
 from .project import Folder
 
@@ -84,7 +84,7 @@ class MainModel(Folder, MainComponent, Model, Notice):
     def settings_file(self) -> str:
         return self._settings_file
 
-    def _initialize(self):
+    def initialize(self):
         # read settings file
         settings = self.parse_yaml_path(self.settings_file)
         # settings yaml as basic, update if any input when init

@@ -91,9 +91,9 @@ class MainMediator(Log):
     def init(self):
         if self._sender_matches("model"):
             self.new_session("Parsing parameters")
-            self.model._initialize()
-            self.nature._initialize_all()
-            self.human._initialize_all()
+            self.model.initialize()
+            self.nature.initialize_all()
+            self.human.initialize_all()
             self.new_session("Initialized")
         elif self._sender_matches("human", "nature"):
             pass
