@@ -13,22 +13,20 @@ import numpy as np
 from agentpy import Model
 from prettytable import PrettyTable
 
-from .components import Component, MainComponent, broadcast
+from .components import Component, MainComponent, iter_func
 from .container import AgentsContainer, BaseAgentList
 from .factory import AgentFactory, PatchFactory
 from .objects import BaseObj, Creation, Creator
 from .patch import Patch
 from .tools.func import make_list, unique_list
-from .tools.read_files import redirect_if_yaml
 
 
 class Module(Component, BaseObj):
     def __init__(self, model: Model, name: Optional[str] = None):
         Component.__init__(self, name=name)
-        BaseObj.__init__(self, model, observer=True)
+        BaseObj.__init__(self, model, observer=True, name=name)
         self._model: Model = model
         self._open: bool = True
-        self.arguments: List[str] = ["open", "record", "report"]
         self._recording_vars: List[str] = []
         self._reporting_vars: List[str] = []
 
@@ -70,13 +68,11 @@ class Module(Component, BaseObj):
         self._reporting_vars = unique_list(self._rep_vars, var)
 
     def handle_params(self):
-        my_params = self.params
-        self._parsing_args(params=my_params)
-        self.switch_open_to(my_params.pop("open", None))
-        self._rec_vars = my_params.pop("record", [])
-        self._rep_vars = my_params.pop("report", [])
+        self.switch_open_to(self.params.pop("open", None))
+        self._rec_vars = self.params.pop("record", [])
+        self._rep_vars = self.params.pop("report", [])
 
-    @broadcast
+    @iter_func("modules")
     def record_vars(self) -> None:
         self.record(self._rec_vars)
         self.record(self.glob_vars)
@@ -94,12 +90,7 @@ class Module(Component, BaseObj):
         Returns:
             any: parsed settings.
         """
-        value = self.params.get(parameter)
-        if not isinstance(value, str):
-            return value
-        else:
-            redirected = redirect_if_yaml(value)
-            return self.parse(redirected)
+        return self.params.get(parameter)
 
     def switch_open_to(self, _open: bool) -> bool:
         if _open is None:
@@ -114,7 +105,7 @@ class Module(Component, BaseObj):
             self._open = _open
             return True
 
-    @broadcast
+    @iter_func("modules")
     def report_vars(self):
         for var in self._rep_vars:
             value = getattr(self, var)
@@ -132,12 +123,6 @@ class CompositeModule(Module, MainComponent, Creator):
     @property
     def modules(self) -> List[Module]:
         return self._modules
-
-    def initialize_all(self) -> None:
-        self.initialize()
-        for module in self.modules:
-            module.initialize()
-        self.state = 1
 
     def summary_modules(self) -> PrettyTable:
         table = PrettyTable()

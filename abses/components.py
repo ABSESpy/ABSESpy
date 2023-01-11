@@ -109,8 +109,11 @@ class Component(Log):
         # retrieve specific parameters and update
         for key in list(params.keys()):
             if key in self.params:
-                self.params[key] = params.pop(key)
-                self.logger.debug(f"Parameter [{key}] updated.")
+                value = params.pop(key)
+                self.logger.debug(
+                    f"Using {value} to update {self.params[key]} for '{key}'"
+                )
+                self.params[key] = value
         # setup arguments
         self._init_arguments()
         # handle parameters
@@ -164,8 +167,9 @@ class MainComponent(Component):
         self.mediator.transfer_event(sender=self, event=self.state)
 
     def _parsing_params(self, params: dict):
+        unsolved = super()._parsing_params(params)
         self.mediator.transfer_parsing(self, params)
-        return super()._parsing_params(params)
+        return unsolved
 
     # TODO: refactor this to log
     @iter_func("modules")

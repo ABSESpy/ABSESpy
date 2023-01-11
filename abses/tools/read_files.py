@@ -65,7 +65,6 @@ def read_yaml(path: str, nesting: bool = True) -> dict:
     """
     # Read yaml file
     with open(path, "r", encoding="utf-8") as file:
-        print(f"Reading {path}")
         yaml_data = file.read()
         params = yaml.load(yaml_data, Loader=yaml.FullLoader)
         file.close()

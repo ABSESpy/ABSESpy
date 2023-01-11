@@ -8,11 +8,13 @@
 from __future__ import annotations
 
 import logging
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import List, Optional
 
 from agentpy.model import Model
 from agentpy.objects import Object, make_list
+
+from .log import Log
 
 logger = logging.getLogger(__name__)
 
@@ -110,9 +112,15 @@ class Observer(metaclass=ABCMeta):
         self._glob_vars = value
 
 
-class BaseObj(Observer, Object):
-    def __init__(self, model: Model, observer: bool = True):
+class BaseObj(Observer, Log, Object):
+    def __init__(
+        self,
+        model: Model,
+        observer: Optional[bool] = True,
+        name: Optional[str] = None,
+    ):
         Object.__init__(self, model=model)
+        Log.__init__(self, name=name)
         self.glob_vars: List[str] = []
         if observer:
             model.attach(self)
@@ -120,8 +128,11 @@ class BaseObj(Observer, Object):
 
 class BaseAgent(BaseObj):
     def __init__(self, model: Model, observer: bool = False):
-        BaseObj.__init__(self, model, observer)
+        BaseObj.__init__(self, model, observer=observer, name=self.breed)
         self.setup()
+
+    def __repr__(self) -> str:
+        return f"<{self.breed} [{self.id}]>"
 
     def setup(self):
         pass
@@ -129,3 +140,17 @@ class BaseAgent(BaseObj):
     @property
     def breed(self) -> str:
         return self.__class__.__name__.lower()
+
+
+class Mediator:
+    @abstractmethod
+    def transfer_event(self, sender: object, event: str):
+        pass
+
+    @abstractmethod
+    def transfer_parsing(self, sender: object, params: dict):
+        pass
+
+    @abstractmethod
+    def transfer_request(self, sender: object, request: str):
+        return request

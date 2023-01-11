@@ -48,8 +48,15 @@ def clean_logs():
 # TODO change a specific log for experiments
 class Log(object):
     def __init__(self, name):
+        if name is None:
+            name = self.__class__.__name__.lower()
+        self._name = name
         self._log = logging.getLogger(name)
         self._log_flag = True
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def logger(self):

@@ -15,7 +15,7 @@ from prettytable import PrettyTable
 
 from .agent_list import BaseAgentList
 from .human import BaseHuman
-from .mediator import MainMediator
+from .main import MainMediator
 from .nature import BaseNature
 from .objects import BaseAgent
 from .patch import Patch
@@ -30,9 +30,6 @@ class Actor(BaseAgent):
         self.human: BaseHuman = self.model.human
         self.nature: BaseNature = self.model.nature
         super().__init__(*args, **kwargs)
-
-    def __repr__(self) -> str:
-        return f"<{self.breed}[{self.id}]>"
 
     @property
     def population(self) -> BaseAgentList:

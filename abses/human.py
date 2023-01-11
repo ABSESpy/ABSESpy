@@ -14,7 +14,6 @@ from .modules import CompositeModule
 class BaseHuman(CompositeModule):
     def __init__(self, model, name="human"):
         CompositeModule.__init__(self, model, name=name)
-        self.arguments = ["agents"]
 
     def create_agents(self, breed_cls, n):
         name = f"{breed_cls.__name__.lower()}"

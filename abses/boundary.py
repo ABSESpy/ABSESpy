@@ -11,7 +11,6 @@ import logging
 import numpy as np
 
 # from .tools.plot_heatmap import custom_cmap_heatmap, matrix_heatmap
-from .tools.read_files import parse_yaml
 
 logger = logging.getLogger(__name__)
 
@@ -234,14 +233,7 @@ def generate_simple_boundaries(
     return boundary
 
 
-def simple_boundary_from(settings: "str|dict"):
-    if isinstance(settings, str):
-        settings = parse_yaml(settings)
-    elif isinstance(settings, dict):
-        pass
-    else:
-        raise TypeError("settings must be a dict or path of yaml")
-
+def simple_boundary_from(settings: dict):
     def parsing_shape(settings) -> tuple:
         y = settings.get("width", 8)
         x = settings.get("height", 6)

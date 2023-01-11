@@ -1,0 +1,21 @@
+model:
+    steps: 5
+    testing: 1
+world: config/world.yaml
+
+groundwater:
+    world: config/world.yaml
+    string: testing
+    nesting:
+        world: config/world.yaml
+        num: 1
+        testing: 2
+    float: 0.1
+
+human:
+    testing: 1
+
+testing: 3
+testing2: [1, 2, 3]
+start: 2020-01-01
+end: 2022-01-01
