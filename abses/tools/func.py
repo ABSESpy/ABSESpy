@@ -85,3 +85,13 @@ def iter_func(elements: str) -> callable:
         return broadcast_func
 
     return broadcast
+
+
+def warp_opfunc(func):
+    """func: data.__add__"""
+
+    def new_func(self, *args, **kwargs):
+        opfunc = getattr(self.data, func.__name__)
+        return opfunc(*args, **kwargs)
+
+    return new_func

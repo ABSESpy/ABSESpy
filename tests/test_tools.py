@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.tools.func import iter_func
+from abses.tools.func import iter_func, warp_opfunc
 from abses.tools.read_files import is_valid_yaml, read_yaml
 
 CONFIG = r"config/testing.yaml"
