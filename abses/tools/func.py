@@ -62,3 +62,26 @@ def unique_list(*args):
             raise TypeError("unique_list can only convert iterable to list")
         unique = unique | set(lst)
     return list(unique)
+
+
+def iter_func(elements: str) -> callable:
+    """
+    A decorator broadcasting function to all elements if available.
+
+    elements:
+        elements (str): attribute name where object store iterable elements.
+        All element in this iterable object will call the decorated function.
+    """
+
+    def broadcast(func: callable) -> callable:
+        def broadcast_func(self, *args, **kwargs):
+            result = func(self, *args, **kwargs)
+            if not hasattr(self, elements):
+                return result
+            for element in getattr(self, elements):
+                getattr(element, func.__name__)(*args, **kwargs)
+            return result
+
+        return broadcast_func
+
+    return broadcast

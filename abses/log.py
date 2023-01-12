@@ -11,6 +11,8 @@ import os
 
 import yaml
 
+from .tools.func import iter_func
+
 CONFIG_PATH = os.path.join(os.getcwd(), "config/log.yaml")
 with open(CONFIG_PATH, "rt") as f:
     config_data = yaml.safe_load(f.read())
@@ -66,5 +68,6 @@ class Log(object):
     def log_flag(self):
         return self._log_flag
 
+    @iter_func("modules")
     def close_log(self):
         self._log_flag = False

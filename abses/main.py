@@ -115,14 +115,6 @@ class MainModel(Folder, MainComponent, Model, Notice):
         settings.update(self._init_params)
         return settings
 
-    # ----------------------------------------------------------------
-
-    # TODO remove this
-    def close_log(self):
-        super().close_log()
-        self.nature.close_log()
-        self.human.close_log()
-
 
 Sender: TypeAlias = Union[MainComponent, BaseAgent]
 TypingUsers: TypeAlias = NamedTuple(

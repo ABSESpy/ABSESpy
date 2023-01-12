@@ -12,7 +12,7 @@ from agentpy.tools import AttrDict
 
 from .log import Log
 from .objects import Mediator
-from .tools.func import make_list
+from .tools.func import iter_func, make_list
 
 STATES = {
     -1: "Waiting",
@@ -21,29 +21,6 @@ STATES = {
     2: "ready",
     3: "complete",
 }
-
-
-def iter_func(elements: str) -> callable:
-    """
-    A decorator broadcasting function to all elements if available.
-
-    elements:
-        elements (str): attribute name where object store iterable elements.
-        All element in this iterable object will call the decorated function.
-    """
-
-    def broadcast(func: callable) -> callable:
-        def broadcast_func(self, *args, **kwargs):
-            result = func(self, *args, **kwargs)
-            if not hasattr(self, elements):
-                return result
-            for element in getattr(self, elements):
-                getattr(element, func.__name__)(*args, **kwargs)
-            return result
-
-        return broadcast_func
-
-    return broadcast
 
 
 class Component(Log):
@@ -190,8 +167,3 @@ class MainComponent(Component):
                 message, condition=len(unsolved) > 0, level="warning"
             )
         return unsolved
-
-    # TODO: refactor this to log
-    @iter_func("modules")
-    def close_log(self):
-        super().close_log()

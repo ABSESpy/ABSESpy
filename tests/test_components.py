@@ -83,30 +83,6 @@ def test_parse_parameter():
     assert not hasattr(comp2, "a")
 
 
-def test_iter_function():
-    class Test:
-        def __init__(self):
-            self.elements = []
-
-        @iter_func("elements")
-        def testing(self, word: str):
-            self.foo = word
-
-    class Element(object):
-        def testing(self, word):
-            self.foo = word
-            self.check = f"{self.foo} added auto."
-
-    main = Test()
-    comp1 = Element()
-    comp2 = Element()
-
-    main.elements.extend([comp1, comp2])
-    main.testing("hello")
-    assert main.foo == comp1.foo == comp2.foo == "hello"
-    assert comp2.check == comp1.check == "hello added auto."
-
-
 def test_main_states():
     class TestMediator(Mediator):
         def transfer_event(self, sender: object, event: str):

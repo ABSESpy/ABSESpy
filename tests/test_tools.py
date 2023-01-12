@@ -5,6 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from abses.tools.func import iter_func
 from abses.tools.read_files import is_valid_yaml, read_yaml
 
 CONFIG = r"config/testing.yaml"
@@ -25,3 +26,27 @@ def test_parse_yaml():
         is_valid_yaml("bad_file.yaml")
     except ValueError as e:
         assert "bad_file.yaml" in e.__str__()
+
+
+def test_iter_function():
+    class Test:
+        def __init__(self):
+            self.elements = []
+
+        @iter_func("elements")
+        def testing(self, word: str):
+            self.foo = word
+
+    class Element(object):
+        def testing(self, word):
+            self.foo = word
+            self.check = f"{self.foo} added auto."
+
+    main = Test()
+    comp1 = Element()
+    comp2 = Element()
+
+    main.elements.extend([comp1, comp2])
+    main.testing("hello")
+    assert main.foo == comp1.foo == comp2.foo == "hello"
+    assert comp2.check == comp1.check == "hello added auto."
