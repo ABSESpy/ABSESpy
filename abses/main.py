@@ -8,19 +8,30 @@
 from __future__ import annotations
 
 import logging
+from collections import namedtuple
+from typing import (
+    Dict,
+    Iterable,
+    NamedTuple,
+    Optional,
+    Tuple,
+    TypeAlias,
+    Union,
+)
 
-from agentpy import Model
+from agentpy import AttrDict, Model
 
 from abses import __version__
 from abses.tools.read_files import read_yaml
 
-from .components import MainComponent
+from .components import STATES, MainComponent
 from .container import AgentsContainer
 from .human import BaseHuman
 from .log import Log
 from .nature import BaseNature
 from .objects import BaseAgent, Mediator, Notice
 from .project import Folder
+from .tools.func import make_list
 
 logger = logging.getLogger(__name__)
 LENGTH = 40  # session fill
@@ -29,13 +40,13 @@ LENGTH = 40  # session fill
 class MainModel(Folder, MainComponent, Model, Notice):
     def __init__(
         self,
-        parameters: dict = None,
-        name: str = None,
-        base: str = None,
-        human_class: BaseHuman = None,
-        nature_class: BaseNature = None,
-        settings_file: str = None,
-        _run_id=None,
+        name: Optional[str] = None,
+        base: Optional[str] = None,
+        parameters: Optional[Dict[str, any]] = None,
+        human_class: Optional[BaseHuman] = None,
+        nature_class: Optional[BaseNature] = None,
+        settings_file: Optional[str] = None,
+        _run_id: Optional[Tuple[int, int]] = None,
         **kwargs,
     ) -> None:
         Model.__init__(self, _run_id=_run_id)
@@ -50,28 +61,31 @@ class MainModel(Folder, MainComponent, Model, Notice):
         if parameters is None:
             parameters = {}
 
-        self.__version__ = __version__
-        self._human = human_class(self)
-        self._nature = nature_class(self)
-        self._agents = AgentsContainer(self)
+        self.__version__: str = __version__
+        self._human: BaseHuman = human_class(self)
+        self._nature: BaseNature = nature_class(self)
+        self._agents = AgentsContainer(model=self)
         # parameters
         # priority: init parameters > input parameters > settings_file
-        self._init_params = {}
+        self._init_params: AttrDict = AttrDict()
         self._init_params.update(parameters)
         self._init_params.update(kwargs)
+
         if settings_file is None:
-            settings_file = parameters.get("settings_file", None)
-        self._settings_file = settings_file
+            settings_file = parameters.pop("settings_file", None)
+        self._settings_file: Optional[str] = settings_file
         # setup mediator
         self.mediator = MainMediator(
             model=self, human=self.human, nature=self.nature
         )
 
+    # ----------------------------------------------------------------
     def __repr__(self):
         name = self.__class__.__name__
         version = self.__version__
         return f"{name}-{version}({self.name}): {self.state}"
 
+    # ----------------------------------------------------------------
     @property
     def agents(self) -> AgentsContainer:
         return self._agents
@@ -85,27 +99,23 @@ class MainModel(Folder, MainComponent, Model, Notice):
         return self._nature
 
     @property
-    def settings_file(self) -> dict:
+    def _settings_from_file(self) -> Dict[str, any]:
         # settings yaml as basic
-        settings = dict()
+        settings = AttrDict()
         if self._settings_file is not None:
             settings = read_yaml(self._settings_file, nesting=True)
         return settings
 
     @property
-    def settings(self) -> dict:
-        settings = dict()
+    def settings(self) -> Dict[str, any]:
+        settings = AttrDict()
         # read basic settings file
-        settings.update(self.settings_file)
+        settings.update(self._settings_from_file)
         # input settings
         settings.update(self._init_params)
         return settings
 
-    def initialize(self):
-        unsolved = self._parsing_params(self.settings)
-        if len(unsolved.keys()) > 0:
-            self.logger.warning(f"Unsolved parameters: {unsolved.keys()}.")
-        self.p.update(self.params)
+    # ----------------------------------------------------------------
 
     # TODO remove this
     def close_log(self):
@@ -114,112 +124,239 @@ class MainModel(Folder, MainComponent, Model, Notice):
         self.human.close_log()
 
 
+Sender: TypeAlias = Union[MainComponent, BaseAgent]
+TypingUsers: TypeAlias = NamedTuple(
+    "Users",
+    [("human", BaseHuman), ("nature", BaseNature), ("model", MainModel)],
+)
+TypingResults: TypeAlias = NamedTuple(
+    "Users", [("human", any), ("nature", any), ("model", any)]
+)
+USERS: Tuple[str] = ("model", "human", "nature")
+Users: TypingUsers = namedtuple("Users", USERS)
+
+
 class MainMediator(Mediator, Log):
-    def __init__(self, model, human, nature):
-        Log.__init__(self, name="Mediator")
-        self._model: MainModel = model
-        self._human: BaseHuman = human
-        self._nature: BaseNature = nature
+    def __init__(self, model: MainModel, human: BaseHuman, nature: BaseNature):
+        self.model: MainModel = model
+        self.human: BaseHuman = human
+        self.nature: BaseNature = nature
         model.mediator: MainMediator = self
         human.mediator: MainMediator = self
         nature.mediator: MainMediator = self
-        self.sender: any = None
-        self._change_state(0)
+        self.users: TypingUsers = Users(
+            model=model, human=human, nature=nature
+        )
+        self.sender: Optional[Sender] = None
+        name = ", ".join([user.name for user in self.users])
+        Log.__init__(self, name=name)
+        self._change_state(0)  # state -> new: initialize all
 
-    def __repr__(self):
-        return "<Model-Mediator>"
+    def __repr__(self) -> str:
+        return f"<Mediator of: {self.name}>"
 
-    def _change_state(self, state_code: int):
-        self.model.state = state_code
-        self.human.state = state_code
-        self.nature.state = state_code
+    def _change_state(self, state_code: int) -> bool:
+        f"""
+        Change all users' state to the assigned state.
 
-    @property
-    def model(self):
-        return self._model
+        Args:
+            state_code (int): {STATES}.
 
-    @property
-    def nature(self):
-        return self._nature
+        Raises:
+            ValueError: Invalid state code.
+        """
+        if state_code not in STATES:
+            raise ValueError(
+                f"Invalid state code {state_code}, valid: {STATES}"
+            )
+        for user in self.users:
+            user.state = state_code
+        return self._states_are(STATES[state_code])
 
-    @property
-    def human(self):
-        return self._human
+    def _check_sender(self, sender: Sender) -> Dict[Sender, bool]:
+        """
+        Check the type of sender, save it as a string attribute.
+        An available pattern includes:
+            1. 'agent': any instance of 'BaseAgent'.
+            2. 'model': the bound instance of 'MainModel'.
+            3. 'human': the bound instance of 'BaseHuman'.
+            4. 'nature': the bound instance of 'BaseNature'.
 
-    def _check_sender(self, sender: object) -> dict:
-        is_model = sender is self.model
-        is_human = sender is self.human
-        is_nature = sender is self.nature
-        is_agent = isinstance(sender, BaseAgent)
-        self.sender = {
-            "model": is_model,
-            "human": is_human,
-            "nature": is_nature,
-            "agent": is_agent,
-        }
+        Args:
+            sender (Sender): the sending request object.
+        """
+        if sender is self.model:
+            self.sender = "model"
+        elif sender is self.human:
+            self.sender = "human"
+        elif sender is self.nature:
+            self.sender = "nature"
+        elif isinstance(sender, BaseAgent):
+            self.sender = "agent"
+        else:
+            raise TypeError(f"Type of sender '{type(sender)}' is invalid.")
 
-    def _sender_matches(self, *args) -> bool:
-        is_matched = [self.sender[p] for p in args]
+    def sender_matches(self, *args: str) -> bool:
+        """
+        Check if the sender now matches ANY given pattern.
+        An available pattern includes:
+            1. 'agent': any instance of 'BaseAgent'.
+            2. 'model': the bound instance of 'MainModel'.
+            3. 'human': the bound instance of 'BaseHuman'.
+            4. 'nature': the bound instance of 'BaseNature'.
+
+        Returns:
+            bool: if the 'self.sender' matches any input pattern, returns True.
+        """
+        is_matched = [self.sender == arg for arg in args]
         return any(is_matched)
 
-    def new_session(self, msg: str, sep: str = ".", new_line=0):
-        self.logger.info(" [%s] ".center(LENGTH, sep) % msg + "\n" * new_line)
+    def session(self, msg: str, sep: str = ".", new_line: int = 0) -> str:
+        """
+        Wrap a session message.
 
-    def _check_state(self, state: str):
-        model_is = self.model.state == state
-        nature_is = self.nature.state == state
-        human_is = self.human.state == state
-        return model_is, nature_is, human_is
+        Args:
+            msg (str): user's msg to wrap.
+            sep (str, optional): separator. Defaults to ".".
+            new_line (int, optional): how many new lines '\n' after wrapped message. Defaults to 0.
 
-    def _all_state_is(self, state: str) -> bool:
-        return all(self._check_state(state))
+        Returns:
+            str: a wrapped message.
+        """
+        wrapped_msg = " [%s] ".center(LENGTH, sep) % msg + "\n" * new_line
+        self.logger.info(wrapped_msg)
+        return wrapped_msg
 
-    def transfer_parsing(self, sender: object, value):
-        if sender is self.model:
-            self.human._parsing_params(value)
-            self.nature._parsing_params(value)
+    def _states_are(self, state: str, how: str = "all") -> bool:
+        f"""
+        Check users' states are same as the given state.
+
+        Args:
+            state (str): checking states {STATES}:
+            how (str, optional):
+                if 'all', returns True only if all users' state are checked.
+                if 'any', any user's state checked, returns True.
+                Defaults to 'all'.
+
+        Raises:
+            ValueError: Invalid input args.
+
+        Returns:
+            bool: if the check is successful.
+        """
+        states = [user.state == state for user in self.users]
+        if how == "all":
+            return all(states)
+        elif how == "any":
+            return any(states)
+        else:
+            raise ValueError(f"{how} in invalid, choose 'any' or 'all'.")
+
+    def trigger_functions(
+        self, users: Union[str, Iterable[str]], func_name: str, *args, **kwargs
+    ) -> TypingResults:
+        f"""
+        Trigger functions for all users
+
+        Args:
+            users (Union[str, Iterable[str]]): which users to trigger, choose one or more from {USERS}.
+            func_name (str): name of the function to trigger.
+            *args, **kwargs: additional arguments to pass to the func.
+
+        Returns:
+            results (NamedTuple[({USERS}), Optional[any]]): a named tuple where each user in {USERS} storing their results.
+        """
+        results = {}
+        for user in USERS:
+            if user not in make_list(users):
+                results[user] = None
+                continue
+            obj = self.users.__getattribute__(user)
+            func = obj.__getattribute__(func_name)
+            results[user] = func(*args, **kwargs)
+        return Users(**results)
+
+    def logging(self, message, condition: bool = True, level="warning"):
+        logging = getattr(self.logger, level)
+        if condition:
+            logging(message)
+
+    def transfer_parsing(self, sender: Sender, params: Dict[str, any]) -> bool:
+        f"""
+        Transfer parameters parsing.
+
+        Args:
+            sender (Sender): any component from {USERS}.
+            params (AttrDict): dictionary of parameters to parse.
+
+        Returns:
+            bool: parsing parameters finished if all model, human, nature components finished, returns True, else False.
+        """
+        self._check_sender(sender)
+        all_finished = False
+        # MainModel parsing parameters finished, trigger others.
+        if self.sender_matches("model"):
+            self.model.p.update(
+                self.model.params
+            )  # todo remove this if self.p is removed
+            self.human.parsing_params(params)
+            self.nature.parsing_params(params)
+            return all_finished
+        # Human / Nature parsing parameters finished, report.
+        elif self.sender_matches("human", "nature"):
+            sender.state = 1
+            self.logger.info(f"{sender.name} parsed parameters.")
+            # finished parsing parameters, change state to initialized.
+            if self._states_are("init", how="all"):
+                self.logger.info("All parameters are initialized.")
+                all_finished = True
+            return all_finished
 
     def new(self):
-        if self._sender_matches("model"):
+        if self.sender_matches("model"):
+            # TODO run id
             run_id = self.model._run_id
             if run_id is not None:
                 run_id = run_id[0]
-            self.new_session(f"Model {self.model.name} ID-{run_id}", sep="*")
-        elif self._sender_matches("human", "nature"):
+            self.session(f"Model {self.model.name} ID-{run_id}", sep="*")
+        elif self.sender_matches("human", "nature"):
             pass
-        if self._all_state_is("new"):
+        if self._states_are("new"):
             # Automatically parsing parameters
             self.model.state = 1
 
     def init(self):
-        if self._sender_matches("model"):
-            self.new_session("Parsing parameters")
+        if self.sender_matches("model"):
+            self.session("Parsing parameters")
+            self.model.parsing_params(self.model.settings)
             self.model.initialize()
             self.nature.initialize()
             self.human.initialize()
-            self.new_session("Initialized")
-        elif self._sender_matches("human", "nature"):
+            self.session("Initialized")
+        elif self.sender_matches("human", "nature"):
             pass
 
     def ready(self):
-        if self._sender_matches("model"):
-            self.new_session("Ready for simulation")
+        if self.sender_matches("model"):
+            self.session("Ready for simulation")
 
     def complete(self):
-        if self._sender_matches("model"):
-            self.new_session(f"Completed in {self.model.t} steps", new_line=0)
-            self.new_session("Finished", sep="*", new_line=1)
+        if self.sender_matches("model"):
+            self.session(f"Completed in {self.model.t} steps", new_line=0)
+            self.session("Finished", sep="*", new_line=1)
             self.human.state = 3
             self.nature.state = 3
-        if self._sender_matches("human"):
+        if self.sender_matches("human"):
             self.human.report_vars()
-        if self._sender_matches("nature"):
+        if self.sender_matches("nature"):
             self.nature.report_vars()
 
-    def transfer_event(self, sender: object, event: str, *args) -> None:
+    def transfer_event(
+        self, sender: object, event: str, *args, **kwargs
+    ) -> None:
         self._check_sender(sender)
         event_func = self.__getattribute__(event)
-        event_func(*args)
+        return event_func(*args, **kwargs)
 
     def transfer_require(self, sender: object, attr: str, **kwargs) -> object:
         if sender is self.human or isinstance(sender, BaseAgent):

@@ -5,7 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.main import MainModel
+from abses.components import MainComponent
+from abses.main import MainMediator, MainModel
 from abses.tools.read_files import read_yaml
 
 # r"config/testing.yaml"
@@ -49,17 +50,62 @@ def test_model_attrs():
     # params 里 1 被 testing.yaml 第一层的 3 覆盖
     # 这个应该出现在
     assert model.__repr__() == "MainModel-v0.0.1(model): init"
-    assert isinstance(model.settings_file, dict)
-    assert len(model.settings_file) == len(config)  # settings file is the same
+    assert isinstance(model._settings_from_file, dict)
+    assert len(model._settings_from_file) == len(
+        config
+    )  # settings file is the same
     assert len(model._init_params) == len(parameters)  # (a, settings)
     assert len(model.settings) == len(config) + 1  # 'a' is extra attr
 
-    assert model.settings_file["model"]["testing"] == 1  # basic setting: 1
-    assert model.settings_file["testing"] == 3  # basic setting: 3
+    assert (
+        model._settings_from_file["model"]["testing"] == 1
+    )  # basic setting: 1
+    assert model._settings_from_file["testing"] == 3  # basic setting: 3
     assert model._init_params["testing"] == testing  # input
     assert model.settings["testing"] == testing  # using input update file
     # 注意这里只会被一次性使用 key 来替代，在这里 model 优先取走了底层的 testing = 3，human 模块就没法更新了，还是1
     # Notice that first-fold key is used once. Here, model firstly take testing = 3,
     # then Human's testing will not be replaced, keeping human.params['testing'] = 1.
     assert model.params.testing == testing
+    assert model.p["testing"] == testing
     assert model.human.params.testing == 1
+
+
+def test_mediator():
+    class TestComponent(MainComponent):
+        def __init__(self, name=None):
+            MainComponent.__init__(self, name=name)
+            self.settings = config
+            self._run_id = "testing"
+            self.p = {}
+
+        def to_trigger(self, arg="testing"):
+            return self.name + " " + arg
+
+        def report_vars(self):
+            pass
+
+    model = TestComponent(name="M")
+    human = TestComponent(name="H")
+    nature = TestComponent(name="N")
+
+    mediator = MainMediator(model=model, nature=nature, human=human)
+    assert mediator.__str__() == "<Mediator of: M, H, N>"
+    results = mediator.trigger_functions("human", "to_trigger")
+    assert results.human == "H testing"
+    assert results.nature is None and results.model is None
+    results = mediator.trigger_functions("nature", "to_trigger", "test")
+    assert results.nature == "N test"
+
+    mediator._change_state(2)
+    assert mediator._states_are("ready", how="all")
+    human.state = 3
+    assert mediator._states_are("complete", how="any")
+    assert not mediator._states_are("complete", how="all")
+    try:
+        mediator._check_sender("wrong sender")
+    except TypeError as e:
+        assert "Type of sender" in e.__str__()
+        assert "str" in e.__str__()
+    mediator._check_sender(model)
+    assert mediator.sender == "model"

@@ -6,7 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 from abc import abstractmethod
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 
 from agentpy.tools import AttrDict
 
@@ -94,7 +94,7 @@ class Component(Log):
                 raise KeyError(f"arg '{arg}' not found in parameters.")
 
     @iter_func("modules")
-    def _parsing_params(self, params: dict) -> dict:
+    def parsing_params(self, params: dict) -> dict:
         """
         Parsing parameters belongs to this component.
 
@@ -120,6 +120,17 @@ class Component(Log):
         self.handle_params()
         return params
 
+    def report_parameters(
+        self, params: Optional[dict] = None, as_string: Optional[bool] = False
+    ) -> Union[dict, str]:
+        # TODO: show parameter table.
+        if len(params) == 0:
+            return None
+        if as_string:
+            return str(list(params.keys()))
+        else:
+            return params.keys()
+
     @abstractmethod
     def handle_params(self):
         """
@@ -129,14 +140,17 @@ class Component(Log):
 
     @abstractmethod
     def initialize(self):
+        """
+        Initialization after handle parameters.
+        """
         pass
 
 
 class MainComponent(Component):
     _states = STATES
 
-    def __init__(self, *args, **kwargs):
-        Component.__init__(self, *args, **kwargs)
+    def __init__(self, name: Optional[str] = None):
+        Component.__init__(self, name=name)
         self._state = -1  # init state waiting
         self._mediator = Mediator()
 
@@ -166,16 +180,18 @@ class MainComponent(Component):
             self._state = code
         self.mediator.transfer_event(sender=self, event=self.state)
 
-    def _parsing_params(self, params: dict):
-        unsolved = super()._parsing_params(params)
-        self.mediator.transfer_parsing(self, params)
+    def parsing_params(self, params: dict) -> dict:
+        unsolved = super().parsing_params(params)
+        finished = self.mediator.transfer_parsing(self, params)
+        if finished:
+            parameters = self.report_parameters(unsolved, as_string=True)
+            message = f"Unsolved parameters: {parameters}."
+            self.mediator.logging(
+                message, condition=len(unsolved) > 0, level="warning"
+            )
         return unsolved
 
     # TODO: refactor this to log
     @iter_func("modules")
     def close_log(self):
         super().close_log()
-
-    @iter_func("modules")
-    def initialize(self):
-        self.state = 1

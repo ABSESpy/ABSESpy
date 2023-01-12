@@ -72,8 +72,8 @@ def test_parse_parameter():
     comp1 = MyComponent(name="comp1")
     comp2 = MyMainComp(name="comp2")
 
-    comp1._parsing_params(params)
-    comp2._parsing_params(params)
+    comp1.parsing_params(params)
+    comp2.parsing_params(params)
     assert "comp1" not in params
     assert "comp2" not in params
     assert "exist" in params

@@ -24,3 +24,7 @@ tag_format = "$version"
 version_variable = 3.8 # or where your version is defined
 # repository_user_var = TWINE_USERNAME
 # repository_pass_var = TWINE_PASSWORD
+
+[tool.isort]
+profile = "black"
+line_length = 79
