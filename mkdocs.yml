@@ -54,7 +54,8 @@ theme:
     features:
         - header.autohide
         - navigation.tabs
-
+        - navigation.tracking
+        - toc.follow
 plugins:
     - search
     - mkdocstrings:
@@ -91,7 +92,10 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - footnotes
-
+  - toc:
+      permalink: "#"
+      baselevel: 2
+      separator: "-"
 # extra:
 #   social:
 #     - type: 'github'

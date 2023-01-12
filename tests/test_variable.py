@@ -7,3 +7,9 @@
 
 
 from abses.variable import Variable
+
+
+def test_variable_now():
+    # var1 = Variable(name='v1', long_name='variable 2', initial_value=0.1)
+    # var2 = Variable(name='v2', long_name='variable 2', initial_value=2)
+    pass

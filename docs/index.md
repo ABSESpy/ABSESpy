@@ -1,12 +1,10 @@
 ---
 title: index
 authors: SongshGeo
-date: 2023-01-10
 long_name: Agent-Based Social-ecological systems Modelling Framework in Python
 name: AB-SESpy
-state: open
+state: review
 banner_icon: 💻
-
 banner_y: 0.52
 SES: social-ecological systems
 github: https://github.com/SongshGeo
