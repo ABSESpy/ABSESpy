@@ -10,8 +10,8 @@ from typing import Iterable, List, Optional, Union
 
 from agentpy.tools import AttrDict
 
+from .bases import Mediator
 from .log import Log
-from .objects import Mediator
 from .tools.func import iter_func, make_list
 
 STATES = {

@@ -5,9 +5,12 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import datetime
 
-from abses import MainModel
+from abses import BaseObj
 from abses.variable import Variable
+
+from .test_objects import noticeable_model
 
 
 def create_variable(*args):
@@ -48,7 +51,7 @@ def test_variable_data():
 
 
 def test_variable_dtype():
-    var1, var2 = create_variable(None, None)
+    var1, _, _, _ = create_variable(None, 1, "test", 0.1)
     assert var1.dtype is None
     var1.data = 1
     assert var1.dtype == int
@@ -56,4 +59,15 @@ def test_variable_dtype():
         var1.data = 0.1
     except TypeError as e:
         assert "mismatches" in str(e)
-    var1.creator
+
+
+def test_variable_creation():
+    model = noticeable_model()
+    obj = BaseObj(model=model)
+    var = Variable("v1", "Variable 1", 1)
+    obj.add_creation(var)
+    t = datetime.datetime.now()
+    obj.time = t
+    obj.inheritance = "time"
+
+    assert var.time == t

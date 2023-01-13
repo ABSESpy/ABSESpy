@@ -11,7 +11,7 @@ import logging
 import os
 from collections import deque
 from datetime import datetime
-from functools import cached_property, total_ordering
+from functools import total_ordering
 from numbers import Number
 from typing import Deque, Optional, Type, TypeAlias, Union
 
@@ -21,7 +21,7 @@ from agentpy.model import Model
 
 from abses.log import Log
 
-from .objects import Creation, Notice
+from .bases import Creation
 from .patch import Patch, update_array
 from .tools.func import wrap_opfunc_to
 
@@ -111,10 +111,6 @@ class Variable(Log, Creation):
         # TODO
         pass
 
-    def notification(self, notice: Notice):
-        super().notification(notice)
-        # self._step_record()
-
     # ----------------------------------------------------------------
 
     @property
@@ -133,6 +129,14 @@ class Variable(Log, Creation):
     def data(self, data: Data) -> None:
         self._check_dtype(data=data)
         self._data = data
+
+    @property
+    def history(self):
+        return self._history
+
+    def update(self):
+        self.history.append(self.data)
+        self._time.append(self.__t)
 
 
 class FileVariable(Variable):

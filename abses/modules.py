@@ -13,10 +13,11 @@ import numpy as np
 from agentpy import Model
 from prettytable import PrettyTable
 
+from .bases import Creation, Creator
 from .components import Component, MainComponent, iter_func
 from .container import AgentsContainer, BaseAgentList
 from .factory import AgentFactory, PatchFactory
-from .objects import BaseObj, Creation, Creator
+from .objects import BaseObj
 from .patch import Patch
 from .tools.func import make_list, unique_list
 

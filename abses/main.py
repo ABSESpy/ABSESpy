@@ -24,12 +24,13 @@ from agentpy import AttrDict, Model
 from abses import __version__
 from abses.tools.read_files import read_yaml
 
+from .bases import Mediator, Notice
 from .components import STATES, MainComponent
 from .container import AgentsContainer
 from .human import BaseHuman
 from .log import Log
 from .nature import BaseNature
-from .objects import BaseAgent, Mediator, Notice
+from .objects import BaseAgent
 from .project import Folder
 from .tools.func import make_list
 
