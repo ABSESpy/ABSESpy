@@ -8,6 +8,7 @@
 import datetime
 
 from abses import BaseObj
+from abses.bases import Creation
 from abses.variable import Variable
 
 from .test_objects import noticeable_model
@@ -59,12 +60,13 @@ def test_variable_dtype():
         var1.data = 0.1
     except TypeError as e:
         assert "mismatches" in str(e)
+    assert isinstance(var1, Creation)
 
 
 def test_variable_creation():
     model = noticeable_model()
     obj = BaseObj(model=model)
-    var = Variable("v1", "Variable 1", 1)
+    var = obj.create_var(name="v1", long_name="Variable 1", data=1)
     obj.add_creation(var)
     t = datetime.datetime.now()
     obj.time = t

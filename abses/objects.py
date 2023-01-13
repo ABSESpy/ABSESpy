@@ -8,8 +8,9 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 
+from agentpy import AttrDict
 from agentpy.model import Model
 from agentpy.objects import Object
 
@@ -27,6 +28,7 @@ class BaseObj(Observer, Log, Object, Creator):
         observer: Optional[bool] = True,
         name: Optional[str] = None,
     ):
+        self._vars = AttrDict()
         Object.__init__(self, model=model)
         Log.__init__(self, name=name)
         Creator.__init__(self)
@@ -35,17 +37,22 @@ class BaseObj(Observer, Log, Object, Creator):
         if observer:
             model.attach(self)
 
-    # def __setattr__(self, __name: str, __value: Any) -> None:
-    #     if hasattr(self, __name):
-    #         attr = self.__getattr__(self, __name)
-    #         if issubclass(attr.__class__, Variable):
-    #             setattr(getattr(attr, 'data'), __name, __value)
-    #             return
-    #     super().__setattr__(__name, __value)
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name in self.variables:
+            self.variables[__name] = __value
+        return super().__setattr__(__name, __value)
 
-    def create_variable(self, *args, **kwargs):
-        var = Variable.create(*args, **kwargs)
+    @property
+    def variables(self):
+        return self.__dict__.get("_vars", {})
+
+    def create_var(self, name, long_name, data):
+        if name in self.variables:
+            raise ValueError("Variable %s already exists" % name)
+        var = Variable(name=name, long_name=long_name, initial_value=data)
         self.add_creation(var)
+        self.variables[var.name] = var
+        return var
 
 
 class BaseAgent(BaseObj):

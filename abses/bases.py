@@ -21,8 +21,10 @@ class Creator:
         self._inheritance: List[str] = []
 
     def _check_creation(self, creation: Creation):
-        if not isinstance(creation, Creation):
-            raise TypeError("Only creation can be added.")
+        if not issubclass(creation.__class__, Creation):
+            raise TypeError(
+                f"Only creation can be added, input {creation.__class__}."
+            )
 
     @property
     def inheritance(self) -> list:

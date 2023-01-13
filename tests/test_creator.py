@@ -19,7 +19,7 @@ def test_creator_creation():
     try:
         creator.add_creation(bad_product)
     except Exception as e:
-        assert e.__str__() == "Only creation can be added."
+        assert "Only creation can be added" in e.__str__()
 
     # add something to be inherited
     creator.a = 1

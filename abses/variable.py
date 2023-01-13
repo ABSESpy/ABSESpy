@@ -134,6 +134,15 @@ class Variable(Log, Creation):
     def history(self):
         return self._history
 
+    # ----------------------------------------------------------------
+
+    @classmethod
+    def create(cls, name, long_name, data):
+        var = cls(name=name, long_name=long_name, initial_value=data)
+        return var
+
+    # ----------------------------------------------------------------
+
     def update(self):
         self.history.append(self.data)
         self._time.append(self.__t)
