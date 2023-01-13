@@ -25,6 +25,7 @@ install-jupyter:
 	conda install nb_conda
 	conda install jupyterlab_execute_time
 	conda install jupyterlab-lsp
+	conda install -c conda-forge python-lsp-server
 	pip install jupyterlab-citation-manager
 	# pip install jupyterlab_darkside_ui
 install-mkdocs:

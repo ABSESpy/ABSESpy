@@ -10,18 +10,16 @@ from abses import MainModel
 from abses.variable import Variable
 
 
+def create_variable(*args):
+    for i, v in enumerate(args):
+        var = Variable(
+            name=f"v{i+1}", long_name=f"variable {i+1}", initial_value=v
+        )
+        yield var
+
+
 def test_variable_data():
-    model = MainModel(base="tests")
-    var1 = Variable(
-        model=model, name="v1", long_name="variable 1", initial_value=0.1
-    )  # float
-    assert hasattr(var1, "__add__")
-    var2 = Variable(
-        model=model, name="v2", long_name="variable 2", initial_value=2
-    )  # int
-    var3 = Variable(
-        model=model, name="v3", long_name="variable 3", initial_value="defect"
-    )  # str
+    var1, var2, var3 = create_variable(0.1, 2, "defect")
 
     assert var1.dtype == float
     assert var2.dtype == int
@@ -47,3 +45,15 @@ def test_variable_data():
     assert var3 * var2 == "defectdefect"
     assert var2 > var1
     assert var1 <= var2
+
+
+def test_variable_dtype():
+    var1, var2 = create_variable(None, None)
+    assert var1.dtype is None
+    var1.data = 1
+    assert var1.dtype == int
+    try:
+        var1.data = 0.1
+    except TypeError as e:
+        assert "mismatches" in str(e)
+    var1.creator

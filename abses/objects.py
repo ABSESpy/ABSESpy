@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from agentpy.model import Model
 from agentpy.objects import Object, make_list
@@ -40,7 +40,7 @@ class Creator:
     def add_creation(self, obj: Creation):
         self._check_creation(creation=obj)
         self.created.append(obj)
-        setattr(obj, "creator", self)
+        setattr(obj, "_creator", self)
         self.notify()
 
     def notify(self):
@@ -53,6 +53,13 @@ class Creator:
 
 
 class Creation:
+    def __init__(self):
+        self._creator: Creator = None
+
+    @property
+    def creator(self):
+        return self._creator
+
     def refresh(self, creator: Creator):
         for attr in creator.inheritance:
             value = creator.__getattribute__(attr)
@@ -112,7 +119,7 @@ class Observer(metaclass=ABCMeta):
         self._glob_vars = value
 
 
-class BaseObj(Observer, Log, Object):
+class BaseObj(Observer, Log, Object, Creator):
     def __init__(
         self,
         model: Model,
@@ -121,9 +128,18 @@ class BaseObj(Observer, Log, Object):
     ):
         Object.__init__(self, model=model)
         Log.__init__(self, name=name)
+        Creator.__init__(self)
         self.glob_vars: List[str] = []
         if observer:
             model.attach(self)
+
+    # def __setattr__(self, __name: str, __value: Any) -> None:
+    #     if hasattr(self, __name):
+    #         attr = self.__getattr__(self, __name)
+    #         if issubclass(attr.__class__, Variable):
+    #             setattr(getattr(attr, 'data'), __name, __value)
+    #             return
+    #     super().__setattr__(__name, __value)
 
 
 class BaseAgent(BaseObj):
