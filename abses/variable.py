@@ -18,7 +18,7 @@ from agentpy.model import Model
 
 from .objects import BaseObj
 from .patch import Patch, update_array
-from .tools.func import warp_opfunc
+from .tools.func import wrap_opfunc_to
 
 MAXLENGTH = 5  # todo move it into system settings.
 
@@ -54,38 +54,11 @@ def setup_registry(registry):
 
 #     for opname in _convert:
 #         opfunc = getattr(cls, opname)
-#         setattr(cls, opname, warp_func(opfunc))
+#         setattr(cls, opname, wrap_func(opfunc))
 #     return cls
 
 
-_convert = (
-    "__neg__",
-    "__pos__",
-    "__abs__",
-    "__invert__",
-    "__add__",
-    "__sub__",
-    "__mul__",
-    "__truediv__",
-    "__floordiv__",
-    "__mod__",
-    "__divmod__",
-    "__pow__",
-    "__lshift__",
-    "__rshift__",
-    "__and__",
-    "__xor__",
-    "__or__",
-    "__lt__",
-    "__le__",
-    "__eq__",
-    "__be__",
-    "__gt__",
-    "__ge__",
-)
-
-
-# @binary_operator
+@total_ordering
 class Variable(BaseObj):
     _created_variables = {}
 
@@ -103,14 +76,14 @@ class Variable(BaseObj):
         self._unit: Optional[str] = unit
         self.data: Data = initial_value
 
-    def _setup_opfunc(self, data: any):
-        for opname in _convert:
-            opfunc = getattr(data.__class__, opname, None)
-            if opfunc is not None:
-                setattr(self.__class__, opname, warp_opfunc(opfunc))
+    def __lt__(self, other):
+        return self.data < other
 
-    # def __repr__(self):
-    #     return f"<Variable [{self.name}] ({self.dtype})>"
+    def __eq__(self, other):
+        return self.data == other
+
+    def __repr__(self):
+        return f"<Var[{self.name}]: {self.data}>"
 
     def _detect_dtype(self, data: Data) -> type:
         if hasattr(data, "dtype"):
@@ -160,7 +133,8 @@ class Variable(BaseObj):
     def data(self, data: Data) -> None:
         self._detect_dtype(data)
         self._data = data
-        self._setup_opfunc(data)
+        wrapped = wrap_opfunc_to(self, "data")
+        self._has_opfunc = wrapped
 
 
 class FileVariable(Variable):

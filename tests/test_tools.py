@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.tools.func import iter_func, warp_opfunc
+from abses.tools.func import iter_func, opfunc_using_attr, wrap_opfunc_to
 from abses.tools.read_files import is_valid_yaml, read_yaml
 
 CONFIG = r"config/testing.yaml"
@@ -50,3 +50,47 @@ def test_iter_function():
     main.testing("hello")
     assert main.foo == comp1.foo == comp2.foo == "hello"
     assert comp2.check == comp1.check == "hello added auto."
+
+
+def test_wrap_opfunc():
+    class Calculation:
+        def __init__(self):
+            self.attr = 1
+
+    cal = Calculation()
+
+    try:
+        cal + 1
+    except TypeError as e:
+        assert "unsupported operand type(s)" in e.__str__()
+
+    # wraping the '__add__' method.
+    opname = "__add__"
+    wrapper = opfunc_using_attr("attr", binary_op=True)
+    wrapped_func = wrapper(getattr(1, opname))
+    setattr(cal.__class__, opname, wrapped_func)
+    assert cal + 1 == 2
+
+    cal2 = Calculation()
+    success = wrap_opfunc_to(cal2, "attr")
+    assert "add" in success
+    assert "radd" in success
+    assert cal2 + 1 == 1 + cal2 == 2
+
+    class MyClass(object):
+        def __init__(self, attr: any):
+            self.attr: any = attr
+
+    int_obj = MyClass(1)
+    str_obj = MyClass("test")
+    float_obj = MyClass(0.1)
+
+    opfunc_int = wrap_opfunc_to(int_obj, "attr")
+    assert "mul" in opfunc_int
+    assert "mod" in opfunc_int
+    assert "pow" in opfunc_int
+    assert int_obj + 1 == 1 + int_obj == 2
+    wrap_opfunc_to(str_obj, "attr")
+    assert str_obj * 2 == "testtest"
+    wrap_opfunc_to(float_obj, "attr")
+    assert float_obj * 10 == 1.0

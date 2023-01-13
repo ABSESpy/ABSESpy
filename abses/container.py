@@ -105,7 +105,7 @@ def apply_agents(func) -> callable:
     Apply this method to all agents of model if input agents argument is None.
 
     Args:
-        manipulate_agents_func (warped function): should be a method of module.
+        manipulate_agents_func (wrapped function): should be a method of module.
     """
 
     def apply(self, agents=None, *args, **kwargs):
