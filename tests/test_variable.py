@@ -71,5 +71,18 @@ def test_variable_creation():
     t = datetime.datetime.now()
     obj.time = t
     obj.inheritance = "time"
-
     assert var.time == t
+    assert obj.v1 is var
+    assert "v1" in obj.variables
+    obj.v1 = 2  # call var.update(2)
+    assert var == 2
+    var.data = 3
+    assert obj.v1 == 3
+    try:
+        obj.v1 = 0.2
+    except TypeError as e:
+        assert "mismatches" in str(e)
+
+
+def test_variables_history():
+    pass

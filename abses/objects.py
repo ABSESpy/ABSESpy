@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from agentpy import AttrDict
 from agentpy.model import Model
@@ -28,7 +28,7 @@ class BaseObj(Observer, Log, Object, Creator):
         observer: Optional[bool] = True,
         name: Optional[str] = None,
     ):
-        self._vars = AttrDict()
+        self._vars: Dict[str, Variable] = AttrDict()
         Object.__init__(self, model=model)
         Log.__init__(self, name=name)
         Creator.__init__(self)
@@ -37,21 +37,33 @@ class BaseObj(Observer, Log, Object, Creator):
         if observer:
             model.attach(self)
 
+    def __getattr__(self, __name: str) -> Any:
+        if __name in self.variables:
+            return self.variables[__name]
+        else:
+            return super().__getattribute__(__name)
+
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.variables:
-            self.variables[__name] = __value
-        return super().__setattr__(__name, __value)
+            self._vars[__name].data = __value
+        else:
+            super().__setattr__(__name, __value)
 
     @property
-    def variables(self):
-        return self.__dict__.get("_vars", {})
+    def variables(self) -> Dict[str, Variable]:
+        return self.__dict__.get("_vars", AttrDict())
 
-    def create_var(self, name, long_name, data):
+    def create_var(
+        self,
+        name: str,
+        long_name: Optional[str] = None,
+        data: Optional[Any] = None,
+    ) -> Variable:
         if name in self.variables:
-            raise ValueError("Variable %s already exists" % name)
+            raise ValueError(f"Variable {name} already exists in {self}.")
         var = Variable(name=name, long_name=long_name, initial_value=data)
         self.add_creation(var)
-        self.variables[var.name] = var
+        self._vars[var.name] = var
         return var
 
 
