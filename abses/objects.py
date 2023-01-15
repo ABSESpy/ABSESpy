@@ -14,6 +14,8 @@ from agentpy import AttrDict
 from agentpy.model import Model
 from agentpy.objects import Object
 
+from abses.tools.func import iter_func
+
 from .bases import Creator, Observer
 from .log import Log
 from .variable import Variable
@@ -52,6 +54,10 @@ class BaseObj(Observer, Log, Object, Creator):
     @property
     def variables(self) -> Dict[str, Variable]:
         return self.__dict__.get("_vars", AttrDict())
+
+    # @iter_func('created')
+    def _update(self, time):
+        pass
 
     def create_var(
         self,

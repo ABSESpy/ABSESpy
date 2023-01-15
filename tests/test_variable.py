@@ -84,5 +84,8 @@ def test_variable_creation():
         assert "mismatches" in str(e)
 
 
-def test_variables_history():
-    pass
+# def test_variables_history():
+#     model = noticeable_model()
+#     var = Variable.create(name="v1", long_name="Variable 1", data=1)
+#     var._history.append(1)
+#     pass

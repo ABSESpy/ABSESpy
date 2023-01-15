@@ -13,7 +13,7 @@ from collections import deque
 from datetime import datetime
 from functools import total_ordering
 from numbers import Number
-from typing import Deque, Optional, Type, TypeAlias, Union
+from typing import Any, Deque, Optional, Type, TypeAlias, Union
 
 import numpy as np
 import pint
@@ -68,13 +68,22 @@ class Variable(Log, Creation):
         Log.__init__(self, name=name)
         Creation.__init__(self)
         self._long_name: str = long_name
-        self._time: Deque[T] = deque([], maxlen=MAXLENGTH)
         self._history: Deque[Data] = deque([], maxlen=MAXLENGTH)
         self._unit: Optional[str] = unit
         self._dtype: Optional[Type] = None
+        self._data: Deque[Data] = None
         self.data: Optional[Data] = initial_value
 
     # ----------------------------------------------------------------
+
+    def __getattribute__(self, __name: str) -> Any:
+        if __name.startswith("_"):
+            return super().__getattribute__(__name)
+        # using data explicit methods.
+        elif callable(getattr(self._data, __name, None)):
+            return getattr(super().data, __name)
+        else:
+            return super().__getattribute__(__name)
 
     def __lt__(self, other):
         return self.data < other
@@ -143,9 +152,8 @@ class Variable(Log, Creation):
 
     # ----------------------------------------------------------------
 
-    def update(self):
+    def _update(self):
         self.history.append(self.data)
-        self._time.append(self.__t)
 
 
 class FileVariable(Variable):
