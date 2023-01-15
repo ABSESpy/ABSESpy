@@ -7,7 +7,7 @@ badgets:
 - blog
 - follow twitter
 
-![ABSES_Banner_v1](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/ABEGM_Banner_v1.png)
+![pixel_abses2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/pixel_abses2.svg)
 
 Language: [English Readme](#) | [简体中文](README_ch)
 

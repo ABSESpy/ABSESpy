@@ -11,9 +11,7 @@ github: https://github.com/SongshGeo
 email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
-# AB-**SES**py
-**Agent-Based Social-ecological systems Modelling Framework in Python**
-![CleanShot2023-01-11at11.17.39@2x](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-01-11%20at%2011.17.39@2x.png)
+![pixel_abses2.svg](assets/pixel_abses2.svg)
 
 ## Features
 ![p50LQ2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/p50LQ2.jpg)

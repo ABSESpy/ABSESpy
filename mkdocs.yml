@@ -35,7 +35,7 @@ nav:
     - Road Map: docs/roadmap.md
 theme:
     name: "material"
-    logo: "assets/ABEGM_Logo_v0.svg"
+    logo: "assets/logo_abses.svg"
     palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
