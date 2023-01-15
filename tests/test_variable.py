@@ -49,6 +49,7 @@ def test_variable_data():
     assert var3 * var2 == "defectdefect"
     assert var2 > var1
     assert var1 <= var2
+    assert var3.startswith("d")
 
 
 def test_variable_dtype():

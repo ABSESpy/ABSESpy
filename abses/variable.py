@@ -81,7 +81,7 @@ class Variable(Log, Creation):
             return super().__getattribute__(__name)
         # using data explicit methods.
         elif callable(getattr(self._data, __name, None)):
-            return getattr(super().data, __name)
+            return getattr(self.data, __name)
         else:
             return super().__getattribute__(__name)
 
