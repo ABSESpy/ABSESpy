@@ -47,7 +47,7 @@ class BaseObj(Observer, Log, Object):
             return super().__getattribute__(__name)
 
     def to_variable(self, name, now: Optional[Data] = None) -> Data:
-        self._registry.check_registry(name, value=now)
+        self._registry.check_variable(name, value=now)
         history = self._vars_history[name]
         return Variable(owner=self, history=history, now=now)
 
@@ -72,7 +72,7 @@ class BaseObj(Observer, Log, Object):
         dtype = type(init_data)
         self._registry.register(
             owner=self,
-            name=name,
+            var_name=name,
             long_name=long_name,
             units=units,
             dtype=dtype,

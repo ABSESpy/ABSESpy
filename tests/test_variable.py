@@ -59,6 +59,38 @@ def test_variable_data():
 #     assert isinstance(var1, Creation)
 
 
+def test_variable_registry():
+    vr = VariablesRegistry(1)
+    vr.register(owner=1, var_name="v1", dtype=type(0.1))
+    vr.register(owner=1, var_name="v2", dtype=type(1))
+    vr.register(owner=2, var_name="v2", dtype=type(1))
+    vr.register(owner=2, var_name="v3", dtype=type("test"))
+    assert vr.model == 1
+    assert vr._variables == ["v1", "v2", "v3"]
+    assert vr._objs_registry == {1: ["v1", "v2"], 2: ["v2", "v3"]}
+    assert vr._map == {"v1": [1], "v2": [1, 2], "v3": [2]}
+    assert vr._data_types == {"v1": float, "v2": int, "v3": str}
+    assert vr._check_type("v1", float)
+    assert vr._is_registered("v2")
+    assert not vr._is_registered("v4")
+    assert vr._has_variable(1, "v1")
+    assert not vr._has_variable(2, "v1")
+    assert vr.check_variable("v3", "testing")
+
+    vr.delete_variable("v1")
+    vr.delete_variable("v2", owner=2)
+    vr.delete_variable("v3", owner=2)
+    assert vr._variables == ["v2"]
+    assert vr._objs_registry == {1: ["v2"]}
+    assert vr._map == {"v2": [1]}
+    assert vr._data_types == {"v2": int}
+    assert vr._check_type("v2", int)
+    assert vr._is_registered("v2")
+    assert not vr._is_registered("v1")
+    assert vr._has_variable(1, "v2")
+    assert not vr._has_variable(2, "v1")
+
+
 def test_variable_creation():
     model = noticeable_model()
     registry = VariablesRegistry(model)

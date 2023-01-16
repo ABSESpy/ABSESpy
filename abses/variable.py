@@ -18,7 +18,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Deque,
     Dict,
     Iterable,
     List,
@@ -72,6 +71,8 @@ def setup_registry(registry):
 
 
 class VariablesRegistry:
+    """Singleton Registry for each model."""
+
     _model: Dict[int, VariablesRegistry] = {}
     _lock = threading.RLock()
 
@@ -83,89 +84,149 @@ class VariablesRegistry:
                 cls._model[model] = instance
         return instance
 
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, model: Model):
+        self.model: Model = model
         self._variables: List[str] = []
         self._objs_registry: Dict[BaseObject, List[str]] = {}
-        self._map: Dict[BaseObject, List[str]] = {}
+        self._map: Dict[str, List[BaseObject]] = {}
         self._ln: Dict[str, str] = {}
         self._units: Dict[str, str] = {}
         self._data_types: Dict[str, Type] = {}
         self._checker: Dict[str, List[Callable]] = {}
 
-    def _check_type(self, name, value) -> bool:
-        if type(value) is self._data_types[name]:
-            return True
+    def _check_type(
+        self, var_name: str, dtype: Type, error_when: Optional[bool] = False
+    ) -> bool:
+        """Judge if the given variable's type matches its given data."""
+        dtype_now = self._data_types.get(var_name, None)
+        if dtype_now is None:
+            flag = None
+        elif dtype is dtype_now:
+            flag = True
+        else:
+            flag = False
+        if flag is error_when:
+            raise ValueError(
+                f"Failed in checking type of variable: '{dtype_now}', now, inputting {dtype}"
+            )
+        return flag
 
     def _is_registered(
-        self, name: str, error_when: Optional[bool] = None
+        self, var_name: str, error_when: Optional[bool] = None
     ) -> bool:
-        if name in self._variables:
+        """Judge if the given variable is registered."""
+        if var_name in self._variables:
             flag = True
         else:
             flag = False
         if flag is True and error_when is True:
-            raise ValueError(f"Variable {name} already registered.")
+            raise ValueError(f"Variable {var_name} already registered.")
         elif flag is False and error_when is False:
-            raise ValueError(f"Variable {name} hasn't been registered")
+            raise ValueError(f"Variable {var_name} hasn't been registered")
         else:
             return flag
 
     def _has_variable(
-        self, owner, name, error_when: Optional[bool] = None
+        self, owner, var_name, error_when: Optional[bool] = None
     ) -> bool:
+        """Judge if the given variable is belong to a given owner."""
         if owner in self._objs_registry:
-            flag = True
+            flag = var_name in self._objs_registry[owner]
         else:
             flag = False
             self._objs_registry[owner] = []
         if flag is True and error_when is True:
             raise ValueError(
-                f"Variable '{name}' has already been registered in {owner}."
+                f"Variable '{var_name}' has already been registered in '{owner}'."
             )
         elif flag is False and error_when is False:
             raise ValueError(
-                f"'{owner}' does not have a registered variable '{name}'."
+                f"'{owner}' does not have a registered variable '{var_name}'."
             )
         else:
             return flag
 
-    def add_variable(
+    def _add_variable(
         self,
-        name: str,
+        var_name: str,
         long_name: Optional[str] = None,
         units: Optional[str] = None,
         dtype: Optional[Type] = None,
         check_func: Optional[Iterable[Callable]] = None,
-    ):
-        self._is_registered(name, error_when=True)
-        self._ln[name] = long_name
-        self._units[name] = units
-        self._data_types[name] = dtype
-        self._checker[name] = make_list(check_func)
+    ) -> None:
+        self._is_registered(var_name, error_when=True)
+        self._check_type(var_name, dtype=dtype, error_when=False)
+        self._variables.append(var_name)
+        self._map[var_name] = list()
+        self._ln[var_name] = long_name
+        self._units[var_name] = units
+        self._data_types[var_name] = dtype
+        self._checker[var_name] = make_list(check_func)
 
-    def register(self, owner: BaseObject, name: str, *args, **kwargs):
-        if not self._is_registered(name):
-            self.add_variable(name, *args, **kwargs)
-        self._has_variable(owner, name, error_when=True)
-        self._objs_registry[owner].append(name)
+    def register(
+        self, owner: BaseObject, var_name: str, *args, **kwargs
+    ) -> None:
+        if not self._is_registered(var_name):
+            self._add_variable(var_name, *args, **kwargs)
+        self._has_variable(owner, var_name, error_when=True)
+        self._objs_registry[owner].append(var_name)
+        self._map[var_name].append(owner)
 
-    def check_registry(self, name: str, value: Any) -> bool:
+    def check_variable(self, var_name: str, value: Any) -> bool:
+        """
+        Check if the given value is valid data registered variable.
+
+        Args:
+            var_name (str): variable's name.
+            value (Any): data to check.
+
+        Returns:
+            bool: if the value is valid data, returns True.
+        """
         results = []
-        results.append(self._is_registered(name))
-        results.append(self._check_type(name, value))
-        for checker in self._checker[name]:
+        results.append(self._is_registered(var_name))
+        results.append(
+            self._check_type(var_name, type(value), error_when=None)
+        )
+        for checker in self._checker[var_name]:
             results.append(checker(value))
         return all(results)
 
-    def delete_variable(self, owner, name: str) -> None:
-        self._is_registered(name, error_when=False)
-        self._objs_registry[owner]
-        self._variables.remove(name)
-        del self._ln[name]
-        del self._units[name]
-        del self._data_types[name]
-        del self._checker[name]
+    def delete_variable(
+        self, var_name: str, owner: Optional[BaseObject] = None
+    ) -> None:
+        """
+        Delete a variable from its owner registry.
+
+        Args:
+            name (str): name of the variable to be deleted.
+            owner (Optional, BaseObject): owner of this variable.
+        """
+
+        def remove_var_from_owner(owner):
+            owned_vars = self._objs_registry[owner]
+            owned_vars.remove(var_name)
+            self._map[var_name].remove(owner)
+            if len(owned_vars) == 0:
+                del self._objs_registry[owner]
+
+        self._is_registered(var_name, error_when=False)
+        if owner is not None:
+            self._has_variable(
+                owner=owner, var_name=var_name, error_when=False
+            )
+            remove_var_from_owner(owner)
+        else:
+            for owner in tuple(self._map[var_name]):
+                remove_var_from_owner(owner)
+        # no owner has this variable, delete it from the registry.
+        if len(self._map[var_name]) == 0 or owner is None:
+            self._variables.remove(var_name)
+            del self._ln[var_name]
+            del self._units[var_name]
+            del self._data_types[var_name]
+            del self._checker[var_name]
+            del self._map[var_name]
 
 
 @total_ordering
