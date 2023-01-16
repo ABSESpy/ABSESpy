@@ -4,7 +4,6 @@
 # @Contact   : SongshGeo@gmail.com
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
-import pandas._libs.tslibs.period as pd
 
 from abses.time import Period, TimeDriver, TimeDriverManager
 
@@ -13,21 +12,13 @@ def test_init_time():
     p1 = Period(2000, freq="Y")
     p2 = Period(p1) + 1
     time = TimeDriver(2000, freq="Y", model=1)
-
-    assert time._data == p1
-    assert type(time._data) is Period
     # time + 1  -> 2001
-    assert time.update() == p2
-    assert time.data == p2
-    assert time.data is TimeDriver.data
-    assert time._data is TimeDriver.data
-    assert time._data == p2
+    assert time.update() == p2 == time.period
+    assert time.period is TimeDriver.period
     assert type(time) is TimeDriverManager
-    assert TimeDriver._manager is time
-    assert time == p2
     # Checking if the history is updated.
-    assert len(time._history) == 1
-    assert len(time._time) == 2
+    assert len(time.history) == 1
+    assert len(time.time) == 2
     time2 = TimeDriver(model=1)  # time driver of the same model
 
     assert time2 is time
@@ -42,10 +33,8 @@ def test_init_time():
 
 def test_different_model():
     time1 = TimeDriver(2000, freq="Y", model=2)
-    assert time1._model == 2
-    assert time1.data == Period(2000, freq="Y")
+    assert time1.period == Period(2000, freq="Y")
     time2 = TimeDriver(2000, freq="Y", model=3)
-    assert time2._model == 3
     assert time1 == time2 == Period(2000, "Y")
     assert time1 is not time2
     time1.update(3)

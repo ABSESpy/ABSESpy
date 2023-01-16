@@ -29,3 +29,4 @@ website: https://cv.songshgeo.com
 ## v-0.0.3 🎉
 - [ ] 并行运算 dask
 - [ ] GPU 加速 [cupy](https://www.jianshu.com/p/b5a6ee8564df) 替代一部分的 numpy
+- [ ] **Actors** as agent templates from the **IAD framework** and **MoHuB** framework.

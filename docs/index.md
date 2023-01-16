@@ -16,10 +16,10 @@ website: https://cv.songshgeo.com
 ## Features
 ![p50LQ2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/p50LQ2.jpg)
 
-ABSESpy makes it easier to build artificial **Social-ecological systems** with GeoSpatial datasets.
+ABSESpy makes it easier to build artificial **Social-ecological systems** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
 
-- Create the environment for agents with **geo data**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- **Actors** as agent templates from the **IAD framework** and **MoHuB** framework.
+- Modelling environment for agents with **[geo data](#TODO)**: `Shapefile`, `GeoTiff`, `NetCDF`.
+- Modelling human behaviour of agents with [cognition, contagion and responses](#TODO).
 - Easily manage all parameters, arguments, and variables with a `yaml` settings file.
 - Generate **reporting** documents, logging, and experiment reports of simulations.
 - Integrated auto experiment with sensitivity analysis and basic visualisation methods.
@@ -39,7 +39,11 @@ The getting started guide aims to get you using `{{name}}` productively as quick
 - Design your model according to our [User Guide](docs/user_guide.md) and [API References](api/model.md)
 
 ## Model Library
-We provide several [examples](examples/negotiation.md) for reference. We likewise encourage users to let us know about links to social-ecological system models/papers developed using ABSES, and we will list them here.
+
+We provide several [examples](examples/negotiation.md) for reference to new users. We likewise encourage users to let us know about links to social-ecological system models/papers developed using `{{name}}`, and we will list them here.
 
 ## About AB**SES**py
-Please follow the [contribution guide](docs/contribution.md) for developers and contributors before reporting bugs or adding new features.
+
+- Welcome to reporting bugs or other issues in our [GitHub discussion forum](#TODO).
+- For enthusiastic developers and contributors, please follow the [contribution guide](docs/contribution.md) when adding new features or fixing bugs.
+- Many lovely people made this project possible through financial support, contributions, and advice. A list of acknowledgements can be found [here](docs/acknowledge.md).
