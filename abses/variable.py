@@ -9,11 +9,25 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 from collections import deque
 from datetime import datetime
 from functools import total_ordering
 from numbers import Number
-from typing import Any, Deque, Optional, Type, TypeAlias, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Deque,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Self,
+    Type,
+    TypeAlias,
+    Union,
+)
 
 import numpy as np
 import pint
@@ -23,7 +37,10 @@ from abses.log import Log
 
 from .bases import Creation
 from .patch import Patch, update_array
-from .tools.func import wrap_opfunc_to
+from .tools.func import make_list, wrap_opfunc_to
+
+if TYPE_CHECKING:
+    from .objects import BaseObject
 
 MAXLENGTH = 5  # todo move it into system settings.
 
@@ -54,25 +71,116 @@ def setup_registry(registry):
 # default_registry = setup_registry(pint.get_application_registry())
 
 
-@total_ordering
-class Variable(Log, Creation):
-    _created_variables = {}
+class VariablesRegistry:
+    _model: Dict[int, VariablesRegistry] = {}
+    _lock = threading.RLock()
 
-    def __init__(
+    def __new__(cls: type[Self], model: Model) -> Self:
+        instance = cls._model.get(model, None)
+        if instance is None:
+            instance = super().__new__(cls)
+            with cls._lock:
+                cls._model[model] = instance
+        return instance
+
+    def __init__(self, model):
+        self.model = model
+        self._variables: List[str] = []
+        self._objs_registry: Dict[BaseObject, List[str]] = {}
+        self._map: Dict[BaseObject, List[str]] = {}
+        self._ln: Dict[str, str] = {}
+        self._units: Dict[str, str] = {}
+        self._data_types: Dict[str, Type] = {}
+        self._checker: Dict[str, List[Callable]] = {}
+
+    def _check_type(self, name, value) -> bool:
+        if type(value) is self._data_types[name]:
+            return True
+
+    def _is_registered(
+        self, name: str, error_when: Optional[bool] = None
+    ) -> bool:
+        if name in self._variables:
+            flag = True
+        else:
+            flag = False
+        if flag is True and error_when is True:
+            raise ValueError(f"Variable {name} already registered.")
+        elif flag is False and error_when is False:
+            raise ValueError(f"Variable {name} hasn't been registered")
+        else:
+            return flag
+
+    def _has_variable(
+        self, owner, name, error_when: Optional[bool] = None
+    ) -> bool:
+        if owner in self._objs_registry:
+            flag = True
+        else:
+            flag = False
+            self._objs_registry[owner] = []
+        if flag is True and error_when is True:
+            raise ValueError(
+                f"Variable '{name}' has already been registered in {owner}."
+            )
+        elif flag is False and error_when is False:
+            raise ValueError(
+                f"'{owner}' does not have a registered variable '{name}'."
+            )
+        else:
+            return flag
+
+    def add_variable(
         self,
         name: str,
         long_name: Optional[str] = None,
-        initial_value: Optional[Data] = None,
-        unit: Optional[str] = None,
+        units: Optional[str] = None,
+        dtype: Optional[Type] = None,
+        check_func: Optional[Iterable[Callable]] = None,
     ):
-        Log.__init__(self, name=name)
-        Creation.__init__(self)
-        self._long_name: str = long_name
-        self._history: Deque[Data] = deque([], maxlen=MAXLENGTH)
-        self._unit: Optional[str] = unit
-        self._dtype: Optional[Type] = None
-        self._data: Deque[Data] = None
-        self.data: Optional[Data] = initial_value
+        self._is_registered(name, error_when=True)
+        self._ln[name] = long_name
+        self._units[name] = units
+        self._data_types[name] = dtype
+        self._checker[name] = make_list(check_func)
+
+    def register(self, owner: BaseObject, name: str, *args, **kwargs):
+        if not self._is_registered(name):
+            self.add_variable(name, *args, **kwargs)
+        self._has_variable(owner, name, error_when=True)
+        self._objs_registry[owner].append(name)
+
+    def check_registry(self, name: str, value: Any) -> bool:
+        results = []
+        results.append(self._is_registered(name))
+        results.append(self._check_type(name, value))
+        for checker in self._checker[name]:
+            results.append(checker(value))
+        return all(results)
+
+    def delete_variable(self, owner, name: str) -> None:
+        self._is_registered(name, error_when=False)
+        self._objs_registry[owner]
+        self._variables.remove(name)
+        del self._ln[name]
+        del self._units[name]
+        del self._data_types[name]
+        del self._checker[name]
+
+
+@total_ordering
+class Variable:
+    def __init__(
+        self,
+        now: Data,
+        owner: Optional[BaseObject] = None,
+        history: Iterable[Data] = None,
+    ):
+        # self.registry: VariablesRegistry = owner.registry
+        self.data = now
+        self.owner = owner
+        self.history = history
+        wrap_opfunc_to(self, "_data")
 
     # ----------------------------------------------------------------
 
@@ -92,43 +200,9 @@ class Variable(Log, Creation):
         return self.data == other
 
     def __repr__(self):
-        return f"<Var[{self.name}]: {self.data}>"
-
-    def _detect_dtype(self, data: Data) -> type:
-        if data is None:
-            return None
-        elif hasattr(data, "dtype"):
-            return data.dtype
-        else:
-            return type(data)
-
-    def _check_dtype(self, data: Data) -> None:
-        dtype = self._detect_dtype(data)
-        # TODO: restrict input data's type
-        # if dtype not in (Number, str, np.ndarray, Patch):
-        #     raise TypeError(f"{dtype} is not a valid Variable's data dtype.")
-        if self.dtype is None:
-            self._data = data
-            self._dtype = dtype
-            wrap_opfunc_to(self, "data")
-        elif dtype != self.dtype:
-            raise TypeError(
-                f"Input {dtype} mismatches existing Variable's dtype {self.dtype}."
-            )
-
-    def _check_unit(self, unit: str):
-        # TODO
-        pass
+        return f"<[{self.owner}]Var: {self.data}>"
 
     # ----------------------------------------------------------------
-
-    @property
-    def dtype(self):
-        return self._dtype
-
-    @property
-    def long_name(self) -> str:
-        return self._long_name
 
     @property
     def data(self) -> Data:
@@ -136,24 +210,14 @@ class Variable(Log, Creation):
 
     @data.setter
     def data(self, data: Data) -> None:
-        self._check_dtype(data=data)
+        # self.registry._check_dtype(data=data)
         self._data = data
 
-    @property
-    def history(self):
-        return self._history
-
     # ----------------------------------------------------------------
 
-    @classmethod
-    def create(cls, name, long_name, data):
-        var = cls(name=name, long_name=long_name, initial_value=data)
-        return var
-
-    # ----------------------------------------------------------------
-
-    def _update(self):
-        self.history.append(self.data)
+    # TODO processing before return
+    def get_value(self) -> Data:
+        return self.data
 
 
 class FileVariable(Variable):

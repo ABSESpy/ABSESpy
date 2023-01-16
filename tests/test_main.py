@@ -49,7 +49,7 @@ def test_model_attrs():
     )
     # params 里 1 被 testing.yaml 第一层的 3 覆盖
     # 这个应该出现在
-    assert model.__repr__() == "MainModel-v0.0.1(model): init"
+    assert model.__repr__() == "<MainModel-v0.0.1(model): init>"
     assert isinstance(model._settings_from_file, dict)
     assert len(model._settings_from_file) == len(
         config

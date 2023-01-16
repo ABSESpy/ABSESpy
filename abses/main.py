@@ -33,6 +33,7 @@ from .nature import BaseNature
 from .objects import BaseAgent
 from .project import Folder
 from .tools.func import make_list
+from .variable import VariablesRegistry
 
 logger = logging.getLogger(__name__)
 LENGTH = 40  # session fill
@@ -66,6 +67,7 @@ class MainModel(Folder, MainComponent, Model, Notice):
         self._human: BaseHuman = human_class(self)
         self._nature: BaseNature = nature_class(self)
         self._agents = AgentsContainer(model=self)
+        self._registry = VariablesRegistry(model=self)
         # parameters
         # priority: init parameters > input parameters > settings_file
         self._init_params: AttrDict = AttrDict()
@@ -84,7 +86,7 @@ class MainModel(Folder, MainComponent, Model, Notice):
     def __repr__(self):
         name = self.__class__.__name__
         version = self.__version__
-        return f"{name}-{version}({self.name}): {self.state}"
+        return f"<{name}-{version}({self.name}): {self.state}>"
 
     # ----------------------------------------------------------------
     @property
@@ -98,6 +100,10 @@ class MainModel(Folder, MainComponent, Model, Notice):
     @property
     def nature(self) -> BaseNature:
         return self._nature
+
+    @property
+    def registry(self) -> VariablesRegistry:
+        return self._registry
 
     @property
     def _settings_from_file(self) -> Dict[str, any]:

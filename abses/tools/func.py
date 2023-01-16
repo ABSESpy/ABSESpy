@@ -166,6 +166,7 @@ _binary_opfunc = (
     "__and__",
     "__xor__",
     "__or__",
+    "__contains__",
 )
 
 _unary_opfunc = (

@@ -9,9 +9,9 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
+from .bases import Creator
 from .boundary import Boundaries, simple_boundary_from
 from .geo import Geo
-from .objects import Creator
 from .patch import Patch
 
 
