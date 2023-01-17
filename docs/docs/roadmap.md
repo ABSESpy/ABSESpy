@@ -16,6 +16,12 @@ website: https://cv.songshgeo.com
 
 ## v-0.0.1 🎉
 - [x] 变量完成
+- [ ] 重构整个项目
+	- [ ] Mediator 步骤方法私有
+	- [ ] Agents Container 单例模式
+- [ ] `Actor` 抽象类
+	- [ ] Actor 使用 `relationship`储存与其它`agents`的关系
+	- [ ] Actor 使用 `ownership` 储存与斑块变量的关系
 - [ ] 变量才生成空间数据 `patch`，中间仅作数组运算
 - [ ] 测试完毕，模型的测试写稳固
 - [ ] 文档初步写完

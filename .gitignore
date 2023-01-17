@@ -148,3 +148,5 @@ docs/.obsidian
 analysis/**/results
 docs/assets
 docs/design
+*.canvas
+img/**/*.pdf

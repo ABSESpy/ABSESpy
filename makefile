@@ -7,8 +7,8 @@ test:
 report:
 	allure serve tmp/allure_results
 diagram:
-	pyreverse -o pdf -p AgentBasedSHM src/abm_chans
-	mv *AgentBasedSHM.pdf img/diagram/.
+	pyreverse -o pdf -p ABSES abses
+	mv *ABSES.pdf img/diagram/.
 	ls img/diagram
 update-dependencies:
 	conda list -e > requirements.txt
