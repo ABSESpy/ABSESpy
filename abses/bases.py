@@ -50,10 +50,7 @@ class Creator:
         self.created.remove(obj)
 
 
-class Creation:
-    def __init__(self):
-        self._creator: Creator = None
-
+class Creation(metaclass=ABCMeta):
     @property
     def creator(self):
         return self._creator
