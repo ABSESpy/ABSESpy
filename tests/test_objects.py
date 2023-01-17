@@ -20,6 +20,7 @@ def noticeable_model():
         def __init__(self):
             Model.__init__(self)
             Notice.__init__(self)
+            self.params = {}
 
     model = MyModel()
     model.a = 1

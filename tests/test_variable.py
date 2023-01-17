@@ -9,6 +9,7 @@ import datetime
 
 from abses import BaseObj
 from abses.bases import Creation
+from abses.main import MainModel
 from abses.variable import Variable, VariablesRegistry
 
 from .test_objects import noticeable_model
@@ -18,6 +19,10 @@ def create_variable(*args):
     for _, v in enumerate(args):
         var = Variable(v)
         yield var
+
+
+def check_testing_string(string) -> bool:
+    return "testing" in string
 
 
 def test_variable_data():
@@ -89,6 +94,7 @@ def test_variable_registry():
     assert not vr._is_registered("v1")
     assert vr._has_variable(1, "v2")
     assert not vr._has_variable(2, "v1")
+    assert vr[1] == ["v2"]
 
 
 def test_variable_creation():
@@ -96,9 +102,6 @@ def test_variable_creation():
     registry = VariablesRegistry(model)
     obj = BaseObj(model=model, observer=True)
     assert obj._registry is registry
-
-    def check_testing_string(string) -> bool:
-        return "testing" in string
 
     var = obj.register_a_var(
         name="test",
@@ -126,8 +129,14 @@ def test_variable_creation():
     #     assert "mismatches" in str(e)
 
 
-# def test_variables_history():
-#     model = noticeable_model()
-#     var = Variable.create(name="v1", long_name="Variable 1", data=1)
-#     var._history.append(1)
-#     pass
+def test_variables_history():
+    model = MainModel(name="test_variables_history", base="tests")
+    model.human.register_a_var(
+        "test",
+        "testing",
+        "test_variables_history",
+        check_func=[check_testing_string],
+    )
+    assert "test" in model.human.vars
+    model.time_go()
+    assert model.human.test == "testing"

@@ -5,9 +5,12 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from collections import deque
+
 from abses.components import MainComponent
 from abses.main import MainMediator, MainModel
 from abses.tools.read_files import read_yaml
+from abses.variable import MAXLENGTH
 
 # r"config/testing.yaml"
 """
@@ -109,3 +112,35 @@ def test_mediator():
         assert "str" in e.__str__()
     mediator._check_sender(model)
     assert mediator.sender == "model"
+
+
+def test_time_go():
+    model = MainModel(base="tests", name="test_time_go")
+    assert model.time.year == 2000
+    model.human.register_a_var(
+        "test",
+        1,
+        "test_time_go",
+    )
+    model.nature.register_a_var(
+        "test",
+        1,
+        "test_time_go",
+    )
+    model.time_go()
+    assert model.time.year == model.human.time.year == 2001
+    assert model.human.time is model.nature.time
+    human_test_result = deque([1], maxlen=MAXLENGTH)
+    nature_test_result = deque([1], maxlen=MAXLENGTH)
+    human_now = 1
+    nature_now = 1
+    for i in range(6):
+        model.human.test += i
+        model.nature.test *= i
+        human_now += i
+        nature_now *= i
+        human_test_result.append(human_now)
+        nature_test_result.append(nature_now)
+        model.time_go()
+    assert model.human._vars_history["test"] == human_test_result
+    assert model.nature._vars_history["test"] == nature_test_result

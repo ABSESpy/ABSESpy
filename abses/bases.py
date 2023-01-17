@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from typing import Iterable, List, Optional, Union
 
 from agentpy.objects import make_list
 
@@ -113,8 +113,10 @@ class Observer(metaclass=ABCMeta):
         return self._glob_vars
 
     @glob_vars.setter
-    def glob_vars(self, value: List[str]):
-        self._glob_vars = value
+    def glob_vars(self, value: Union[Iterable[str], str]) -> None:
+        if not hasattr(self, "_glob_vars"):
+            self._glob_vars = []
+        self._glob_vars.extend(make_list(value))
 
 
 class Mediator:

@@ -32,7 +32,8 @@ from .log import Log
 from .nature import BaseNature
 from .objects import BaseAgent
 from .project import Folder
-from .tools.func import make_list
+from .time import TimeDriver
+from .tools.func import iter_func, make_list
 from .variable import VariablesRegistry
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,6 @@ class MainModel(Folder, MainComponent, Model, Notice):
         self._human: BaseHuman = human_class(self)
         self._nature: BaseNature = nature_class(self)
         self._agents = AgentsContainer(model=self)
-        self._registry = VariablesRegistry(model=self)
         # parameters
         # priority: init parameters > input parameters > settings_file
         self._init_params: AttrDict = AttrDict()
@@ -81,6 +81,8 @@ class MainModel(Folder, MainComponent, Model, Notice):
         self.mediator = MainMediator(
             model=self, human=self.human, nature=self.nature
         )
+        self._registry = VariablesRegistry(model=self)
+        self._time = TimeDriver(model=self)
 
     # ----------------------------------------------------------------
     def __repr__(self):
@@ -106,6 +108,10 @@ class MainModel(Folder, MainComponent, Model, Notice):
         return self._registry
 
     @property
+    def time(self) -> TimeDriver:
+        return self._time
+
+    @property
     def _settings_from_file(self) -> Dict[str, any]:
         # settings yaml as basic
         settings = AttrDict()
@@ -121,6 +127,10 @@ class MainModel(Folder, MainComponent, Model, Notice):
         # input settings
         settings.update(self._init_params)
         return settings
+
+    @iter_func("observers")
+    def time_go(self, steps: int = 1):
+        return self.time.update(steps)
 
 
 Sender: TypeAlias = Union[MainComponent, BaseAgent]

@@ -32,10 +32,7 @@ import numpy as np
 import pint
 from agentpy.model import Model
 
-from abses.log import Log
-
-from .bases import Creation
-from .patch import Patch, update_array
+from .patch import Patch
 from .tools.func import make_list, wrap_opfunc_to
 
 if TYPE_CHECKING:
@@ -93,6 +90,9 @@ class VariablesRegistry:
         self._units: Dict[str, str] = {}
         self._data_types: Dict[str, Type] = {}
         self._checker: Dict[str, List[Callable]] = {}
+
+    def __getitem__(self, owner) -> List[str]:
+        return self._objs_registry.get(owner, [])
 
     def _check_type(
         self, var_name: str, dtype: Type, error_when: Optional[bool] = False

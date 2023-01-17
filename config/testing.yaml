@@ -1,6 +1,11 @@
 model:
     steps: 5
     testing: 1
+    time:
+        start: 2000-01-01
+        end: 2023-01-01
+        freq: 'Y'
+
 world: config/world.yaml
 
 groundwater:

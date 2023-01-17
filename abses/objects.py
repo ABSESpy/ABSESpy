@@ -15,6 +15,8 @@ from agentpy import AttrDict
 from agentpy.model import Model
 from agentpy.objects import Object
 
+from abses.time import TimeDriver
+
 from .bases import Observer
 from .log import Log
 from .variable import MAXLENGTH, Data, Variable, VariablesRegistry
@@ -31,35 +33,32 @@ class BaseObj(Observer, Log, Object):
     ):
         Object.__init__(self, model=model)
         Log.__init__(self, name=name)
-        self._registry: VariablesRegistry = VariablesRegistry(model)
-        self._registered_vars: List[str] = []
+        self._registry: VariablesRegistry = VariablesRegistry(model=model)
         self._vars_history: Dict[str, Deque[Variable]] = AttrDict()
+        self._time: TimeDriver = TimeDriver(model=model)
         self.glob_vars: List[str] = []
         if observer:
             model.attach(self)
 
     def __getattr__(self, __name: str) -> Any:
-        if __name in self.__dict__.get("_registered_vars"):
-            now = super().__getattribute__(__name)
-            var = self.to_variable(__name, now)
-            return var.get_value()
-        else:
-            return super().__getattribute__(__name)
+        # if __name in self.vars:
+        #     now = super().__getattribute__(__name)
+        #     var = self.to_variable(__name, now)
+        #     return var.get_value()
+        return super().__getattribute__(__name)
+
+    @property
+    def vars(self) -> List[str]:
+        return self._registry[self]
+
+    @property
+    def time(self) -> TimeDriver:
+        return self._time
 
     def to_variable(self, name, now: Optional[Data] = None) -> Data:
         self._registry.check_variable(name, value=now)
         history = self._vars_history[name]
         return Variable(owner=self, history=history, now=now)
-
-    # def __setattr__(self, __name: str, __value: Any) -> None:
-    #     if __name in self.variables:
-    #         self._vars[__name].data = __value
-    #     else:
-    #         super().__setattr__(__name, __value)
-
-    @property
-    def variables(self) -> Dict[str, Variable]:
-        return self.__dict__.get("_vars", AttrDict())
 
     def register_a_var(
         self,
@@ -79,8 +78,14 @@ class BaseObj(Observer, Log, Object):
             check_func=check_func,
         )
         self._vars_history[name] = deque([], maxlen=MAXLENGTH)
+        self.__setattr__(name, init_data)
         var = self.to_variable(name=name, now=init_data)
         return var
+
+    def time_go(self):
+        for var in self._registry[self]:
+            value_now = self.__getattr__(var)
+            self._vars_history[var].append(value_now)
 
 
 class BaseAgent(BaseObj):
