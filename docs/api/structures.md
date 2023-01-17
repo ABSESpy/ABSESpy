@@ -13,4 +13,4 @@ github: https://github.com/SongshGeo
 email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
-::: abses.objects.Creator
+::: abses.bases.Creator

@@ -37,3 +37,4 @@ install-mkdocs:
 	pip install mkdocs-macros-plugin
 	pip install mkdocs-jupyter
 	pip install mkdocs-callouts
+	pip install mkdocs-glightbox

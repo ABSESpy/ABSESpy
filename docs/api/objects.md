@@ -15,4 +15,4 @@ website: https://cv.songshgeo.com
 ---
 # Document for `Objects`
 
-::: abses.objects.Creator
+::: abses.bases.Creator

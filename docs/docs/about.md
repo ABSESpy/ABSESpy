@@ -21,7 +21,7 @@ cas: ../background#complex-adaptive-systems#complex-adaptive-systems(cas)
 > [!INFO]Definition
 > An agent-based model (often referred to as **ABM**) is composed of autonomous agents, **who are diverse and interact with one another and their environment**.
 
-ABM is simulated over time: at each [time step](#TODO) or [event](#TODO), agents take [decisions](#TODO) and act based on [their attributes](#TODO) and/or in response or anticipation of other agents’ behaviours or changes in the [environment](#TODO). The micro-level actions and interactions of many agents **give rise to macro-level patterns** and dynamics, which are typically the focus of analysis. The agents thus respond diversely to the contexts (*usually depicted by the model's parameters and variables*) they jointly created, and their actions' outcomes then lead to an [emergence]({{emergence}}) of the macro-pattern.
+ABM is simulated over time: at each [time step](#TODO) or [event](#TODO), agents take [decisions](#TODO "this is a decision link") and act based on [their attributes](#TODO) and/or in response or anticipation of other agents’ behaviours or changes in the [environment](#TODO). The micro-level actions and interactions of many agents **give rise to macro-level patterns** and dynamics, which are typically the focus of analysis. The agents thus respond diversely to the contexts (*usually depicted by the model's parameters and variables*) they jointly created, and their actions' outcomes then lead to an [emergence]({{emergence}}) of the macro-pattern.
 
 ## What are Social-ecological Systems (SESs)
 > [!INFO]Definition

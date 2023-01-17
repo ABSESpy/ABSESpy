@@ -56,6 +56,7 @@ theme:
         - navigation.tabs
         - navigation.tracking
         - toc.follow
+        - content.tooltips  # only sponsor
 plugins:
     - search
     - mkdocstrings:
@@ -69,6 +70,9 @@ plugins:
     - macros
     - mkdocs-jupyter
     - callouts
+    - glightbox
+    # https://squidfunk.github.io/mkdocs-material/setup/setting-up-tags/
+    - tags
 
 extra:
   alternate:
@@ -78,8 +82,12 @@ extra:
     - name: Chinese
       link: /ch/
       lang: ch
+  # https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/
+  version:
+    - provider: mike
 
 markdown_extensions:
+  - abbr
   - attr_list
   - admonition
   - md_in_html
@@ -96,6 +104,13 @@ markdown_extensions:
       permalink: "#"
       baselevel: 2
       separator: "-"
+  - attr_list
+  - md_in_html
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.snippets:
+      auto_append:
+        - abbreviations.md
 # extra:
 #   social:
 #     - type: 'github'
