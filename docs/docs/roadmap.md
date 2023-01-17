@@ -6,7 +6,7 @@ long_name: Agent-Based Social-ecological systems Modelling Framework in Python
 name: AB-SESpy
 state: open
 banner_icon: 💻
-banner: "https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/ABEGM_Banner_v1.png"
+banner: "https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/abses_github_repo.svg"
 banner_y: 0.52
 SES: social-ecological systems
 github: https://github.com/SongshGeo
@@ -19,7 +19,7 @@ website: https://cv.songshgeo.com
 - [ ] 变量才生成空间数据 `patch`，中间仅作数组运算
 - [ ] 测试完毕，模型的测试写稳固
 - [ ] 文档初步写完
-- [ ] 更新图标 zepix
+- [x] 更新图标 zepix
 
 ## v-0.0.2 🎉
 - [ ] `human` 模块重构，自带图 `graph`
@@ -31,3 +31,6 @@ website: https://cv.songshgeo.com
 - [ ] 并行运算 dask
 - [ ] GPU 加速 [cupy](https://www.jianshu.com/p/b5a6ee8564df) 替代一部分的 numpy
 - [ ] **Actors** as agent templates from the **IAD framework** and **MoHuB** framework.
+
+## v-0.0.4 🎉
+- [ ] 自动生成 SES network
