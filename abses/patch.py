@@ -6,6 +6,7 @@
 # Website: https://cv.songshgeo.com/
 import copy
 from collections.abc import Iterable
+from functools import cached_property
 from typing import Optional
 
 import numpy as np
@@ -84,7 +85,6 @@ class ArrayOperation:
 class GeoXarray:
     def __init__(self, xda: xr.DataArray, geo: Geo):
         self._obj: xr.DataArray = self.setup_spatial(xda, geo)
-        self._area = self.area(recalc=True)
         self._geo: Geo = geo
 
     def setup_spatial(self, xda, geo: Geo) -> xr.DataArray:
@@ -101,14 +101,12 @@ class GeoXarray:
         size_y = abs(affine[4])
         return size_x, size_y
 
-    def area(self, recalc=False):
-        if recalc:
-            x, y = self.resolution
-            area = x * y
-            self._area = area
-            return area
-        else:
-            return self._area
+    @cached_property
+    def area(self):
+        x, y = self.resolution
+        area = x * y
+        self._area = area
+        return area
 
     def resampling(self, factor):
         from rasterio.enums import Resampling
