@@ -22,13 +22,13 @@ __all__ = [
     "HumanModule",
     "PatchModule",
     "Agent",
-    "BaseAgentList",
+    "ActorsList",
     "AgentsContainer" "MyExperiment",
 ]
 __version__ = "v0.0.1"
 
-from .agents import Actor
-from .container import AgentsContainer, BaseAgentList
+from .actor import Actor
+from .container import ActorsList, AgentsContainer
 from .human import BaseHuman
 from .main import MainModel
 from .modules import HumanModule, PatchModule

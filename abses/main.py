@@ -24,13 +24,13 @@ from agentpy import AttrDict, Model
 from abses import __version__
 from abses.tools.read_files import read_yaml
 
+from .actor import Actor
 from .bases import Mediator, Notice
 from .components import STATES, MainComponent
 from .container import AgentsContainer
 from .human import BaseHuman
 from .log import Log
 from .nature import BaseNature
-from .objects import BaseAgent
 from .project import Folder
 from .time import TimeDriver
 from .tools.func import iter_func, make_list
@@ -129,11 +129,20 @@ class MainModel(Folder, MainComponent, Model, Notice):
         return settings
 
     @iter_func("observers")
-    def time_go(self, steps: int = 1):
-        return self.time.update(steps)
+    def _when_time_go(self):
+        pass
+
+    def time_go(self, steps: int = 1) -> TimeDriver:
+        for _ in range(steps):
+            self.time.update()
+            self._when_time_go()
+            self.t += 1
+            self.step()
+            self.update()
+        return self.time
 
 
-Sender: TypeAlias = Union[MainComponent, BaseAgent]
+Sender: TypeAlias = Union[MainComponent, Actor]
 TypingUsers: TypeAlias = NamedTuple(
     "Users",
     [("human", BaseHuman), ("nature", BaseNature), ("model", MainModel)],
@@ -186,7 +195,7 @@ class MainMediator(Mediator, Log):
         """
         Check the type of sender, save it as a string attribute.
         An available pattern includes:
-            1. 'agent': any instance of 'BaseAgent'.
+            1. 'agent': any instance of 'Actor'.
             2. 'model': the bound instance of 'MainModel'.
             3. 'human': the bound instance of 'BaseHuman'.
             4. 'nature': the bound instance of 'BaseNature'.
@@ -200,7 +209,7 @@ class MainMediator(Mediator, Log):
             self.sender = "human"
         elif sender is self.nature:
             self.sender = "nature"
-        elif isinstance(sender, BaseAgent):
+        elif isinstance(sender, Actor):
             self.sender = "agent"
         else:
             raise TypeError(f"Type of sender '{type(sender)}' is invalid.")
@@ -209,7 +218,7 @@ class MainMediator(Mediator, Log):
         """
         Check if the sender now matches ANY given pattern.
         An available pattern includes:
-            1. 'agent': any instance of 'BaseAgent'.
+            1. 'agent': any instance of 'Actor'.
             2. 'model': the bound instance of 'MainModel'.
             3. 'human': the bound instance of 'BaseHuman'.
             4. 'nature': the bound instance of 'BaseNature'.
@@ -368,6 +377,6 @@ class MainMediator(Mediator, Log):
         return event_func(*args, **kwargs)
 
     def transfer_require(self, sender: object, attr: str, **kwargs) -> object:
-        if sender is self.human or isinstance(sender, BaseAgent):
+        if sender is self.human or isinstance(sender, Actor):
             patch_obj = self.nature.send_patch(attr, **kwargs)
             return patch_obj

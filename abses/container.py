@@ -6,24 +6,22 @@
 # Website: https://cv.songshgeo.com/
 
 import logging
-from collections import UserDict
 from typing import Optional
 
-from agentpy import Agent, AgentList
+from agentpy import Agent, AttrDict
 
-from .agent_list import BaseAgentList
-from .objects import BaseAgent
+from .actor import Actor
+from .sequences import ActorsList
 from .tools.func import make_list, norm_choice
 
 logger = logging.getLogger("__name__")
 
 
-class AgentsContainer(UserDict):
-    def __init__(self, model, agents: AgentList = None):
+class AgentsContainer(AttrDict):
+    def __init__(self, model):
         super().__init__()
         self._model = model
         self._breeds = {}
-        self.add(agents)
 
     def __len__(self):
         return len(self.to_list())
@@ -38,7 +36,6 @@ class AgentsContainer(UserDict):
     @breeds.setter
     def breeds(self, breed_cls):
         name = breed_cls.__name__.lower()
-        self.__setattr__(name, self[name])
         self._breeds[name] = breed_cls
 
     def apply(
@@ -53,30 +50,30 @@ class AgentsContainer(UserDict):
             results[breed] = res
         return results
 
-    def now(self, breed: Optional[str] = None) -> BaseAgentList:
+    def now(self, breed: Optional[str] = None) -> ActorsList:
         if breed is None:
             agents = self.to_list()
         else:
             agents = self[breed]
         return agents.select(agents.on_earth)
 
-    def to_list(self) -> BaseAgentList:
-        agents = BaseAgentList(self._model)
+    def to_list(self) -> ActorsList:
+        agents = ActorsList(self._model)
         for _, agents_lst in self.items():
             agents.extend(agents_lst)
         return agents
 
     def _verify_agent(self, agent):
-        if not isinstance(agent, (BaseAgent, Agent)):
+        if not isinstance(agent, (Actor, Agent)):
             return None
         else:
             breed = agent.__class__.__name__.lower()
             if breed not in self.breeds:
-                self[breed] = BaseAgentList(model=self._model)
+                self[breed] = ActorsList(model=self._model)
                 self.breeds = agent.__class__
             return breed
 
-    def add(self, agents: AgentList = None) -> None:
+    def add(self, agents: ActorsList = None) -> None:
         agents = make_list(agents)
         for agent in agents:
             breed = self._verify_agent(agent)
@@ -85,13 +82,13 @@ class AgentsContainer(UserDict):
             else:
                 self[breed].append(agent)
 
-    def get_breed(self, breed: str) -> BaseAgentList:
+    def get_breed(self, breed: str) -> ActorsList:
         if breed in self.breeds:
             return self[breed]
         else:
-            return BaseAgentList(model=self._model)
+            return ActorsList(model=self._model)
 
-    def remove(self, agents: BaseAgentList = None) -> None:
+    def remove(self, agents: ActorsList = None) -> None:
         for agent in make_list(agents):
             breed = self._verify_agent(agent)
             self[breed].remove(agent)

@@ -9,7 +9,8 @@
 测试对象
 """
 
-from abses.objects import BaseAgent, BaseObj
+from abses.actor import Actor
+from abses.objects import BaseObj
 
 from .create_tested_instances import noticeable_model
 
@@ -32,16 +33,16 @@ def test_base_object():
 def test_base_agent():
     model = noticeable_model()
 
-    class Actor(BaseAgent):
+    class MyActor(Actor):
         pass
 
-    class Father(BaseAgent):
+    class Father(MyActor):
         pass
 
-    actor1 = Actor(model=model, observer=True)
-    actor2 = Actor(model=model, observer=False)
+    actor1 = MyActor(model=model, observer=True)
+    actor2 = MyActor(model=model, observer=False)
     father = Father(model=model, observer=True)
 
-    assert actor1.breed == actor2.breed == "actor"
+    assert actor1.breed == actor2.breed == "myactor"
     assert father.breed == "father"
     assert actor1.a == 1

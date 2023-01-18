@@ -9,13 +9,25 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from typing import Any, Callable, Deque, Dict, Iterable, List, Optional
+from typing import (
+    Any,
+    Callable,
+    Deque,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 
+import pandas as pd
 from agentpy import AttrDict
 from agentpy.model import Model
 from agentpy.objects import Object
 
 from abses.time import TimeDriver
+from abses.tools.func import make_list
 
 from .bases import Observer
 from .log import Log
@@ -37,6 +49,8 @@ class BaseObj(Observer, Log, Object):
         self._vars_history: Dict[str, Deque[Variable]] = AttrDict()
         self._time: TimeDriver = TimeDriver(model=model)
         self.glob_vars: List[str] = []
+        self._recording: Set[str] = set()
+        self._reporting: Set[str] = set()
         if observer:
             model.attach(self)
 
@@ -54,6 +68,27 @@ class BaseObj(Observer, Log, Object):
     @property
     def time(self) -> TimeDriver:
         return self._time
+
+    @property
+    def output(self) -> pd.DataFrame:
+        df = pd.DataFrame(self.log, index=self.time.time[:-1])
+        return df
+
+    @property
+    def recording(self) -> Set[str]:
+        return self._recording
+
+    @recording.setter
+    def recording(self, variables: Union[str, Iterable[str]]) -> None:
+        self._recording = self.recording.union(set(make_list(variables)))
+
+    @property
+    def reporting(self) -> Set[str]:
+        return self._reporting
+
+    @reporting.setter
+    def reporting(self, variables: Union[str, Iterable[str]]) -> None:
+        self._reporting = self.reporting.union(make_list(variables))
 
     def to_variable(self, name, now: Optional[Data] = None) -> Data:
         self._registry.check_variable(name, value=now)
@@ -82,23 +117,8 @@ class BaseObj(Observer, Log, Object):
         var = self.to_variable(name=name, now=init_data)
         return var
 
-    def time_go(self):
+    def _when_time_go(self):
+        self.record(self._recording)
         for var in self._registry[self]:
             value_now = self.__getattr__(var)
             self._vars_history[var].append(value_now)
-
-
-class BaseAgent(BaseObj):
-    def __init__(self, model: Model, observer: bool = False):
-        BaseObj.__init__(self, model, observer=observer, name=self.breed)
-        self.setup()
-
-    def __repr__(self) -> str:
-        return f"<{self.breed} [{self.id}]>"
-
-    def setup(self):
-        pass
-
-    @property
-    def breed(self) -> str:
-        return self.__class__.__name__.lower()

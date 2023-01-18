@@ -15,13 +15,6 @@ from .geo import Geo
 from .patch import Patch
 
 
-class AgentFactory:
-    def create(self):
-        pass
-
-    pass
-
-
 class PatchFactory(Creator, Geo):
     _valid_type = (bool, int, float, str, "float32")
     _valid_dtype = tuple([np.dtype(t) for t in _valid_type])

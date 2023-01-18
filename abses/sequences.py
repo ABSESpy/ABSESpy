@@ -13,13 +13,13 @@ from typing import List
 import numpy as np
 from agentpy import Agent, AgentList
 
-from .objects import BaseAgent
+from .actor import Actor
 from .tools.func import make_list, norm_choice
 
 logger = logging.getLogger("__name__")
 
 
-class BaseAgentList(AgentList):
+class ActorsList(AgentList):
     def __repr__(self):
         return f"<List: {self.__len__()} {self.breed()}s>"
 
@@ -44,19 +44,19 @@ class BaseAgentList(AgentList):
         else:
             return breeds[0]
 
-    def select(self, selection: Iterable[bool]) -> List[BaseAgent]:
-        """Returns a new :class:`BaseAgentList` based on `selection`.
+    def select(self, selection: Iterable[bool]) -> List[Actor]:
+        """Returns a new :class:`ActorList` based on `selection`.
 
         Arguments:
             selection (list of bool): List with same length as the agent list.
                 Positions that return True will be selected.
         """
         self._check_length(selection)
-        return BaseAgentList(
+        return ActorsList(
             self.model, [a for a, s in zip(self, selection) if s]
         )
 
-    def ids(self, ids: Iterable[int]) -> List[BaseAgent]:
+    def ids(self, ids: Iterable[int]) -> List[Actor]:
         """
         Select by a `ids` list of Agent.
 
@@ -64,7 +64,7 @@ class BaseAgentList(AgentList):
             ids (iterable): an iterable id list. List[id], ID is an attr of agent obj.
 
         Returns:
-            BaseAgentList: A subset of origin agents list.
+            ActorList: A subset of origin agents list.
         """
         ids = make_list(ids)
         agents = self.select([agent.id in ids for agent in self])
@@ -72,22 +72,20 @@ class BaseAgentList(AgentList):
 
     def random_choose(
         self, p=None, size: int = 1, replace: bool = False
-    ) -> BaseAgent:
+    ) -> Actor:
         if size == 1:
             return norm_choice(self, p=p)
         elif size > 1:
             chosen = norm_choice(self, p=p, size=size)
-            return BaseAgentList(self.model, chosen)
+            return ActorsList(self.model, chosen)
 
-    def better(
-        self, metric, than: "Number|BaseAgent|None" = None
-    ) -> AgentList:
+    def better(self, metric, than: "Number|Actor|None" = None) -> AgentList:
         metrics = self.metrics.get(metric)
         if than is None:
             return self.select(metrics == max(metrics))
         elif isinstance(than, Number):
             return self.select(metrics > than)
-        elif isinstance(than, BaseAgent):
+        elif isinstance(than, Actor):
             diff = self.diff(metric, than)
             return self.select(diff > 0)
 

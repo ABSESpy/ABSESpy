@@ -13,13 +13,13 @@ import numpy as np
 from agentpy import Model
 from prettytable import PrettyTable
 
-from .bases import Creation, Creator
+from .bases import Creator
 from .components import Component, MainComponent, iter_func
-from .container import AgentsContainer, BaseAgentList
-from .factory import AgentFactory, PatchFactory
+from .container import ActorsList, AgentsContainer
+from .factory import PatchFactory
 from .objects import BaseObj
 from .patch import Patch
-from .tools.func import make_list, unique_list
+from .tools.func import make_list
 
 
 class Module(Component, BaseObj):
@@ -28,8 +28,6 @@ class Module(Component, BaseObj):
         BaseObj.__init__(self, model, observer=True, name=name)
         self._model: Model = model
         self._open: bool = True
-        self._recording: Set[str] = set()
-        self._reporting: Set[str] = set()
 
     def __repr__(self) -> str:
         if self.opening:
@@ -43,7 +41,7 @@ class Module(Component, BaseObj):
         return self.model.agents
 
     @agents.setter
-    def agents(self, agents: BaseAgentList) -> None:
+    def agents(self, agents: ActorsList) -> None:
         agents = make_list(agents)
         self.agents.add(agents)
 
@@ -52,17 +50,10 @@ class Module(Component, BaseObj):
         return self._open
 
     def _after_parsing(self):
-        super()._after_parsing()
         self.switch_open_to(self.params.pop("open", None))
-        to_record = self.params.pop("record", [])
-        self._recording |= set(to_record)
-        self._reporting |= set(to_record)  # recording vars also reported
-        self._reporting |= set(self.params.pop("report", []))
-
-    @iter_func("modules")
-    def record_vars(self) -> None:
-        self.record(self._recording)
-        self.record(self.glob_vars)
+        self.recording = self.params.pop("record", [])
+        self.reporting = self.recording  # recording vars also reported
+        self.reporting = self.params.pop("report", [])
 
     @iter_func("modules")
     def report_vars(self):
@@ -70,7 +61,9 @@ class Module(Component, BaseObj):
             value = getattr(self, var)
             self.model.report(var, value)
 
+    @iter_func("modules")
     def switch_open_to(self, _open: Optional[bool] = None) -> bool:
+        """#TODO 思考和说明模块关闭后有何不同"""
         if _open is None:
             return False
         elif not isinstance(_open, bool):
@@ -114,16 +107,9 @@ class CompositeModule(Module, MainComponent, Creator):
         return module
 
 
-# leaf
-class LeafModule(Module, Creation):
-    def __init__(self, *args, **kwargs) -> None:
-        Module.__init__(self, *args, **kwargs)
-
-
-# class Patch
-class PatchModule(PatchFactory, LeafModule):
+class PatchModule(PatchFactory, Module):
     def __init__(self, model, name: str = None, **kwargs):
-        LeafModule.__init__(self, model, name=name)
+        Module.__init__(self, model, name=name)
         PatchFactory.__init__(self, **kwargs)
         self._patches = []
 
@@ -185,9 +171,9 @@ class PatchModule(PatchFactory, LeafModule):
         pass
 
 
-class HumanModule(AgentFactory, LeafModule):
-    def to_agents(self, iterable: Iterable) -> BaseAgentList:
-        return BaseAgentList(self.model, iterable)
+class HumanModule(Module):
+    def to_agents(self, iterable: Iterable) -> ActorsList:
+        return ActorsList(self.model, iterable)
 
     def mock(self, agents, attrs, how="attr"):
         tutors = self.to_agents(agents.tutor.now)

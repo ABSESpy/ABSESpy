@@ -7,7 +7,7 @@
 
 import networkx as nx
 
-from .container import AgentsContainer, BaseAgentList
+from .container import ActorsList, AgentsContainer
 from .modules import CompositeModule
 
 
@@ -17,7 +17,7 @@ class BaseHuman(CompositeModule):
 
     def create_agents(self, breed_cls, n):
         name = f"{breed_cls.__name__.lower()}"
-        agents = BaseAgentList(self.model, objs=n, cls=breed_cls)
+        agents = ActorsList(self.model, objs=n, cls=breed_cls)
         self._set_agents(name, agents)
         self._set_graph(name, agents)
         return agents
@@ -36,7 +36,7 @@ class BaseHuman(CompositeModule):
             self.create_agents(breed_cls, n)
 
     def _set_graph(
-        self, name, agents: BaseAgentList, graph: nx.Graph = None, **kwargs
+        self, name, agents: ActorsList, graph: nx.Graph = None, **kwargs
     ) -> None:
         if graph is None:
             graph = nx.Graph(**kwargs)

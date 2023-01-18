@@ -7,7 +7,7 @@
 
 from agentpy import Model
 
-from abses.bases import Notice
+from abses.bases import Mediator, Notice
 from abses.main import MainModel
 
 
@@ -16,6 +16,7 @@ def noticeable_model():
         def __init__(self):
             Model.__init__(self)
             Notice.__init__(self)
+            self.mediator = None
             self.params = {}
 
     model = MyModel()

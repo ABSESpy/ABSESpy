@@ -11,7 +11,7 @@ import numpy as np
 from agentpy.grid import AgentIter, Grid, _IterArea
 
 from .algorithms.spatial import points_to_polygons, polygon_to_mask
-from .container import AgentsContainer, BaseAgentList, apply_agents
+from .container import ActorsList, AgentsContainer, apply_agents
 from .factory import PatchFactory
 from .modules import CompositeModule
 from .patch import Patch
@@ -206,7 +206,7 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         distance: int = 0,
         neighbors: int = 4,
         breed: str = None,
-    ) -> "AgentsContainer|BaseAgentList":
+    ) -> "AgentsContainer|ActorsList":
         position = self.create_patch(False, "position")
         position[pos] = True
         buffer = position.arr.buffer(buffer=distance, neighbors=neighbors)
