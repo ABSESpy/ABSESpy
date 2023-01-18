@@ -8,10 +8,10 @@
 import logging
 from collections.abc import Iterable
 from numbers import Number
-from typing import Callable, List
+from typing import Any, Callable, Dict, List, Optional, Self, Union
 
 import numpy as np
-from agentpy import Agent, AgentList
+from agentpy import Agent, AgentList, AttrIter
 
 from .actor import Actor
 from .tools.func import make_list, norm_choice
@@ -21,44 +21,52 @@ logger = logging.getLogger("__name__")
 
 class ActorsList(AgentList):
     def __repr__(self):
-        return f"<List: {self.__len__()} {self.breed()}s>"
+        results = []
+        for k, v in self.to_dict().items():
+            results.append(f"({len(v)}){k}")
+        return f"<{'; '.join(results)}>"
 
-    # def __call__(self, func_name, *args, **kwargs):
-    #     for actor in self.__iter__():
-    #         yield actor.__getattr__(func_name)(*args, **kwargs)
+    def __getattr__(self, name) -> np.ndarray:
+        """Return callable list of attributes"""
+        if name[0] == "_":  # Private variables are looked up normally
+            super().__getattr__(name)
+        elif name in self.__dir__():
+            return super().__getattr__(name)
+        else:
+            return ActorsList.array(self, name)
 
-    def breed(self):
-        breeds = np.unique([p.breed for p in self])
-        breed = self._check_breed(breeds)
-        return breed
-
-    def _check_length(self, length):
+    def _is_same_length(self, length: Iterable[Any]) -> bool:
         if not hasattr(self, "__len__"):
             raise ValueError(f"{type(length)} object is not iterable.")
-        if not length.__len__() == self.__len__():
-            raise ValueError(
-                f"{type(length)} length is {len(length)}, mismatch with {self}."
-            )
-
-    def _check_breed(self, breeds):
-        if len(breeds) == 0:
-            return None
-        elif len(breeds) > 1:
-            logger.warning(f"Creating AgentsList with mixed breeds: {breeds}.")
+        elif not length.__len__() == self.__len__():
+            return False
         else:
-            return breeds[0]
+            return True
 
-    def select(self, selection: Iterable[bool]) -> List[Actor]:
+    def to_dict(self) -> Dict[str, Self]:
+        dic = {}
+        for actor in self.__iter__():
+            breed = actor.breed
+            if breed not in dic:
+                dic[breed] = ActorsList(self.model, [actor])
+            else:
+                dic[breed].append(actor)
+        return dic
+
+    def select(self, selection: Union[str, Iterable[bool]]) -> Self:
         """Returns a new :class:`ActorList` based on `selection`.
 
         Arguments:
             selection (list of bool): List with same length as the agent list.
                 Positions that return True will be selected.
         """
-        self._check_length(selection)
-        return ActorsList(
-            self.model, [a for a, s in zip(self, selection) if s]
-        )
+        if isinstance(selection, str):
+            return self.to_dict()[selection]
+        elif self._is_same_length(selection):
+            selected = [a for a, s in zip(self, selection) if s]
+            return ActorsList(self.model, selected)
+        else:
+            raise TypeError(f"Invalid selection {type(selection)}")
 
     def ids(self, ids: Iterable[int]) -> List[Actor]:
         """
@@ -75,16 +83,21 @@ class ActorsList(AgentList):
         return agents
 
     def random_choose(
-        self, p=None, size: int = 1, replace: bool = False
-    ) -> Actor:
+        self,
+        p: Optional[Iterable[float]] = None,
+        size: int = 1,
+        replace: bool = True,
+    ) -> Union[Actor, Self]:
         if size == 1:
-            return norm_choice(self, p=p)
+            return norm_choice(self, p=p, replace=replace)
         elif size > 1:
-            chosen = norm_choice(self, p=p, size=size)
+            chosen = norm_choice(self, p=p, size=size, replace=replace)
             return ActorsList(self.model, chosen)
 
-    def better(self, metric, than: "Number|Actor|None" = None) -> AgentList:
-        metrics = self.metrics.get(metric)
+    def better(
+        self, metric: str, than: Optional[Union[Number, Actor]] = None
+    ) -> Self:
+        metrics = self.array(attr=metric)
         if than is None:
             return self.select(metrics == max(metrics))
         elif isinstance(than, Number):
@@ -93,8 +106,8 @@ class ActorsList(AgentList):
             diff = self.diff(metric, than)
             return self.select(diff > 0)
 
-    def diff(self, metric: str, other) -> np.ndarray:
-        diff = self.metrics.get(metric) - other.metrics.get(metric)
+    def diff(self, metric: str, other: Actor) -> np.ndarray:
+        diff = self.array(metric) - getattr(other, metric)
         return np.array(diff)
 
     def update(self, attr: str, values: Iterable[any]) -> None:
@@ -128,11 +141,7 @@ class ActorsList(AgentList):
         self, attr: str, how: "int|str" = "attr", *args, **kwargs
     ) -> np.ndarray:
         if how == "attr":
-            results = getattr(self, attr)
-        elif isinstance(how, int):
-            results = self.decision.get(how)
-        elif how == "metric":
-            results = self.metrics.get(attr)
+            results = [getattr(actor, attr) for actor in self]
         elif how == "loc":
             results = self.loc(attr)
         elif how == "mine":

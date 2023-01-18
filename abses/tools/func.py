@@ -26,7 +26,9 @@ def make_list(element, keep_none=False):
     return element
 
 
-def norm_choice(a: Iterable[any], size: int = None, p=None) -> any:
+def norm_choice(
+    a: Iterable[any], size: int = None, p=None, replace=False
+) -> any:
     if p is None or len(set(p)) == 0:
         p = np.ones(len(make_list(a)))
     p = np.array(make_list(p), dtype=float)
@@ -47,11 +49,11 @@ def norm_choice(a: Iterable[any], size: int = None, p=None) -> any:
     if possible_entries < size:
         bounds = a[p > 0]
         rand = np.random.choice(
-            a[p == 0], size=(size - possible_entries), replace=False
+            a[p == 0], size=(size - possible_entries), replace=replace
         )
         selected = np.concatenate([bounds, rand])
     else:
-        selected = np.random.choice(a, p=p, size=size, replace=False)
+        selected = np.random.choice(a, p=p, size=size, replace=replace)
     return selected
 
 
