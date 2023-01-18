@@ -7,12 +7,20 @@
 
 import logging
 from numbers import Number
-from typing import TYPE_CHECKING, Dict, Iterable, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Self,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 import numpy as np
 from agentpy import AttrDict
-from prettytable import PrettyTable
 
 from .objects import BaseObj
 from .patch import Patch
@@ -50,6 +58,24 @@ class Actor(BaseObj):
     def pos(self) -> Tuple[int, int]:
         return self._pos
 
+    def settle_down(self, position: Optional[Tuple[int, int]] = None) -> bool:
+        self._pos = position
+        self._on_earth = True
+        return self.on_earth
+
+    def build_connection(
+        self, name: str, other: Union[Self, Iterable[Self], Callable]
+    ):
+        pass
+
+    def attach_places(self, name: str, place: Union[Patch, Callable]):
+        pass
+
+    def perception(
+        self, connection, solving: Optional[Iterable[Callable]] = None
+    ):
+        pass
+
     def require(self, var: str, **kwargs):
         patch_obj = self.mediator.transfer_require(self, var, **kwargs)
         return patch_obj
@@ -58,68 +84,33 @@ class Actor(BaseObj):
         patch_obj = self.require(patch, **kwargs)
         if len(patch_obj.shape) == 2:
             return patch_obj[self.pos]
-        elif len(patch_obj.shape) == 3:
-            return patch_obj[:, self.pos[0], self.pos[1]]
+        # elif len(patch_obj.shape) == 3:
+        #     return patch_obj[:, self.pos[0], self.pos[1]]
 
     def alter_nature(self, patch: str, value: "int|float|bool") -> Patch:
         patch = self.require(patch)
         patch[self.pos] = value
         return patch
 
-    def report(
-        self,
-        memory: int = 0,
-        max_width: int = 30,
-        decimal: int = 4,
-        verbose: bool = False,
-    ) -> PrettyTable:
-        table = PrettyTable()
-        # TODO more general
-        # * Farmer: 5 has no attribute 'metrics'.
-        for metric, evo in self.metrics.items():
-            table.add_row([metric, evo.get(memory)])
-        table.field_names = ["Var", "Value"]
-        if verbose:
-            for attr, val in self.__dict__.items():
-                if attr in ("id", "type"):
-                    continue
-                if attr.startswith("_"):
-                    continue
-                table.add_row([attr, val])
-        table.max_width = max_width
-        table.title = f"{self.type} {self.id}:"
-        table.float_format = f".{decimal}"
-        return table
-
-    def update(self, attr: str, val: any) -> None:
-        if attr in self.metrics:
-            self.metrics[attr].update(val)
-        elif attr == "decision":
-            self.decision.update(val)
-        elif not hasattr(self, attr):
-            raise KeyError(f"Attribute {attr} not found.")
-        else:
-            setattr(self, attr, val)
-
-    def find_tutor(self, others, metric, how="best"):
-        better = others.better(metric, than=self)
-        if len(better) == 0:
-            tutor = self
-        else:
-            if how == "best":
-                better = others.better(metric, than=None)
-                weights = None
-            elif how == "diff":
-                diff = better.diff(metric, self)
-                weights = diff
-            # elif how == "fermi":
-            #     diff = better.diff(metric, self)
-            #     weights = fermi_ruler(diff)
-            else:
-                raise ValueError(f"Unknown evolve strategy {how}.")
-            tutor = better.random_choose(p=weights)
-        self.tutor.update(tutor)
-        return tutor
+    # def find_tutor(self, others, metric, how="best"):
+    #     better = others.better(metric, than=self)
+    #     if len(better) == 0:
+    #         tutor = self
+    #     else:
+    #         if how == "best":
+    #             better = others.better(metric, than=None)
+    #             weights = None
+    #         elif how == "diff":
+    #             diff = better.diff(metric, self)
+    #             weights = diff
+    #         # elif how == "fermi":
+    #         #     diff = better.diff(metric, self)
+    #         #     weights = fermi_ruler(diff)
+    #         else:
+    #             raise ValueError(f"Unknown evolve strategy {how}.")
+    #         tutor = better.random_choose(p=weights)
+    #     self.tutor.update(tutor)
+    #     return tutor
 
 
 # class LandOwner(Actor):

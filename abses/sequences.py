@@ -8,7 +8,7 @@
 import logging
 from collections.abc import Iterable
 from numbers import Number
-from typing import List
+from typing import Callable, List
 
 import numpy as np
 from agentpy import Agent, AgentList
@@ -22,6 +22,10 @@ logger = logging.getLogger("__name__")
 class ActorsList(AgentList):
     def __repr__(self):
         return f"<List: {self.__len__()} {self.breed()}s>"
+
+    # def __call__(self, func_name, *args, **kwargs):
+    #     for actor in self.__iter__():
+    #         yield actor.__getattr__(func_name)(*args, **kwargs)
 
     def breed(self):
         breeds = np.unique([p.breed for p in self])
@@ -140,3 +144,7 @@ class ActorsList(AgentList):
         lon = [X[x, y] for x, y in self.pos]
         lat = [Y[x, y] for x, y in self.pos]
         return lon, lat
+
+    def apply(self, func: Callable, *args, **kwargs):
+        for actor in self.__iter__():
+            yield actor.__getattr__(func)(*args, **kwargs)

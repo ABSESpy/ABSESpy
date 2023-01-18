@@ -25,6 +25,7 @@ import pandas as pd
 from agentpy import AttrDict
 from agentpy.model import Model
 from agentpy.objects import Object
+from prettytable import PrettyTable
 
 from abses.time import TimeDriver
 from abses.tools.func import make_list
@@ -90,6 +91,12 @@ class BaseObj(Observer, Log, Object):
     def reporting(self, variables: Union[str, Iterable[str]]) -> None:
         self._reporting = self.reporting.union(make_list(variables))
 
+    def _when_time_go(self):
+        self.record(self._recording)
+        for var in self._registry[self]:
+            value_now = self.__getattr__(var)
+            self._vars_history[var].append(value_now)
+
     def to_variable(self, name, now: Optional[Data] = None) -> Data:
         self._registry.check_variable(name, value=now)
         history = self._vars_history[name]
@@ -117,8 +124,20 @@ class BaseObj(Observer, Log, Object):
         var = self.to_variable(name=name, now=init_data)
         return var
 
-    def _when_time_go(self):
-        self.record(self._recording)
-        for var in self._registry[self]:
-            value_now = self.__getattr__(var)
-            self._vars_history[var].append(value_now)
+    def report(
+        self,
+        max_width: int = 30,
+        decimal: int = 4,
+    ) -> PrettyTable:
+        table = PrettyTable()
+        table.field_names = ["Variable", "Value"]
+        for attr, val in self.__dict__.items():
+            if attr in ("id", "type"):
+                continue
+            if attr.startswith("_"):
+                continue
+            table.add_row([attr, val])
+        table.max_width = max_width
+        table.title = f"{self.type} {self.id}:"
+        table.float_format = f".{decimal}"
+        return table

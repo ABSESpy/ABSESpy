@@ -131,34 +131,25 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         pos = self.random_positions(1, mask)[0]
         self.move_to(agent, pos)
 
-    @apply_agents
     def add_agents(
         self,
-        agents=None,
+        agents: ActorsList,
         positions=None,
         random=False,
-        empty=False,
+        only_empty=False,
         only_accessible=True,
     ):
         # TODO: refactor this without if-else
-        if only_accessible:
-            mask = self.accessible
+        mask = self.accessible
+        if positions is None:
             positions = self.random_positions(
                 len(agents),
                 mask=mask,
             )
-            super().add_agents(agents, positions=positions)
-        else:
-            super().add_agents(
-                agents,
-                positions=positions,
-                random=random,
-                empty=empty,
-            )
-        agents._on_earth = True
-        self.logger.info(
-            f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
-        )
+        for agent, pos in zip(agents, positions):
+            agent.settle_down(position=pos)
+        # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
+        # self.mediator.transfer_event(self, msg)
 
     def land_allotment(
         self, agents, mask: np.ndarray = None

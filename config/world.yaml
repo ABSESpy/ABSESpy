@@ -1,7 +1,7 @@
 ## world
-width: 22
-height: 22
-outside: 4
+width: 9
+height: 9
+outside: 1
 border: 1
-resolution: 200
+resolution: 10
 units: m

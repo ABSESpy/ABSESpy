@@ -9,6 +9,9 @@ from agentpy import Model
 
 from abses.bases import Mediator, Notice
 from abses.main import MainModel
+from abses.tools.read_files import read_yaml
+
+world = read_yaml("config/world.yaml")
 
 
 def noticeable_model():
@@ -26,4 +29,11 @@ def noticeable_model():
 
 
 def simple_main_model(func):
-    return MainModel(base="tests", name=func.__name__)
+    model = MainModel(
+        base="tests",
+        name=func.__name__,
+        parameters={"nature": {"world": world}},
+    )
+    boundary = model.nature.generate_boundary(model.nature.params["world"])
+    model.nature.from_boundary(boundary)
+    return model
