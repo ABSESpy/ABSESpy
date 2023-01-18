@@ -9,23 +9,9 @@
 测试对象
 """
 
-from agentpy import Model
-
-from abses.bases import Notice, Observer
 from abses.objects import BaseAgent, BaseObj
 
-
-def noticeable_model():
-    class MyModel(Model, Notice):
-        def __init__(self):
-            Model.__init__(self)
-            Notice.__init__(self)
-            self.params = {}
-
-    model = MyModel()
-    model.a = 1
-    model.glob_vars = "a"
-    return model
+from .create_tested_instances import noticeable_model
 
 
 def test_base_object():

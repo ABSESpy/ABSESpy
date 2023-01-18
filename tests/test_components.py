@@ -45,7 +45,7 @@ def test_arguments():
     }
 
     try:
-        comp._init_arguments()
+        comp._parsing_args()
     except KeyError as e:
         assert "c" in e.__str__()
     assert comp.a == 1
@@ -58,7 +58,7 @@ def test_arguments():
     assert "a" in comp2.arguments
     assert "a" not in comp2.params
     try:
-        comp2._init_arguments()
+        comp2._parsing_args()
     except KeyError as e:
         assert "a" in e.__str__()
 

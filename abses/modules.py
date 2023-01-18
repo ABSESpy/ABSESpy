@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import List, Optional
+from typing import List, Optional, Set, Union
 
 import numpy as np
 from agentpy import Model
@@ -28,8 +28,8 @@ class Module(Component, BaseObj):
         BaseObj.__init__(self, model, observer=True, name=name)
         self._model: Model = model
         self._open: bool = True
-        self._recording_vars: List[str] = []
-        self._reporting_vars: List[str] = []
+        self._recording: Set[str] = set()
+        self._reporting: Set[str] = set()
 
     def __repr__(self) -> str:
         if self.opening:
@@ -51,66 +51,37 @@ class Module(Component, BaseObj):
     def opening(self) -> bool:
         return self._open
 
-    @property
-    def _rec_vars(self) -> List[str]:
-        return self._recording_vars
-
-    @_rec_vars.setter
-    def _rec_vars(self, var: List[str]) -> None:
-        self._recording_vars = unique_list(self._rec_vars, var)
-        self._rep_vars = var
-
-    @property
-    def _rep_vars(self) -> List[str]:
-        return self._reporting_vars
-
-    @_rep_vars.setter
-    def _rep_vars(self, var: Iterable[str]) -> None:
-        self._reporting_vars = unique_list(self._rep_vars, var)
-
-    def handle_params(self):
+    def _after_parsing(self):
+        super()._after_parsing()
         self.switch_open_to(self.params.pop("open", None))
-        self._rec_vars = self.params.pop("record", [])
-        self._rep_vars = self.params.pop("report", [])
+        to_record = self.params.pop("record", [])
+        self._recording |= set(to_record)
+        self._reporting |= set(to_record)  # recording vars also reported
+        self._reporting |= set(self.params.pop("report", []))
 
     @iter_func("modules")
     def record_vars(self) -> None:
-        self.record(self._rec_vars)
+        self.record(self._recording)
         self.record(self.glob_vars)
-
-    def parse(self, parameter: str) -> any:
-        """
-        Generate settings dictionary from setting files.
-
-        Args:
-            parameter (str): parameter's name.
-
-        Raises:
-            AB_EGMpyError: not correctly formatted settings.
-
-        Returns:
-            any: parsed settings.
-        """
-        return self.params.get(parameter)
-
-    def switch_open_to(self, _open: bool) -> bool:
-        if _open is None:
-            return False
-        elif not isinstance(_open, bool):
-            self.logger.error(
-                f"Accept boolean parameters, input {type(_open)} instead."
-            )
-            return False
-        else:
-            self.logger.info(f"{self.name} switch open state to {_open}!")
-            self._open = _open
-            return True
 
     @iter_func("modules")
     def report_vars(self):
-        for var in self._rep_vars:
+        for var in self._reporting:
             value = getattr(self, var)
             self.model.report(var, value)
+
+    def switch_open_to(self, _open: Optional[bool] = None) -> bool:
+        if _open is None:
+            return False
+        elif not isinstance(_open, bool):
+            raise TypeError("Accept boolean parameters")
+        else:
+            if self._open is not _open:
+                self.logger.info(f"{self} switch 'open' to {_open}.")
+                self._open = _open
+            else:
+                pass
+        return self._open
 
 
 # Composite

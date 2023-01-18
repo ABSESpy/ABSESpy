@@ -6,7 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 from abc import abstractmethod
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Set, Union
 
 from agentpy.tools import AttrDict
 
@@ -53,7 +53,7 @@ class Component(Log):
         self._arguments = sorted(list(set(self.arguments)))
 
     @iter_func("modules")
-    def _init_arguments(self) -> None:
+    def _parsing_args(self) -> None:
         """
         Initialize arguments of the component then delete from param dictionary.
 
@@ -92,8 +92,10 @@ class Component(Log):
                 )
                 self.params[key] = value
         # setup arguments
-        self._init_arguments()
-        # handle parameters
+        self._parsing_args()
+        # solving parameters diversely
+        self._after_parsing()
+        # handle parameters defined by users
         self.handle_params()
         return params
 
@@ -107,6 +109,10 @@ class Component(Log):
             return str(list(params.keys()))
         else:
             return params.keys()
+
+    @abstractmethod
+    def _after_parsing(self):
+        pass
 
     @abstractmethod
     def handle_params(self):
@@ -167,3 +173,7 @@ class MainComponent(Component):
                 message, condition=len(unsolved) > 0, level="warning"
             )
         return unsolved
+
+    @iter_func("modules")
+    def _after_parsing(self):
+        pass
