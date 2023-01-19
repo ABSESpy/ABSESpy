@@ -54,7 +54,8 @@ class AgentsContainer(AttrDict):
         return len(self.to_list())
 
     def __repr__(self):
-        rep = self.to_list().__repr__()[1:-1]
+        # "<ActorsList: >"
+        rep = self.to_list().__repr__()[13:-1]
         return f"<AgentsContainer: {rep}>"
 
     def __getattr__(self, name: str) -> Any:

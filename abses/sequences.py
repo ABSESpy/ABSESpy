@@ -24,7 +24,7 @@ class ActorsList(AgentList):
         results = []
         for k, v in self.to_dict().items():
             results.append(f"({len(v)}){k}")
-        return f"<{'; '.join(results)}>"
+        return f"<ActorsList: {'; '.join(results)}>"
 
     def __getattr__(self, name) -> np.ndarray:
         """Return callable list of attributes"""

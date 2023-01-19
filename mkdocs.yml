@@ -26,13 +26,14 @@ nav:
         - Variables: api/variables.md
         - Experiment: api/experiment.md
     - Examples:
+        - Manipulate Actors: notebooks/actors.ipynb
         - Climate negotiation: examples/negotiation.md
         - Groundwater withdraw: examples/groundwater.md
         - Yellow River Quotas: examples/yr_sim.md
     - Contribution: docs/contribution.md
     - Change Log:
+        - Road Map: docs/roadmap.md
         - v0.0.1: logs/v-0.0.1.md
-    - Road Map: docs/roadmap.md
 theme:
     name: "material"
     logo: "assets/logo_abses.svg"
