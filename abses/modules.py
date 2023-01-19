@@ -26,6 +26,7 @@ class Module(Component, BaseObj):
     def __init__(self, model: Model, name: Optional[str] = None):
         Component.__init__(self, name=name)
         BaseObj.__init__(self, model, observer=True, name=name)
+        self._agents = AgentsContainer(model)
         self._model: Model = model
         self._open: bool = True
 
@@ -38,12 +39,7 @@ class Module(Component, BaseObj):
 
     @property
     def agents(self) -> AgentsContainer:
-        return self.model.agents
-
-    @agents.setter
-    def agents(self, agents: ActorsList) -> None:
-        agents = make_list(agents)
-        self.agents.add(agents)
+        return self._agents
 
     @property
     def opening(self) -> bool:

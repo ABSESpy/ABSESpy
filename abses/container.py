@@ -83,6 +83,10 @@ class AgentsContainer(AttrDict):
         else:
             return agents
 
+    # def create_from(self, breeds: dict):
+    #     for breed_cls, n in breeds.items():
+    #         self.create_agents(breed_cls, n)
+
     def to_list(
         self, breeds: Optional[Union[str, Iterable[str]]] = None
     ) -> ActorsList:

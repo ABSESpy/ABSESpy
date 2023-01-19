@@ -15,8 +15,8 @@ from .create_tested_instances import Admin, Farmer, simple_main_model
 
 def test_sequences_attributes():
     model = simple_main_model(test_sequences_attributes)
-    actors5 = model.human.create_agents(Actor, 5)
-    farmers3 = model.human.create_agents(Farmer, 3)
+    actors5 = model.agents.create(Actor, 5)
+    farmers3 = model.agents.create(Farmer, 3)
     actors5.test = 1
     farmers3.test = -1
     mixed_actors = ActorsList(model=model, objs=[*actors5, *farmers3])

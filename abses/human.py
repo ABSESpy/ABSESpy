@@ -15,35 +15,5 @@ class BaseHuman(CompositeModule):
     def __init__(self, model, name="human"):
         CompositeModule.__init__(self, model, name=name)
 
-    def create_agents(self, breed_cls, n):
-        name = f"{breed_cls.__name__.lower()}"
-        agents = ActorsList(self.model, objs=n, cls=breed_cls)
-        self._set_graph(name, agents)
-        return agents
-
-    def create_agents_from(self, breeds: dict) -> AgentsContainer:
-        """
-        Generate agents.
-
-        Args:
-            breeds (dict): {Agent class: number to create}
-
-        Returns:
-            AgentsContainer: model's agents container.
-        """
-        for breed_cls, n in breeds.items():
-            self.create_agents(breed_cls, n)
-
-    def _set_graph(
-        self, name, agents: ActorsList, graph: nx.Graph = None, **kwargs
-    ) -> None:
-        if graph is None:
-            graph = nx.Graph(**kwargs)
-            self.logger.info(f"Generate graph for breed: '{name}'.")
-        graph.add_nodes_from(agents)
-        setattr(self, f"{name}s_graph", graph)
-
     def require(self, attr: str) -> object:
         return self.mediator.transfer_require(self, attr)
-
-    pass
