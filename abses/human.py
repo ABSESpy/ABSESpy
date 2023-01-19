@@ -18,7 +18,6 @@ class BaseHuman(CompositeModule):
     def create_agents(self, breed_cls, n):
         name = f"{breed_cls.__name__.lower()}"
         agents = ActorsList(self.model, objs=n, cls=breed_cls)
-        self._set_agents(name, agents)
         self._set_graph(name, agents)
         return agents
 
@@ -43,13 +42,6 @@ class BaseHuman(CompositeModule):
             self.logger.info(f"Generate graph for breed: '{name}'.")
         graph.add_nodes_from(agents)
         setattr(self, f"{name}s_graph", graph)
-
-    def _set_agents(self, name, agents):
-        self.agents = agents
-        self.__setattr__(f"{name}s", self.agents[name])
-        self.inheritance = f"{name}s"
-        self.logger.info(f"Create {len(agents)} {name}s.")
-        self.notify()
 
     def require(self, attr: str) -> object:
         return self.mediator.transfer_require(self, attr)

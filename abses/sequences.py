@@ -11,7 +11,7 @@ from numbers import Number
 from typing import Any, Callable, Dict, List, Optional, Self, Union
 
 import numpy as np
-from agentpy import Agent, AgentList, AttrIter
+from agentpy import AgentList
 
 from .actor import Actor
 from .tools.func import make_list, norm_choice
@@ -34,6 +34,19 @@ class ActorsList(AgentList):
             return super().__getattr__(name)
         else:
             return ActorsList.array(self, name)
+
+    def __eq__(self, other):
+        if not self._is_same_length(other):
+            return False
+        else:
+            return all([actor in other for actor in self])
+
+    def __getitem__(self, index):
+        results = super().__getitem__(index)
+        if isinstance(index, slice):
+            return ActorsList(self.model, results)
+        else:
+            return results
 
     def _is_same_length(self, length: Iterable[Any]) -> bool:
         if not hasattr(self, "__len__"):
@@ -67,6 +80,9 @@ class ActorsList(AgentList):
             return ActorsList(self.model, selected)
         else:
             raise TypeError(f"Invalid selection {type(selection)}")
+
+    def now(self) -> Self:
+        return self.select(self.on_earth)
 
     def ids(self, ids: Iterable[int]) -> List[Actor]:
         """
@@ -103,22 +119,11 @@ class ActorsList(AgentList):
         elif isinstance(than, Number):
             return self.select(metrics > than)
         elif isinstance(than, Actor):
-            diff = self.diff(metric, than)
+            diff = self.array(metric) - getattr(than, metric)
             return self.select(diff > 0)
-
-    def diff(self, metric: str, other: Actor) -> np.ndarray:
-        diff = self.array(metric) - getattr(other, metric)
-        return np.array(diff)
 
     def update(self, attr: str, values: Iterable[any]) -> None:
         [agent.update(attr, val) for agent, val in zip(self, values)]
-
-    def decision_is(self, decision, rate=False):
-        selected = self.select(self.decision.now == decision)
-        if rate:
-            return len(selected) / len(self)
-        else:
-            return selected
 
     def split(self, where: Iterable[int]) -> np.ndarray:
         """
@@ -133,22 +138,19 @@ class ActorsList(AgentList):
         to_split = np.array(self)
         return np.hsplit(to_split, where)
 
-    def remove(self, agents: Iterable[Agent]) -> None:
-        for agent in make_list(agents):
-            super().remove(agent)
-
     def array(
         self, attr: str, how: "int|str" = "attr", *args, **kwargs
     ) -> np.ndarray:
         if how == "attr":
             results = [getattr(actor, attr) for actor in self]
-        elif how == "loc":
-            results = self.loc(attr)
-        elif how == "mine":
-            results = self.mine(attr, *args, **kwargs)
+        # elif how == "loc":
+        #     results = self.loc(attr)
+        # elif how == "mine":
+        #     results = self.mine(attr, *args, **kwargs)
         return np.array(results)
 
     def position_to_coord(self, x_coords, y_coords):
+        # TODO move this to actor's property
         X, Y = np.meshgrid(x_coords, y_coords)
         lon = [X[x, y] for x, y in self.pos]
         lat = [Y[x, y] for x, y in self.pos]
@@ -157,3 +159,6 @@ class ActorsList(AgentList):
     def apply(self, func: Callable, *args, **kwargs):
         for actor in self.__iter__():
             yield actor.__getattr__(func)(*args, **kwargs)
+
+    def trigger(self):
+        pass

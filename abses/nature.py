@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from agentpy.grid import AgentIter, Grid, _IterArea
@@ -14,8 +14,10 @@ from .algorithms.spatial import points_to_polygons, polygon_to_mask
 from .container import ActorsList, AgentsContainer, apply_agents
 from .factory import PatchFactory
 from .modules import CompositeModule
-from .patch import Patch
+from .patch import Patch, get_buffer
 from .tools.func import norm_choice
+
+# from nptyping import NDArray, Shape
 
 
 class BaseNature(CompositeModule, PatchFactory, Grid):
@@ -177,19 +179,28 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         return ownership
 
     def lookup_agents(
-        self, mask_patch: Patch, breed: str = None
-    ) -> AgentsContainer:
-        # TODO 如何不查找到已经死掉的 Agents？？
+        self, mask_patch: np.ndarray, breed: Optional[str] = None
+    ) -> ActorsList:
+        """
+        Find alive agents who is settling on the given patch.
+
+        Args:
+            mask_patch (NDArray[Bool]): bool masked, must has the same shape as the world.
+            breed (Optional[str], optional): only search the designated breed. Defaults to None.
+
+        Returns:
+            ActorsList: actors on the given patches.
+        """
         area = np.array(
             [self.grid.agents[cell] for cell in mask_patch.arr.where()],
             dtype=object,
         )
         agents_lst = AgentIter(self.model, _IterArea(area)).to_list()
-        agents = AgentsContainer(model=self.model, agents=agents_lst)
+        agents = ActorsList(model=self.model, agents=agents_lst)
         if breed is None:
             return agents
         else:
-            return agents.get_breed(breed)
+            return agents.to_dict()[breed]
 
     def find_neighbor_by_position(
         self,
@@ -197,19 +208,26 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         distance: int = 0,
         neighbors: int = 4,
         breed: str = None,
-    ) -> "AgentsContainer|ActorsList":
-        position = self.create_patch(False, "position")
+    ) -> ActorsList:
+        position = np.zeros(self.shape, dtype=bool)
         position[pos] = True
-        buffer = position.arr.buffer(buffer=distance, neighbors=neighbors)
+        buffer = get_buffer(buffer=distance, neighbors=neighbors)
         return self.lookup_agents(buffer, breed=breed)
 
-    def has_agent(self, breed: str = None, mask: Patch = None) -> Patch:
+    def has_agent(self, breed: str = None, mask: np.ndarray = None) -> Patch:
+        """
+        Where exists agents.
+
+        Args:
+            breed (str, optional): if assigned, only find this type of agents. Defaults to None.
+            mask (np.ndarray, optional): if assigned, only find agents on those patches. Defaults to None.
+
+        Returns:
+            Patch: bool patch, True if this cell has agent, False otherwise.
+        """
         if mask is None:
-            mask = self.create_patch(True, "mask")
-        if breed is None:
-            agents = self.agents.to_list()
-        else:
-            agents = self.agents[breed]
+            mask = np.ones(self.shape, dtype=bool)
+        agents = self.lookup_agents(mask, breed=breed)
         has_agents = np.zeros(self.shape, bool)
         for agent in agents.select(agents.on_earth):
             has_agents[agent.pos] = True

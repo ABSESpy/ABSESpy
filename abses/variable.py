@@ -36,6 +36,7 @@ from .patch import Patch
 from .tools.func import make_list, wrap_opfunc_to
 
 if TYPE_CHECKING:
+    from .main import MainModel
     from .objects import BaseObject
 
 MAXLENGTH = 5  # todo move it into system settings.
@@ -70,10 +71,10 @@ def setup_registry(registry):
 class VariablesRegistry:
     """Singleton Registry for each model."""
 
-    _model: Dict[int, VariablesRegistry] = {}
+    _model: Dict[MainModel, VariablesRegistry] = {}
     _lock = threading.RLock()
 
-    def __new__(cls: type[Self], model: Model) -> Self:
+    def __new__(cls: type[Self], model: MainModel) -> Self:
         instance = cls._model.get(model, None)
         if instance is None:
             instance = super().__new__(cls)

@@ -15,7 +15,7 @@ update-dependencies:
 	conda env export > freeze.yml
 install-dependencies:
 	conda install matplotlib pandas scipy numpy seaborn networkx geopandas rasterio pyyaml rioxarray geocube cf_xarray metpy openpyxl pint-pandas cartopy netCDF4
-	pip install agentpy prettytable rasterstats pyet dataclasses-json
+	pip install agentpy prettytable rasterstats pyet dataclasses-json nptyping
 install-tests:
 	conda install pytest
 	pip install allure-pytest

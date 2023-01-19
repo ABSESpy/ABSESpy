@@ -10,15 +10,7 @@ import numpy as np
 from abses.actor import Actor
 from abses.sequences import ActorsList
 
-from .create_tested_instances import simple_main_model
-
-
-class Farmer(Actor):
-    pass
-
-
-class Admin(Actor):
-    pass
+from .create_tested_instances import Admin, Farmer, simple_main_model
 
 
 def test_sequences_attributes():
@@ -35,12 +27,17 @@ def test_sequences_attributes():
         mixed_actors.on_earth
         == [False, False, False, False, False, False, False, False]
     )
+    assert len(mixed_actors.now()) == 0
     assert mixed_actors.select("farmer") == farmers3
     each_one = mixed_actors.select(
         [True, False, False, False, False, True, False, False]
     )
     assert each_one.__repr__() == "<(1)actor; (1)farmer>"
     assert mixed_actors.array("test").sum() == mixed_actors.test.sum()
+    # 设置属性
+    mixed_actors.testing = "testing"
+    for actor in mixed_actors:
+        assert actor.testing == "testing"
 
 
 # def test_sequences_random_choose():
@@ -59,10 +56,6 @@ def test_sequences_better():
     a_farmer.metric = 0.1
 
     better = others.better("metric", than=a_farmer)
-    differences = others.diff("metric", a_farmer)
-    for i, calculated in enumerate(differences):
-        assert [-0.1, 0.0, 0.1, 0.2, 0.3][i] == round(calculated, 1)
-    assert (differences > 0).sum() == 3
     assert better == others.select([False, False, True, True, True])
     assert others.better("metric")[0] == others[-1]
     assert others.better("metric", than=0.05) == others.select(

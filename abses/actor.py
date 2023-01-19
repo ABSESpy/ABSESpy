@@ -42,9 +42,10 @@ class Actor(BaseObj):
         self._ownerships: Dict[str, Patch] = AttrDict()
         self.setup(kwargs=kwargs)
 
+    @classmethod
     @property
-    def breed(self) -> str:
-        return self.__class__.__name__.lower()
+    def breed(cls) -> str:
+        return cls.__name__.lower()
 
     @property
     def population(self):

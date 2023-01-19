@@ -7,11 +7,20 @@
 
 from agentpy import Model
 
+from abses.actor import Actor
 from abses.bases import Mediator, Notice
 from abses.main import MainModel
 from abses.tools.read_files import read_yaml
 
 world = read_yaml("config/world.yaml")
+
+
+class Farmer(Actor):
+    pass
+
+
+class Admin(Actor):
+    pass
 
 
 def noticeable_model():

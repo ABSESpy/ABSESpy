@@ -5,8 +5,20 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from __future__ import annotations
+
 import logging
-from typing import Optional
+import threading
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Self,
+    Type,
+    Union,
+)
 
 from agentpy import Agent, AttrDict
 
@@ -14,12 +26,27 @@ from .actor import Actor
 from .sequences import ActorsList
 from .tools.func import make_list, norm_choice
 
+if TYPE_CHECKING:
+    from .main import MainModel
+
 logger = logging.getLogger("__name__")
 
 
 class AgentsContainer(AttrDict):
-    def __init__(self, model):
-        super().__init__()
+    """Singleton AgentsContainer for each model."""
+
+    _models: Dict[MainModel, AgentsContainer] = {}
+    _lock = threading.RLock()
+
+    def __new__(cls: type[Self], model: MainModel) -> Self:
+        instance = cls._models.get(model, None)
+        if instance is None:
+            instance = super().__new__(cls)
+            with cls._lock:
+                cls._models[model] = instance
+        return instance
+
+    def __init__(self, model: MainModel):
         self._model = model
         self._breeds = {}
 
@@ -27,74 +54,63 @@ class AgentsContainer(AttrDict):
         return len(self.to_list())
 
     def __repr__(self):
-        return f"<AgentsContainer: {[f'{breed}: {len(agents)}' for breed, agents in self.items()]}>"
+        rep = self.to_list().__repr__()[1:-1]
+        return f"<AgentsContainer: {rep}>"
+
+    def __getattr__(self, name: str) -> Any:
+        if name[0] == "_":
+            return super().__getattr__(name)
+        elif name in self._breeds:
+            return self.to_list(name)
+        else:
+            return super().__getattr__(name)
 
     @property
     def breeds(self):
         return tuple(self._breeds.keys())
 
-    @breeds.setter
-    def breeds(self, breed_cls):
-        name = breed_cls.__name__.lower()
-        self._breeds[name] = breed_cls
-
-    def apply(
-        self, func: callable, sender: object = None, *args, **kwargs
-    ) -> dict:
-        results = {}
-        for breed, agents in self.items():
-            if sender:
-                res = func(sender, agents, *args, **kwargs)
-            else:
-                res = func(agents, *args, **kwargs)
-            results[breed] = res
-        return results
-
-    def now(self, breed: Optional[str] = None) -> ActorsList:
-        if breed is None:
-            agents = self.to_list()
+    def create(
+        self, breed_cls: Type[Actor], n: int = 1
+    ) -> Union[Actor, ActorsList]:
+        breed = breed_cls.breed
+        if breed not in self._breeds:
+            self._breeds[breed] = breed_cls
+            self[breed] = set()
+        agents = ActorsList(self._model, objs=n, cls=breed_cls)
+        self.add(agents)
+        if n == 1:
+            return agents[0]
         else:
-            agents = self[breed]
-        return agents.select(agents.on_earth)
+            return agents
 
-    def to_list(self) -> ActorsList:
+    def to_list(
+        self, breeds: Optional[Union[str, Iterable[str]]] = None
+    ) -> ActorsList:
+        if breeds is None:
+            breeds = self.breeds
         agents = ActorsList(self._model)
-        for _, agents_lst in self.items():
-            agents.extend(agents_lst)
+        for breed in make_list(breeds):
+            agents.extend(self[breed])
         return agents
 
-    def _verify_agent(self, agent):
-        if not isinstance(agent, (Actor, Agent)):
-            return None
-        else:
-            breed = agent.__class__.__name__.lower()
-            if breed not in self.breeds:
-                self[breed] = ActorsList(model=self._model)
-                self.breeds = agent.__class__
-            return breed
-
-    def add(self, agents: ActorsList = None) -> None:
-        agents = make_list(agents)
-        for agent in agents:
-            breed = self._verify_agent(agent)
-            if breed is None:
-                continue
+    def add(self, agents: Union[Actor, ActorsList] = None) -> None:
+        if isinstance(agents, Actor):
+            breed = agents.breed
+            if breed not in self._breeds:
+                raise TypeError(f"'{breed}' not registered.")
             else:
-                self[breed].append(agent)
-
-    def get_breed(self, breed: str) -> ActorsList:
-        if breed in self.breeds:
-            return self[breed]
+                self[breed].add(agents)
         else:
-            return ActorsList(model=self._model)
+            dic = agents.to_dict()
+            for k, lst in dic.items():
+                if k not in self.breeds:
+                    raise TypeError(f"'{k}' not registered.")
+                self[k] = self[k].union(lst)
 
-    def remove(self, agents: ActorsList = None) -> None:
-        for agent in make_list(agents):
-            breed = self._verify_agent(agent)
-            self[breed].remove(agent)
-            del agent
-            if len(self[breed]) == 0:
-                del self[breed]
+    def remove(self, agents: Union[Actor, ActorsList] = None) -> None:
+        dic = agents.to_dict()
+        for breed, lst in dic.items():
+            self[breed] = self[breed] - set(lst)
 
 
 def apply_agents(func) -> callable:

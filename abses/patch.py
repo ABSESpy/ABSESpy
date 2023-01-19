@@ -23,6 +23,22 @@ from .geo import Geo
 # TODO use a decorator function instead of recalc
 
 
+def get_buffer(array, buffer=1, neighbors=4):
+    if neighbors == 4:
+        connectivity = 1
+    elif neighbors == 8:
+        connectivity = 2
+    struct = ndimage.generate_binary_structure(2, connectivity)
+    result = array.copy()
+    i = 1
+    while i <= buffer:
+        result = ndimage.binary_dilation(result, structure=struct).astype(
+            array.dtype
+        )
+        i += 1
+    return result
+
+
 def update_array(
     array,
     value: "np.ndarray|str|bool|float",
@@ -57,19 +73,7 @@ class ArrayOperation:
         self.array = array
 
     def buffer(self, buffer=1, neighbors=4):
-        if neighbors == 4:
-            connectivity = 1
-        elif neighbors == 8:
-            connectivity = 2
-        struct = ndimage.generate_binary_structure(2, connectivity)
-        result = self.array.copy()
-        i = 1
-        while i <= buffer:
-            result = ndimage.binary_dilation(result, structure=struct).astype(
-                self.array.dtype
-            )
-            i += 1
-        return result
+        return get_buffer(self.array, buffer=buffer, neighbors=neighbors)
 
     def unique(self) -> np.ndarray:
         return np.unique(self.array)
