@@ -18,7 +18,7 @@ website: https://cv.songshgeo.com
 - [x] 变量完成
 - [ ] 重构整个项目
 	- [ ] Mediator 步骤方法私有
-	- [ ] Agents Container 单例模式
+	- [x] Agents Container 单例模式
 - [ ] `Actor` 抽象类
 	- [ ] Actor 使用 `relationship`储存与其它`agents`的关系
 	- [ ] Actor 使用 `ownership` 储存与斑块变量的关系

@@ -24,15 +24,15 @@ def test_container_attributes():
     admins_5 = ac.create(Admin, 5)
     assert isinstance(a_farmer, Actor)
     assert ac.__len__() == 6
-    assert ac.__repr__() == "<AgentsContainer: (1)farmer; (5)admin>"
-    assert ac.breeds == tuple(["farmer", "admin"])
-    assert ac._breeds == {"farmer": Farmer, "admin": Admin}
-    for admin in ac.admin:
+    assert ac.__repr__() == "<AgentsContainer: (1)Farmer; (5)Admin>"
+    assert ac.breeds == tuple(["Farmer", "Admin"])
+    assert ac._breeds == {"Farmer": Farmer, "Admin": Admin}
+    for admin in ac.Admin:
         assert admin in admins_5
-    assert ac.admin == admins_5
+    assert ac.Admin == admins_5
 
     # 增删
     another_farmer = Farmer(model)
     ac.add(another_farmer)
     ac.remove(admins_5[:2])
-    assert ac.__repr__() == "<AgentsContainer: (2)farmer; (3)admin>"
+    assert ac.__repr__() == "<AgentsContainer: (2)Farmer; (3)Admin>"

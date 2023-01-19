@@ -16,7 +16,7 @@ def test_actor_attributes():
 
     assert actor.mediator is model.mediator
     assert actor.on_earth is False
-    assert actor.breed == "actor"
+    assert actor.breed == "Actor"
     pos = (3, 3)
     model.nature.add_agents(agents=[actor], positions=[pos])
     assert actor.on_earth is True

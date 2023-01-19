@@ -43,6 +43,6 @@ def test_base_agent():
     actor2 = MyActor(model=model, observer=False)
     father = Father(model=model, observer=True)
 
-    assert actor1.breed == actor2.breed == "myactor"
-    assert father.breed == "father"
+    assert actor1.breed == actor2.breed == "MyActor"
+    assert father.breed == "Father"
     assert actor1.a == 1

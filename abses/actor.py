@@ -33,8 +33,14 @@ logger = logging.getLogger("__name__")
 
 
 class Actor(BaseObj):
-    def __init__(self, model, observer: bool = True, **kwargs):
-        BaseObj.__init__(self, model, observer=observer, name=self.breed)
+    def __init__(
+        self,
+        model,
+        observer: bool = True,
+        name: Optional[str] = None,
+        **kwargs
+    ):
+        BaseObj.__init__(self, model, observer=observer, name=name)
         self.mediator: MainMediator = self.model.mediator
         self._on_earth: bool = False
         self._pos: Tuple[int, int] = None
@@ -45,7 +51,7 @@ class Actor(BaseObj):
     @classmethod
     @property
     def breed(cls) -> str:
-        return cls.__name__.lower()
+        return cls.__name__
 
     @property
     def population(self):

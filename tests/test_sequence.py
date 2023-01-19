@@ -21,18 +21,18 @@ def test_sequences_attributes():
     farmers3.test = -1
     mixed_actors = ActorsList(model=model, objs=[*actors5, *farmers3])
     assert isinstance(actors5, ActorsList)
-    assert mixed_actors.__repr__() == "<(5)actor; (3)farmer>"
-    assert mixed_actors.to_dict() == {"actor": actors5, "farmer": farmers3}
+    assert mixed_actors.__repr__() == "<(5)Actor; (3)Farmer>"
+    assert mixed_actors.to_dict() == {"Actor": actors5, "Farmer": farmers3}
     assert all(
         mixed_actors.on_earth
         == [False, False, False, False, False, False, False, False]
     )
     assert len(mixed_actors.now()) == 0
-    assert mixed_actors.select("farmer") == farmers3
+    assert mixed_actors.select("Farmer") == farmers3
     each_one = mixed_actors.select(
         [True, False, False, False, False, True, False, False]
     )
-    assert each_one.__repr__() == "<(1)actor; (1)farmer>"
+    assert each_one.__repr__() == "<(1)Actor; (1)Farmer>"
     assert mixed_actors.array("test").sum() == mixed_actors.test.sum()
     # 设置属性
     mixed_actors.testing = "testing"

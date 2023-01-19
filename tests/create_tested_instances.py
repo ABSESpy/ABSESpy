@@ -5,6 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from typing import Callable, Optional, Union
+
 from agentpy import Model
 
 from abses.actor import Actor
@@ -37,10 +39,18 @@ def noticeable_model():
     return model
 
 
-def simple_main_model(func):
+def simple_main_model(
+    func: Optional[Union[Callable, str]] = None
+) -> MainModel:
+    if func is None:
+        name = "test"
+    elif isinstance(func, str):
+        name = func
+    else:
+        name = func.__name__
     model = MainModel(
         base="tests",
-        name=func.__name__,
+        name=name,
         parameters={"nature": {"world": world}},
     )
     boundary = model.nature.generate_boundary(model.nature.params["world"])

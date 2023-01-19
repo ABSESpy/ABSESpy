@@ -65,19 +65,23 @@ class AgentsContainer(AttrDict):
         else:
             return super().__getattr__(name)
 
+    def __contains__(self, name):
+        return name in self.to_list()
+
     @property
     def breeds(self):
         return tuple(self._breeds.keys())
 
+    def _register(self, actor: Actor) -> None:
+        if actor.breed not in self._breeds:
+            self._breeds[actor.breed] = type(actor)
+            self[actor.breed] = set()
+
     def create(
         self, breed_cls: Type[Actor], n: int = 1
     ) -> Union[Actor, ActorsList]:
-        breed = breed_cls.breed
-        if breed not in self._breeds:
-            self._breeds[breed] = breed_cls
-            self[breed] = set()
         agents = ActorsList(self._model, objs=n, cls=breed_cls)
-        self.add(agents)
+        self.add(agents, register=True)
         if n == 1:
             return agents[0]
         else:
@@ -97,19 +101,19 @@ class AgentsContainer(AttrDict):
             agents.extend(self[breed])
         return agents
 
-    def add(self, agents: Union[Actor, ActorsList] = None) -> None:
-        if isinstance(agents, Actor):
-            breed = agents.breed
-            if breed not in self._breeds:
-                raise TypeError(f"'{breed}' not registered.")
-            else:
-                self[breed].add(agents)
-        else:
-            dic = agents.to_dict()
-            for k, lst in dic.items():
-                if k not in self.breeds:
+    def add(
+        self,
+        agents: Union[Actor, ActorsList, Iterable[Actor]] = None,
+        register: bool = False,
+    ) -> None:
+        dic = ActorsList(self._model, make_list(agents)).to_dict()
+        for k, actors_lst in dic.items():
+            if k not in self.breeds:
+                if register:
+                    self._register(actors_lst[0])
+                else:
                     raise TypeError(f"'{k}' not registered.")
-                self[k] = self[k].union(lst)
+            self[k] = self[k].union(actors_lst)
 
     def remove(self, agents: Union[Actor, ActorsList] = None) -> None:
         dic = agents.to_dict()
