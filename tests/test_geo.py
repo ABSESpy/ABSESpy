@@ -42,6 +42,7 @@ def test_setup_from_coords():
     assert geo.dims == geo3.dims == ("x", "y")
     assert (geo.x == np.arange(2, 10, 2)).all()
     assert (geo3.y == np.arange(1, 4)).all()
+    assert geo.mask.sum() == 0
 
 
 def test_setup_from_file():
@@ -52,3 +53,9 @@ def test_setup_from_file():
     geo5.auto_setup("config/world.yaml")
     assert geo5.shape == (9, 9)
     assert (geo5.x == np.arange(0, 90, 10)).all()
+    assert geo4.mask.sum() == 182289  # nodata
+
+    mask = np.ones(geo5.shape, bool)
+    mask[0, 0] = False
+    geo5.mask = mask
+    assert geo5.mask.sum() == 80

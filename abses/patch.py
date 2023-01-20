@@ -240,7 +240,7 @@ class Patch(np.ndarray, Creation):
         xda = xr.DataArray(
             data=self,
             name=self.name,
-            coords=self.father.coords,
+            coords=self.father.geo.coords,
             attrs=self.father.attrs,
         ).where(self.father.accessible)
         self._xda = xda

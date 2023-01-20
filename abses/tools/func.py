@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 import logging
-from typing import Iterable, List
+from typing import Any, Iterable, List
 
 import numpy as np
 
@@ -28,32 +28,41 @@ def make_list(element, keep_none=False):
 
 def norm_choice(
     a: Iterable[any], size: int = None, p=None, replace=False
-) -> any:
-    if p is None or len(set(p)) == 0:
-        p = np.ones(len(make_list(a)))
-    p = np.array(make_list(p), dtype=float)
-    negative = p < 0
-    if sum(negative) > 0:
-        logger.warning(
-            f"Input {sum(negative)} p are negative, change to zero when normalizing."
-        )
-        p[negative] = 0.0
-    if all(p == 0):
-        p = np.ones(len(make_list(a)))
-        logger.warning("Input possibilities are all zeros.")
-    p /= p.sum()
-    # 如果有概率的实体 少于要选择的实体
-    if size is None:
-        return np.random.choice(a, p=p)
-    possible_entries = len(p[p > 0])
-    if possible_entries < size:
-        bounds = a[p > 0]
-        rand = np.random.choice(
-            a[p == 0], size=(size - possible_entries), replace=replace
-        )
-        selected = np.concatenate([bounds, rand])
+) -> Any:
+    """
+    A more robust random chooser.
+
+    Args:
+        a (Iterable[any]): An iterable instance to choose.
+        size (int, optional): size of the choice. Defaults to None.
+        p (_type_, optional): probability. Defaults to None.
+        replace (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        Any: _description_
+    """
+    p = np.array(make_list(p))
+    possible_entries = (p > 0).sum()
+    if possible_entries == 0:
+        p = None
     else:
-        selected = np.random.choice(a, p=p, size=size, replace=replace)
+        p = np.where(p > 0, p, 0.0)
+        p /= p.sum()
+    # solve probability
+    if p is None or replace is True:
+        return np.random.choice(a, size=size, p=p, replace=replace)
+    else:
+        # 如果有概率的实体 少于要选择的实体，优先返回
+        if size is None:
+            return np.random.choice(a, p=p, replace=False)
+        elif possible_entries < size:
+            bounds = a[p > 0]
+            rand = np.random.choice(
+                a[p == 0], size=(size - possible_entries), replace=False
+            )
+            selected = np.concatenate([bounds, rand])
+        else:
+            selected = np.random.choice(a, p=p, size=size, replace=False)
     return selected
 
 

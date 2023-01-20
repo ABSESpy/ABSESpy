@@ -22,6 +22,7 @@ from typing import (
     Self,
     Sequence,
     Tuple,
+    Type,
     TypeAlias,
     Union,
 )
@@ -29,7 +30,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 import rioxarray
-import xarray
+import xarray as xr
 from pyproj.crs.crs import CRS
 
 from .tools.read_files import read_yaml
@@ -66,10 +67,28 @@ class Geo:
         self._dims: Tuple[str, str] = ("x", "y")
         self._x: Optional[np.ndarray] = None
         self._y: Optional[np.ndarray] = None
+        self._mask: Optional[np.ndarray] = None
 
     @property
     def shape(self) -> Tuple[int, int]:
         return self.height, self.width
+
+    @property
+    def mask(self) -> xr.DataArray:
+        if self._mask is None:
+            return self.zeros()
+        else:
+            return self.wrap_data(self._mask)
+
+    @mask.setter
+    def mask(self, value):
+        if not hasattr(value, "shape"):
+            raise AttributeError("Mask must has 'shape' attribute")
+        elif value.shape != self.shape:
+            raise ValueError(
+                f"Input shape {value.shape} does not match {self.shape}."
+            )
+        self._mask = value
 
     @property
     def crs(self) -> CRS:
@@ -105,7 +124,7 @@ class Geo:
             return self.crs.name
 
     @property
-    def georef(self):
+    def georef(self) -> Dict[str, Any]:
         georef = {
             "crs": f"{self.geographic_crs_name}",
             "dims": f"{self.dims}",
@@ -114,11 +133,11 @@ class Geo:
         return georef
 
     @property
-    def width(self):
+    def width(self) -> int:
         return len(self._x)
 
     @property
-    def height(self):
+    def height(self) -> int:
         return len(self._y)
 
     @property
@@ -132,12 +151,12 @@ class Geo:
     @property
     def coords(self) -> Dict[str, np.ndarray]:
         coords = {
-            self.dims[0]: self.x,
             self.dims[1]: self.y,
+            self.dims[0]: self.x,
         }
         return coords
 
-    def show_georef(self):
+    def show_georef(self) -> pd.Series:
         return pd.Series(self.georef)
 
     def retrieve_georef(self, **kwargs) -> None:
@@ -149,7 +168,7 @@ class Geo:
         coord_x: Coordinate,
         coord_y: Coordinate,
         **kwargs: Dict[str, Any],
-    ) -> Shape2:
+    ) -> None:
         """
         Setup geographic references from coordinates.
 
@@ -182,7 +201,6 @@ class Geo:
         y, self._y = parse_coord(coord_y, "y")
         self._dims = (x, y)
         self.retrieve_georef(**kwargs)
-        return self.shape
 
     def setup_from_shape(
         self,
@@ -194,10 +212,9 @@ class Geo:
         self._x = np.arange(0, width * resolution, resolution)
         self._y = np.arange(0, height * resolution, resolution)
         self.retrieve_georef(**kwargs)
-        return self.shape
 
     @staticmethod
-    def detect_dims(dims: Tuple[str]):
+    def detect_dims(dims: Tuple[str]) -> Tuple[str]:
         if "x" in dims and "y" in dims:
             return ("x", "y")
         elif "lon" in dims and "lat" in dims:
@@ -207,16 +224,21 @@ class Geo:
         else:
             raise ValueError("Unknown dimensions %s." % dims)
 
-    def setup_from_dict(self, settings: dict):
+    def setup_from_dict(self, settings: dict) -> None:
         shape = settings.pop("shape", None)
         resolution = settings.pop("resolution", 1)
         if shape is None:
-            width = settings.pop("width")
-            height = settings.pop("height")
+            try:
+                width = settings.pop("width")
+                height = settings.pop("height")
+            except KeyError:
+                raise KeyError(
+                    f"'shape' or ('width' and 'height') not specified in {settings.keys()}!"
+                )
             shape = (height, width)
         self.setup_from_shape(shape=shape, resolution=resolution, **settings)
 
-    def setup_from_file(self, filename: str):
+    def setup_from_file(self, filename: str) -> None:
         path = Path(filename)
         if not path.is_file():
             raise ValueError("Could not find file %s" % filename)
@@ -226,14 +248,36 @@ class Geo:
             x_coord = xda.coords[dims[0]].to_dict()
             y_coord = xda.coords[dims[1]].to_dict()
             self.setup_from_coords(x_coord, y_coord, **xda.attrs)
+            self.mask = xda.isnull().data.reshape(self.shape)
         elif path.suffix in [".yaml"]:
             settings = read_yaml(path)
             self.setup_from_dict(settings)
         else:
             raise ValueError(f"Unknown referring file type {path.suffix}.")
 
-    def auto_setup(self, settings: Union[str, dict]):
+    def auto_setup(self, settings: Union[str, dict]) -> None:
         if isinstance(settings, str):
             self.setup_from_file(settings)
         elif isinstance(settings, dict):
             self.setup_from_dict(settings)
+        else:
+            raise TypeError(f"Not support '{type(settings)}'.")
+
+    def zeros(self, dtype: Type = bool) -> xr.DataArray:
+        data = np.zeros(self.shape, dtype=dtype)
+        return self.wrap_data(data, mask=False)
+
+    def ones(self, dtype: Type = bool) -> xr.DataArray:
+        data = np.ones(self.shape, dtype=dtype)
+        return self.wrap_data(data, mask=False)
+
+    def wrap_data(
+        self, data: Optional[np.ndarray] = None, mask: bool = False
+    ) -> xr.DataArray:
+        if data is None:
+            return self.mask
+        xda = xr.DataArray(data, coords=self.coords)
+        if mask is True:
+            return xda.where(self.mask)
+        else:
+            return xda

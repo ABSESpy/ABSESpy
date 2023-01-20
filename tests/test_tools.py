@@ -5,8 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.tools.func import iter_func, opfunc_using_attr, wrap_opfunc_to
-from abses.tools.read_files import is_valid_yaml, read_yaml
+from abses.tools.func import *
+from abses.tools.read_files import *
 
 CONFIG = r"config/testing.yaml"
 
@@ -94,3 +94,15 @@ def test_wrap_opfunc():
     assert str_obj * 2 == "testtest"
     wrap_opfunc_to(float_obj, "attr")
     assert float_obj * 10 == 1.0
+
+
+def test_random_choosers():
+    p = [0.0, -1.0, -1.0, -1.0]
+    p2 = [300.0, -1.0, -1.0, -1]
+    # possible entries == 0, p = None
+    norm_choice(a=np.arange(4), size=2, p=p, replace=True)
+    norm_choice(a=np.arange(4), size=2, p=None, replace=False)
+    r3 = norm_choice(a=np.arange(4), size=2, p=p2, replace=True)
+    r4 = norm_choice(a=np.arange(4), size=2, p=p2, replace=False)
+    assert (np.array([0.0, 0.0]) == r3).all()
+    assert 0 in r4

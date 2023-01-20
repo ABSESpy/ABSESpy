@@ -106,7 +106,7 @@ class CompositeModule(Module, MainComponent, Creator):
 class PatchModule(PatchFactory, Module):
     def __init__(self, model, name: str = None, **kwargs):
         Module.__init__(self, model, name=name)
-        PatchFactory.__init__(self, **kwargs)
+        PatchFactory.__init__(self, model, **kwargs)
         self._patches = []
 
     @property
@@ -168,22 +168,22 @@ class PatchModule(PatchFactory, Module):
 
 
 class HumanModule(Module):
-    def to_agents(self, iterable: Iterable) -> ActorsList:
-        return ActorsList(self.model, iterable)
-
-    def mock(self, agents, attrs, how="attr"):
-        tutors = self.to_agents(agents.tutor.now)
-        for attr in make_list(attrs):
-            values = tutors.array(attr, how)
-            agents.update(attr, values)
+    pass
 
 
-def skip_if_close(func):
-    def skip_module_method(self, *args, **kwargs):
-        if self.opening:
-            func(self, *args, **kwargs)
-        else:
-            if self.log_flag:
-                self.logger.warning(f"{self}.")
+#     def mock(self, agents, attrs, how="attr"):
+#         tutors = self.to_agents(agents.tutor.now)
+#         for attr in make_list(attrs):
+#             values = tutors.array(attr, how)
+#             agents.update(attr, values)
 
-    return skip_module_method
+
+# def skip_if_close(func):
+#     def skip_module_method(self, *args, **kwargs):
+#         if self.opening:
+#             func(self, *args, **kwargs)
+#         else:
+#             if self.log_flag:
+#                 self.logger.warning(f"{self}.")
+
+#     return skip_module_method

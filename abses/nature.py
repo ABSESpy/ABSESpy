@@ -10,12 +10,22 @@ from typing import List, Optional, Tuple
 import numpy as np
 from agentpy.grid import AgentIter, Grid, _IterArea
 
+from abses.boundary import Boundaries
+from abses.geo import Geo
+
 from .algorithms.spatial import points_to_polygons, polygon_to_mask
-from .container import ActorsList, AgentsContainer, apply_agents
+from .container import ActorsList, AgentsContainer
 from .factory import PatchFactory
 from .modules import CompositeModule
 from .patch import Patch, get_buffer
 from .tools.func import norm_choice
+
+DEFAULT_WORLD = {
+    "width": 9,
+    "height": 9,
+    "resolution": 10,
+    # 'units': 'm',
+}
 
 # from nptyping import NDArray, Shape
 
@@ -23,75 +33,74 @@ from .tools.func import norm_choice
 class BaseNature(CompositeModule, PatchFactory, Grid):
     def __init__(self, model, name="nature", **kwargs):
         CompositeModule.__init__(self, model, name=name)
-        PatchFactory.__init__(self, **kwargs)
-        self._patches = {}  # TODO: refactor this
+        PatchFactory.__init__(self, model=model, **kwargs)
+        self._boundary: Boundaries = None
+
+    # @property
+    # def patches(self):
+    #     return tuple(self._patches.keys())
 
     @property
-    def patches(self):
-        return tuple(self._patches.keys())
+    def boundary(self):
+        return self._boundary
 
-    def set_space(self, shape, mask, *args, **kwargs):
-        Grid.__init__(self, model=self.model, shape=shape, *args, **kwargs)
-        self._mask = mask
-        self.shape = shape
-        # todo: refactor this
-        if hasattr(mask, "coords"):
-            self._coords = self.mask.coords
-            self.inheritance = "_coords"
+    @boundary.setter
+    def boundary(self, boundary):
+        self._boundary = boundary
 
-    def from_boundary(self, boundary, *args, **kwargs):
-        shape = boundary.shape
-        mask = ~boundary.interior
-        self.set_space(shape, mask, *args, **kwargs)
+    # def _check_boundary(self, boundary):
+    #     if not isinstance(boundary, Boundaries):
+    #         raise TypeError("boundary must be Boundaries")
 
-    def send_patch(self, attr: str, **kwargs) -> Patch:
-        if hasattr(self, attr):
-            obj = getattr(self, attr)
-            return obj
-        elif attr in self.patches:
-            module = self._patches[attr]
-            obj = module.get_patch(attr, **kwargs)
-            return obj
-        else:
-            raise ValueError(f"Unknown patch {attr}.")
+    def _after_parsing(self):
+        settings = self.params.get("world", DEFAULT_WORLD).copy()
+        self.geo.auto_setup(settings=settings)
+        boundary_settings = self.params.get("boundary", {})
+        self.boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
+        Grid.__init__(self, model=self.model, shape=self.geo.shape)
 
-    def initialize(self):
-        settings = self.params.get("boundary")
-        if settings:
-            boundary = self.generate_boundary(settings)
-            self.from_boundary(boundary)
-        self.notify()
+    # def send_patch(self, attr: str, **kwargs) -> Patch:
+    #     if hasattr(self, attr):
+    #         obj = getattr(self, attr)
+    #         return obj
+    #     elif attr in self.patches:
+    #         module = self._patches[attr]
+    #         obj = module.get_patch(attr, **kwargs)
+    #         return obj
+    #     else:
+    #         raise ValueError(f"Unknown patch {attr}.")
 
-    def transfer_var(self, sender: object, var: str) -> None:
-        if var not in self.patches:
-            self._patches[var] = sender
-        else:
-            module = self._patches[var]
-            if sender is module:
-                self.logger.warning(
-                    f"Transfer exists {var} of {module}, please use 'update' function to do so."
-                )
-            self.logger.error(
-                f"{sender} wants to transfer an exists var '{var}', which was created by {module}!"
-            )
+    # def transfer_var(self, sender: object, var: str) -> None:
+    #     if var not in self.patches:
+    #         self._patches[var] = sender
+    #     else:
+    #         module = self._patches[var]
+    #         if sender is module:
+    #             self.logger.warning(
+    #                 f"Transfer exists {var} of {module}, please use 'update' function to do so."
+    #             )
+    #         self.logger.error(
+    #             f"{sender} wants to transfer an exists var '{var}', which was created by {module}!"
+    #         )
 
-    def transfer_update(
-        self, sender: object, patch_name: str, **kwargs
-    ) -> None:
-        # update a patch
-        if patch_name in self.patches:
-            owner = self._patches[patch_name]
-            getattr(owner, patch_name).update(**kwargs)
-            self.logger.debug(
-                f"{sender} requires {patch_name} of {owner} to update."
-            )
+    # def transfer_update(
+    #     self, sender: object, patch_name: str, **kwargs
+    # ) -> None:
+    #     # update a patch
+    #     if patch_name in self.patches:
+    #         owner = self._patches[patch_name]
+    #         getattr(owner, patch_name).update(**kwargs)
+    #         self.logger.debug(
+    #             f"{sender} requires {patch_name} of {owner} to update."
+    #         )
 
     def random_positions(
         self,
         k: int,
-        mask: np.ndarray = None,
+        where: np.ndarray = None,
         probabilities: np.ndarray = None,
         only_empty: bool = False,
+        replace: bool = False,
     ) -> List[Tuple[int, int]]:
         """
         Choose 'k' patches in the world randomly.
@@ -104,18 +113,23 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         Returns:
             List[Tuple[int, int]]: iterable coordinates of chosen patches.
         """
-        if mask is None:
-            mask = np.ones(self.shape, bool)
+        if where is None:
+            where = self.accessible
+        else:
+            where = self.accessible & where
         if only_empty is True:
-            mask = mask & ~self.has_agent()
-        mask = self.create_patch(mask, "mask")
-        accessible_pos = [(x, y) for x, y in mask.arr.where()]
+            where = where & ~self.has_agent()
+        where = self.create_patch(where, "where")
+        potential_pos = [(x, y) for x, y in where.arr.where()]
         if probabilities is not None:
-            probabilities = probabilities[mask]
+            probabilities = probabilities[where]
         pos_index = norm_choice(
-            np.arange(len(accessible_pos)), size=k, p=probabilities
+            np.arange(len(potential_pos)),
+            size=k,
+            p=probabilities,
+            replace=replace,
         )
-        positions = [accessible_pos[i] for i in pos_index]
+        positions = [potential_pos[i] for i in pos_index]
         return positions
 
     def random_move(
@@ -137,17 +151,10 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         self,
         agents: ActorsList,
         positions=None,
-        random=False,
-        only_empty=False,
-        only_accessible=True,
     ):
-        # TODO: refactor this without if-else
-        mask = self.accessible
         if positions is None:
-            positions = self.random_positions(
-                len(agents),
-                mask=mask,
-            )
+            positions = self.random_positions(len(agents))
+        self.empty
         for agent, pos in zip(agents, positions):
             agent.settle_down(position=pos)
         # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."

@@ -53,6 +53,4 @@ def simple_main_model(
         name=name,
         parameters={"nature": {"world": world}},
     )
-    boundary = model.nature.generate_boundary(model.nature.params["world"])
-    model.nature.from_boundary(boundary)
     return model
