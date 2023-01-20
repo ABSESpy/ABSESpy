@@ -13,7 +13,10 @@ nav:
         - Background: docs/background.md
         - License: docs/license.md
         - Acknowledge: docs/acknowledge.md
-    - User Guide: docs/user_guide.md
+    - User Guide:
+        - User Guid: docs/user_guide.md
+        - Manipulate Actors: notebooks/actors.ipynb
+        - Manipulate GeoData: notebooks/geodata.ipynb
     - API references:
         - Model: api/model.md
         - Structures: api/structures.md
@@ -26,7 +29,6 @@ nav:
         - Variables: api/variables.md
         - Experiment: api/experiment.md
     - Examples:
-        - Manipulate Actors: notebooks/actors.ipynb
         - Climate negotiation: examples/negotiation.md
         - Groundwater withdraw: examples/groundwater.md
         - Yellow River Quotas: examples/yr_sim.md
