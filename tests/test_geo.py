@@ -42,3 +42,13 @@ def test_setup_from_coords():
     assert geo.dims == geo3.dims == ("x", "y")
     assert (geo.x == np.arange(2, 10, 2)).all()
     assert (geo3.y == np.arange(1, 4)).all()
+
+
+def test_setup_from_file():
+    geo4 = Geo(4)
+    geo4.setup_from_file("data/mean_prec.tif")
+    assert geo4.shape == (400, 700)
+    geo5 = Geo(5)
+    geo5.auto_setup("config/world.yaml")
+    assert geo5.shape == (9, 9)
+    assert (geo5.x == np.arange(0, 90, 10)).all()

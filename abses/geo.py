@@ -7,8 +7,10 @@
 
 from __future__ import annotations
 
+import os
 import threading
 from numbers import Number
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -26,7 +28,11 @@ from typing import (
 
 import numpy as np
 import pandas as pd
+import rioxarray
+import xarray
 from pyproj.crs.crs import CRS
+
+from .tools.read_files import read_yaml
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -189,3 +195,45 @@ class Geo:
         self._y = np.arange(0, height * resolution, resolution)
         self.retrieve_georef(**kwargs)
         return self.shape
+
+    @staticmethod
+    def detect_dims(dims: Tuple[str]):
+        if "x" in dims and "y" in dims:
+            return ("x", "y")
+        elif "lon" in dims and "lat" in dims:
+            return ("lon", "lat")
+        elif "longitude" in dims and "latitude" in dims:
+            return ("longitude", "latitude")
+        else:
+            raise ValueError("Unknown dimensions %s." % dims)
+
+    def setup_from_dict(self, settings: dict):
+        shape = settings.pop("shape", None)
+        resolution = settings.pop("resolution", 1)
+        if shape is None:
+            width = settings.pop("width")
+            height = settings.pop("height")
+            shape = (height, width)
+        self.setup_from_shape(shape=shape, resolution=resolution, **settings)
+
+    def setup_from_file(self, filename: str):
+        path = Path(filename)
+        if not path.is_file():
+            raise ValueError("Could not find file %s" % filename)
+        if path.suffix in [".tiff", ".tif"]:
+            xda = rioxarray.open_rasterio(filename)
+            dims = self.detect_dims(xda.dims)
+            x_coord = xda.coords[dims[0]].to_dict()
+            y_coord = xda.coords[dims[1]].to_dict()
+            self.setup_from_coords(x_coord, y_coord, **xda.attrs)
+        elif path.suffix in [".yaml"]:
+            settings = read_yaml(path)
+            self.setup_from_dict(settings)
+        else:
+            raise ValueError(f"Unknown referring file type {path.suffix}.")
+
+    def auto_setup(self, settings: Union[str, dict]):
+        if isinstance(settings, str):
+            self.setup_from_file(settings)
+        elif isinstance(settings, dict):
+            self.setup_from_dict(settings)
