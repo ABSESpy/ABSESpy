@@ -5,11 +5,12 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from agentpy.grid import AgentIter, Grid, _IterArea
 
+from abses.actor import Actor
 from abses.boundary import Boundaries
 from abses.geo import Geo
 
@@ -39,6 +40,9 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
     # @property
     # def patches(self):
     #     return tuple(self._patches.keys())
+
+    def __getitem__(self, key):
+        return ActorsList(self.model, self.grid["agents"][key])
 
     @property
     def boundary(self):
@@ -132,20 +136,20 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         positions = [potential_pos[i] for i in pos_index]
         return positions
 
-    def random_move(
-        self,
-        agent,
-        only_empty: bool = True,
-        avoid_breed: str = None,
-        only_accessible: bool = True,
-    ):
-        mask = self.create_patch(True, "mask")
-        if only_accessible:
-            mask = mask | self.accessible
-        if only_empty:
-            mask = mask | ~self.has_agent(avoid_breed)
-        pos = self.random_positions(1, mask)[0]
-        self.move_to(agent, pos)
+    # def random_move(
+    #     self,
+    #     agent,
+    #     only_empty: bool = True,
+    #     avoid_breed: str = None,
+    #     only_accessible: bool = True,
+    # ):
+    #     mask = self.create_patch(True, "mask")
+    #     if only_accessible:
+    #         mask = mask | self.accessible
+    #     if only_empty:
+    #         mask = mask | ~self.has_agent(avoid_breed)
+    #     pos = self.random_positions(1, mask)[0]
+    #     self.move_to(agent, pos)
 
     def add_agents(
         self,
@@ -154,14 +158,14 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
     ):
         if positions is None:
             positions = self.random_positions(len(agents))
-        self.empty
         for agent, pos in zip(agents, positions):
             agent.settle_down(position=pos)
+        super().add_agents(agents, positions, random=False, empty=False)
         # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
         # self.mediator.transfer_event(self, msg)
 
     def land_allotment(
-        self, agents, mask: np.ndarray = None
+        self, agents: ActorsList, where: np.ndarray = None
     ) -> AgentsContainer:
         """
         > For each cell in the grid, find the nearest agent and assign that agent's id to the cell
@@ -169,24 +173,16 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         :param mask: a boolean array that indicates which cells should be assigned an owner
         :return: The pattern of the agents.
         """
-        ownership = self.create_patch(
-            np.nan,
-            name=f"{agents.breed()}s_ownership",
-        )  # TODO: add=True, refactor patches
-        if mask is None:
-            mask = self.accessible
+        where = self.geo.wrap_data(where, masked=True)
         points = agents.array("pos")
         polygons = points_to_polygons(points)
         for i, agent in enumerate(agents):
             owned_land = polygon_to_mask(polygons[i], shape=self.shape)
-            owned_land = owned_land & mask
-            ownership.update(agent.id, mask=owned_land)
-            agent.owned_land = owned_land
-        self.__setattr__(ownership.name, ownership)
-        return ownership
+            owned_land = owned_land & where
+            agent.attach_places(name="owned", place=owned_land)
 
     def lookup_agents(
-        self, mask_patch: np.ndarray, breed: Optional[str] = None
+        self, where: np.ndarray, breed: Optional[str] = None
     ) -> ActorsList:
         """
         Find alive agents who is settling on the given patch.
@@ -198,12 +194,11 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         Returns:
             ActorsList: actors on the given patches.
         """
-        area = np.array(
-            [self.grid.agents[cell] for cell in mask_patch.arr.where()],
-            dtype=object,
-        )
-        agents_lst = AgentIter(self.model, _IterArea(area)).to_list()
-        agents = ActorsList(model=self.model, agents=agents_lst)
+        where = self.create_patch(where, "where")
+        agents = ActorsList(model=self.model)
+        for cell in where.arr.where():
+            agents_here = self.grid["agents"][cell]
+            agents.extend(agents_here)
         if breed is None:
             return agents
         else:
@@ -221,7 +216,9 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         buffer = get_buffer(buffer=distance, neighbors=neighbors)
         return self.lookup_agents(buffer, breed=breed)
 
-    def has_agent(self, breed: str = None, mask: np.ndarray = None) -> Patch:
+    def has_agent(
+        self, breed: str = None, where: Optional[np.ndarray] = None
+    ) -> Patch:
         """
         Where exists agents.
 
@@ -232,9 +229,8 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         Returns:
             Patch: bool patch, True if this cell has agent, False otherwise.
         """
-        if mask is None:
-            mask = np.ones(self.shape, dtype=bool)
-        agents = self.lookup_agents(mask, breed=breed)
+        where = self.geo.wrap_data(where, masked=True)
+        agents = self.lookup_agents(where, breed=breed)
         has_agents = np.zeros(self.shape, bool)
         for agent in agents.select(agents.on_earth):
             has_agents[agent.pos] = True

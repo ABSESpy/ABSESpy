@@ -65,9 +65,16 @@ class Actor(BaseObj):
     def pos(self) -> Tuple[int, int]:
         return self._pos
 
+    def neighbors(self, distance: int = 1, exclude: bool = True):
+        return self.mediator.transfer_request(self, "neighbors")
+
     def settle_down(self, position: Optional[Tuple[int, int]] = None) -> bool:
-        self._pos = position
-        self._on_earth = True
+        if self.on_earth is False:  # If is a no-home agents
+            self._pos = position
+            self._on_earth = True
+        else:  # If already on earth.
+            self.mediator.transfer_request(self, "move", position=position)
+            self._pos = position
         return self.on_earth
 
     def build_connection(

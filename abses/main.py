@@ -380,3 +380,10 @@ class MainMediator(Mediator, Log):
         if sender is self.human or isinstance(sender, Actor):
             patch_obj = self.nature.send_patch(attr, **kwargs)
             return patch_obj
+
+    def transfer_request(self, sender: object, attr: str, **kwargs) -> object:
+        self._check_sender(sender)
+        if self.sender_matches("agent"):
+            if attr == "move":
+                pos = kwargs.get("position")
+                self.nature.move_to(sender, pos)

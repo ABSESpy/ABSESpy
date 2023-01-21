@@ -80,6 +80,10 @@ class Geo:
         else:
             return self.wrap_data(self._mask)
 
+    @property
+    def accessible(self) -> xr.DataArray:
+        return ~self.mask
+
     @mask.setter
     def mask(self, value):
         if not hasattr(value, "shape"):
@@ -265,19 +269,19 @@ class Geo:
 
     def zeros(self, dtype: Type = bool) -> xr.DataArray:
         data = np.zeros(self.shape, dtype=dtype)
-        return self.wrap_data(data, mask=False)
+        return self.wrap_data(data, masked=False)
 
     def ones(self, dtype: Type = bool) -> xr.DataArray:
         data = np.ones(self.shape, dtype=dtype)
-        return self.wrap_data(data, mask=False)
+        return self.wrap_data(data, masked=False)
 
     def wrap_data(
-        self, data: Optional[np.ndarray] = None, mask: bool = False
+        self, data: Optional[np.ndarray] = None, masked: bool = False
     ) -> xr.DataArray:
         if data is None:
-            return self.mask
+            return self.accessible
         xda = xr.DataArray(data, coords=self.coords)
-        if mask is True:
-            return xda.where(self.mask)
+        if masked is True:
+            return xda.where(self.accessible)
         else:
             return xda

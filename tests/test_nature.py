@@ -27,3 +27,12 @@ def test_nature_positions():
     positions_replace = nature.random_positions(k=5, where=zeros, replace=True)
     model.nature.add_agents(actors, positions_replace)
     assert (actors.pos == (0, 0)).all()
+    for actor in actors:
+        assert nature.positions[actor] == (0, 0)
+    actors[0].settle_down((0, 1))
+    assert len(nature.grid["agents"][0, 0]) == 4
+    assert len(nature.lookup_agents(zeros)) == 4
+    assert len(nature.has_agent().arr.where()) == 2
+    actors_4 = nature[0, 0]
+    assert len(actors_4) == 4
+    assert actors_4.array("id").sum() == actors[1:].id.sum()

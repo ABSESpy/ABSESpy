@@ -8,7 +8,17 @@
 import logging
 from collections.abc import Iterable
 from numbers import Number
-from typing import Any, Callable, Dict, List, Optional, Self, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Self,
+    Union,
+    overload,
+)
 
 import numpy as np
 from agentpy import AgentList
@@ -35,13 +45,20 @@ class ActorsList(AgentList):
         else:
             return ActorsList.array(self, name)
 
+    def __iter__(self) -> Iterator[Actor]:
+        return super().__iter__()
+
     def __eq__(self, other):
         if not self._is_same_length(other):
             return False
         else:
             return all([actor in other for actor in self])
 
-    def __getitem__(self, index):
+    @overload
+    def __getitem__(self, other: int) -> Actor:
+        ...
+
+    def __getitem__(self, index: slice) -> Self:
         results = super().__getitem__(index)
         if isinstance(index, slice):
             return ActorsList(self.model, results)

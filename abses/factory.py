@@ -46,14 +46,13 @@ class PatchFactory(Creator):
 
     @property
     def mask(self) -> xarray.DataArray:
-        return self.geo.wrap_data(self._mask, mask=True)
+        if self._mask is None:
+            self._mask = self.geo.zeros(bool)
+        return self._mask | self.geo.mask
 
     @property
     def accessible(self):
-        if self.mask is None:
-            return None
-        else:
-            return ~self.mask
+        return ~self.mask
 
     @property
     def attrs(self):
