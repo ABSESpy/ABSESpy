@@ -5,10 +5,10 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, overload
 
 import numpy as np
-from agentpy.grid import AgentIter, Grid, _IterArea
+from agentpy.grid import AgentSet, Grid
 
 from abses.actor import Actor
 from abses.boundary import Boundaries
@@ -28,21 +28,48 @@ DEFAULT_WORLD = {
     # 'units': 'm',
 }
 
-# from nptyping import NDArray, Shape
+
+class PositionSet(AgentSet):
+    def __init__(self, model, index, accessible, *args, **kwargs):
+        super().__init__(model, *args, **kwargs)
+        self._index: Tuple[int, int] = index
+        self._accessible: bool = accessible
+
+    @property
+    def index(self):
+        return self._index
+
+    @property
+    def accessible(self):
+        return self._accessible
+
+    def add(self, actor: Actor):
+        if self._accessible is False:
+            raise KeyError(f"{self.index} is not accessible.")
+        else:
+            super().add(actor)
 
 
-class BaseNature(CompositeModule, PatchFactory, Grid):
+class BaseNature(CompositeModule, PatchFactory):
     def __init__(self, model, name="nature", **kwargs):
         CompositeModule.__init__(self, model, name=name)
         PatchFactory.__init__(self, model=model, **kwargs)
         self._boundary: Boundaries = None
+        self._grid: np.ndarray = None
 
     # @property
     # def patches(self):
     #     return tuple(self._patches.keys())
 
-    def __getitem__(self, key):
-        return ActorsList(self.model, self.grid["agents"][key])
+    def __getitem__(self, key: Union[Tuple[int, int], slice]) -> ActorsList:
+        items = self.grid[key]
+        if isinstance(items, AgentSet):
+            return ActorsList(self.model, items)
+        else:
+            agents = ActorsList(self.model)
+            for item in items.flatten():
+                agents.extend(item)
+        return agents
 
     @property
     def boundary(self):
@@ -52,16 +79,27 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
     def boundary(self, boundary):
         self._boundary = boundary
 
-    # def _check_boundary(self, boundary):
-    #     if not isinstance(boundary, Boundaries):
-    #         raise TypeError("boundary must be Boundaries")
+    @property
+    def grid(self) -> np.ndarray:
+        return self._grid
+
+    def _setup_grid(self, shape: Tuple[int, int]):
+        array = np.empty(shape=shape, dtype=object)
+        it = np.nditer(array, flags=["refs_ok", "multi_index"])
+        for _ in it:
+            index = it.multi_index
+            access = self.accessible[index]
+            array[index] = PositionSet(
+                model=self.model, accessible=access, index=index
+            )
+        self._grid = array
 
     def _after_parsing(self):
         settings = self.params.get("world", DEFAULT_WORLD).copy()
         self.geo.auto_setup(settings=settings)
         boundary_settings = self.params.get("boundary", {})
         self.boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
-        Grid.__init__(self, model=self.model, shape=self.geo.shape)
+        self._setup_grid(shape=self.geo.shape)
 
     # def send_patch(self, attr: str, **kwargs) -> Patch:
     #     if hasattr(self, attr):
@@ -160,7 +198,7 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
             positions = self.random_positions(len(agents))
         for agent, pos in zip(agents, positions):
             agent.settle_down(position=pos)
-        super().add_agents(agents, positions, random=False, empty=False)
+            self.grid[pos].add(agent)
         # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
         # self.mediator.transfer_event(self, msg)
 
@@ -197,7 +235,7 @@ class BaseNature(CompositeModule, PatchFactory, Grid):
         where = self.create_patch(where, "where")
         agents = ActorsList(model=self.model)
         for cell in where.arr.where():
-            agents_here = self.grid["agents"][cell]
+            agents_here = self.grid[cell]
             agents.extend(agents_here)
         if breed is None:
             return agents

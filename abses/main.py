@@ -383,7 +383,3 @@ class MainMediator(Mediator, Log):
 
     def transfer_request(self, sender: object, attr: str, **kwargs) -> object:
         self._check_sender(sender)
-        if self.sender_matches("agent"):
-            if attr == "move":
-                pos = kwargs.get("position")
-                self.nature.move_to(sender, pos)

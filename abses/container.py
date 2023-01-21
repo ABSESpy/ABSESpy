@@ -20,7 +20,7 @@ from typing import (
     Union,
 )
 
-from agentpy import Agent, AttrDict
+from agentpy import AttrDict
 
 from .actor import Actor
 from .sequences import ActorsList

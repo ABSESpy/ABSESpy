@@ -20,7 +20,7 @@ from typing import (
 
 import networkx as nx
 import numpy as np
-from agentpy import AttrDict
+from agentpy import AgentSet, AttrDict
 
 from .objects import BaseObj
 from .patch import Patch
@@ -65,6 +65,10 @@ class Actor(BaseObj):
     def pos(self) -> Tuple[int, int]:
         return self._pos
 
+    @property
+    def here(self) -> AgentSet:
+        return self.model.nature.grid[self.pos]
+
     def neighbors(self, distance: int = 1, exclude: bool = True):
         return self.mediator.transfer_request(self, "neighbors")
 
@@ -73,8 +77,9 @@ class Actor(BaseObj):
             self._pos = position
             self._on_earth = True
         else:  # If already on earth.
-            self.mediator.transfer_request(self, "move", position=position)
+            self.here.remove(self)
             self._pos = position
+            self.here.add(self)
         return self.on_earth
 
     def build_connection(
