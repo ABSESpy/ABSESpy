@@ -34,5 +34,6 @@ def test_container_attributes():
     # 增删
     another_farmer = Farmer(model)
     ac.add(another_farmer)
-    ac.remove(admins_5[:2])
-    assert ac.__repr__() == "<AgentsContainer: (2)Farmer; (3)Admin>"
+    ac.remove(admins_5[0])
+    admins_5[1:3].trigger("die")
+    assert ac.__repr__() == "<AgentsContainer: (2)Farmer; (2)Admin>"

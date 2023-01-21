@@ -32,17 +32,17 @@ class PatchFactory(Creator):
     def geo(self):
         return self._geo
 
-    @property
-    def shape(self):
-        return self.geo.shape
+    # @property
+    # def shape(self):
+    #     return self.geo.shape
 
-    @shape.setter
-    def shape(self, value: Tuple[int, int]):
-        if value == self.shape:
-            pass
-        else:
-            msg = f"Geographic shape {self.shape}, NOT allow to change it!"
-            raise ValueError(msg)
+    # @shape.setter
+    # def shape(self, value: Tuple[int, int]):
+    #     if value == self.shape:
+    #         pass
+    #     else:
+    #         msg = f"Geographic shape {self.shape}, NOT allow to change it!"
+    #         raise ValueError(msg)
 
     @property
     def mask(self) -> xarray.DataArray:
@@ -77,12 +77,6 @@ class PatchFactory(Creator):
     def _check_name(self, name):
         pass
 
-    def full_array(self, value):
-        if not self.shape:
-            raise ValueError("Shape is not assigned.")
-        else:
-            return np.full(self.shape, value)
-
     def create_patch(
         self,
         values: "np.ndarray|str|bool|float|int",
@@ -92,7 +86,7 @@ class PatchFactory(Creator):
         if not hasattr(values, "shape"):
             # only int|float|str|bool are supported
             self._check_type(values)
-            values = self.full_array(values)
+            values = np.full(self.geo.shape, values)
         else:
             # nd-array like data
             self._check_dtype(values)
@@ -102,12 +96,12 @@ class PatchFactory(Creator):
         self.add_creation(patch)
         return patch
 
-    def generate_boundary(self, settings: Optional[dict] = None) -> Boundaries:
-        # resolution = settings.pop("resolution", 1)
-        boundary = simple_boundary_from(settings)
-        self.shape = boundary.shape
-        # self.coords = self.setup_coords(width, height, resolution)
-        self.mask = ~boundary.interior
-        self.boundary = boundary
-        self.notify()
-        return boundary
+    # def generate_boundary(self, settings: Optional[dict] = None) -> Boundaries:
+    #     # resolution = settings.pop("resolution", 1)
+    #     boundary = simple_boundary_from(settings)
+    #     self.shape = boundary.shape
+    #     # self.coords = self.setup_coords(width, height, resolution)
+    #     self.mask = ~boundary.interior
+    #     self.boundary = boundary
+    #     self.notify()
+    #     return boundary

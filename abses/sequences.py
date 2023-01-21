@@ -16,6 +16,7 @@ from typing import (
     List,
     Optional,
     Self,
+    TypeAlias,
     Union,
     overload,
 )
@@ -28,6 +29,8 @@ from .tools.func import make_list, norm_choice
 
 logger = logging.getLogger("__name__")
 
+Selection: TypeAlias = Union[str, Iterable[bool]]
+
 
 class ActorsList(AgentList):
     def __repr__(self):
@@ -36,7 +39,7 @@ class ActorsList(AgentList):
             results.append(f"({len(v)}){k}")
         return f"<ActorsList: {'; '.join(results)}>"
 
-    def __getattr__(self, name) -> np.ndarray:
+    def __getattr__(self, name: str) -> np.ndarray:
         """Return callable list of attributes"""
         if name[0] == "_":  # Private variables are looked up normally
             super().__getattr__(name)
@@ -48,7 +51,7 @@ class ActorsList(AgentList):
     def __iter__(self) -> Iterator[Actor]:
         return super().__iter__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Iterable) -> bool:
         if not self._is_same_length(other):
             return False
         else:
@@ -58,22 +61,39 @@ class ActorsList(AgentList):
     def __getitem__(self, other: int) -> Actor:
         ...
 
+    @overload
     def __getitem__(self, index: slice) -> Self:
+        ...
+
+    def __getitem__(self, index):
         results = super().__getitem__(index)
         if isinstance(index, slice):
             return ActorsList(self.model, results)
         else:
             return results
 
-    def _is_same_length(self, length: Iterable[Any]) -> bool:
+    def _is_same_length(
+        self, length: Iterable[Any], rep_error: bool = False
+    ) -> bool:
+        """Check if the length of input is as same as the number of actors."""
         if not hasattr(self, "__len__"):
             raise ValueError(f"{type(length)} object is not iterable.")
         elif not length.__len__() == self.__len__():
+            if rep_error:
+                raise ValueError(
+                    f"Length of the input {len(length)} mismatch {len(self)} actors."
+                )
             return False
         else:
             return True
 
     def to_dict(self) -> Dict[str, Self]:
+        """
+        Convert all actors in this list to a dictionary.
+
+        Returns:
+            Dict[str, Self]: key is the breed of actors, and values are corresponding actors.
+        """
         dic = {}
         for actor in self.__iter__():
             breed = actor.breed
@@ -83,7 +103,7 @@ class ActorsList(AgentList):
                 dic[breed].append(actor)
         return dic
 
-    def select(self, selection: Union[str, Iterable[bool]]) -> Self:
+    def select(self, selection: Selection) -> Self:
         """Returns a new :class:`ActorList` based on `selection`.
 
         Arguments:
@@ -99,6 +119,7 @@ class ActorsList(AgentList):
             raise TypeError(f"Invalid selection {type(selection)}")
 
     def now(self) -> Self:
+        """Only select actors who is already setup on the earth."""
         return self.select(self.on_earth)
 
     def ids(self, ids: Iterable[int]) -> List[Actor]:
@@ -140,7 +161,8 @@ class ActorsList(AgentList):
             return self.select(diff > 0)
 
     def update(self, attr: str, values: Iterable[any]) -> None:
-        [agent.update(attr, val) for agent, val in zip(self, values)]
+        self._is_same_length(values, rep_error=True)
+        [agent.__setattr__(attr, val) for agent, val in zip(self, values)]
 
     def split(self, where: Iterable[int]) -> np.ndarray:
         """
@@ -173,9 +195,9 @@ class ActorsList(AgentList):
         lat = [Y[x, y] for x, y in self.pos]
         return lon, lat
 
-    def apply(self, func: Callable, *args, **kwargs):
+    def trigger(self, func_name: str, *args, **kwargs) -> np.ndarray:
+        results = []
         for actor in self.__iter__():
-            yield actor.__getattr__(func)(*args, **kwargs)
-
-    def trigger(self):
-        pass
+            func = getattr(actor, func_name)
+            results.append(func(*args, **kwargs))
+        return np.array(results)

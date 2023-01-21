@@ -67,7 +67,13 @@ class Actor(BaseObj):
 
     @property
     def here(self) -> AgentSet:
-        return self.model.nature.grid[self.pos]
+        if self.on_earth is True:
+            return self.model.nature.grid[self.pos]
+        else:
+            return None
+
+    def die(self):
+        self.model.agents.remove(self)
 
     def neighbors(self, distance: int = 1, exclude: bool = True):
         return self.mediator.transfer_request(self, "neighbors")

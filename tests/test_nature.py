@@ -17,19 +17,20 @@ def test_nature_positions():
     model = simple_main_model(test_nature_positions)
     nature = model.nature
     actors = model.agents.create(Actor, 5)
-    assert nature.shape == (9, 9)
-    zeros = np.zeros(nature.shape, bool)
-    zeros[0, 0] = True
+
+    where = nature.geo.zeros()
+    where[0, 0] = True
     try:
-        nature.random_positions(k=5, where=zeros, replace=False)
+        nature.random_positions(k=5, where=where, replace=False)
     except Exception as e:
         assert "larger" in str(e)
-    positions_replace = nature.random_positions(k=5, where=zeros, replace=True)
+    positions_replace = nature.random_positions(k=5, where=where, replace=True)
     model.nature.add_agents(actors, positions_replace)
     assert (actors.pos == (0, 0)).all()
     actors[0].settle_down((0, 1))
     assert len(nature.grid[0, 0]) == 4
-    assert len(nature.lookup_agents(zeros)) == 4
+    assert len(nature.lookup_agents(where)) == 4
+    assert len(nature[where]) == 4
     assert len(nature.has_agent().arr.where()) == 2
     actors_4 = nature[0, 0]
     assert len(actors_4) == 4

@@ -40,3 +40,4 @@ website: https://cv.songshgeo.com
 
 ## v-0.0.4 🎉
 - [ ] 自动生成 SES network
+- [ ] 重构边界 `Boundaries`

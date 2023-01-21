@@ -5,20 +5,20 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import List, Optional, Tuple, Union, overload
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from agentpy.grid import AgentSet, Grid
+from agentpy.grid import AgentSet
 
 from abses.actor import Actor
 from abses.boundary import Boundaries
-from abses.geo import Geo
 
 from .algorithms.spatial import points_to_polygons, polygon_to_mask
-from .container import ActorsList, AgentsContainer
+from .container import AgentsContainer
 from .factory import PatchFactory
 from .modules import CompositeModule
 from .patch import Patch, get_buffer
+from .sequences import ActorsList, Selection
 from .tools.func import norm_choice
 
 DEFAULT_WORLD = {
@@ -66,24 +66,25 @@ class BaseNature(CompositeModule, PatchFactory):
         if isinstance(items, AgentSet):
             return ActorsList(self.model, items)
         else:
-            agents = ActorsList(self.model)
-            for item in items.flatten():
-                agents.extend(item)
-        return agents
+            return self._aggregate_agents(items)
 
     @property
-    def boundary(self):
+    def boundary(self) -> Boundaries:
         return self._boundary
-
-    @boundary.setter
-    def boundary(self, boundary):
-        self._boundary = boundary
 
     @property
     def grid(self) -> np.ndarray:
         return self._grid
 
+    def _aggregate_agents(self, items: np.ndarray) -> ActorsList:
+        """Aggregating searched `PositionSet`s into an `ActorsList`."""
+        agents = ActorsList(self.model)
+        for item in items.flatten():
+            agents.extend(item)
+        return agents
+
     def _setup_grid(self, shape: Tuple[int, int]):
+        """A numpy 2-d Grid where agents are saved in."""
         array = np.empty(shape=shape, dtype=object)
         it = np.nditer(array, flags=["refs_ok", "multi_index"])
         for _ in it:
@@ -95,10 +96,11 @@ class BaseNature(CompositeModule, PatchFactory):
         self._grid = array
 
     def _after_parsing(self):
+        """After parsing parameters, setup grid and geographic settings."""
         settings = self.params.get("world", DEFAULT_WORLD).copy()
         self.geo.auto_setup(settings=settings)
         boundary_settings = self.params.get("boundary", {})
-        self.boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
+        self._boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
         self._setup_grid(shape=self.geo.shape)
 
     # def send_patch(self, attr: str, **kwargs) -> Patch:
@@ -160,7 +162,7 @@ class BaseNature(CompositeModule, PatchFactory):
         else:
             where = self.accessible & where
         if only_empty is True:
-            where = where & ~self.has_agent()
+            where = where & ~self.has_agent().astype(bool)
         where = self.create_patch(where, "where")
         potential_pos = [(x, y) for x, y in where.arr.where()]
         if probabilities is not None:
@@ -220,57 +222,68 @@ class BaseNature(CompositeModule, PatchFactory):
             agent.attach_places(name="owned", place=owned_land)
 
     def lookup_agents(
-        self, where: np.ndarray, breed: Optional[str] = None
+        self, where: np.ndarray, selection: Optional[Selection] = None
     ) -> ActorsList:
         """
-        Find alive agents who is settling on the given patch.
+        Search agents.
 
         Args:
-            mask_patch (NDArray[Bool]): bool masked, must has the same shape as the world.
-            breed (Optional[str], optional): only search the designated breed. Defaults to None.
+            where (np.ndarray): bool mask, when a cell is False, ignore agents here.
+            selection (Optional[Selection], optional): filter results after search. see `ActorsList.select()` for more information. Defaults to None, meaning that no further selection, just returns the actual agents distribution.
 
         Returns:
-            ActorsList: actors on the given patches.
+            ActorsList: all qualified agents.
         """
-        where = self.create_patch(where, "where")
-        agents = ActorsList(model=self.model)
-        for cell in where.arr.where():
-            agents_here = self.grid[cell]
-            agents.extend(agents_here)
-        if breed is None:
+        where = self.geo.wrap_data(where, masked=True)
+        where_bool = where.to_numpy().astype(bool)
+        agents = self._aggregate_agents(self.grid[where_bool])
+        if selection is None:
             return agents
         else:
-            return agents.to_dict()[breed]
+            return agents.select(selection)
 
-    def find_neighbor_by_position(
+    def find_neighbors(
         self,
         pos: Tuple[int, int],
         distance: int = 0,
         neighbors: int = 4,
-        breed: str = None,
+        selection: Optional[Selection] = None,
     ) -> ActorsList:
-        position = np.zeros(self.shape, dtype=bool)
-        position[pos] = True
-        buffer = get_buffer(buffer=distance, neighbors=neighbors)
-        return self.lookup_agents(buffer, breed=breed)
-
-    def has_agent(
-        self, breed: str = None, where: Optional[np.ndarray] = None
-    ) -> Patch:
         """
-        Where exists agents.
+        Find all agents nearby with a given position and distance.
 
         Args:
-            breed (str, optional): if assigned, only find this type of agents. Defaults to None.
-            mask (np.ndarray, optional): if assigned, only find agents on those patches. Defaults to None.
+            pos (Tuple[int, int]): a specific position in the world.
+            distance (int, optional): distances to search. Defaults to 0.
+            neighbors (int, optional): neighbor rule. Defaults to 4.
+            breed (str, optional): filter results after search. see `ActorsList.select()` for more information. Defaults to None, meaning that no further selection, just returns the actual agents distribution.
 
         Returns:
-            Patch: bool patch, True if this cell has agent, False otherwise.
+            ActorsList: all qualified agents.
         """
-        where = self.geo.wrap_data(where, masked=True)
-        agents = self.lookup_agents(where, breed=breed)
-        has_agents = np.zeros(self.shape, bool)
-        for agent in agents.select(agents.on_earth):
-            has_agents[agent.pos] = True
+        position = self.geo.zeros()
+        position[pos] = True
+        buffer = get_buffer(buffer=distance, neighbors=neighbors)
+        return self.lookup_agents(buffer, selection=selection)
+
+    def has_agent(self, selection: Optional[Selection] = None) -> Patch:
+        """
+        How many qualified agents are available in each cell.
+
+        Args:
+            selection (Optional[Selection], optional): selection, see `ActorsList.select()` for more information. Defaults to None, meaning that no further selection, just returns the actual agents distribution.
+
+        Returns:
+            Patch[int]: number of qualified agents in each cell.
+        """
+
+        def counts_agent(agents, selection):
+            agents = ActorsList(self.model, agents)
+            if selection is not None:
+                return len(agents.select(selection))
+            else:
+                return len(agents)
+
+        has_agents = np.vectorize(counts_agent)(self.grid, selection)
         patch = self.create_patch(has_agents, "has_agent", True)
         return patch

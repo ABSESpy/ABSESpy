@@ -116,10 +116,10 @@ class AgentsContainer(AttrDict):
                     raise TypeError(f"'{k}' not registered.")
             self[k] = self[k].union(actors_lst)
 
-    def remove(self, agents: Union[Actor, ActorsList] = None) -> None:
-        dic = agents.to_dict()
-        for breed, lst in dic.items():
-            self[breed] = self[breed] - set(lst)
+    def remove(self, agent: Actor) -> None:
+        self[agent.breed].remove(agent)
+        if agent.on_earth is True:
+            agent.here.remove(agent)
 
 
 def apply_agents(func) -> callable:
