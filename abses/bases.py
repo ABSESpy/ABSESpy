@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Set, Union
 
 from agentpy.objects import make_list
 
@@ -63,7 +63,7 @@ class Creation(metaclass=ABCMeta):
 
 class Notice:
     def __init__(self, observer: Optional[Observer] = None):
-        self.observers: List[Observer] = []
+        self.observers: Set[Observer] = set()
         self._glob_vars: List[str] = []
         if observer is not None:
             self.attach(observer)
@@ -81,7 +81,7 @@ class Notice:
         self.notify()
 
     def attach(self, observer: Observer):
-        self.observers.extend(make_list(observer))
+        self.observers.add(observer)
         observer.notification(self)
 
     def detach(self, observer: Observer):

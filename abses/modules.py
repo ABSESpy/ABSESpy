@@ -16,7 +16,6 @@ from prettytable import PrettyTable
 from .bases import Creator
 from .components import Component, MainComponent, iter_func
 from .container import ActorsList, AgentsContainer
-from .factory import PatchFactory
 from .objects import BaseObj
 from .patch import Patch
 from .tools.func import make_list
@@ -101,89 +100,3 @@ class CompositeModule(Module, MainComponent, Creator):
         self.modules.append(module)  # register as module
         self.notify()  # update attributes
         return module
-
-
-class PatchModule(PatchFactory, Module):
-    def __init__(self, model, name: str = None, **kwargs):
-        Module.__init__(self, model, name=name)
-        PatchFactory.__init__(self, model, **kwargs)
-        self._patches = []
-
-    @property
-    def patches(self):
-        return self._patches
-
-    @patches.setter
-    def patches(self, patch_name: str) -> None:
-        self.creator.transfer_var(self, patch_name)
-        self._patches.append(patch_name)
-
-    @property
-    def num_attrs(self):
-        return self._num_attrs
-
-    @property
-    def bool_attrs(self):
-        return self._bool_attrs
-
-    def init_variables(self):
-        # Hydraulic attributions.
-        for attr in self.num_attrs:
-            value = self.params.get(attr, 0.0)
-            self.create_patch(value, attr, add=True)
-
-        # Type mask with bool dtype.
-        for attr in self.bool_attrs:
-            value = self.params.get(attr, False)
-            self.create_patch(False, attr, add=True)
-
-    def create_patch(self, *args, add=False, **kwargs):
-        patch = super().create_patch(*args, **kwargs)
-        if add:
-            self.add_patch(patch)
-        return patch
-
-    def add_patch(self, patch: Patch) -> None:
-        self.patches = patch.name
-        setattr(self, patch.name, patch)
-
-    def get_patch(self, attr):
-        return getattr(self, attr)
-
-    def update_patch(
-        self,
-        patch_name: str,
-        value: "str|int|float|bool|np.ndarray",
-        mask: np.ndarray = None,
-    ):
-        if patch_name in self.patches:
-            self.logger.warning(
-                f"{patch_name} was created by this module, use 'patch.update()' method instead."
-            )
-        else:
-            self.mediator.transfer_update(
-                self, patch_name, value=value, mask=mask
-            )
-        pass
-
-
-class HumanModule(Module):
-    pass
-
-
-#     def mock(self, agents, attrs, how="attr"):
-#         tutors = self.to_agents(agents.tutor.now)
-#         for attr in make_list(attrs):
-#             values = tutors.array(attr, how)
-#             agents.update(attr, values)
-
-
-# def skip_if_close(func):
-#     def skip_module_method(self, *args, **kwargs):
-#         if self.opening:
-#             func(self, *args, **kwargs)
-#         else:
-#             if self.log_flag:
-#                 self.logger.warning(f"{self}.")
-
-#     return skip_module_method

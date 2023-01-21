@@ -8,15 +8,17 @@
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
+import xarray
 from agentpy.grid import AgentSet
 
 from abses.actor import Actor
+from abses.bases import Creator
 from abses.boundary import Boundaries
+from abses.geo import Geo
 
 from .algorithms.spatial import points_to_polygons, polygon_to_mask
 from .container import AgentsContainer
-from .factory import PatchFactory
-from .modules import CompositeModule
+from .modules import CompositeModule, Module
 from .patch import Patch, get_buffer
 from .sequences import ActorsList, Selection
 from .tools.func import norm_choice
@@ -50,10 +52,126 @@ class PositionSet(AgentSet):
             super().add(actor)
 
 
-class BaseNature(CompositeModule, PatchFactory):
+class PatchModule(Module, Creator):
+    _valid_type = (bool, int, float, str, "float32")
+    _valid_dtype = tuple([np.dtype(t) for t in _valid_type])
+
+    def __init__(self, model, name=None, **kwargs):
+        Module.__init__(self, model, name=name)
+        Creator.__init__(self)
+        self._geo = Geo(model)
+        self._mask = None
+        # Other attrs
+        self._attrs = kwargs.copy()
+
+    @property
+    def geo(self):
+        return self._geo
+
+    @property
+    def mask(self) -> xarray.DataArray:
+        if self._mask is None:
+            self._mask = self.geo.zeros(bool)
+        return self._mask | self.geo.mask
+
+    @property
+    def accessible(self):
+        return ~self.mask
+
+    @property
+    def attrs(self):
+        return self._attrs
+
+    def _check_dtype(self, values) -> None:
+        dtype = values.dtype
+        if dtype not in self._valid_dtype:
+            raise TypeError(f"Invalid value type {dtype}.")
+
+    def _check_type(self, value) -> type:
+        val_type = type(value)
+        if val_type not in self._valid_type:
+            raise ValueError(f"Invalid type {val_type}")
+
+    def _check_shape(self, values):
+        if values.shape != self.geo.shape:
+            raise ValueError(
+                f"Invalid shape {values.shape}, mismatch with shape {self.shape}."
+            )
+
+    def create_patch(
+        self,
+        values: "np.ndarray|str|bool|float|int",
+        name: str,
+        xarray: bool = True,
+    ) -> Patch:
+        if not hasattr(values, "shape"):
+            # only int|float|str|bool are supported
+            self._check_type(values)
+            values = np.full(self.geo.shape, values)
+        else:
+            # nd-array like data
+            self._check_dtype(values)
+            self._check_shape(values)
+        patch = Patch(values, name=name, father=self, xarray=xarray)
+        self.add_creation(patch)
+        return patch
+
+    # @property
+    # def patches(self):
+    #     return self._patches
+
+    # @patches.setter
+    # def patches(self, patch_name: str) -> None:
+    #     self.creator.transfer_var(self, patch_name)
+    #     self._patches.append(patch_name)
+
+    # @property
+    # def num_attrs(self):
+    #     return self._num_attrs
+
+    # @property
+    # def bool_attrs(self):
+    #     return self._bool_attrs
+
+    def init_variables(self):
+        # Hydraulic attributions.
+        for attr in self.num_attrs:
+            value = self.params.get(attr, 0.0)
+            self.create_patch(value, attr, add=True)
+
+        # Type mask with bool dtype.
+        for attr in self.bool_attrs:
+            value = self.params.get(attr, False)
+            self.create_patch(False, attr, add=True)
+
+    # def add_patch(self, patch: Patch) -> None:
+    #     self.patches = patch.name
+    #     setattr(self, patch.name, patch)
+
+    # def get_patch(self, attr):
+    #     return getattr(self, attr)
+
+    # def update_patch(
+    #     self,
+    #     patch_name: str,
+    #     value: "str|int|float|bool|np.ndarray",
+    #     mask: np.ndarray = None,
+    # ):
+    #     if patch_name in self.patches:
+    #         self.logger.warning(
+    #             f"{patch_name} was created by this module, use 'patch.update()' method instead."
+    #         )
+    #     else:
+    #         self.mediator.transfer_update(
+    #             self, patch_name, value=value, mask=mask
+    #         )
+    #     pass
+
+
+class BaseNature(CompositeModule, PatchModule):
     def __init__(self, model, name="nature", **kwargs):
+        PatchModule.__init__(self, model=model, **kwargs)
         CompositeModule.__init__(self, model, name=name)
-        PatchFactory.__init__(self, model=model, **kwargs)
         self._boundary: Boundaries = None
         self._grid: np.ndarray = None
 

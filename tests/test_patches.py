@@ -8,7 +8,10 @@
 
 import numpy as np
 
-from abses.factory import Patch, PatchFactory
+from abses.nature import PatchModule
+from abses.patch import Patch
+
+from .create_tested_instances import noticeable_model
 
 creator = "SongshGeo"
 
@@ -63,10 +66,11 @@ def test_patch_sort():
 
 
 def get_factory_tested_patch():
+    model = noticeable_model()
     base_patch = get_tested_patches()
     adj4_1 = base_patch.arr.buffer(neighbors=4, buffer=1)
     # 创建一个默认的斑块工厂
-    ph = PatchFactory(model=30, creator=creator, shape=adj4_1.shape)
+    ph = PatchModule(model=model, creator=creator, shape=adj4_1.shape)
     assert ph.shape == adj4_1.shape == ph.geo.shape
     created_patch = ph.create_patch(adj4_1, "adj41")
     return ph, created_patch
@@ -117,7 +121,8 @@ def get_factory_tested_patch():
 def test_patch_factories():
     shape = (3, 3)
     arr1 = np.ones(shape)
-    empty_factory = PatchFactory(model=1, shape=shape)
+    model = noticeable_model()
+    empty_factory = PatchModule(model=model, shape=shape)
     empty_factory.geo.setup_from_shape(shape)
     # create through arr
     var1 = empty_factory.create_patch(arr1, "var1")
@@ -126,8 +131,8 @@ def test_patch_factories():
     assert var1.all() == var2.all()
     assert var1.name == "var1"
 
-    full_factory = PatchFactory(
-        model=1, shape=shape, test="testing extra attr"
+    full_factory = PatchModule(
+        model=model, shape=shape, test="testing extra attr"
     )
     empty_factory.geo.setup_from_shape(shape)
     patch_str = full_factory.create_patch("str", "str_patch")

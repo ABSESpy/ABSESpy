@@ -29,8 +29,7 @@ __version__ = "v0.0.1"
 
 from .actor import Actor
 from .container import ActorsList, AgentsContainer
-from .human import BaseHuman
+from .human import BaseHuman, HumanModule
 from .main import MainModel
-from .modules import HumanModule, PatchModule
-from .nature import BaseNature
+from .nature import BaseNature, PatchModule
 from .objects import *
