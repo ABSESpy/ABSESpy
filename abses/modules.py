@@ -15,9 +15,7 @@ from prettytable import PrettyTable
 
 from .bases import Creator
 from .components import Component, MainComponent, iter_func
-from .container import ActorsList, AgentsContainer
 from .objects import BaseObj
-from .patch import Patch
 from .tools.func import make_list
 
 
@@ -25,7 +23,6 @@ class Module(Component, BaseObj):
     def __init__(self, model: Model, name: Optional[str] = None):
         Component.__init__(self, name=name)
         BaseObj.__init__(self, model, observer=True, name=name)
-        self._agents = AgentsContainer(model)
         self._model: Model = model
         self._open: bool = True
 
@@ -35,10 +32,6 @@ class Module(Component, BaseObj):
         else:
             flag = "closed"
         return f"<{self.name}: {flag}>"
-
-    @property
-    def agents(self) -> AgentsContainer:
-        return self._agents
 
     @property
     def opening(self) -> bool:

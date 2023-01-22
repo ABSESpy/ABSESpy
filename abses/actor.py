@@ -9,13 +9,16 @@ import logging
 from numbers import Number
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Dict,
     Iterable,
+    List,
     Optional,
     Self,
     Tuple,
     Union,
+    overload,
 )
 
 import networkx as nx
@@ -26,10 +29,24 @@ from .objects import BaseObj
 from .patch import Patch
 
 if TYPE_CHECKING:
+    from abses.sequences import Selection
+
     from .main import MainMediator
     from .sequences import ActorsList
 
 logger = logging.getLogger("__name__")
+
+
+def parsing_string_selection(selection: str) -> Dict[str, Any]:
+    selection_dict = dict()
+    if "==" not in selection:
+        return {"breed": selection}
+    else:
+        expressions = selection.split(",")
+        for exp in expressions:
+            left, right = tuple(exp.split("=="))
+            selection_dict[left.strip(" ")] = right.strip(" ")
+    return selection_dict
 
 
 class Actor(BaseObj):
@@ -38,15 +55,23 @@ class Actor(BaseObj):
         model,
         observer: bool = True,
         name: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         BaseObj.__init__(self, model, observer=observer, name=name)
-        self.mediator: MainMediator = self.model.mediator
         self._on_earth: bool = False
         self._pos: Tuple[int, int] = None
         self._relationships: Dict[str, ActorsList] = AttrDict()
         self._ownerships: Dict[str, Patch] = AttrDict()
+        self._rules: List[
+            Tuple[str, Selection, Callable, Tuple[Any], Dict[str, Any]]
+        ] = []
+        self.mediator: MainMediator = self.model.mediator
         self.setup(kwargs=kwargs)
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name[0] != "_" and hasattr(self, "_rules"):
+            self._check_rules()
 
     @classmethod
     @property
@@ -72,13 +97,44 @@ class Actor(BaseObj):
         else:
             return None
 
+    def _check_rules(self):
+        results = {}
+        for name, selection, trigger, args, kwargs in self._rules:
+            if self.selecting(selection) is True:
+                result = self.__getattr__(trigger)(*args, **kwargs)
+                self.logger.debug(f"Rule '{name}' applied on '{self}'.")
+                results[name] = result
+        return results
+
+    def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
+        if isinstance(selection, str):
+            selection = parsing_string_selection(selection)
+        results = []
+        for k, v in selection.items():
+            attr = getattr(self, k, None)
+            if attr is None:
+                results.append(False)
+            elif attr == v or str(attr):
+                results.append(True)
+            else:
+                results.append(False)
+        return all(results)
+
+    def rule(
+        self, when, then: Callable, name: Optional[str] = None, *args, **kwargs
+    ):
+        if name is None:
+            name = f"rule ({len(self._rules) + 1})"
+        self._rules.append([name, when, then, args, kwargs])
+        self._check_rules()
+
     def die(self):
         self.model.agents.remove(self)
 
     def neighbors(self, distance: int = 1, exclude: bool = True):
         return self.mediator.transfer_request(self, "neighbors")
 
-    def settle_down(self, position: Optional[Tuple[int, int]] = None) -> bool:
+    def settle_down(self, position: Optional[Tuple[int, int]]) -> bool:
         if self.on_earth is False:  # If is a no-home agents
             self._pos = position
             self._on_earth = True

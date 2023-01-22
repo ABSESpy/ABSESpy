@@ -19,7 +19,6 @@ def test_modules_attributes():
     model = simple_main_model(test_modules_attributes)
     module = Module(model=model, name="tested_module")
     assert module.__repr__() == "<tested_module: open>"
-    assert module.agents is model.agents
     module.switch_open_to(False)
     assert module.__repr__() == "<tested_module: closed>"
 
