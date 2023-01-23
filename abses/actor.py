@@ -114,7 +114,7 @@ class Actor(BaseObj):
             attr = getattr(self, k, None)
             if attr is None:
                 results.append(False)
-            elif attr == v or str(attr):
+            elif attr == v or str(attr) == v:
                 results.append(True)
             else:
                 results.append(False)
@@ -141,7 +141,7 @@ class Actor(BaseObj):
         else:  # If already on earth.
             self.here.remove(self)
             self._pos = position
-            self.here.add(self)
+        self.here.add(self)
         return self.on_earth
 
     def build_connection(

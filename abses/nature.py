@@ -318,7 +318,7 @@ class BaseNature(CompositeModule, PatchModule):
             positions = self.random_positions(len(agents))
         for agent, pos in zip(agents, positions):
             agent.settle_down(position=pos)
-            self.grid[pos].add(agent)
+            # self.grid[pos].add(agent)
         # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
         # self.mediator.transfer_event(self, msg)
 

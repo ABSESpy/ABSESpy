@@ -44,14 +44,15 @@ def test_human_define():
 
 
 def test_human_rule():
-    model = simple_main_model()
+    model = simple_main_model(test_human_rule)
     human = model.human
     farmers = human.agents.create(Farmer, 5)
     farmers.rule(when="test == 1", then="settle_down", position=(3, 3))
+    # assert checked
     farmers.update("test", np.arange(5))
-    assert human.agents.to_list().on_earth.sum() == 5
+    assert human.agents.to_list().on_earth.sum() == 1
     farmers.rule(when="test == 2", then="die")
-    # assert human.agents.__len__() == 4  # TODO fix die
+    assert human.agents.__len__() == 4
 
 
 def test_human_arena():

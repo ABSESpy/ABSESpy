@@ -7,7 +7,7 @@
 
 from abses.actor import Actor
 
-from .create_tested_instances import simple_main_model
+from .create_tested_instances import Farmer, simple_main_model
 
 
 def test_actor_attributes():
@@ -26,16 +26,23 @@ def test_actor_attributes():
 def test_actor_selecting():
     model = simple_main_model(test_actor_selecting)
     actor = Actor(model=model)
-
     actor.test1 = 1
     actor.test2 = "testing"
     selection = {"test1": 1, "test2": "testing"}
     selection2 = "test1 == 1, test2 == testing"
-    selection3 = "actor"
+    selection3 = "Actor"
 
     assert actor.selecting(selection=selection)
     assert actor.selecting(selection=selection2)
     assert actor.selecting(selection=selection3)
+
+    actor2 = Farmer(model=model)
+
+    actor2.test2 = 2
+    actor2.test2 = "testing"
+    assert actor2.selecting(selection=selection) is False
+    assert actor2.selecting(selection=selection2) is False
+    assert actor2.selecting(selection=selection3) is False
 
 
 def test_actor_rule():
