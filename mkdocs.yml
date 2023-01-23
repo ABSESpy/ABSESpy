@@ -12,11 +12,24 @@ nav:
         - Introduction: docs/about.md
         - Background: docs/background.md
         - License: docs/license.md
+        - Contribution: docs/contribution.md
         - Acknowledge: docs/acknowledge.md
     - User Guide:
-        - User Guid: docs/user_guide.md
-        - Manipulate Actors: notebooks/actors.ipynb
-        - Manipulate GeoData: notebooks/geodata.ipynb
+        - Structure model: docs/user_guide.md
+        - Setup a Model:
+          - Getting started: notebooks/model.ipynb
+          - Setup parameters: notebooks/parameters.ipynb
+          - Control simulation flow: notebooks/workflow.ipynb
+        - Human behavior:
+          - Actors Container: notebooks/human/actors.ipynb
+          - Selecting Actors: notebooks/human/selecting.ipynb
+          - Define Rules for actors: notebooks/human/rules.ipynb
+          - Positions and movement: notebooks/human/movement.ipynb
+          - Structured Human Behavior: notebooks/human/CCR_example.ipynb
+        - Natural processes:
+          - Manipulate GeoData: notebooks/nature/geodata.ipynb
+          - Patch variables: notebooks/nature/patch.ipynb
+        - Experiment: notebooks/experiment.ipynb
     - API references:
         - Model: api/model.md
         - Structures: api/structures.md
@@ -32,7 +45,6 @@ nav:
         - Climate negotiation: examples/negotiation.md
         - Groundwater withdraw: examples/groundwater.md
         - Yellow River Quotas: examples/yr_sim.md
-    - Contribution: docs/contribution.md
     - Change Log:
         - Road Map: docs/roadmap.md
         - v0.0.1: logs/v-0.0.1.md
