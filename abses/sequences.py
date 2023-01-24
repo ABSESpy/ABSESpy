@@ -45,7 +45,7 @@ class ActorsList(AgentList):
             super().__getattr__(name)
         elif name in self.__dir__():
             return super().__getattr__(name)
-        elif hasattr(getattr(Actor, name, None), "__call__"):
+        elif hasattr(getattr(self[0], name, None), "__call__"):
             return super().__getattr__(name)
         else:
             return ActorsList.array(self, name)

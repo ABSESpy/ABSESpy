@@ -32,6 +32,7 @@ from .human import BaseHuman
 from .log import Log
 from .nature import BaseNature
 from .project import Folder
+from .sequences import ActorsList
 from .time import TimeDriver
 from .tools.func import iter_func, make_list
 from .variable import VariablesRegistry
@@ -94,6 +95,10 @@ class MainModel(Folder, MainComponent, Model, Notice):
     @property
     def agents(self) -> AgentsContainer:
         return self._agents
+
+    @property
+    def all_agents(self) -> ActorsList:
+        return self.agents.to_list()
 
     @property
     def human(self) -> BaseHuman:

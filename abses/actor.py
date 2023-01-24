@@ -66,7 +66,7 @@ class Actor(BaseObj):
             Tuple[str, Selection, Callable, Tuple[Any], Dict[str, Any]]
         ] = []
         self.mediator: MainMediator = self.model.mediator
-        self.setup(kwargs=kwargs)
+        self.setup(**kwargs)
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
