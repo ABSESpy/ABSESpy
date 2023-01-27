@@ -4,6 +4,7 @@
 # @Contact   : SongshGeo@gmail.com
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
+from __future__ import annotations
 
 import logging
 from numbers import Number
@@ -17,6 +18,7 @@ from typing import (
     Optional,
     Self,
     Tuple,
+    TypeAlias,
     Union,
     overload,
 )
@@ -29,10 +31,10 @@ from .objects import BaseObj
 from .patch import Patch
 
 if TYPE_CHECKING:
-    from abses.sequences import Selection
-
     from .main import MainMediator
     from .sequences import ActorsList
+
+Selection: TypeAlias = Union[str, Iterable[bool]]
 
 logger = logging.getLogger("__name__")
 
@@ -47,6 +49,23 @@ def parsing_string_selection(selection: str) -> Dict[str, Any]:
             left, right = tuple(exp.split("=="))
             selection_dict[left.strip(" ")] = right.strip(" ")
     return selection_dict
+
+
+def perception(func):
+    @property
+    def wrapper(self, *args, **kwargs):
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
+def link_to(func):
+    # TODO and links, which can be searched through networkx
+    @property
+    def wrapper(self, *args, **kwargs):
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Actor(BaseObj):
@@ -91,9 +110,9 @@ class Actor(BaseObj):
         return self._pos
 
     @property
-    def here(self) -> AgentSet:
+    def here(self) -> ActorsList:
         if self.on_earth is True:
-            return self.model.nature.grid[self.pos]
+            return self.neighbors(0)
         else:
             return None
 
@@ -105,6 +124,31 @@ class Actor(BaseObj):
                 self.logger.debug(f"Rule '{name}' applied on '{self}'.")
                 results[name] = result
         return results
+
+    def request(
+        self,
+        request: str,
+        header: Dict[str, Any],
+        receiver: Optional[str] = None,
+    ) -> Any:
+        if receiver is None:
+            response = self.mediator.transfer_request(self, request)
+        elif receiver in ["nature", "human"]:
+            results = self.mediator.trigger_functions(
+                users=receiver, func_name=request, **header
+            )
+            response = results.__getattribute__(receiver)
+        else:
+            raise ValueError(f"Unknown transfer request {receiver}")
+        return response
+
+    # def request(self, request: str, header=None, receiver=None) -> Any:
+    #     # header.update({'how': 'GET'})
+    #     return self.request(request, header, receiver)
+
+    # def post(self, request: str, value: Any, header=None, receiver=None):
+    #     header.update({'how': 'POST', request: value})
+    #     return self._request(request, header, receiver)
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
         if isinstance(selection, str):
@@ -121,50 +165,65 @@ class Actor(BaseObj):
         return all(results)
 
     def rule(
-        self, when, then: Callable, name: Optional[str] = None, *args, **kwargs
+        self,
+        when,
+        then: Callable,
+        name: Optional[str] = None,
+        check_now: Optional[bool] = True,
+        *args,
+        **kwargs,
     ):
         if name is None:
             name = f"rule ({len(self._rules) + 1})"
         self._rules.append([name, when, then, args, kwargs])
-        self._check_rules()
+        if check_now is True:
+            self._check_rules()
 
     def die(self):
         self.model.agents.remove(self)
 
-    def neighbors(self, distance: int = 1, exclude: bool = True):
-        return self.mediator.transfer_request(self, "neighbors")
+    def neighbors(
+        self,
+        distance: int = 1,
+        selection: Selection = None,
+        exclude: bool = True,
+    ):
+        # The area around within a certain distance.
+        header = {
+            "pos": self.pos,
+            "distance": distance,
+            "selection": selection,
+        }
+        agents = self.request(
+            request="neighbors", header=header, receiver="nature"
+        )
+        if exclude is True:
+            agents.remove(self)
+        return agents
 
     def settle_down(self, position: Optional[Tuple[int, int]]) -> bool:
-        if self.on_earth is False:  # If is a no-home agents
-            self._pos = position
-            self._on_earth = True
-        else:  # If already on earth.
-            self.here.remove(self)
-            self._pos = position
-        self.here.add(self)
+        header = {"actor": self, "position": position}
+        self.request("actor_to", header=header, receiver="nature")
+        self._pos = position
+        self._on_earth = True
         return self.on_earth
 
-    def build_connection(
-        self, name: str, other: Union[Self, Iterable[Self], Callable]
-    ):
+    def move(self, pos: Optional[Tuple[int, int]] = None):
+        if self.on_earth is False:
+            raise ValueError(f"Position of {self} is not set.")
+        if pos is None:
+            pos = self.request(
+                "random_positions", header={"k": 1}, receiver="nature"
+            )[0]
+        self.settle_down(pos)
+
+    def link_to(self, name: str, other: Union[Self, Iterable[Self], Callable]):
         pass
 
-    def attach_places(self, name: str, place: Union[Patch, Callable]):
-        pass
-
-    def perception(
-        self, connection, solving: Optional[Iterable[Callable]] = None
-    ):
-        pass
-
-    def require(self, var: str, **kwargs):
-        patch_obj = self.mediator.transfer_require(self, var, **kwargs)
-        return patch_obj
-
-    def loc(self, patch, **kwargs):
-        patch_obj = self.require(patch, **kwargs)
-        if len(patch_obj.shape) == 2:
-            return patch_obj[self.pos]
+    def loc(self, request: str, **kwargs):
+        header = {"sender": self, "position": self.pos}
+        response = self.request(request, header, **kwargs)
+        return response
         # elif len(patch_obj.shape) == 3:
         #     return patch_obj[:, self.pos[0], self.pos[1]]
 

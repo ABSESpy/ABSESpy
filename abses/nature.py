@@ -221,16 +221,25 @@ class BaseNature(CompositeModule, PatchModule):
         self._boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
         self._setup_grid(shape=self.geo.shape)
 
-    # def send_patch(self, attr: str, **kwargs) -> Patch:
-    #     if hasattr(self, attr):
-    #         obj = getattr(self, attr)
-    #         return obj
-    #     elif attr in self.patches:
-    #         module = self._patches[attr]
-    #         obj = module.get_patch(attr, **kwargs)
-    #         return obj
-    #     else:
-    #         raise ValueError(f"Unknown patch {attr}.")
+    def patch(self, attr: str, **kwargs) -> Patch:
+        if hasattr(self, attr):
+            obj = getattr(self, attr)
+            return obj
+        elif attr in self.patches:
+            module = self._patches[attr]
+            obj = module.get_patch(attr, **kwargs)
+            return obj
+        else:
+            raise ValueError(f"Unknown patch {attr}.")
+
+    def actor_to(self, actor: Actor, position: Tuple[int, int]):
+        if actor.on_earth is True:
+            self.grid[actor.pos].remove(actor)
+        self.grid[position].add(actor)
+
+    # def agents(self, key, header: dict) -> ActorsList:
+    #     selection = header.get('selection', None)
+    #     return self[key].select(selection=selection)
 
     # def transfer_var(self, sender: object, var: str) -> None:
     #     if var not in self.patches:
@@ -309,16 +318,11 @@ class BaseNature(CompositeModule, PatchModule):
     #     pos = self.random_positions(1, mask)[0]
     #     self.move_to(agent, pos)
 
-    def add_agents(
-        self,
-        agents: ActorsList,
-        positions=None,
-    ):
+    def add_agents(self, agents: ActorsList, positions=None, **kwargs):
         if positions is None:
-            positions = self.random_positions(len(agents))
-        for agent, pos in zip(agents, positions):
-            agent.settle_down(position=pos)
-            # self.grid[pos].add(agent)
+            positions = self.random_positions(len(agents), **kwargs)
+        for actor, pos in zip(agents, positions):
+            actor.settle_down(pos)
         # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
         # self.mediator.transfer_event(self, msg)
 
@@ -360,11 +364,11 @@ class BaseNature(CompositeModule, PatchModule):
         else:
             return agents.select(selection)
 
-    def find_neighbors(
+    def neighbors(
         self,
         pos: Tuple[int, int],
         distance: int = 0,
-        neighbors: int = 4,
+        approach: int = 4,
         selection: Optional[Selection] = None,
     ) -> ActorsList:
         """
@@ -381,7 +385,9 @@ class BaseNature(CompositeModule, PatchModule):
         """
         position = self.geo.zeros()
         position[pos] = True
-        buffer = get_buffer(buffer=distance, neighbors=neighbors)
+        buffer = get_buffer(
+            array=position, buffer=distance, neighbors=approach
+        )
         return self.lookup_agents(buffer, selection=selection)
 
     def has_agent(self, selection: Optional[Selection] = None) -> Patch:

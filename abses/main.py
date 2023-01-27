@@ -335,7 +335,7 @@ class MainMediator(Mediator, Log):
                 all_finished = True
             return all_finished
 
-    def new(self):
+    def _new(self):
         if self.sender_matches("model"):
             # TODO run id
             run_id = self.model._run_id
@@ -348,7 +348,7 @@ class MainMediator(Mediator, Log):
             # Automatically parsing parameters
             self.model.state = 1
 
-    def init(self):
+    def _init(self):
         if self.sender_matches("model"):
             self.session("Parsing parameters")
             self.model.parsing_params(self.model.settings)
@@ -359,11 +359,11 @@ class MainMediator(Mediator, Log):
         elif self.sender_matches("human", "nature"):
             pass
 
-    def ready(self):
+    def _ready(self):
         if self.sender_matches("model"):
             self.session("Ready for simulation")
 
-    def complete(self):
+    def _complete(self):
         if self.sender_matches("model"):
             self.session(f"Completed in {self.model.t} steps", new_line=0)
             self.session("Finished", sep="*", new_line=1)
@@ -378,13 +378,13 @@ class MainMediator(Mediator, Log):
         self, sender: object, event: str, *args, **kwargs
     ) -> None:
         self._check_sender(sender)
-        event_func = self.__getattribute__(event)
+        event_func = self.__getattribute__(f"_{event}")
         return event_func(*args, **kwargs)
-
-    def transfer_require(self, sender: object, attr: str, **kwargs) -> object:
-        if sender is self.human or isinstance(sender, Actor):
-            patch_obj = self.nature.send_patch(attr, **kwargs)
-            return patch_obj
 
     def transfer_request(self, sender: object, attr: str, **kwargs) -> object:
         self._check_sender(sender)
+        if self.sender_matches("agent"):
+            response = self.nature.patch(attr, **kwargs)
+        else:
+            response = None
+        return response

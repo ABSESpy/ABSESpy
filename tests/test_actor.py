@@ -6,6 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 from abses.actor import Actor
+from abses.sequences import ActorsList
 
 from .create_tested_instances import Farmer, simple_main_model
 
@@ -52,7 +53,7 @@ def test_actor_rule():
 
     selection = {"test1": 1, "test2": "testing"}
 
-    actor.rule(selection, "settle_down", None, (3, 3))
+    actor.rule(selection, "settle_down", None, True, (3, 3))
     expected = ("rule (1)", selection, "settle_down", ((3, 3),), {})
     for actual, expected in zip(actor._rules[0], expected):
         assert actual == expected
@@ -67,3 +68,23 @@ def test_actor_rule():
     assert actor.selecting(selection) is True
     assert actor.on_earth is True
     assert actor.pos == (3, 3)
+
+
+def test_actor_request():
+    model = simple_main_model(test_actor_request)
+    actors = model.agents.create(Actor, 5)
+    positions = [(4, 4), (4, 4), (4, 3), (5, 5), (5, 6)]
+    model.nature.add_agents(actors, positions=positions)
+
+    center = actors[0]
+    assert center.pos == (4, 4)
+    neighbors = center.request(
+        "neighbors", header={"pos": center.pos}, receiver="nature"
+    )
+    assert type(neighbors) is ActorsList
+    assert len(neighbors) == 2
+    assert (neighbors.pos == [(4, 4), (4, 4)]).all()  # default distance = 0
+
+    assert len(center.neighbors()) == 2
+    assert (center.neighbors().pos == [(4, 3), (4, 4)]).all()
+    # assert actors[0] in neighbors and actors[2] in neighbors
