@@ -90,9 +90,6 @@ def test_model_run():
     model = WealthModel(
         name="wealth demo", base="tests", parameters=parameters
     )
-    N = 100
-    actors = model.agents.create(WealthyActor, N)
-    model.nature.add_agents(actors, replace=True)
     # assert not actor.fit_in
     results = model.run()
-    assert len(results.variables.WealthyActor) == N
+    assert len(results.variables.WealthyActor) == len(model.agents)
