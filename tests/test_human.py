@@ -47,7 +47,9 @@ def test_human_rule():
     model = simple_main_model(test_human_rule)
     human = model.human
     farmers = human.agents.create(Farmer, 5)
-    farmers.rule(when="test == 1", then="settle_down", position=(3, 3))
+    farmers.rule(
+        when="test == 1", then="settle_down", position=(3, 3), disposable=True
+    )
     # assert checked
     farmers.update("test", np.arange(5))
     assert human.agents.to_list().on_earth.sum() == 1

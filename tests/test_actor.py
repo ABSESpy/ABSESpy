@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.actor import Actor
+from abses.actor import Actor, check_rule, perception
 from abses.sequences import ActorsList
 
 from .create_tested_instances import Farmer, simple_main_model
@@ -47,16 +47,15 @@ def test_actor_selecting():
 
 
 def test_actor_rule():
-    model = simple_main_model(test_actor_selecting)
+    model = simple_main_model(test_actor_rule)
     actor = Actor(model=model)
     assert actor.on_earth is False
 
     selection = {"test1": 1, "test2": "testing"}
 
-    actor.rule(selection, "settle_down", None, True, (3, 3))
-    expected = ("rule (1)", selection, "settle_down", ((3, 3),), {})
-    for actual, expected in zip(actor._rules[0], expected):
-        assert actual == expected
+    actor.rule(
+        when=selection, then="settle_down", position=(3, 3), disposable=True
+    )
     assert actor.selecting(selection) is False
     assert actor.on_earth is False
 
@@ -68,6 +67,30 @@ def test_actor_rule():
     assert actor.selecting(selection) is True
     assert actor.on_earth is True
     assert actor.pos == (3, 3)
+
+
+def test_actor_loop_rule():
+    model = simple_main_model(test_actor_loop_rule)
+
+    class MyActor(Actor):
+        @perception
+        def flag(self):
+            return self.test < 3
+
+        def testing(self):
+            self.test += 1
+
+        @check_rule(loop=True)
+        def after_testing(self):
+            self.passed = True
+
+    actor = MyActor(model=model)
+    actor.test = 0
+    selection = {"flag": True}
+    actor.rule(when=selection, then="testing", check_now=False)
+    actor.after_testing()
+    assert actor.test == 3
+    assert actor.passed
 
 
 def test_actor_request():

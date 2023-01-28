@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .sequences import ActorsList
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
+Trigger: TypeAlias = Union[Callable, str]
 
 logger = logging.getLogger("__name__")
 
@@ -53,7 +54,7 @@ def parsing_string_selection(selection: str) -> Dict[str, Any]:
 
 def perception(func):
     @property
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Actor, *args, **kwargs):
         return func(self, *args, **kwargs)
 
     return wrapper
@@ -62,13 +63,30 @@ def perception(func):
 def link_to(func):
     # TODO and links, which can be searched through networkx
     @property
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Actor, *args, **kwargs):
         return func(self, *args, **kwargs)
 
     return wrapper
 
 
+def check_rule(loop: bool = False) -> Callable:
+    def f(func: Callable) -> Callable:
+        def wrapper(self: Actor, *args, **kwargs):
+            triggered = self._check_rules("now")
+            if loop is True:
+                while len(triggered) > 0:
+                    triggered = self._check_rules("now")
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return f
+
+
 class Actor(BaseObj):
+    # when checking the rules
+    _freq_levels = {"now": 0, "update": 1, "move": 2, "any": 3}
+
     def __init__(
         self,
         model,
@@ -81,16 +99,14 @@ class Actor(BaseObj):
         self._pos: Tuple[int, int] = None
         self._relationships: Dict[str, ActorsList] = AttrDict()
         self._ownerships: Dict[str, Patch] = AttrDict()
-        self._rules: List[
-            Tuple[str, Selection, Callable, Tuple[Any], Dict[str, Any]]
-        ] = []
+        self._rules: Dict[str, Dict[str, Any]] = dict()
         self.mediator: MainMediator = self.model.mediator
         self.setup(**kwargs)
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
         if name[0] != "_" and hasattr(self, "_rules"):
-            self._check_rules()
+            self._check_rules(check_when="any")
 
     @classmethod
     @property
@@ -116,14 +132,31 @@ class Actor(BaseObj):
         else:
             return None
 
-    def _check_rules(self):
-        results = {}
-        for name, selection, trigger, args, kwargs in self._rules:
-            if self.selecting(selection) is True:
-                result = self.__getattr__(trigger)(*args, **kwargs)
-                self.logger.debug(f"Rule '{name}' applied on '{self}'.")
-                results[name] = result
-        return results
+    def _freq_level(self, level: str) -> int:
+        code = self._freq_levels.get(level, None)
+        if code is None:
+            keys = tuple(self._freq_levels.keys())
+            raise KeyError(f"freq level {level} is not available in {keys}")
+        return code
+
+    def _check_rules(self, check_when: str) -> List[str]:
+        triggered_rules = []
+        for name in list(self._rules.keys()):
+            rule = self._rules[name]
+            parameters = rule.get("params", {})
+            if rule.frequency < self._freq_level(check_when):
+                continue
+            if self.selecting(rule.when) is True:
+                triggered_rules.append(name)
+                # check if is a disposable rule
+                if rule.disposable is True:
+                    self.logger.debug(
+                        f"Rule '{name}' applied on '{self}' in {self.time}."
+                    )
+                    del self._rules[name]
+                self.__getattr__(rule.then)(**parameters)
+        # delete disposable rules
+        return triggered_rules
 
     def request(
         self,
@@ -166,18 +199,27 @@ class Actor(BaseObj):
 
     def rule(
         self,
-        when,
-        then: Callable,
+        when: Selection,
+        then: Trigger,
         name: Optional[str] = None,
+        frequency: str = "any",
+        disposable: bool = False,
         check_now: Optional[bool] = True,
-        *args,
         **kwargs,
     ):
         if name is None:
             name = f"rule ({len(self._rules) + 1})"
-        self._rules.append([name, when, then, args, kwargs])
+        self._rules[name] = AttrDict(
+            {
+                "when": when,
+                "then": then,
+                "params": kwargs,
+                "disposable": disposable,
+                "frequency": self._freq_level(frequency),
+            }
+        )
         if check_now is True:
-            self._check_rules()
+            self._check_rules("now")
 
     def die(self):
         self.model.agents.remove(self)
@@ -185,6 +227,7 @@ class Actor(BaseObj):
     def neighbors(
         self,
         distance: int = 1,
+        approach: int = 4,
         selection: Selection = None,
         exclude: bool = True,
     ):
@@ -193,6 +236,7 @@ class Actor(BaseObj):
             "pos": self.pos,
             "distance": distance,
             "selection": selection,
+            "approach": approach,
         }
         agents = self.request(
             request="neighbors", header=header, receiver="nature"
@@ -206,7 +250,6 @@ class Actor(BaseObj):
         self.request("actor_to", header=header, receiver="nature")
         self._pos = position
         self._on_earth = True
-        return self.on_earth
 
     def move(self, pos: Optional[Tuple[int, int]] = None):
         if self.on_earth is False:

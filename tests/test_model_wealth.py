@@ -7,7 +7,7 @@
 import numpy as np
 
 from abses import Actor, MainModel
-from abses.actor import link_to, perception
+from abses.actor import check_rule, link_to, perception
 
 
 def gini(x):
@@ -27,26 +27,32 @@ class WealthyActor(Actor):
 
     def setup(self):
         self.wealth: int = 1
-        self.rule(when="fit_in == False", then="move", check_now=False)
+        self.rule(
+            when={"fit_in": False},
+            then="move",
+            check_now=False,
+            frequency="now",
+        )
 
     # setup property 'potential partner',
     # which auto links to these potential partners.
     @link_to
     def potential_partners(self):
-        return self.neighbors(distance=5)
+        return self.neighbors(distance=3, approach=8)
 
     @perception
     def fit_in(self) -> bool:
         if len(self.potential_partners) == 0:
             return False
-        others_wealth = self.potential_partners.wealth
-        lower = self.wealth < others_wealth.mean() - others_wealth.std()
-        higher = self.wealth > others_wealth.mean() + others_wealth.std()
-        if lower or higher:
-            return False
+        # others_wealth = self.potential_partners.wealth
+        # lower = self.wealth < others_wealth.mean() - 2 * others_wealth.std()
+        # higher = self.wealth > others_wealth.mean() + 2 * others_wealth.std()
+        # if lower or higher:
+        #     return False
         else:
             return True
 
+    @check_rule(loop=True)
     def wealth_transfer(self):
         partner = self.potential_partners.random_choose()
         if self.wealth > 0:
@@ -84,4 +90,9 @@ def test_model_run():
     model = WealthModel(
         name="wealth demo", base="tests", parameters=parameters
     )
-    model.run()
+    N = 100
+    actors = model.agents.create(WealthyActor, N)
+    model.nature.add_agents(actors, replace=True)
+    # assert not actor.fit_in
+    results = model.run()
+    assert len(results.variables.WealthyActor) == N
