@@ -1,0 +1,8 @@
+nature:
+  world: "data/mean_prec.tif"
+
+hydro:
+  et0: data/test/FAO56_PM_pet0.nc
+  qtot: data/test/down_scaled_qtot.nc
+  prec: data/test/prec_%Y-%m_01deg.tif
+  deficit: float

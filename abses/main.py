@@ -384,7 +384,7 @@ class MainMediator(Mediator, Log):
     def transfer_request(self, sender: object, attr: str, **kwargs) -> object:
         self._check_sender(sender)
         if self.sender_matches("agent"):
-            response = self.nature.patch(attr, **kwargs)
+            response = self.nature.get_patch(attr, **kwargs)
         else:
             response = None
         return response

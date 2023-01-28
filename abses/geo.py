@@ -282,7 +282,13 @@ class Geo:
         if data is None:
             return self.accessible
         xda = xr.DataArray(data, coords=self.coords)
+        xda.rio.write_crs(self.crs, inplace=True)
         if masked is True:
             return xda.where(self.accessible)
         else:
             return xda
+
+    def clip_match(self, xda: xr.DataArray) -> xr.DataArray:
+        xda = xda.rio.write_crs(self.crs)
+        aligned = xda.rio.reproject_match(self.accessible)
+        return aligned

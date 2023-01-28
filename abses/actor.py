@@ -266,7 +266,7 @@ class Actor(BaseObj):
     def loc(self, request: str, **kwargs):
         header = {"sender": self, "position": self.pos}
         response = self.request(request, header, **kwargs)
-        return response
+        return response[self.pos]
         # elif len(patch_obj.shape) == 3:
         #     return patch_obj[:, self.pos[0], self.pos[1]]
 

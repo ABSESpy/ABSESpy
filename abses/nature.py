@@ -7,15 +7,18 @@
 
 from copy import deepcopy
 from functools import cached_property
+from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import xarray
+from agentpy import AttrDict
 from agentpy.grid import AgentSet
 
 from abses.actor import Actor
 from abses.bases import Creator
 from abses.boundary import Boundaries
+from abses.engine import GeoEngine
 from abses.geo import Geo
 
 from .algorithms.spatial import points_to_polygons, polygon_to_mask
@@ -65,6 +68,7 @@ class PatchModule(Module, Creator):
         self._mask = None
         # Other attrs
         self._attrs = kwargs.copy()
+        self._patches = AttrDict()
 
     @property
     def geo(self):
@@ -119,9 +123,9 @@ class PatchModule(Module, Creator):
         self.add_creation(patch)
         return patch
 
-    # @property
-    # def patches(self):
-    #     return self._patches
+    @property
+    def patches(self):
+        return self._patches
 
     # @patches.setter
     # def patches(self, patch_name: str) -> None:
@@ -147,10 +151,15 @@ class PatchModule(Module, Creator):
             value = self.params.get(attr, False)
             self.create_patch(False, attr, add=True)
 
-    def add_patch(self, patch: Patch) -> None:
-        self.register_a_var(name=patch.name, value=patch.value)
-        self.patches = patch.name
-        setattr(self, patch.name, patch)
+    def read_patch(self, path, name) -> None:
+        path = GeoEngine(path, self.model)
+        array = path.read2array()
+        patch = self.create_patch(array, name=name)
+        self._patches[name] = patch
+        return patch
+        # self.register_a_var(name=patch.name, value=patch.value)
+        # self.patches = patch.name
+        # setattr(self, patch.name, patch)
 
     # def get_patch(self, attr):
     #     return getattr(self, attr)
@@ -225,25 +234,22 @@ class BaseNature(CompositeModule, PatchModule):
         self._boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
         self._setup_grid(shape=self.geo.shape)
 
-    def patch(self, attr: str, **kwargs) -> Patch:
+    def get_patch(self, attr: str, **kwargs) -> Patch:
+        # TODO: finish this method
         if hasattr(self, attr):
             obj = getattr(self, attr)
             return obj
         elif attr in self.patches:
-            module = self._patches[attr]
-            obj = module.get_patch(attr, **kwargs)
-            return obj
+            patch = self._patches[attr]
+            return patch
         else:
             raise ValueError(f"Unknown patch {attr}.")
 
     def actor_to(self, actor: Actor, position: Tuple[int, int]):
+        # TODO: refactor this function
         if actor.on_earth is True:
             self.grid[actor.pos].remove(actor)
         self.grid[position].add(actor)
-
-    # def agents(self, key, header: dict) -> ActorsList:
-    #     selection = header.get('selection', None)
-    #     return self[key].select(selection=selection)
 
     # def transfer_var(self, sender: object, var: str) -> None:
     #     if var not in self.patches:
@@ -306,21 +312,6 @@ class BaseNature(CompositeModule, PatchModule):
         )
         positions = [potential_pos[i] for i in pos_index]
         return positions
-
-    # def random_move(
-    #     self,
-    #     agent,
-    #     only_empty: bool = True,
-    #     avoid_breed: str = None,
-    #     only_accessible: bool = True,
-    # ):
-    #     mask = self.create_patch(True, "mask")
-    #     if only_accessible:
-    #         mask = mask | self.accessible
-    #     if only_empty:
-    #         mask = mask | ~self.has_agent(avoid_breed)
-    #     pos = self.random_positions(1, mask)[0]
-    #     self.move_to(agent, pos)
 
     def add_agents(self, agents: ActorsList, positions=None, **kwargs):
         if positions is None:

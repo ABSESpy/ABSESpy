@@ -17,20 +17,22 @@ website: https://cv.songshgeo.com
 ## v-0.0.1 🎉
 
 ### Features
-- [x] 将变量完成
-- [x] 重构整个项目
-- [ ] Mediator 步骤方法私有
-- [x] Agents Container 单例模式
-- [ ] `Actor` 功能整理写完并测试
-- [ ] Actor 使用 `relationship`储存与其它`agents`的关系
-- [ ] Actor 使用 `ownership` 储存与斑块变量的关系
+- [x] **Actors:** `Actor` 的创建、查改、储存
+- [x] **Actors:** 选取可自动更新的行动者集合并读取、更新属性
+- [ ] **Actors**: 从`Patch`和自己的位置读取属性、改变世界
+- [ ] **Nature**: 自动读取空间数据作为 `Patch` 变量
+- [x] **Nature**: 将 `Actors` 添加到空间并进行位置增删查改
+- [x] **Model**: 模型运行自动化，全程记录流程进度日志
+- [x] **Experiment**: 自行开始重复实验，参数敏感性分析
+
 - [ ] 变量才生成空间数据 `patch`，中间仅作数组运算
 - [ ] 初步完成项目文档
 
 
 ## v-0.0.2 🎉
 - [ ] 文档初步写完
-- [ ] `human` 模块重构，自带图 `graph`
+- [ ] **human**: 模块自动生成所有主体的复杂网络
+- [ ] Actor 使用 `ownership` 储存与斑块变量的关系
 - [ ] 使用新框架设计 Agent 的交互
 - [ ] 修改删掉邻居人数不一样的测试问题
 - [ ] 变量在返回之前可以按注册时逻辑进行预处理

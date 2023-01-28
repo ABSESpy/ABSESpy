@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Iterable
 
+import xarray as xr
 import yaml
 
 from .func import make_list
