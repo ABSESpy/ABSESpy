@@ -9,12 +9,12 @@ import numpy as np
 import xarray as xr
 
 from abses.geo import Geo
+from abses.main import MainModel
 
 
 def test_setup_from_shape():
     geo = Geo(1)
     geo.setup_from_shape((3, 4), resolution=10)
-    assert geo.crs is None
     assert geo.shape == (3, 4)
     assert geo.height == 3
     assert geo.width == 4
@@ -34,7 +34,7 @@ def test_setup_from_coords():
     )
     geo3 = Geo(3)
     geo3.setup_from_coords(coord_y=[1, 2, 3], coord_x=[2, 4, 6, 8])
-    assert geo.crs is geo3.crs is None
+    assert geo.crs == geo3.crs
     assert geo.shape == geo3.shape == (3, 4)
     assert geo.height == geo3.height == 3
     assert geo.width == geo3.width == 4
@@ -57,5 +57,15 @@ def test_setup_from_file():
 
     mask = np.ones(geo5.shape, bool)
     mask[0, 0] = False
-    geo5.mask = mask
+    geo5._setup_mask(mask)
     assert geo5.mask.sum() == 80
+
+
+def test_auto_setup():
+    geo = Geo(6)
+    geo.auto_setup("data/mean_prec.tif")
+    assert geo.shape == (400, 700)
+
+    model = MainModel(settings_file="config/patch_vars.yaml")
+    assert model.nature.geo.shape == (400, 700)
+    model.nature._setup_grid((400, 700))

@@ -5,6 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from copy import deepcopy
+from functools import cached_property
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -72,7 +74,8 @@ class PatchModule(Module, Creator):
     def mask(self) -> xarray.DataArray:
         if self._mask is None:
             self._mask = self.geo.zeros(bool)
-        return self._mask | self.geo.mask
+        mask = self._mask | self.geo.mask
+        return mask.rio.write_crs(self.geo.crs)
 
     @property
     def accessible(self):
@@ -100,7 +103,7 @@ class PatchModule(Module, Creator):
 
     def create_patch(
         self,
-        values: "np.ndarray|str|bool|float|int",
+        values: Union[np.ndarray, str, bool, float, int],
         name: str,
         xarray: bool = True,
     ) -> Patch:
@@ -144,9 +147,10 @@ class PatchModule(Module, Creator):
             value = self.params.get(attr, False)
             self.create_patch(False, attr, add=True)
 
-    # def add_patch(self, patch: Patch) -> None:
-    #     self.patches = patch.name
-    #     setattr(self, patch.name, patch)
+    def add_patch(self, patch: Patch) -> None:
+        self.register_a_var(name=patch.name, value=patch.value)
+        self.patches = patch.name
+        setattr(self, patch.name, patch)
 
     # def get_patch(self, attr):
     #     return getattr(self, attr)
@@ -204,18 +208,18 @@ class BaseNature(CompositeModule, PatchModule):
     def _setup_grid(self, shape: Tuple[int, int]):
         """A numpy 2-d Grid where agents are saved in."""
         array = np.empty(shape=shape, dtype=object)
+        access = self.accessible.to_numpy()
         it = np.nditer(array, flags=["refs_ok", "multi_index"])
         for _ in it:
             index = it.multi_index
-            access = self.accessible[index]
             array[index] = PositionSet(
-                model=self.model, accessible=access, index=index
+                model=self.model, accessible=access[index], index=index
             )
         self._grid = array
 
     def _after_parsing(self):
         """After parsing parameters, setup grid and geographic settings."""
-        settings = self.params.get("world", DEFAULT_WORLD).copy()
+        settings = deepcopy(self.params.get("world", DEFAULT_WORLD))
         self.geo.auto_setup(settings=settings)
         boundary_settings = self.params.get("boundary", {})
         self._boundary = Boundaries(shape=self.geo.shape, **boundary_settings)

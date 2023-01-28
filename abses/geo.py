@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import threading
+from functools import cached_property
 from numbers import Number
 from pathlib import Path
 from typing import (
@@ -84,16 +85,6 @@ class Geo:
     def accessible(self) -> xr.DataArray:
         return ~self.mask
 
-    @mask.setter
-    def mask(self, value):
-        if not hasattr(value, "shape"):
-            raise AttributeError("Mask must has 'shape' attribute")
-        elif value.shape != self.shape:
-            raise ValueError(
-                f"Input shape {value.shape} does not match {self.shape}."
-            )
-        self._mask = value
-
     @property
     def crs(self) -> CRS:
         return self._crs
@@ -160,11 +151,20 @@ class Geo:
         }
         return coords
 
+    def _setup_mask(self, value):
+        if not hasattr(value, "shape"):
+            raise AttributeError("Mask must has 'shape' attribute")
+        elif value.shape != self.shape:
+            raise ValueError(
+                f"Input shape {value.shape} does not match {self.shape}."
+            )
+        self._mask = value
+
     def show_georef(self) -> pd.Series:
         return pd.Series(self.georef)
 
     def retrieve_georef(self, **kwargs) -> None:
-        self.crs = kwargs.pop("crs", None)
+        self.crs = kwargs.pop("crs", WGS84)
         self._nodata = kwargs.pop("nodata", NODATA)
 
     def setup_from_coords(
@@ -252,7 +252,8 @@ class Geo:
             x_coord = xda.coords[dims[0]].to_dict()
             y_coord = xda.coords[dims[1]].to_dict()
             self.setup_from_coords(x_coord, y_coord, **xda.attrs)
-            self.mask = xda.isnull().data.reshape(self.shape)
+            nodata = xda.isnull().data.reshape(self.shape)
+            self._setup_mask(nodata)
         elif path.suffix in [".yaml"]:
             settings = read_yaml(path)
             self.setup_from_dict(settings)
