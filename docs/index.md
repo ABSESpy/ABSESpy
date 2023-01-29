@@ -20,7 +20,7 @@ website: https://cv.songshgeo.com
 `ABSESpy` makes it easier to build artificial **[Social-ecological systems](docs/about.md#what-are-social-ecological-systems-sess)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
 
 - Modelling environment for agents with **[geo data](tutorial/notebooks/nature/geodata.ipynb)**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- Modelling **human behaviour** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
+- Modelling **[human behaviour](tutorial/notebooks/human/CCR_example.ipynb)** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
 - Easily manage all [parameters, arguments](tutorial/notebooks/parameters.ipynb), and variables with a `yaml` settings file.
 
 [More features ...](logs/v-0.0.1.md)

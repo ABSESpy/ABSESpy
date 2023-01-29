@@ -14,9 +14,10 @@ email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
 
-## v-0.0.1 🎉
+## [v-0.0.1 🎉](logs/../../logs/v-0.0.1.md)
 
 ### Features
+
 - [x] **Actors:** `Actor` 的创建、查改、储存
 - [x] **Actors:** 选取可自动更新的行动者集合并读取、更新属性
 - [x] **Actors**: 从`Patch`和自己的位置读取属性、改变世界
@@ -29,18 +30,20 @@ website: https://cv.songshgeo.com
 
 
 ## v-0.0.2 🎉
-- [ ] 文档初步写完
+
+- [ ] **API**: 文档初步写完
+- [ ] **doc**: 中文 README
+- [ ] **example**: 上传第一个大型模型完整案例
 - [ ] **human**: 模块自动生成所有主体的复杂网络
-- [ ] Actor 使用 `ownership` 储存与斑块变量的关系
-- [ ] 使用新框架设计 Agent 的交互
-- [ ] 修改删掉邻居人数不一样的测试问题
-- [ ] 变量在返回之前可以按注册时逻辑进行预处理
+- [ ] **Actor**: 使用 `ownership` 储存与斑块变量的关系
+- [ ] **Variable**: 变量在返回之前可以按注册时逻辑进行预处理
 
 ## v-0.0.3 🎉
-- [ ] 并行运算 dask
+
+- [ ] 使用 `dask` 实现并行运算
 - [ ] [GPU](https://zhuanlan.zhihu.com/p/148693465) 加速 [cupy](https://www.jianshu.com/p/b5a6ee8564df) 替代一部分的 numpy
 - [ ] **Actors** as agent templates from the **IAD framework** and **MoHuB** framework.
 
 ## v-0.0.4 🎉
-- [ ] 自动生成 SES network
+
 - [ ] 重构边界 `Boundaries`

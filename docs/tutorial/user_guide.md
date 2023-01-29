@@ -35,9 +35,9 @@ Three main components `BaseHuman`, `BaseNature` and `MainModel` are included. Ge
 ## Human
 
 - Understanding of the structure of the `ABSESpy` [management and storage `Actor` (i.e., agents)](notebooks//human/actors.ipynb)
-- Defining the [collections of actors, rules of action, perception](notebooks//human/selecting.ipynb) ... as if they were real people
+- Defining the [collections of actors, rules of action, perception](notebooks//human/rules.ipynb) ... as if they were real people
 - Applying [Cognition, Contagion and behavioral Response (CCR Framework)](../docs/background.md#human-behaviour-framework) with `ABSESpy`, here is an [demo model](notebooks/human/CCR_example.ipynb).
 
 ## Experiment
 
-- [Run the model repeatedly to test the sensitivity of a parameter](notebooks//experiment.ipynb)
+- Run the model repeatedly to test the sensitivity of a parameter. This function from agentpy is used. [Please refer to here](https://agentpy.readthedocs.io/en/latest/guide_ema.html).

@@ -9,97 +9,63 @@ badgets:
 
 ![pixel_abses2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/pixel_abses2.svg)
 
-Language: [English Readme](#) | [简体中文](README_ch)
+<!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-![p50LQ2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/p50LQ2.jpg)
+`ABSESpy` makes it easier to build artificial **[Social-ecological systems](docs/about.md#what-are-social-ecological-systems-sess)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
 
-ABSESpy makes it easier to build artificial **Social-ecological systems** with GeoSpatial datasets.
-- Create the environment for agents with **geo data**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- **Actors** as agent templates from the **IAD framework** and **MoHuB** framework.
-- Easily manage all parameters, arguments, and variables with a `yaml` settings file.
-- Generate **reporting** documents, logging, and experiment reports of simulations.
-- Integrated auto experiment with sensitivity analysis and basic visualisation methods.
+## Why `ABSESpy`?
 
-## Installing
+**Several characteristics of Agent-Based model (ABM) make it an essential method for social-ecological systems (SES) research:**
+
+1. It focuses on the change of an SES over time from mutual adaptations of agents and their environments.
+2. its ability to generate emergent system-level outcomes from micro-level interactions and macro-level feedback.
+3. its ability to represent the diversity and heterogeneity of human and non-human actors and the spatial characteristics of an SES ...
+
+However, there is currently no modelling framework that **combines geo-spatial data and actor behaviour** (`actor` is the term for agents in the SES framework) well. `ABSESpy` is designed for spatial modelling that **couples human and nature** by:
+
+- Modelling environment for agents with **[geo data](tutorial/notebooks/nature/geodata.ipynb)**: `Shapefile`, `GeoTiff`, `NetCDF`.
+- Modelling **[human behaviour](tutorial/notebooks/human/CCR_example.ipynb)** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
+- Easily manage all [parameters, arguments](tutorial/notebooks/parameters.ipynb), and variables with a `yaml` settings file.
+
+## Install
+
 Install with pip or your favourite PyPI package manager.
 ```
 pip install abses
 ```
 
-Run the following to test ABSESpy successfully installed on your terminal:
-```
-abses --verson
-```
+## Basic usage & Documents
 
-## Basic usage
+You can see how to use `ABSESpy` in these simple [tutorials](#TODO):
 
-```yaml
-world:
-	width: 22
-	height: 22
-	boundary: 1
-time:
-	start: 2000-01-01
-	freq: M
-	end: 2020-01-01
-nature:
-	map: xxx/xxx/map.shp
-	resolution:
+1. [Organize an Agent-based model](#TODO) for construct a SES.
+2. Using [geo-spatial data](#TODO) as the environment.
+3. Simply applying a [human behavior framework](#TODO).
 
-human:
-	admins: 3
-	farmers: 30
+<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/2jFmIS.jpg" alt="Drawing" style="width: 400px;"/>
 
-```
-
-Then create the model logic in Python:
-```python
-from abses import Model, Actor
-
-# subclass from the Model, creating an artificial Social-ecological System.
-class ArtificialSES(Model):
-
-	def initialize(self):
-		pass
-
-	def setup(self):
-		# setup after loading parameters
-		actors = self.human.generate_actors(Actor, n=3)
-		self.nature.add_actors(actors, how=randomly)
-		# each actor owns a piece of land by Voronoi
-		self.nature.allocating(actors, algorithm=voronoi)
-
-	def update(self):
-		pass
-
-	def step(self):
-		pass
-
-	def end(self):
-		pass
-
-model, nature, human, agents = Model.to_objects()
-```
-
-Simulation:
-Climate change:
-
-Actors' decisions:
-
-See documents for more usage examples.
-
-## Why agent-based modelling with SES?
-### Agent-based model applications in SES research:
-1. xx
-2. xx
-3. xx
+Access the full Documentation [here](#TODO).
 
 
-## Testing model
+## Get in touch
 
-We provide a testing model, install data from [here]() and run tests.
+- **For enthusiastic developers and contributors**, all contributions, bug reports, bug fixes, documentation improvements, enhancements, and ideas are welcome.
+- **For SES researchers**, welcome to use this package in social-ecological system (SES) studies. If you have a model published, feel free to contribute it to our model library through [mailing list](https://groups.google.com/g/absespy).
 
-## Projects using ABSESpy
+If you need any help when using `ABSESpy`, don't hesitate to get in touch with us through:
 
-Welcome to use this package in your research. If you need any help when using **ABSESpy**, don't hesitate to get in touch with me through songshgeo@gmail.com
-- Agriculture and water use in the Yellow River Basin, China
+- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/SongshGeo/ABSESpy/discussions).
+- Report bugs, suggest features or view the source code [on _GitHub_](https://github.com/SongshGeo/ABSESpy/issues).
+- For less well-defined questions or ideas or to announce other projects of interest to xarray users, use the [mailing list](https://groups.google.com/g/absespy).
+
+## License
+
+Copyright 2023, `ABSESpy` [Shuang Song](https://cv.songshgeo.com/)
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+[https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+`ABSESpy` bundles portions of `AgentPy`, `pandas`, `NumPy` and `Xarray`; the full text of these licenses is included in the licenses directory.
