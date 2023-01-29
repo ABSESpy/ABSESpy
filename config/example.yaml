@@ -1,0 +1,8 @@
+demo:
+    testing: 'from file'
+
+nature:
+    param1: 0.1
+
+human:
+    arg1: 5

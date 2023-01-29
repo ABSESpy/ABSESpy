@@ -146,6 +146,13 @@ class MainModel(Folder, MainComponent, Model, Notice):
             self.update()
         return self.time
 
+    def sim_step(self):
+        """Proceeds the simulation by one step, incrementing `Model.t` by 1
+        and then calling :func:`Model.step` and :func:`Model.update`."""
+        self.time_go()
+        if self.t >= self._steps:
+            self.running = False
+
 
 Sender: TypeAlias = Union[MainComponent, Actor]
 TypingUsers: TypeAlias = NamedTuple(

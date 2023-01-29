@@ -112,13 +112,14 @@ class ActorsList(AgentList):
             selection (list of bool): List with same length as the agent list.
                 Positions that return True will be selected.
         """
-        if isinstance(selection, str):
-            return self.to_dict()[selection]
-        elif self._is_same_length(selection):
-            selected = [a for a, s in zip(self, selection) if s]
-            return ActorsList(self.model, selected)
+        if isinstance(selection, (str, dict)):
+            bool_ = [actor.selecting(selection) for actor in self]
+        elif isinstance(selection, (list, tuple, np.ndarray)):
+            bool_ = make_list(selection)
         else:
-            raise TypeError(f"Invalid selection {type(selection)}")
+            raise TypeError(f"Invalid selection type {type(selection)}")
+        selected = [a for a, s in zip(self, bool_) if s]
+        return ActorsList(self.model, selected)
 
     def now(self) -> Self:
         """Only select actors who is already setup on the earth."""

@@ -23,7 +23,7 @@ from typing import (
 from agentpy import AttrDict
 
 from .actor import Actor
-from .sequences import ActorsList
+from .sequences import ActorsList, Selection
 from .tools.func import make_list, norm_choice
 
 if TYPE_CHECKING:
@@ -120,6 +120,9 @@ class AgentsContainer(AttrDict):
         self[agent.breed].remove(agent)
         if agent.on_earth is True:
             agent.here.remove(agent)
+
+    def select(self, selection: Selection) -> ActorsList:
+        return self.to_list().select(selection)
 
 
 def apply_agents(func) -> callable:
