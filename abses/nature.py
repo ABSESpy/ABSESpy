@@ -16,7 +16,7 @@ from agentpy import AttrDict
 from agentpy.grid import AgentSet
 
 from abses.actor import Actor
-from abses.bases import Creator
+from abses.bases import Creation, Creator
 from abses.boundary import Boundaries
 from abses.engine import GeoEngine
 from abses.geo import Geo
@@ -57,7 +57,7 @@ class PositionSet(AgentSet):
             super().add(actor)
 
 
-class PatchModule(Module, Creator):
+class PatchModule(Module, Creator, Creation):
     _valid_type = (bool, int, float, str, "float32")
     _valid_dtype = tuple([np.dtype(t) for t in _valid_type])
 
@@ -110,6 +110,7 @@ class PatchModule(Module, Creator):
         values: Union[np.ndarray, str, bool, float, int],
         name: str,
         xarray: bool = True,
+        add: bool = False,
     ) -> Patch:
         if not hasattr(values, "shape"):
             # only int|float|str|bool are supported
@@ -121,6 +122,8 @@ class PatchModule(Module, Creator):
             self._check_shape(values)
         patch = Patch(values, name=name, father=self, xarray=xarray)
         self.add_creation(patch)
+        if add is True:
+            self._patches[name] = patch
         return patch
 
     @property
@@ -237,12 +240,12 @@ class BaseNature(CompositeModule, PatchModule):
 
     def get_patch(self, attr: str, **kwargs) -> Patch:
         # TODO: finish this method
-        if hasattr(self, attr):
-            obj = getattr(self, attr)
-            return obj
-        elif attr in self.patches:
+        if attr in self.patches:
             patch = self._patches[attr]
             return patch
+        for module in self.modules:
+            if attr in module.patches:
+                return module._patches[attr]
         else:
             raise ValueError(f"Unknown patch {attr}.")
 

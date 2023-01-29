@@ -11,6 +11,7 @@ import networkx as nx
 from agentpy import AttrDict
 
 from abses.actor import Actor
+from abses.bases import Creation
 
 from .container import AgentsContainer
 from .modules import CompositeModule, Module
@@ -20,9 +21,10 @@ Actors: TypeAlias = Union[ActorsList, Selection, Actor]
 Trigger: TypeAlias = Union[str, Callable]
 
 
-class HumanModule(Module):
+class HumanModule(Module, Creation):
     def __init__(self, model, name=None):
-        super().__init__(model, name)
+        Module.__init__(self, model, name)
+        Creation.__init__(self)
         self._agents = AgentsContainer(model)
         self._collections: Dict[str, Selection] = AttrDict()
         self._rules: Dict[str, Trigger] = AttrDict()

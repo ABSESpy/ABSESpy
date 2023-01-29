@@ -57,18 +57,20 @@ class Geo:
         instance = cls._models.get(model, None)
         if instance is None:
             instance = super().__new__(cls)
+            cls._initialize(instance, model)
             with cls._lock:
                 cls._models[model] = instance
         return instance
 
-    def __init__(self, model=None):
-        self._model = model
-        self._crs: CRS = None
-        self._nodata: float = None
-        self._dims: Tuple[str, str] = ("x", "y")
-        self._x: Optional[np.ndarray] = None
-        self._y: Optional[np.ndarray] = None
-        self._mask: Optional[np.ndarray] = None
+    @classmethod
+    def _initialize(cls, instance, model):
+        instance._model = model
+        instance._crs: CRS = None
+        instance._nodata: float = None
+        instance._dims: Tuple[str, str] = ("x", "y")
+        instance._x: Optional[np.ndarray] = None
+        instance._y: Optional[np.ndarray] = None
+        instance._mask: Optional[np.ndarray] = None
 
     @property
     def shape(self) -> Tuple[int, int]:
