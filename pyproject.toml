@@ -18,7 +18,7 @@ exclude = '''
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0"
+version = "0.1.2"
 tag_format = "$version"
 [semantic_release]
 version_variable = 3.8 # or where your version is defined
@@ -31,7 +31,7 @@ line_length = 79
 
 [tool.poetry]
 name = "abses"
-version = "0.1.1"
+version = "0.1.2"
 description = "ABSESpy makes it easier to build artificial Social-ecological systems with real GeoSpatial datasets and fully incorporate human behaviour."
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
