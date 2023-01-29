@@ -36,7 +36,7 @@ The getting started guide aims to get you using `{{name}}` productively as quick
 - {{name}} depends on several excellent open-sourced Python packages: [dependencies](docs/dependencies.md)
 - Installing the {{name}} package: [install](docs/install.md)
 - Run our testing models: [primary usage](docs/usage.md)
-- Design your model according to our [User Guide](docs/user_guide.md) and [API References](api/model.md)
+- Design your model according to our [User Guide](tutorial/user_guide.md) and [API References](api/model.md)
 
 ## Model Library
 

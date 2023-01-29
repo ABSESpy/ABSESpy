@@ -15,21 +15,21 @@ nav:
         - Contribution: docs/contribution.md
         - Acknowledge: docs/acknowledge.md
     - User Guide:
-        - Structure model: docs/user_guide.md
+        - Structure model: tutorial/user_guide.md
         - Setup a Model:
-          - Getting started: notebooks/model.ipynb
-          - Setup parameters: notebooks/parameters.ipynb
-          - Control simulation flow: notebooks/workflow.ipynb
+          - Getting started: tutorial/notebooks/model.ipynb
+          - Setup parameters: tutorial/notebooks/parameters.ipynb
+          - Control simulation flow: tutorial/notebooks/workflow.ipynb
         - Human behavior:
-          - Actors Container: notebooks/human/actors.ipynb
-          - Selecting Actors: notebooks/human/selecting.ipynb
-          - Define Rules for actors: notebooks/human/rules.ipynb
-          - Positions and movement: notebooks/human/movement.ipynb
-          - Structured Human Behavior: notebooks/human/CCR_example.ipynb
+          - Actors Container: tutorial/notebooks/human/actors.ipynb
+          - Selecting Actors: tutorial/notebooks/human/selecting.ipynb
+          - Define Rules for actors: tutorial/notebooks/human/rules.ipynb
+          - Positions and movement: tutorial/notebooks/human/movement.ipynb
+          - Structured Human Behavior: tutorial/notebooks/human/CCR_example.ipynb
         - Natural processes:
-          - Manipulate GeoData: notebooks/nature/geodata.ipynb
-          - Patch variables: notebooks/nature/patch.ipynb
-        - Experiment: notebooks/experiment.ipynb
+          - Manipulate GeoData: tutorial/notebooks/nature/geodata.ipynb
+          - Patch variables: tutorial/notebooks/nature/patch.ipynb
+        - Experiment: tutorial/notebooks/experiment.ipynb
     - API references:
         - Model: api/model.md
         - Structures: api/structures.md
@@ -83,7 +83,10 @@ plugins:
     - bibtex:
         bib_file: "docs/refs.bib"
     - macros
-    - mkdocs-jupyter
+    - mkdocs-jupyter:
+      # include_source: True
+      # execute: true
+      # - allow_errors: false
     - callouts
     - glightbox
     # https://squidfunk.github.io/mkdocs-material/setup/setting-up-tags/

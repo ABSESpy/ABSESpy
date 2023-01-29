@@ -24,10 +24,20 @@ Three main components `BaseHuman`, `BaseNature` and `MainModel` are included. Ge
 
 ## Model
 
-- First of all, to [Model Structure](#TODO)
+- First of all, get started with a simple [model demo](notebooks/model.ipynb).
+- [Management of model parameters using `yaml` configuration files](notebooks/parameters.ipynb).
 
 ## Nature
 
+- [Load the geographic dataset](notebooks//nature/geodata.ipynb) as the space in which the subject operates and the patch variables that the subject can access based on its location.
+- [Manipulate `Patch` object for better spatial analysis](notebooks//nature/patch.ipynb)
+
 ## Human
 
+- Understanding of the structure of the `ABSESpy` [management and storage `Actor` (i.e., agents)](notebooks//human/actors.ipynb)
+- Defining the [collections of actors, rules of action, perception](notebooks//human/selecting.ipynb) ... as if they were real people
+- Applying [Cognition, Contagion and behavioral Response (CCR Framework)](../docs/background.md#human-behaviour-framework) with `ABSESpy`, here is an [demo model](notebooks/human/CCR_example.ipynb).
+
 ## Experiment
+
+- [Run the model repeatedly to test the sensitivity of a parameter](notebooks//experiment.ipynb)
