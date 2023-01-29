@@ -14,36 +14,35 @@ website: https://cv.songshgeo.com
 ![pixel_abses2.svg](assets/pixel_abses2.svg)
 
 ## Features
-![p50LQ2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/p50LQ2.jpg)
 
-ABSESpy makes it easier to build artificial **Social-ecological systems** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
+![PHbDgA](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/PHbDgA.jpg)
 
-- Modelling environment for agents with **[geo data](#TODO)**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- Modelling human behaviour of agents with [cognition, contagion and responses](#TODO).
-- Easily manage all parameters, arguments, and variables with a `yaml` settings file.
-- Generate **reporting** documents, logging, and experiment reports of simulations.
-- Integrated auto experiment with sensitivity analysis and basic visualisation methods.
+`ABSESpy` makes it easier to build artificial **[Social-ecological systems](docs/about.md#what-are-social-ecological-systems-sess)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
 
-[More features ...](docs/features.md)
+- Modelling environment for agents with **[geo data](tutorial/notebooks/nature/geodata.ipynb)**: `Shapefile`, `GeoTiff`, `NetCDF`.
+- Modelling **human behaviour** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
+- Easily manage all [parameters, arguments](tutorial/notebooks/parameters.ipynb), and variables with a `yaml` settings file.
+
+[More features ...](logs/v-0.0.1.md)
 
 ## Getting Start
 
 The getting started guide aims to get you using `{{name}}` productively as quickly as possible. It is designed as an entry point for new users and introduces `{{name}}`’s main concepts.
 
 > [!INFO]Note
-> If you are unfamiliar with the social-ecological systems' framework or Agent-based modelling method, we strongly suggest you browse our [design concepts](docs/design.md) before building your model.
+> If you are unfamiliar with the social-ecological systems' framework or Agent-based modelling method, we strongly suggest you browse our [core concepts](docs/background.md) and [tutorial](tutorial/user_guide.md) before building your model.
 
 - {{name}} depends on several excellent open-sourced Python packages: [dependencies](docs/dependencies.md)
 - Installing the {{name}} package: [install](docs/install.md)
-- Run our testing models: [primary usage](docs/usage.md)
+- Run our testing models: [primary usage](tutorial/notebooks/model.ipynb)
 - Design your model according to our [User Guide](tutorial/user_guide.md) and [API References](api/model.md)
 
-## Model Library
+<!-- ## Model Library
 
-We provide several [examples](examples/negotiation.md) for reference to new users. We likewise encourage users to let us know about links to social-ecological system models/papers developed using `{{name}}`, and we will list them here.
+We provide several [examples](examples/negotiation.md) for reference to new users. We likewise encourage users to let us know about links to social-ecological system models/papers developed using `{{name}}`, and we will list them here. -->
 
 ## About AB**SES**py
 
-- Welcome to reporting bugs or other issues in our [GitHub discussion forum](#TODO).
+- Welcome to reporting bugs or other issues in our [GitHub discussion forum](https://github.com/SongshGeo/ABSESpy/discussions).
 - For enthusiastic developers and contributors, please follow the [contribution guide](docs/contribution.md) when adding new features or fixing bugs.
 - Many lovely people made this project possible through financial support, contributions, and advice. A list of acknowledgements can be found [here](docs/acknowledge.md).

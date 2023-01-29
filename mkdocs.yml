@@ -3,12 +3,12 @@ site_name: AB-SESpy
 nav:
     - Home:
         - AB-SESpy: index.md
-        - Dependencies: docs/dependencies.md
-        - Install: docs/install.md
-        - Design: docs/design.md
-        - Usage: docs/usage.md
-        - Features: docs/features.md
-    - About:
+        # - Dependencies: docs/dependencies.md
+        # - Install: docs/install.md
+        # - Design: docs/design.md
+        # - Usage: docs/usage.md
+        # - Features: docs/features.md
+    # - About:
         - Introduction: docs/about.md
         - Background: docs/background.md
         - License: docs/license.md
@@ -19,20 +19,19 @@ nav:
         - Setup a Model:
           - Getting started: tutorial/notebooks/model.ipynb
           - Setup parameters: tutorial/notebooks/parameters.ipynb
-          - Control simulation flow: tutorial/notebooks/workflow.ipynb
+          # - Control simulation flow: tutorial/notebooks/workflow.ipynb
         - Human behavior:
           - Actors Container: tutorial/notebooks/human/actors.ipynb
-          - Selecting Actors: tutorial/notebooks/human/selecting.ipynb
-          - Define Rules for actors: tutorial/notebooks/human/rules.ipynb
-          - Positions and movement: tutorial/notebooks/human/movement.ipynb
-          - Structured Human Behavior: tutorial/notebooks/human/CCR_example.ipynb
+          - Manipulate actors: tutorial/notebooks/human/rules.ipynb
+          # - Positions and movement: tutorial/notebooks/human/movement.ipynb
+          - Human Behavior: tutorial/notebooks/human/CCR_example.ipynb
         - Natural processes:
           - Manipulate GeoData: tutorial/notebooks/nature/geodata.ipynb
-          - Patch variables: tutorial/notebooks/nature/patch.ipynb
+          # - Patch variables: tutorial/notebooks/nature/patch.ipynb
         - Experiment: tutorial/notebooks/experiment.ipynb
     - API references:
         - Model: api/model.md
-        - Structures: api/structures.md
+        # - Structures: api/structures.md
         - Agent: api/agent.md
         - Agents: api/agents.md
         - Human: api/human.md
@@ -40,11 +39,11 @@ nav:
           - Boundary: api/boundary.md
           - Patch: api/patch.md
         - Variables: api/variables.md
-        - Experiment: api/experiment.md
-    - Examples:
-        - Climate negotiation: examples/negotiation.md
-        - Groundwater withdraw: examples/groundwater.md
-        - Yellow River Quotas: examples/yr_sim.md
+        # - Experiment: api/experiment.md
+    # - Examples:
+    #     - Climate negotiation: examples/negotiation.md
+    #     - Groundwater withdraw: examples/groundwater.md
+    #     - Yellow River Quotas: examples/yr_sim.md
     - Change Log:
         - Road Map: docs/roadmap.md
         - v0.0.1: logs/v-0.0.1.md

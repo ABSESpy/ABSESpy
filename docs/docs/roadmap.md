@@ -19,14 +19,13 @@ website: https://cv.songshgeo.com
 ### Features
 - [x] **Actors:** `Actor` 的创建、查改、储存
 - [x] **Actors:** 选取可自动更新的行动者集合并读取、更新属性
-- [ ] **Actors**: 从`Patch`和自己的位置读取属性、改变世界
-- [ ] **Nature**: 自动读取空间数据作为 `Patch` 变量
+- [x] **Actors**: 从`Patch`和自己的位置读取属性、改变世界
+- [x] **Nature**: 自动读取空间数据作为 `Patch` 变量
 - [x] **Nature**: 将 `Actors` 添加到空间并进行位置增删查改
 - [x] **Model**: 模型运行自动化，全程记录流程进度日志
 - [x] **Experiment**: 自行开始重复实验，参数敏感性分析
-
-- [ ] 变量才生成空间数据 `patch`，中间仅作数组运算
-- [ ] 初步完成项目文档
+- [x] **Document**: 基本功能的介绍
+- [x] **Build**: 初步完成项目架构
 
 
 ## v-0.0.2 🎉
