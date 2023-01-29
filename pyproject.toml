@@ -28,3 +28,28 @@ version_variable = 3.8 # or where your version is defined
 [tool.isort]
 profile = "black"
 line_length = 79
+
+[tool.poetry]
+name = "abses"
+version = "0.1.0"
+description = "ABSESpy makes it easier to build artificial Social-ecological systems with real GeoSpatial datasets and fully incorporate human behaviour."
+authors = ["Shuang Song <songshgeo@gmail.com>"]
+license = "Apache 2.0 License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+agentpy = "^0.1.5"
+numpy = "^1.24.1"
+pandas = "^1.5.3"
+xarray = "^2023.1.0"
+rioxarray = "^0.13.3"
+geopandas = "^0.12.2"
+pre-commit = "^3.0.1"
+scriv = "^1.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
