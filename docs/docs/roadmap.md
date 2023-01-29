@@ -33,6 +33,7 @@ website: https://cv.songshgeo.com
 
 - [ ] **API**: 文档初步写完
 - [ ] **doc**: 中文 README
+- [ ] **build**: 在其它 python 版本上进行测试
 - [ ] **example**: 上传第一个大型模型完整案例
 - [ ] **human**: 模块自动生成所有主体的复杂网络
 - [ ] **Actor**: 使用 `ownership` 储存与斑块变量的关系
