@@ -5,7 +5,7 @@
 
 <!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-`ABSESpy` makes it easier to build artificial **[Social-ecological systems](docs/about.md#what-are-social-ecological-systems-sess)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
+`ABSESpy` makes it easier to build artificial **[Social-ecological systems](https://songshgeo.github.io/ABSESpy/docs/about/)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
 
 ## Why `ABSESpy`?
 
@@ -17,9 +17,9 @@
 
 However, there is currently no modelling framework that **combines geo-spatial data and actor behaviour** (`actor` is the term for agents in the SES framework) well. `ABSESpy` is designed for spatial modelling that **couples human and nature** by:
 
-- Modelling environment for agents with **[geo data](tutorial/notebooks/nature/geodata.ipynb)**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- Modelling **[human behaviour](tutorial/notebooks/human/CCR_example.ipynb)** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
-- Easily manage all [parameters, arguments](tutorial/notebooks/parameters.ipynb), and variables with a `yaml` settings file.
+- Modelling environment for agents with **[geo data](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/nature/geodata/)**: `Shapefile`, `GeoTiff`, `NetCDF`.
+- Modelling **[human behaviour](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/human/CCR_example/)** of agents with [cognition, contagion and responses](https://songshgeo.github.io/ABSESpy/docs/background/#human-behaviour-framework).
+- Easily manage all [parameters, arguments](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/parameters/), and variables with a `yaml` settings file.
 
 ## Install
 
@@ -30,16 +30,15 @@ pip install abses
 
 ## Basic usage & Documents
 
-You can see how to use `ABSESpy` in these simple [tutorials](#TODO):
+You can see how to use `ABSESpy` in these simple [tutorials](https://songshgeo.github.io/ABSESpy/tutorial/user_guide/):
 
-1. [Organize an Agent-based model](#TODO) for construct a SES.
-2. Using [geo-spatial data](#TODO) as the environment.
-3. Simply applying a [human behavior framework](#TODO).
+1. [Organize an Agent-based model](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/model/) and [easily manage parameters](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/parameters/).
+2. Using [geo-spatial data](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/nature/geodata/) as the environment.
+3. Simply applying a [human behavior framework](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/human/CCR_example/).
 
 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/2jFmIS.jpg" alt="Drawing" style="width: 400px;"/>
 
-Access the full Documentation [here](#TODO).
-
+Access the [full Documentation here](https://songshgeo.github.io/ABSESpy/).
 
 ## Get in touch
 
