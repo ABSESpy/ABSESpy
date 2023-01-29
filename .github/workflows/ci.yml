@@ -19,4 +19,10 @@ jobs:
           key: ${{ github.ref }}
           path: .cache
       - run: pip install mkdocs-material
+      - run: pip install mkdocstrings\[python\]
+      - run: pip install mkdocs-bibtex
+      - run: pip install mkdocs-macros-plugin
+      - run: pip install mkdocs-jupyter
+      - run: pip install mkdocs-callouts
+      - run: pip install mkdocs-glightbox
       - run: mkdocs gh-deploy --force
