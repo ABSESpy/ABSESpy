@@ -36,7 +36,7 @@ You can see how to use `ABSESpy` in these simple [tutorials](https://songshgeo.g
 2. Using [geo-spatial data](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/nature/geodata/) as the environment.
 3. Simply applying a [human behavior framework](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/human/CCR_example/).
 
-<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/2jFmIS.jpg" alt="Drawing" style="width: 400px;"/>
+<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/DQg0xJ.jpg" alt="Drawing" style="width: 600px;"/>
 
 Access the [full Documentation here](https://songshgeo.github.io/ABSESpy/).
 
