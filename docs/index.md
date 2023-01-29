@@ -11,11 +11,12 @@ github: https://github.com/SongshGeo
 email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
-![pixel_abses2.svg](assets/pixel_abses2.svg)
+
+![pixel_abses2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/pixel_abses2.svg)
 
 ## Features
 
-![PHbDgA](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/PHbDgA.jpg)
+<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/DQg0xJ.jpg" alt="Drawing" style="width: 800px;"/>
 
 `ABSESpy` makes it easier to build artificial **[Social-ecological systems](docs/about.md#what-are-social-ecological-systems-sess)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
 

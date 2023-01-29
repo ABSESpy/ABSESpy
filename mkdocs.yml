@@ -49,7 +49,7 @@ nav:
         - v0.1.0: logs/v-0.1.0.md
 theme:
     name: "material"
-    logo: "assets/logo_abses.svg"
+    logo: "https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/logo_abses.svg"
     palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
