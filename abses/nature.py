@@ -153,6 +153,7 @@ class PatchModule(Module, Creator):
 
     def read_patch(self, path, name) -> None:
         path = GeoEngine(path, self.model)
+        # dataset = path.get_dataset()
         array = path.read2array()
         patch = self.create_patch(array, name=name)
         self._patches[name] = patch

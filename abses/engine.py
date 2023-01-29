@@ -8,7 +8,9 @@
 import pathlib
 from typing import Callable, Union
 
+import netCDF4
 import numpy as np
+import rioxarray
 import xarray
 
 from abses.geo import Geo
@@ -37,7 +39,9 @@ class GeoEngine:
         if self.path.suffix in [".tif", ".tiff"]:
             pass
         elif self.path.suffix in [".nc"]:
-            xda = xarray.open_dataarray(self.path.absolute())
+            xda = xarray.open_dataarray(
+                self.path.absolute(), decode_coords="all"
+            )
             resampled = xda.resample(time=self.time.freq).mean()
             xda_now = resampled.sel(
                 time=self.time.period.to_timestamp("S"),
