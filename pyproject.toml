@@ -18,7 +18,7 @@ exclude = '''
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.1"
+version = "0.1.0"
 tag_format = "$version"
 [semantic_release]
 version_variable = 3.8 # or where your version is defined

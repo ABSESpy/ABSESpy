@@ -23,7 +23,7 @@ website: https://cv.songshgeo.com
 - Modelling **[human behaviour](tutorial/notebooks/human/CCR_example.ipynb)** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
 - Easily manage all [parameters, arguments](tutorial/notebooks/parameters.ipynb), and variables with a `yaml` settings file.
 
-[More features ...](logs/v-0.0.1.md)
+[More features ...](logs/v-0.1.0.md)
 
 ## Getting Start
 

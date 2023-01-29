@@ -46,7 +46,7 @@ nav:
     #     - Yellow River Quotas: examples/yr_sim.md
     - Change Log:
         - Road Map: docs/roadmap.md
-        - v0.0.1: logs/v-0.0.1.md
+        - v0.1.0: logs/v-0.1.0.md
 theme:
     name: "material"
     logo: "assets/logo_abses.svg"

@@ -25,9 +25,9 @@ __all__ = [
     "ActorsList",
     "AgentsContainer" "MyExperiment",
 ]
-__version__ = "v0.0.1"
+__version__ = "v0.1.0"
 
-from .actor import Actor
+from .actor import Actor, link_to, perception
 from .container import ActorsList, AgentsContainer
 from .human import BaseHuman, HumanModule
 from .main import MainModel

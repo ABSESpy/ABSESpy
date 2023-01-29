@@ -14,7 +14,7 @@ email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
 
-## [v-0.0.1 🎉](logs/../../logs/v-0.0.1.md)
+## [v-0.1.0 🎉](logs/../../logs/v-0.1.0.md)
 
 ### Features
 
@@ -29,7 +29,7 @@ website: https://cv.songshgeo.com
 - [x] **Build**: 初步完成项目架构
 
 
-## v-0.0.2 🎉
+## v-0.2.0 🎉
 
 - [ ] **API**: 文档初步写完
 - [ ] **doc**: 中文 README
@@ -38,12 +38,12 @@ website: https://cv.songshgeo.com
 - [ ] **Actor**: 使用 `ownership` 储存与斑块变量的关系
 - [ ] **Variable**: 变量在返回之前可以按注册时逻辑进行预处理
 
-## v-0.0.3 🎉
+## v-0.3.0 🎉
 
 - [ ] 使用 `dask` 实现并行运算
 - [ ] [GPU](https://zhuanlan.zhihu.com/p/148693465) 加速 [cupy](https://www.jianshu.com/p/b5a6ee8564df) 替代一部分的 numpy
 - [ ] **Actors** as agent templates from the **IAD framework** and **MoHuB** framework.
 
-## v-0.0.4 🎉
+## v-0.4.0 🎉
 
 - [ ] 重构边界 `Boundaries`
