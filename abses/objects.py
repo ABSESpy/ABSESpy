@@ -72,8 +72,7 @@ class BaseObj(Observer, Log, Object):
 
     @property
     def output(self) -> pd.DataFrame:
-        df = pd.DataFrame(self.log, index=self.time.time[:-1])
-        return df
+        return pd.DataFrame(self.log, index=self.time.time[:-1])
 
     @property
     def recording(self) -> Set[str]:
@@ -121,8 +120,7 @@ class BaseObj(Observer, Log, Object):
         )
         self._vars_history[name] = deque([], maxlen=MAXLENGTH)
         self.__setattr__(name, init_data)
-        var = self.to_variable(name=name, now=init_data)
-        return var
+        return self.to_variable(name=name, now=init_data)
 
     def report(
         self,

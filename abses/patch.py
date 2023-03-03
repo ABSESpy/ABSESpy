@@ -118,12 +118,11 @@ class GeoXarray:
         xds = self._obj.transpose("lat", "lon")
         new_width = xds.rio.width * factor
         new_height = xds.rio.height * factor
-        scaled = xds.rio.reproject(
+        return xds.rio.reproject(
             xds.rio.crs,
             shape=(new_height, new_width),
             resampling=Resampling.bilinear,
         )
-        return scaled
 
 
 class Patch(np.ndarray, Creation):
@@ -171,10 +170,7 @@ class Patch(np.ndarray, Creation):
 
     @property
     def rio(self) -> GeoXarray:
-        if self._rio is None:
-            return self.to_spatial(True)
-        else:
-            return self._rio
+        return self.to_spatial(True) if self._rio is None else self._rio
 
     @property
     def cell_area(self):
@@ -203,15 +199,13 @@ class Patch(np.ndarray, Creation):
             "at": ufunc.at,
             "__call__": ufunc,
         }
-        output = f[method](
+        return f[method](
             *(
                 i.view(np.ndarray) if isinstance(i, Patch) else i
                 for i in inputs
             ),
             **kwargs,
         )
-        # output.__dict__ = self.__dict__  # carry forward attributes
-        return output
 
     def update(
         self,
@@ -233,7 +227,7 @@ class Patch(np.ndarray, Creation):
             update_array(self.xda.data, value, mask)
 
     def to_xarray(self, recalc: bool = True) -> xr.DataArray:
-        if recalc is False:
+        if not recalc:
             return self._xda
         if self.father is None:
             raise ValueError("father of patch must be specified")
@@ -250,6 +244,6 @@ class Patch(np.ndarray, Creation):
         if self.xda is None:
             # raise AB_EGMpyError("patch", wrong="convert", condition="")
             raise ValueError("to_spatial requires patch")
-        if recalc is True:
+        if recalc:
             self._rio = GeoXarray(self.xda, self.father)
         return self.rio

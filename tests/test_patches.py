@@ -22,10 +22,7 @@ def get_tested_patches():
     mask = np.zeros(shape, bool)
     mask[2, 2] = True  # 只有最中间的点是 True
 
-    # 不建立标注数组和空间参考的 patch，测试数学计算
-    # 测试 buffer 函数
-    patch2 = Patch(mask, name="no_father_mask", xarray=False)
-    return patch2
+    return Patch(mask, name="no_father_mask", xarray=False)
 
 
 def test_arr_calculation():
@@ -36,7 +33,7 @@ def test_arr_calculation():
     adj4_2 = patch.arr.buffer(neighbors=4, buffer=2)
     # 只有一个单元格是 True 的矩阵经过 buffer 计算后分别有多少 True 单元格：
     adjs_masks = (adj8_1, adj8_2, adj4_1, adj4_2)
-    assert tuple([adj.sum() for adj in adjs_masks]) == (9, 20, 5, 12)
+    assert tuple(adj.sum() for adj in adjs_masks) == (9, 20, 5, 12)
 
     # 查看哪些位置是 True
     patch = Patch(adj4_1, "adj81")

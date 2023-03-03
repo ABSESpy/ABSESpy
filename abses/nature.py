@@ -122,7 +122,7 @@ class PatchModule(Module, Creator, Creation):
             self._check_shape(values)
         patch = Patch(values, name=name, father=self, xarray=xarray)
         self.add_creation(patch)
-        if add is True:
+        if add:
             self._patches[name] = patch
         return patch
 
@@ -241,13 +241,11 @@ class BaseNature(CompositeModule, PatchModule):
     def get_patch(self, attr: str, **kwargs) -> Patch:
         # TODO: finish this method
         if attr in self.patches:
-            patch = self._patches[attr]
-            return patch
+            return self._patches[attr]
         for module in self.modules:
             if attr in module.patches:
                 return module._patches[attr]
-        else:
-            raise ValueError(f"Unknown patch {attr}.")
+        raise ValueError(f"Unknown patch {attr}.")
 
     def actor_to(self, actor: Actor, position: Tuple[int, int]):
         # TODO: refactor this function
@@ -298,14 +296,11 @@ class BaseNature(CompositeModule, PatchModule):
         Returns:
             List[Tuple[int, int]]: iterable coordinates of chosen patches.
         """
-        if where is None:
-            where = self.accessible
-        else:
-            where = self.accessible & where
-        if only_empty is True:
+        where = self.accessible if where is None else self.accessible & where
+        if only_empty:
             where = where & ~self.has_agent().astype(bool)
         where = self.create_patch(where, "where")
-        potential_pos = [(x, y) for x, y in where.arr.where()]
+        potential_pos = list(where.arr.where())
         if probabilities is not None:
             probabilities = probabilities[where]
         pos_index = norm_choice(
@@ -314,8 +309,7 @@ class BaseNature(CompositeModule, PatchModule):
             p=probabilities,
             replace=replace,
         )
-        positions = [potential_pos[i] for i in pos_index]
-        return positions
+        return [potential_pos[i] for i in pos_index]
 
     def add_agents(self, agents: ActorsList, positions=None, **kwargs):
         if positions is None:
@@ -358,10 +352,7 @@ class BaseNature(CompositeModule, PatchModule):
         where = self.geo.wrap_data(where, masked=True)
         where_bool = where.to_numpy().astype(bool)
         agents = self._aggregate_agents(self.grid[where_bool])
-        if selection is None:
-            return agents
-        else:
-            return agents.select(selection)
+        return agents if selection is None else agents.select(selection)
 
     def neighbors(
         self,
@@ -402,10 +393,11 @@ class BaseNature(CompositeModule, PatchModule):
 
         def counts_agent(agents, selection):
             agents = ActorsList(self.model, agents)
-            if selection is not None:
-                return len(agents.select(selection))
-            else:
-                return len(agents)
+            return (
+                len(agents.select(selection))
+                if selection is not None
+                else len(agents)
+            )
 
         has_agents = np.vectorize(counts_agent)(self.grid, selection)
         patch = self.create_patch(has_agents, "has_agent", True)

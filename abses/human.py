@@ -30,13 +30,10 @@ class HumanModule(Module, Creation):
         self._rules: Dict[str, Trigger] = AttrDict()
 
     def __getattr__(self, name):
-        if name[0] == "_":
+        if name[0] == "_" or name not in self._collections:
             return super().__getattr__(name)
-        elif name in self._collections:
-            selection = self._collections[name]
-            return self.actors.select(selection)
-        else:
-            return super().__getattr__(name)
+        selection = self._collections[name]
+        return self.actors.select(selection)
 
     @property
     def agents(self) -> AgentsContainer:

@@ -20,7 +20,6 @@ ignore: # A list of paths or files which Sourcery will ignore.
   - .tox
   - setup.py     # ignore the `setup.py` file
   - .venv/       # ignore everything in the `.venv` directory
-  - tests/       # ignore everything in the `tests` directory
   - data/*       # ignore all files in the `data` directory, but not in subdirectories
 
 rule_settings:

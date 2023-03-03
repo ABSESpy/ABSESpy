@@ -41,14 +41,13 @@ logger = logging.getLogger("__name__")
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
-    selection_dict = dict()
+    selection_dict = {}
     if "==" not in selection:
         return {"breed": selection}
-    else:
-        expressions = selection.split(",")
-        for exp in expressions:
-            left, right = tuple(exp.split("=="))
-            selection_dict[left.strip(" ")] = right.strip(" ")
+    expressions = selection.split(",")
+    for exp in expressions:
+        left, right = tuple(exp.split("=="))
+        selection_dict[left.strip(" ")] = right.strip(" ")
     return selection_dict
 
 
@@ -73,7 +72,7 @@ def check_rule(loop: bool = False) -> Callable:
     def f(func: Callable) -> Callable:
         def wrapper(self: Actor, *args, **kwargs):
             triggered = self._check_rules("now")
-            if loop is True:
+            if loop:
                 while len(triggered) > 0:
                     triggered = self._check_rules("now")
             return func(self, *args, **kwargs)
@@ -99,7 +98,7 @@ class Actor(BaseObj):
         self._pos: Tuple[int, int] = None
         self._relationships: Dict[str, ActorsList] = AttrDict()
         self._ownerships: Dict[str, Patch] = AttrDict()
-        self._rules: Dict[str, Dict[str, Any]] = dict()
+        self._rules: Dict[str, Dict[str, Any]] = {}
         self.mediator: MainMediator = self.model.mediator
         self.setup(**kwargs)
 
@@ -127,10 +126,7 @@ class Actor(BaseObj):
 
     @property
     def here(self) -> ActorsList:
-        if self.on_earth is True:
-            return self.neighbors(0)
-        else:
-            return None
+        return self.neighbors(0) if self.on_earth is True else None
 
     def _freq_level(self, level: str) -> int:
         code = self._freq_levels.get(level, None)
@@ -241,7 +237,7 @@ class Actor(BaseObj):
         agents = self.request(
             request="neighbors", header=header, receiver="nature"
         )
-        if exclude is True:
+        if exclude:
             agents.remove(self)
         return agents
 

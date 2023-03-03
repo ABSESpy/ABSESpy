@@ -48,21 +48,19 @@ def norm_choice(
     else:
         p = np.where(p > 0, p, 0.0)
         p /= p.sum()
-    # solve probability
     if p is None or replace is True:
         return np.random.choice(a, size=size, p=p, replace=replace)
+    # 如果有概率的实体 少于要选择的实体，优先返回
+    if size is None:
+        return np.random.choice(a, p=p, replace=False)
+    elif possible_entries < size:
+        bounds = a[p > 0]
+        rand = np.random.choice(
+            a[p == 0], size=(size - possible_entries), replace=False
+        )
+        selected = np.concatenate([bounds, rand])
     else:
-        # 如果有概率的实体 少于要选择的实体，优先返回
-        if size is None:
-            return np.random.choice(a, p=p, replace=False)
-        elif possible_entries < size:
-            bounds = a[p > 0]
-            rand = np.random.choice(
-                a[p == 0], size=(size - possible_entries), replace=False
-            )
-            selected = np.concatenate([bounds, rand])
-        else:
-            selected = np.random.choice(a, p=p, size=size, replace=False)
+        selected = np.random.choice(a, p=p, size=size, replace=False)
     return selected
 
 
@@ -148,10 +146,7 @@ def opfunc_using_attr(attr: str, binary_op: bool) -> callable:
 
         return new_func
 
-    if binary_op:
-        return wrap_binary_opfunc
-    else:
-        return wrap_unary_opfunc
+    return wrap_binary_opfunc if binary_op else wrap_unary_opfunc
 
 
 # https://zhuanlan.zhihu.com/p/515284250
@@ -212,10 +207,9 @@ def wrap_opfunc_to(obj: object, attr: str) -> List[str]:
         func = getattr(getattr(obj, attr), opname, None)
         if func is None:
             return False
-        else:
-            wrapper = opfunc_using_attr(attr, binary_op=binary_op)
-            setattr(obj.__class__, opname, wrapper(func))
-            return True
+        wrapper = opfunc_using_attr(attr, binary_op=binary_op)
+        setattr(obj.__class__, opname, wrapper(func))
+        return True
 
     successful_wrapped = []
     for opname in _binary_opfunc:

@@ -77,10 +77,11 @@ class TimeDriverManager:
     ) -> Period:
         freq = settings.get("freq", DEFAULT_FREQ)
         values = settings.get(key, defaults)
-        if not isinstance(values, dict):
-            return Period(value=values, freq=freq)
-        else:
-            return Period(freq=freq, **values)
+        return (
+            Period(freq=freq, **values)
+            if isinstance(values, dict)
+            else Period(value=values, freq=freq)
+        )
 
 
 class TimeDriver(Period):

@@ -84,7 +84,7 @@ def test_mediator():
             self.p = {}
 
         def to_trigger(self, arg="testing"):
-            return self.name + " " + arg
+            return f"{self.name} {arg}"
 
         def report_vars(self):
             pass

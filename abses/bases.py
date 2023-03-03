@@ -88,7 +88,7 @@ class Notice:
         self.observers.remove(observer)
 
     def notify(self, *args: str):
-        if len(args) > 0:
+        if args:
             for attr in args:
                 val = getattr(self, attr)
                 for observer in self.observers:

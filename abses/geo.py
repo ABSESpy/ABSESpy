@@ -78,10 +78,9 @@ class Geo:
 
     @property
     def mask(self) -> xr.DataArray:
-        if self._mask is None:
-            return self.zeros()
-        else:
-            return self.wrap_data(self._mask)
+        return (
+            self.zeros() if self._mask is None else self.wrap_data(self._mask)
+        )
 
     @property
     def accessible(self) -> xr.DataArray:
@@ -115,19 +114,15 @@ class Geo:
 
     @property
     def geographic_crs_name(self) -> str:
-        if self.crs is None:
-            return "Not exists"
-        else:
-            return self.crs.name
+        return "Not exists" if self.crs is None else self.crs.name
 
     @property
     def georef(self) -> Dict[str, Any]:
-        georef = {
+        return {
             "crs": f"{self.geographic_crs_name}",
             "dims": f"{self.dims}",
             "nodata": f"{self.nodata}",
         }
-        return georef
 
     @property
     def width(self) -> int:
@@ -147,11 +142,10 @@ class Geo:
 
     @property
     def coords(self) -> Dict[str, np.ndarray]:
-        coords = {
+        return {
             self.dims[1]: self.y,
             self.dims[0]: self.x,
         }
-        return coords
 
     def _setup_mask(self, value):
         if not hasattr(value, "shape"):
@@ -228,7 +222,7 @@ class Geo:
         elif "longitude" in dims and "latitude" in dims:
             return ("longitude", "latitude")
         else:
-            raise ValueError("Unknown dimensions %s." % dims)
+            raise ValueError(f"Unknown dimensions {dims}.")
 
     def setup_from_dict(self, settings: dict) -> None:
         shape = settings.pop("shape", None)
@@ -237,17 +231,17 @@ class Geo:
             try:
                 width = settings.pop("width")
                 height = settings.pop("height")
-            except KeyError:
+            except KeyError as e:
                 raise KeyError(
                     f"'shape' or ('width' and 'height') not specified in {settings.keys()}!"
-                )
+                ) from e
             shape = (height, width)
         self.setup_from_shape(shape=shape, resolution=resolution, **settings)
 
     def setup_from_file(self, filename: str) -> None:
         path = Path(filename)
         if not path.is_file():
-            raise ValueError("Could not find file %s" % filename)
+            raise ValueError(f"Could not find file {filename}")
         if path.suffix in [".tiff", ".tif"]:
             xda = rioxarray.open_rasterio(filename)
             dims = self.detect_dims(xda.dims)
@@ -285,12 +279,8 @@ class Geo:
             return self.accessible
         xda = xr.DataArray(data, coords=self.coords)
         xda.rio.write_crs(self.crs, inplace=True)
-        if masked is True:
-            return xda.where(self.accessible)
-        else:
-            return xda
+        return xda.where(self.accessible) if masked else xda
 
     def clip_match(self, xda: xr.DataArray) -> xr.DataArray:
         xda = xda.rio.write_crs(self.crs)
-        aligned = xda.rio.reproject_match(self.accessible)
-        return aligned
+        return xda.rio.reproject_match(self.accessible)

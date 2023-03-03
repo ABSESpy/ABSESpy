@@ -349,8 +349,6 @@ class MainMediator(Mediator, Log):
             if run_id is not None:
                 run_id = run_id[0]
             self.session(f"Model {self.model.name} ID-{run_id}", sep="*")
-        elif self.sender_matches("human", "nature"):
-            pass
         if self._states_are("new"):
             # Automatically parsing parameters
             self.model.state = 1
@@ -363,8 +361,6 @@ class MainMediator(Mediator, Log):
             self.nature.initialize()
             self.human.initialize()
             self.session("Initialized")
-        elif self.sender_matches("human", "nature"):
-            pass
 
     def _ready(self):
         if self.sender_matches("model"):
@@ -390,8 +386,8 @@ class MainMediator(Mediator, Log):
 
     def transfer_request(self, sender: object, attr: str, **kwargs) -> object:
         self._check_sender(sender)
-        if self.sender_matches("agent"):
-            response = self.nature.get_patch(attr, **kwargs)
-        else:
-            response = None
-        return response
+        return (
+            self.nature.get_patch(attr, **kwargs)
+            if self.sender_matches("agent")
+            else None
+        )

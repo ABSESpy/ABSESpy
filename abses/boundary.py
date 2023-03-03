@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class Boundaries:
-
     BOUNDARIES = ["outside", "interior", "boundaries", "special_boundaries"]
 
     def __init__(self, shape):
@@ -82,13 +81,12 @@ class Boundaries:
     def init_simple_boundaries(self, shape: tuple, settings: dict = None):
         outsides = settings.pop("outsides", 0)
         border = settings.pop("border", 1)
-        boundary = generate_simple_boundaries(
+        return generate_simple_boundaries(
             shape=shape,
             boundary=self,
             outsides=outsides,
             border=border,
         )
-        return boundary
 
     def change_special_boundary(self, name, patch):
         """Update a special boundary."""

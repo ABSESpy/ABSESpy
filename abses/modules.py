@@ -27,10 +27,7 @@ class Module(Component, BaseObj):
         self._open: bool = True
 
     def __repr__(self) -> str:
-        if self.opening:
-            flag = "open"
-        else:
-            flag = "closed"
+        flag = "open" if self.opening else "closed"
         return f"<{self.name}: {flag}>"
 
     @property
@@ -60,8 +57,6 @@ class Module(Component, BaseObj):
             if self._open is not _open:
                 self.logger.info(f"{self} switch 'open' to {_open}.")
                 self._open = _open
-            else:
-                pass
         return self._open
 
 

@@ -21,9 +21,10 @@ __all__ = [
     "BaseNature",
     "HumanModule",
     "PatchModule",
-    "Agent",
+    "Actor",
     "ActorsList",
-    "AgentsContainer" "MyExperiment",
+    "AgentsContainer",
+    # "MyExperiment",
 ]
 __version__ = "v0.1.2"
 

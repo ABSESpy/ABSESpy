@@ -114,13 +114,10 @@ class VariablesRegistry:
         self, var_name: str, error_when: Optional[bool] = None
     ) -> bool:
         """Judge if the given variable is registered."""
-        if var_name in self._variables:
-            flag = True
-        else:
-            flag = False
-        if flag is True and error_when is True:
+        flag = var_name in self._variables
+        if flag and error_when is True:
             raise ValueError(f"Variable {var_name} already registered.")
-        elif flag is False and error_when is False:
+        elif not flag and error_when is False:
             raise ValueError(f"Variable {var_name} hasn't been registered")
         else:
             return flag
@@ -134,11 +131,11 @@ class VariablesRegistry:
         else:
             flag = False
             self._objs_registry[owner] = []
-        if flag is True and error_when is True:
+        if flag and error_when is True:
             raise ValueError(
                 f"Variable '{var_name}' has already been registered in '{owner}'."
             )
-        elif flag is False and error_when is False:
+        elif not flag and error_when is False:
             raise ValueError(
                 f"'{owner}' does not have a registered variable '{var_name}'."
             )
@@ -156,7 +153,7 @@ class VariablesRegistry:
         self._is_registered(var_name, error_when=True)
         self._check_type(var_name, dtype=dtype, error_when=False)
         self._variables.append(var_name)
-        self._map[var_name] = list()
+        self._map[var_name] = []
         self._ln[var_name] = long_name
         self._units[var_name] = units
         self._data_types[var_name] = dtype
@@ -182,13 +179,11 @@ class VariablesRegistry:
         Returns:
             bool: if the value is valid data, returns True.
         """
-        results = []
-        results.append(self._is_registered(var_name))
+        results = [self._is_registered(var_name)]
         results.append(
             self._check_type(var_name, type(value), error_when=None)
         )
-        for checker in self._checker[var_name]:
-            results.append(checker(value))
+        results.extend(checker(value) for checker in self._checker[var_name])
         return all(results)
 
     def delete_variable(

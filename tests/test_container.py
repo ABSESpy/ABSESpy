@@ -25,7 +25,7 @@ def test_container_attributes():
     assert isinstance(a_farmer, Actor)
     assert ac.__len__() == 6
     assert ac.__repr__() == "<AgentsContainer: (1)Farmer; (5)Admin>"
-    assert ac.breeds == tuple(["Farmer", "Admin"])
+    assert ac.breeds == ("Farmer", "Admin")
     assert ac._breeds == {"Farmer": Farmer, "Admin": Admin}
     for admin in ac.Admin:
         assert admin in admins_5

@@ -34,9 +34,7 @@ Selection: TypeAlias = Union[str, Iterable[bool]]
 
 class ActorsList(AgentList):
     def __repr__(self):
-        results = []
-        for k, v in self.to_dict().items():
-            results.append(f"({len(v)}){k}")
+        results = [f"({len(v)}){k}" for k, v in self.to_dict().items()]
         return f"<ActorsList: {'; '.join(results)}>"
 
     def __getattr__(self, name: str) -> np.ndarray:
@@ -54,10 +52,11 @@ class ActorsList(AgentList):
         return super().__iter__()
 
     def __eq__(self, other: Iterable) -> bool:
-        if not self._is_same_length(other):
-            return False
-        else:
-            return all([actor in other for actor in self])
+        return (
+            all(actor in other for actor in self)
+            if self._is_same_length(other)
+            else False
+        )
 
     @overload
     def __getitem__(self, other: int) -> Actor:
@@ -69,10 +68,11 @@ class ActorsList(AgentList):
 
     def __getitem__(self, index):
         results = super().__getitem__(index)
-        if isinstance(index, slice):
-            return ActorsList(self.model, results)
-        else:
-            return results
+        return (
+            ActorsList(self.model, results)
+            if isinstance(index, slice)
+            else results
+        )
 
     def _is_same_length(
         self, length: Iterable[Any], rep_error: bool = False
@@ -80,7 +80,7 @@ class ActorsList(AgentList):
         """Check if the length of input is as same as the number of actors."""
         if not hasattr(self, "__len__"):
             raise ValueError(f"{type(length)} object is not iterable.")
-        elif not length.__len__() == self.__len__():
+        elif length.__len__() != self.__len__():
             if rep_error:
                 raise ValueError(
                     f"Length of the input {len(length)} mismatch {len(self)} actors."
@@ -136,8 +136,7 @@ class ActorsList(AgentList):
             ActorList: A subset of origin agents list.
         """
         ids = make_list(ids)
-        agents = self.select([agent.id in ids for agent in self])
-        return agents
+        return self.select([agent.id in ids for agent in self])
 
     def random_choose(
         self,
@@ -199,8 +198,8 @@ class ActorsList(AgentList):
         return lon, lat
 
     def trigger(self, func_name: str, *args, **kwargs) -> np.ndarray:
-        results = []
-        for actor in self.__iter__():
-            func = getattr(actor, func_name)
-            results.append(func(*args, **kwargs))
+        results = [
+            getattr(actor, func_name)(*args, **kwargs)
+            for actor in self.__iter__()
+        ]
         return np.array(results)

@@ -16,11 +16,7 @@ def points_to_polygons(points: np.ndarray) -> np.ndarray:
     # points[:, ::-1] reversed x, y of a point
     vor = Voronoi(points[:, ::-1])
     regions, vertices = voronoi_finite_polygons_2d(vor)
-    polygons = []
-    for reg in regions:
-        polygon = vertices[reg]
-        polygons.append(polygon)
-    return polygons
+    return [vertices[reg] for reg in regions]
 
 
 def voronoi_finite_polygons_2d(vor, radius=None):

@@ -48,9 +48,8 @@ def simple_main_model(
         name = func
     else:
         name = func.__name__
-    model = MainModel(
+    return MainModel(
         base="tests",
         name=name,
         parameters={"nature": {"world": world}},
     )
-    return model

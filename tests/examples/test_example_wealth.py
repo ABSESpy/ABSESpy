@@ -11,7 +11,6 @@ from abses.actor import check_rule, link_to, perception
 
 
 def gini(x):
-
     """Calculate Gini Coefficient"""
     # By Warren Weckesser https://stackoverflow.com/a/39513799
 
@@ -42,15 +41,7 @@ class WealthyActor(Actor):
 
     @perception
     def fit_in(self) -> bool:
-        if len(self.potential_partners) == 0:
-            return False
-        # others_wealth = self.potential_partners.wealth
-        # lower = self.wealth < others_wealth.mean() - 2 * others_wealth.std()
-        # higher = self.wealth > others_wealth.mean() + 2 * others_wealth.std()
-        # if lower or higher:
-        #     return False
-        else:
-            return True
+        return len(self.potential_partners) != 0
 
     @check_rule(loop=True)
     def wealth_transfer(self):

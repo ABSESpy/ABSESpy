@@ -6,7 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 from abc import abstractmethod
-from typing import Iterable, List, Optional, Set, Union
+from typing import Iterable, List, Optional, Union
 
 from agentpy.tools import AttrDict
 
@@ -67,8 +67,8 @@ class Component(Log):
                 value = self.params[arg]
                 self.__setattr__(arg, value)
                 del self.params[arg]
-            except KeyError:
-                raise KeyError(f"arg '{arg}' not found in parameters.")
+            except KeyError as e:
+                raise KeyError(f"arg '{arg}' not found in parameters.") from e
 
     @iter_func("modules")
     def parsing_params(self, params: dict) -> dict:
@@ -88,7 +88,10 @@ class Component(Log):
             if key in self.params:
                 value = params.pop(key)
                 self.logger.debug(
-                    f"Using {value} to update {self.params[key]} for '{key}'"
+                    "Using %s to update %s for '%s'",
+                    value,
+                    self.params[key],
+                    key,
                 )
                 self.params[key] = value
         # setup arguments
@@ -105,10 +108,7 @@ class Component(Log):
         # TODO: show parameter table.
         if len(params) == 0:
             return None
-        if as_string:
-            return str(list(params.keys()))
-        else:
-            return params.keys()
+        return str(list(params.keys())) if as_string else params.keys()
 
     @abstractmethod
     def _after_parsing(self):
@@ -119,14 +119,12 @@ class Component(Log):
         """
         Handle parameters after loading.
         """
-        pass
 
     @abstractmethod
     def initialize(self):
         """
         Initialization after handle parameters.
         """
-        pass
 
 
 class MainComponent(Component):
@@ -165,8 +163,7 @@ class MainComponent(Component):
 
     def parsing_params(self, params: dict) -> dict:
         unsolved = super().parsing_params(params)
-        finished = self.mediator.transfer_parsing(self, params)
-        if finished:
+        if self.mediator.transfer_parsing(self, params):
             parameters = self.report_parameters(unsolved, as_string=True)
             message = f"Unsolved parameters: {parameters}."
             self.mediator.logging(
