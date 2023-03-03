@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from collections import deque
 from datetime import datetime
 from functools import total_ordering
 from numbers import Number
@@ -29,7 +28,6 @@ from typing import (
 )
 
 import numpy as np
-import pint
 from agentpy.model import Model
 
 from .patch import Patch

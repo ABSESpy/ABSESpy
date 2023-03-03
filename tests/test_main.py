@@ -7,6 +7,7 @@
 
 from collections import deque
 
+from abses import __version__
 from abses.components import MainComponent
 from abses.main import MainMediator, MainModel
 from abses.tools.read_files import read_yaml
@@ -52,7 +53,7 @@ def test_model_attrs():
     )
     # params 里 1 被 testing.yaml 第一层的 3 覆盖
     # 这个应该出现在
-    assert model.__repr__() == "<MainModel-v0.1.0(model): init>"
+    assert model.__repr__() == f"<MainModel-{__version__}(model): init>"
     assert isinstance(model._settings_from_file, dict)
     assert len(model._settings_from_file) == len(
         config

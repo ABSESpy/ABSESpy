@@ -22,9 +22,9 @@ from typing import (
 
 from agentpy import AttrDict
 
-from .actor import Actor
-from .sequences import ActorsList, Selection
-from .tools.func import make_list, norm_choice
+from abses.actor import Actor
+from abses.sequences import ActorsList, Selection
+from abses.tools.func import make_list
 
 if TYPE_CHECKING:
     from .main import MainModel
@@ -47,6 +47,7 @@ class AgentsContainer(AttrDict):
         return instance
 
     def __init__(self, model: MainModel):
+        super().__init__()
         self._model = model
         self._breeds = {}
 
@@ -59,12 +60,10 @@ class AgentsContainer(AttrDict):
         return f"<AgentsContainer: {rep}>"
 
     def __getattr__(self, name: str) -> Any:
-        if name[0] == "_":
+        if name[0] == "_" or name not in self._breeds:
             return super().__getattr__(name)
-        elif name in self._breeds:
-            return self.to_list(name)
         else:
-            return super().__getattr__(name)
+            return self.to_list(name)
 
     def __contains__(self, name):
         return name in self.to_list()
@@ -83,10 +82,7 @@ class AgentsContainer(AttrDict):
     ) -> Union[Actor, ActorsList]:
         agents = ActorsList(self._model, objs=n, cls=breed_cls)
         self.add(agents, register=True)
-        if n == 1:
-            return agents[0]
-        else:
-            return agents
+        return agents[0] if n == 1 else agents
 
     # def create_from(self, breeds: dict):
     #     for breed_cls, n in breeds.items():

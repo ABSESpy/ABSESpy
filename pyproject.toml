@@ -38,7 +38,11 @@ license = "Apache 2.0 License"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">3.8.1"
+prettytable = "^3.6.0"
+pint = "^0.20.1"
+netcdf4 = "^1.6.2"
+agentpy = "^0.1.5"
 
 [tool.poetry.group.dev.dependencies]
 agentpy = "^0.1.5"
@@ -49,6 +53,8 @@ rioxarray = "^0.13.3"
 geopandas = "^0.12.2"
 pre-commit = "^3.0.1"
 scriv = "^1.2.0"
+pytest = "^7.2.1"
+sourcery = "^1.0.6"
 
 [build-system]
 requires = ["poetry-core"]
