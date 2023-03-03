@@ -28,7 +28,7 @@ __all__ = [
     "perception",
     # "MyExperiment",
 ]
-__version__ = "v0.1.2"
+__version__ = "v0.1.3"
 
 from .actor import Actor, link_to, perception
 from .container import ActorsList, AgentsContainer
