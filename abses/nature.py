@@ -77,8 +77,8 @@ class PatchModule(Module, Creator, Creation):
     @property
     def mask(self) -> xarray.DataArray:
         if self._mask is None:
-            self._mask = self.geo.zeros(bool)
-        mask = self._mask | self.geo.mask
+            mask = self.geo.zeros(bool)
+        mask = mask | self.geo.mask
         return mask.rio.write_crs(self.geo.crs)
 
     @property
