@@ -9,6 +9,8 @@
     ],
     "workbench.colorTheme": "Ayu Mirage",
     "conventionalCommits.scopes": [
-        "geo"
-    ]
+        "geo",
+        "time",
+        "projects"
+    ],
 }
