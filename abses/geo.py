@@ -238,18 +238,21 @@ class Geo:
             shape = (height, width)
         self.setup_from_shape(shape=shape, resolution=resolution, **settings)
 
+    def setup_from_dataarray(self, xda: xr.DataArray):
+        dims = self.detect_dims(xda.dims)
+        x_coord = xda.coords[dims[0]].to_dict()
+        y_coord = xda.coords[dims[1]].to_dict()
+        self.setup_from_coords(x_coord, y_coord, **xda.attrs)
+        nodata = xda.isnull().data.reshape(self.shape)
+        self._setup_mask(nodata)
+
     def setup_from_file(self, filename: str) -> None:
         path = Path(filename)
         if not path.is_file():
             raise ValueError(f"Could not find file {filename}")
         if path.suffix in [".tiff", ".tif"]:
             xda = rioxarray.open_rasterio(filename)
-            dims = self.detect_dims(xda.dims)
-            x_coord = xda.coords[dims[0]].to_dict()
-            y_coord = xda.coords[dims[1]].to_dict()
-            self.setup_from_coords(x_coord, y_coord, **xda.attrs)
-            nodata = xda.isnull().data.reshape(self.shape)
-            self._setup_mask(nodata)
+            self.setup_from_dataarray(xda)
         elif path.suffix in [".yaml"]:
             settings = read_yaml(path)
             self.setup_from_dict(settings)

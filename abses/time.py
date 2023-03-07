@@ -37,7 +37,7 @@ class TimeDriverManager:
         self._time: List[Period] = [start]
         self._history: Deque[Period] = deque([], maxlen=MAXLENGTH)
         self._model: MainModel = model
-        self._settings: Dict[str, Any] = model.params.get("time", {})
+        self._settings: Dict[str, Any] = settings
         # instances operational func using the property '_data'
         wrap_opfunc_to(self, "_data")
 
