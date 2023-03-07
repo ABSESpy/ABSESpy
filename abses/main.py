@@ -118,6 +118,10 @@ class MainModel(Folder, MainComponent, Model, Notice):
         return self._time
 
     @property
+    def db(self) -> AttrDict:
+        return self._db
+
+    @property
     def _settings_from_file(self) -> Dict[str, any]:
         # settings yaml as basic
         settings = AttrDict()
