@@ -102,7 +102,7 @@ class PatchModule(Module, Creator, Creation):
     def _check_shape(self, values):
         if values.shape != self.geo.shape:
             raise ValueError(
-                f"Invalid shape {values.shape}, mismatch with shape {self.shape}."
+                f"Invalid shape {values.shape}, mismatch with shape {self.geo.shape}."
             )
 
     def create_patch(
@@ -236,7 +236,9 @@ class BaseNature(CompositeModule, PatchModule):
         self.geo.auto_setup(settings=settings)
         boundary_settings = self.params.get("boundary", {})
         self._boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
-        self._setup_grid(shape=self.geo.shape)
+        self._setup_grid(
+            shape=self.geo.shape
+        )  # TODO: move this to better position
 
     def get_patch(self, attr: str, **kwargs) -> Patch:
         # TODO: finish this method
@@ -400,5 +402,4 @@ class BaseNature(CompositeModule, PatchModule):
             )
 
         has_agents = np.vectorize(counts_agent)(self.grid, selection)
-        patch = self.create_patch(has_agents, "has_agent", True)
-        return patch
+        return self.create_patch(has_agents, "has_agent", True)

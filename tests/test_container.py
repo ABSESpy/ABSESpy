@@ -20,7 +20,7 @@ def test_container_attributes():
     assert ac.__len__() == 0
     assert ac.__repr__() == "<AgentsContainer: >"
     assert ac._model is model
-    a_farmer = ac.create(Farmer)
+    a_farmer = ac.create(Farmer, signleton=True)
     admins_5 = ac.create(Admin, 5)
     assert isinstance(a_farmer, Actor)
     assert ac.__len__() == 6

@@ -78,11 +78,14 @@ class AgentsContainer(AttrDict):
             self[actor.breed] = set()
 
     def create(
-        self, breed_cls: Type[Actor], n: int = 1
+        self, breed_cls: Type[Actor], n: int = 1, signleton: bool = False
     ) -> Union[Actor, ActorsList]:
         agents = ActorsList(self._model, objs=n, cls=breed_cls)
         self.add(agents, register=True)
-        return agents[0] if n == 1 else agents
+        if signleton:
+            return agents[0] if n == 1 else agents
+        else:
+            return agents
 
     # def create_from(self, breeds: dict):
     #     for breed_cls, n in breeds.items():

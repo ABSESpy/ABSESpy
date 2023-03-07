@@ -393,6 +393,6 @@ class MainMediator(Mediator, Log):
         self._check_sender(sender)
         return (
             self.nature.get_patch(attr, **kwargs)
-            if self.sender_matches("agent")
+            if self.sender_matches("agent", "human")
             else None
         )

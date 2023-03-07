@@ -61,7 +61,7 @@ class HumanModule(Module, Creation):
         actor_B.trigger(interaction, actor_A)
 
     def require(self, attr: str) -> object:
-        return self.mediator.transfer_require(self, attr)
+        return self.mediator.transfer_request(self, attr)
 
 
 class BaseHuman(CompositeModule, HumanModule):

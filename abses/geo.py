@@ -285,5 +285,6 @@ class Geo:
         return xda.where(self.accessible) if masked else xda
 
     def clip_match(self, xda: xr.DataArray) -> xr.DataArray:
+        """调整数据的范围"""
         xda = xda.rio.write_crs(self.crs)
         return xda.rio.reproject_match(self.accessible)
