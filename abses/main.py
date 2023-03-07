@@ -83,6 +83,7 @@ class MainModel(Folder, MainComponent, Model, Notice):
             model=self, human=self.human, nature=self.nature
         )
         self._registry = VariablesRegistry(model=self)
+        logger.warning(f"{self.params}")
         self._time = TimeDriver(model=self)
 
     # ----------------------------------------------------------------

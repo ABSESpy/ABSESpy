@@ -46,3 +46,11 @@ def test_different_model():
     time2.update(4)
     assert time2 == Period(2004, "Y")
     assert time1 != time2
+
+
+def test_time_settings():
+    name = "test_different_model_4"
+    params = {name: {"time": {"start": "1998"}}}
+    model4 = MainModel(name=name, base="tests", parameters=params)
+    assert model4.params.get("time") == {"start": "1998"}
+    assert model4.time._start == Period("1998")

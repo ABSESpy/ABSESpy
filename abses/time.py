@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections import deque
 from typing import TYPE_CHECKING, Any, Deque, Dict, List, Optional
@@ -22,22 +23,29 @@ if TYPE_CHECKING:
 DEFAULT_START = "2000-01-01 00:00:00"
 DEFAULT_END = "2023-01-01 00:00:00"
 DEFAULT_FREQ = "Y"
+logger = logging.getLogger(__name__)
+
+
+def parsing_settings(
+    settings: Dict[str, Any], key: str, defaults: Optional[str]
+) -> Period:
+    freq = settings.get("freq", DEFAULT_FREQ)
+    values = settings.get(key, defaults)
+    return (
+        Period(freq=freq, **values)
+        if isinstance(values, dict)
+        else Period(value=values, freq=freq)
+    )
 
 
 class TimeDriverManager:
-    def __init__(self, model: MainModel) -> None:
-        settings = model.params.get("time", {})
-        start = self._parsing_settings(
-            settings, key="start", defaults=DEFAULT_START
-        )
-        self._end = self._parsing_settings(
-            settings, key="end", defaults=DEFAULT_END
-        )
+    def __init__(self, model: MainModel, start, end) -> None:
+        self._start = start
+        self._end = end
         self._data: Period = start
         self._time: List[Period] = [start]
         self._history: Deque[Period] = deque([], maxlen=MAXLENGTH)
         self._model: MainModel = model
-        self._settings: Dict[str, Any] = settings
         # instances operational func using the property '_data'
         wrap_opfunc_to(self, "_data")
 
@@ -71,18 +79,6 @@ class TimeDriverManager:
     def __repr__(self) -> str:
         return self._data.__str__()
 
-    @staticmethod
-    def _parsing_settings(
-        settings: Dict[str, Any], key: str, defaults: Optional[str]
-    ) -> Period:
-        freq = settings.get("freq", DEFAULT_FREQ)
-        values = settings.get(key, defaults)
-        return (
-            Period(freq=freq, **values)
-            if isinstance(values, dict)
-            else Period(value=values, freq=freq)
-        )
-
 
 class TimeDriver(Period):
     _manager: TimeDriverManager = None
@@ -97,7 +93,13 @@ class TimeDriver(Period):
         """
         # if this is the first time to initialize.
         if cls._model.get(model) is None:
-            driver = TimeDriverManager(model)
+            settings = model.params.get("time", {})
+            start = parsing_settings(
+                settings, key="start", defaults=DEFAULT_START
+            )
+            end = parsing_settings(settings, key="end", defaults=DEFAULT_END)
+            logger.warning(f"{settings}: {start}~{end}")
+            driver = TimeDriverManager(model, start, end)
             with cls._lock:
                 cls._model[model] = driver
         # if this model has a TimeDriverManager.
@@ -130,6 +132,11 @@ class TimeDriver(Period):
     @property
     def manager(cls) -> TimeDriverManager:
         return cls._manager
+
+    @classmethod
+    @property
+    def settings(cls) -> Dict[str, Any]:
+        return cls._manager._model.params.get("time", {})
 
     @classmethod
     def update(cls, steps: Optional[int] = 1) -> Period:

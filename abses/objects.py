@@ -48,7 +48,6 @@ class BaseObj(Observer, Log, Object):
         Log.__init__(self, name=name)
         self._registry: VariablesRegistry = VariablesRegistry(model=model)
         self._vars_history: Dict[str, Deque[Variable]] = AttrDict()
-        self._time: TimeDriver = TimeDriver(model=model)
         self.glob_vars: List[str] = []
         self._recording: Set[str] = set()
         self._reporting: Set[str] = set()
@@ -68,7 +67,7 @@ class BaseObj(Observer, Log, Object):
 
     @property
     def time(self) -> TimeDriver:
-        return self._time
+        return self.model.time
 
     @property
     def output(self) -> pd.DataFrame:
