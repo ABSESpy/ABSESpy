@@ -79,12 +79,12 @@ class MainModel(Folder, MainComponent, Model, Notice):
             settings_file = parameters.pop("settings_file", None)
         self._settings_file: Optional[str] = settings_file
         # setup mediator
+        self._time = TimeDriver(model=self, settings=self.settings.get("time"))
         self.mediator = MainMediator(
             model=self, human=self.human, nature=self.nature
         )
+        self._db = self.settings.get("db", AttrDict())
         self._registry = VariablesRegistry(model=self)
-        logger.warning(f"{self.params}")
-        self._time = TimeDriver(model=self)
 
     # ----------------------------------------------------------------
     def __repr__(self):

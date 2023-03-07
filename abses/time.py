@@ -12,6 +12,7 @@ import threading
 from collections import deque
 from typing import TYPE_CHECKING, Any, Deque, Dict, List, Optional
 
+from agentpy import AttrDict
 from pandas import Period
 
 from .tools.func import wrap_opfunc_to
@@ -86,14 +87,17 @@ class TimeDriver(Period):
     _lock = threading.RLock()
 
     # 单例模式：https://www.jb51.net/article/202178.htm
-    def __new__(cls, model: MainModel) -> TimeDriverManager:
+    def __new__(
+        cls, model: MainModel, settings: Dict[str, Any] = None
+    ) -> TimeDriverManager:
         """A Singleton wrapped class, each model has its own driver.
         This class has NO instance, but init a TimeDriverManager.
         Each model can only store one initialized TimeDriverManager instance.
         """
+        if settings is None:
+            settings = AttrDict()
         # if this is the first time to initialize.
         if cls._model.get(model) is None:
-            settings = model.params.pop("time", {})
             start = parsing_settings(
                 settings, key="start", defaults=DEFAULT_START
             )

@@ -70,6 +70,10 @@ class BaseObj(Observer, Log, Object):
         return self.model.time
 
     @property
+    def db(self) -> Dict:
+        return self.model.db
+
+    @property
     def output(self) -> pd.DataFrame:
         return pd.DataFrame(self.log, index=self.time.time[:-1])
 

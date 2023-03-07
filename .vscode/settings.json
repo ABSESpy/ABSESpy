@@ -11,6 +11,7 @@
     "conventionalCommits.scopes": [
         "geo",
         "time",
-        "projects"
+        "projects",
+        "data"
     ],
 }

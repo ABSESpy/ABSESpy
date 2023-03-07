@@ -50,7 +50,6 @@ def test_different_model():
 
 def test_time_settings():
     name = "test_different_model_4"
-    params = {name: {"time": {"start": "1998"}}}
+    params = {"time": {"start": "1998"}}
     model4 = MainModel(name=name, base="tests", parameters=params)
-    assert model4.params.get("time") == {"start": "1998"}
     assert model4.time._start == Period("1998")
