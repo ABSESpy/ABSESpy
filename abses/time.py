@@ -93,12 +93,11 @@ class TimeDriver(Period):
         """
         # if this is the first time to initialize.
         if cls._model.get(model) is None:
-            settings = model.params.get("time", {})
+            settings = model.params.pop("time", {})
             start = parsing_settings(
                 settings, key="start", defaults=DEFAULT_START
             )
             end = parsing_settings(settings, key="end", defaults=DEFAULT_END)
-            logger.warning(f"{settings}: {start}~{end}")
             driver = TimeDriverManager(model, start, end)
             with cls._lock:
                 cls._model[model] = driver
