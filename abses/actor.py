@@ -132,8 +132,9 @@ class Actor(BaseObj):
     def here(self) -> ActorsList:
         return self.neighbors(0) if self.on_earth is True else None
 
-    def random(self) -> float:
-        self.model.random.random()
+    def random(self) -> np.random:
+        """Random number generator"""
+        return self.model.random
 
     def _freq_level(self, level: str) -> int:
         code = self._freq_levels.get(level, None)
