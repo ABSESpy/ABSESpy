@@ -30,7 +30,12 @@ from agentpy import AgentSet, AttrDict
 from .objects import BaseObj
 from .patch import Patch
 
+# A class that is used to store the position of the agent.
+
+
 if TYPE_CHECKING:
+    from abses.nature import PositionSet
+
     from .main import MainMediator
     from .sequences import ActorsList
 
@@ -94,8 +99,7 @@ class Actor(BaseObj):
         **kwargs,
     ):
         BaseObj.__init__(self, model, observer=observer, name=name)
-        self._on_earth: bool = False
-        self._pos: Tuple[int, int] = None
+        self._pos: PositionSet = None
         self._relationships: Dict[str, ActorsList] = AttrDict()
         self._ownerships: Dict[str, Patch] = AttrDict()
         self._rules: Dict[str, Dict[str, Any]] = {}
@@ -118,15 +122,18 @@ class Actor(BaseObj):
 
     @property
     def on_earth(self) -> bool:
-        return self._on_earth
+        return bool(self._pos)
 
     @property
     def pos(self) -> Tuple[int, int]:
-        return self._pos
+        return self._pos.index
 
     @property
     def here(self) -> ActorsList:
         return self.neighbors(0) if self.on_earth is True else None
+
+    def random(self) -> float:
+        self.model.random.random()
 
     def _freq_level(self, level: str) -> int:
         code = self._freq_levels.get(level, None)
@@ -217,7 +224,8 @@ class Actor(BaseObj):
         if check_now is True:
             self._check_rules("now")
 
-    def die(self):
+    def die(self) -> None:
+        """从世界消失"""
         self.model.agents.remove(self)
 
     def neighbors(
@@ -241,30 +249,25 @@ class Actor(BaseObj):
             agents.remove(self)
         return agents
 
-    def settle_down(self, position: Optional[Tuple[int, int]]) -> bool:
-        header = {"actor": self, "position": position}
-        self.request("actor_to", header=header, receiver="nature")
-        self._pos = position
-        self._on_earth = True
-
-    def move(self, pos: Optional[Tuple[int, int]] = None):
-        if self.on_earth is False:
-            raise ValueError(f"Position of {self} is not set.")
-        if pos is None:
-            pos = self.request(
+    def move_to(self, position: Optional[Tuple[int, int]] = None) -> bool:
+        """移动到某个位置"""
+        if position is None:
+            position = self.request(
                 "random_positions", header={"k": 1}, receiver="nature"
             )[0]
-        self.settle_down(pos)
+        header = {"actor": self, "position": position}
+        pos_set = self.request("actor_to", header=header, receiver="nature")
+        self._pos = pos_set
 
     def link_to(self, name: str, other: Union[Self, Iterable[Self], Callable]):
+        # TODO finish this
         pass
 
     def loc(self, request: str, **kwargs):
+        """寻找自己所在位置的斑块数据"""
         header = {"sender": self, "position": self.pos}
         response = self.request(request, header, **kwargs)
         return response[self.pos]
-        # elif len(patch_obj.shape) == 3:
-        #     return patch_obj[:, self.pos[0], self.pos[1]]
 
     def alter_nature(self, patch: str, value: "int|float|bool") -> Patch:
         patch = self.require(patch)

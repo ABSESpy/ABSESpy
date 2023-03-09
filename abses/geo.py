@@ -284,7 +284,17 @@ class Geo:
         xda.rio.write_crs(self.crs, inplace=True)
         return xda.where(self.accessible) if masked else xda
 
-    def clip_match(self, xda: xr.DataArray) -> xr.DataArray:
-        """调整数据的范围"""
+    def clip_match(
+        self, xda: xr.DataArray, resample="nearest", **kwargs
+    ) -> xr.DataArray:
+        """调整数据的范围
+        resampling (rasterio.enums.Resampling, optional):
+        – See [rasterio.warp.reproject()](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling) for more details.
+        """
+        from rasterio.enums import Resampling
+
+        resample = getattr(Resampling, resample)
         xda = xda.rio.write_crs(self.crs)
-        return xda.rio.reproject_match(self.accessible)
+        return xda.rio.reproject_match(
+            self.accessible, resampling=resample, **kwargs
+        )

@@ -48,7 +48,7 @@ def test_human_rule():
     human = model.human
     farmers = human.agents.create(Farmer, 5)
     farmers.rule(
-        when="test == 1", then="settle_down", position=(3, 3), disposable=True
+        when="test == 1", then="move_to", position=(3, 3), disposable=True
     )
     # assert checked
     farmers.update("test", np.arange(5))

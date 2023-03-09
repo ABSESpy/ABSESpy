@@ -27,7 +27,7 @@ def test_nature_positions():
     positions_replace = nature.random_positions(k=5, where=where, replace=True)
     model.nature.add_agents(actors, positions_replace)
     assert (actors.pos == (0, 0)).all()
-    actors[0].settle_down((0, 1))
+    actors[0].move_to((0, 1))
     assert len(nature.grid[0, 0]) == 4
     assert len(nature.lookup_agents(where)) == 4
     assert len(nature[where]) == 4

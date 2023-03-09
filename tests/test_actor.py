@@ -54,7 +54,7 @@ def test_actor_rule():
     selection = {"test1": 1, "test2": "testing"}
 
     actor.rule(
-        when=selection, then="settle_down", position=(3, 3), disposable=True
+        when=selection, then="move_to", position=(3, 3), disposable=True
     )
     assert actor.selecting(selection) is False
     assert actor.on_earth is False

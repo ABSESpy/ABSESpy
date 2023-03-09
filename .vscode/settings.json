@@ -12,6 +12,7 @@
         "geo",
         "time",
         "projects",
-        "data"
+        "data",
+        "agent"
     ],
 }

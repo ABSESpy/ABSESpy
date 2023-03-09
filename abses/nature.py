@@ -8,7 +8,7 @@
 from copy import deepcopy
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import numpy as np
 import xarray
@@ -191,6 +191,7 @@ class BaseNature(CompositeModule, PatchModule):
         CompositeModule.__init__(self, model, name=name)
         self._boundary: Boundaries = None
         self._grid: np.ndarray = None
+        self._agents: AgentSet = AgentSet(model=model)
 
     # @property
     # def patches(self):
@@ -250,10 +251,11 @@ class BaseNature(CompositeModule, PatchModule):
         raise ValueError(f"Unknown patch {attr}.")
 
     def actor_to(self, actor: Actor, position: Tuple[int, int]):
-        # TODO: refactor this function
+        """将主体移动到某个地方"""
         if actor.on_earth is True:
             self.grid[actor.pos].remove(actor)
         self.grid[position].add(actor)
+        return self.grid[position]
 
     # def transfer_var(self, sender: object, var: str) -> None:
     #     if var not in self.patches:
@@ -317,9 +319,15 @@ class BaseNature(CompositeModule, PatchModule):
         if positions is None:
             positions = self.random_positions(len(agents), **kwargs)
         for actor, pos in zip(agents, positions):
-            actor.settle_down(pos)
+            actor.move_to(pos)
         # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
         # self.mediator.transfer_event(self, msg)
+
+    def remove(self, agent) -> None:
+        """Remove a given agent from landscape."""
+        if not agent.on_earth:
+            raise ValueError(f"{agent} not on earth.")
+        self.grid[agent.pos].remove(agent)
 
     def land_allotment(
         self, agents: ActorsList, where: np.ndarray = None

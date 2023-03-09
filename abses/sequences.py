@@ -43,7 +43,7 @@ class ActorsList(AgentList):
             super().__getattr__(name)
         elif name in self.__dir__():
             return super().__getattr__(name)
-        elif hasattr(getattr(self[0], name, None), "__call__"):
+        elif len(self) and hasattr(getattr(self[0], name, None), "__call__"):
             return super().__getattr__(name)
         else:
             return ActorsList.array(self, name)
@@ -188,6 +188,7 @@ class ActorsList(AgentList):
         #     results = self.loc(attr)
         # elif how == "mine":
         #     results = self.mine(attr, *args, **kwargs)
+        # TODO: fixing cannot access local variable 'results' where it is not associated with a value
         return np.array(results)
 
     def position_to_coord(self, x_coords, y_coords):

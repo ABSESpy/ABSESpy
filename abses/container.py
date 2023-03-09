@@ -116,9 +116,10 @@ class AgentsContainer(AttrDict):
             self[k] = self[k].union(actors_lst)
 
     def remove(self, agent: Actor) -> None:
+        """移除特定 Agent"""
         self[agent.breed].remove(agent)
-        if agent.on_earth is True:
-            agent.here.remove(agent)
+        if agent.on_earth:
+            self._model.nature.remove(agent)
 
     def select(self, selection: Selection) -> ActorsList:
         return self.to_list().select(selection)
