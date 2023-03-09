@@ -142,6 +142,11 @@ class TimeDriver(Period):
         return cls._manager._model.params.get("time", {})
 
     @classmethod
+    @property
+    def end(cls) -> str:
+        return cls._manager._end
+
+    @classmethod
     def update(cls, steps: Optional[int] = 1) -> Period:
         """
         Update the time period.

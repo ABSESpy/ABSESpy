@@ -157,6 +157,8 @@ class MainModel(Folder, MainComponent, Model, Notice):
         self.time_go()
         if self.t >= self._steps:
             self.running = False
+        elif self.time.period >= self.time.end:
+            self.running = False
 
 
 Sender: TypeAlias = Union[MainComponent, Actor]
