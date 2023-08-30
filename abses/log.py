@@ -11,6 +11,8 @@ import logging.config
 from .tools.func import iter_func
 
 
+# https://towardsdatascience.com/5-easy-and-effective-ways-to-use-python-logging-a9564bd17ccd
+# TODO 这里可以使用更好的工作流进行日志记录
 # TODO change a specific log for experiments
 class Log(object):
     def __init__(self, name):

@@ -108,6 +108,7 @@ class TimeDriver(Period):
         # if this model has a TimeDriverManager.
         else:
             driver = cls._model[model]
+            cls._select_manager(model)
         return driver
 
     @classmethod
@@ -139,12 +140,12 @@ class TimeDriver(Period):
     @classmethod
     @property
     def settings(cls) -> Dict[str, Any]:
-        return cls._manager._model.params.get("time", {})
+        return cls.manager._model.params.get("time", {})
 
     @classmethod
     @property
     def end(cls) -> str:
-        return cls._manager._end
+        return cls.manager._end
 
     @classmethod
     def update(cls, steps: Optional[int] = 1) -> Period:

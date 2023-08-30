@@ -3,7 +3,7 @@ hello:
 	echo "Hello World"
 test:
 	@echo "Runing Pytest"
-	pytest -vs --clean-alluredir --alluredir tmp/allure_results
+	poetry run pytest -vs --clean-alluredir --alluredir tmp/allure_results
 report:
 	allure serve tmp/allure_results
 diagram:
