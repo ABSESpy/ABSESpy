@@ -8,116 +8,73 @@
 """
 测试模型的基本组件
 """
+import pytest
+from omegaconf import DictConfig
 
-from abses.components import *
-
-
-class MyComponent(Component):
-    args = ["a", "b", "c"]
-
-    def handle_params(self):
-        self.handle = "handle is triggered"
-
-    def initialize(self):
-        self.init = "init is triggered, too"
+from abses.components import Component
 
 
-class MyMainComp(MainComponent):
-    pass
+class MainModel:
+    """测试模型"""
+
+    def __init__(self, settings: DictConfig) -> None:
+        self.settings = settings
 
 
-def test_component():
-    comp = Component(name="comp1")
-    comp.params = {"p1": 1}
-    comp.arguments = "params"
-    comp.arguments = ["a", "b", "a"]  # repeat 'a' will be removed
-
-    assert comp.params.p1 == 1
-    assert comp.params["p1"] == 1
-    assert comp.arguments == ["a", "b", "params"]
-
-
-def test_arguments():
-    comp = MyComponent()
-    comp.params = {
-        "a": 1,
-        "b": 2,
-    }
-
-    try:
-        comp._parsing_args()
-    except KeyError as e:
-        assert "c" in e.__str__()
-    assert comp.a == 1
-    assert comp.b == 2
-    assert "a" not in comp.params
-    assert not hasattr(comp.params, "b")
-
-    comp2 = MyMainComp()
-    comp2.arguments = comp.arguments
-    assert "a" in comp2.arguments
-    assert "a" not in comp2.params
-    try:
-        comp2._parsing_args()
-    except KeyError as e:
-        assert "a" in e.__str__()
+def test_component_initialization():
+    """
+    测试组件的初始化
+    """
+    model = MainModel(settings={})
+    component = Component(model, "test_component")
+    assert isinstance(component.args, DictConfig)
+    assert list(component.args.keys()) == component.__args__
 
 
-def test_parse_parameter():
-    params = {
-        "comp1": {"a": 1, "b": 2, "c": 3},
-        "comp2": {"a": -1, "b": -2, "c": -3},
-        "exist": "unsolved param",
-    }
-    comp1 = MyComponent(name="comp1")
-    comp2 = MyMainComp(name="comp2")
+def test_component_params():
+    """
+    Test the initialization of a component with specific parameters.
 
-    comp1.parsing_params(params)
-    comp2.parsing_params(params)
-    assert "comp1" not in params
-    assert "comp2" not in params
-    assert "exist" in params
-    assert comp1.a == 1  # as argument
-    assert "is triggered" in comp1.handle
-    assert comp2.params.a == -1  # as a parameter
-    assert not hasattr(comp2, "a")
+    This function creates a `MainModel` object with the given settings and then
+    creates a `Component` object using the model and the specified component name.
+    It asserts that the `params` attribute of the component is equal to the
+    expected parameters.
+    """
+    model = MainModel(
+        settings={"test_component": {"param1": "value1", "param2": "value2"}}
+    )
+    component = Component(model, "test_component")
+    assert component.params == {"param1": "value1", "param2": "value2"}
 
 
-def test_main_states():
-    class TestMediator(Mediator):
-        def transfer_event(self, sender: object, event: str):
-            self.state = event
+def test_component_args_property():
+    model = MainModel(
+        settings={"test_component": {"param1": "value1", "param2": "value2"}}
+    )
+    component = Component(model, "test_component")
+    component.add_args(["param1"])
+    assert component.args == DictConfig({"param1": "value1"})
 
-    comp = MyMainComp()
-    mediator = comp.mediator = TestMediator()
 
-    assert comp._state == -1
-    assert comp.state == STATES[-1]
+def test_component_args_setter_string():
+    model = MainModel(settings={"test_component": {"param3": "value3"}})
+    component = Component(model, "test_component")
+    component.add_args("param3")
+    assert "param3" in component.args
 
-    # cannot setting wrong code:
-    try:
-        comp.state = -2
-    except ValueError as e:
-        assert "Invalid state" in e.__str__()
-        assert f"{STATES}" in e.__str__()
 
-    # cannot setting repeat code:
-    try:
-        comp.state = -1
-    except ValueError as e:
-        assert "repeat" in e.__str__()
+def test_component_args_setter_iterable():
+    model = MainModel(
+        settings={"test_component": {"param4": "value4", "param5": "value5"}}
+    )
+    component = Component(model, "test_component")
+    component.add_args(["param4", "param5"])
+    assert "param4" in component.args
+    assert "param5" in component.args
 
-    # correct setting:
-    comp.state = 0
-    assert mediator.state == comp.state == STATES[0]
 
-    # cannot setting lower code
-    comp.state = 1
-    assert mediator.state == comp.state == STATES[1]
-    comp.state = 2
-    assert mediator.state == comp.state == STATES[2]
-
-    try:
-        comp.state = 1
-    except ValueError as e:
-        assert "retreat" in e.__str__()
+def test_component_args_setter_invalid_arg():
+    model = MainModel(settings={})
+    component = Component(model, "test_component")
+    with pytest.raises(KeyError, match="Argument param6 not found."):
+        component.add_args("param6")
