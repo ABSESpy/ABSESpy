@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from abses.time import TimeDriver
 
@@ -32,7 +32,6 @@ class BaseObj(Observer, Log):
         name: Optional[str] = None,
     ):
         Log.__init__(self, name=name)
-        self.glob_vars: List[str] = []
         self.time = TimeDriver(model)
         if observer:
             model.attach(self)

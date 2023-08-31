@@ -6,24 +6,26 @@
 # Website: https://cv.songshgeo.com/
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import List, Optional, Set, Union
+import logging
+from abc import abstractmethod
+from typing import List, Optional
 
-import numpy as np
 from agentpy import Model
-from prettytable import PrettyTable
 
-from .bases import Creator
-from .components import Component, MainComponent, iter_func
+from abses.tools.func import iter_func
+
+from .bases import Notice
+from .components import Component
 from .objects import BaseObj
-from .tools.func import make_list
+from .states import States
 
 
 class Module(Component, BaseObj):
+    """基本的模块"""
+
     def __init__(self, model: Model, name: Optional[str] = None):
-        Component.__init__(self, name=name)
+        Component.__init__(self, model=model, name=name)
         BaseObj.__init__(self, model, observer=True, name=name)
-        self._model: Model = model
         self._open: bool = True
 
     def __repr__(self) -> str:
@@ -32,59 +34,53 @@ class Module(Component, BaseObj):
 
     @property
     def opening(self) -> bool:
+        """模块处于打开或关闭状态"""
         return self._open
-
-    def _after_parsing(self):
-        self.switch_open_to(self.params.pop("open", None))
-        self.recording = self.params.pop("record", [])
-        self.reporting = self.recording  # recording vars also reported
-        self.reporting = self.params.pop("report", [])
-
-    @iter_func("modules")
-    def report_vars(self):
-        for var in self._reporting:
-            value = getattr(self, var)
-            self.model.report(var, value)
 
     @iter_func("modules")
     def switch_open_to(self, _open: Optional[bool] = None) -> bool:
-        """#TODO 思考和说明模块关闭后有何不同"""
+        """开启或关闭模块，同时开启或关闭所有子模块"""
         if _open is None:
             return False
-        elif not isinstance(_open, bool):
+        if not isinstance(_open, bool):
             raise TypeError("Accept boolean parameters")
-        else:
-            if self._open is not _open:
-                self.logger.info(f"{self} switch 'open' to {_open}.")
-                self._open = _open
+        if self._open is not _open:
+            logging.info("%s switch 'open' to %s.", self.name, _open)
+            self._open = _open
         return self._open
+
+    # @abstractmethod
+    def initialize(self):
+        """
+        Initialization after handle parameters.
+        """
 
 
 # Composite
-class CompositeModule(Module, MainComponent, Creator):
+class CompositeModule(Module, States, Notice):
+    """基本的组合模块，可以创建次级模块"""
+
     def __init__(self, model: Model, name: str = None) -> None:
-        MainComponent.__init__(self, name=name)
-        Creator.__init__(self)
+        States.__init__(self)
+        Notice.__init__(self)
         Module.__init__(self, model, name=name)
         self._modules: List[Module] = []
 
     @property
     def modules(self) -> List[Module]:
+        """当前模块的次级模块"""
         return self._modules
 
-    def summary_modules(self) -> PrettyTable:
-        table = PrettyTable()
-        table.field_names = ["Name", "Opening", "Params"]
-        for module in self.modules:
-            table.add_row([module.name, module.opening, len(module.params)])
-        return table
-
     def create_module(self, module_class: Module, *args, **kwargs) -> Module:
-        module = module_class(model=self.model, *args, **kwargs)
+        """创建次级模块"""
+        module = module_class(model=self._model, *args, **kwargs)
         if not issubclass(module.__class__, Module):
             raise TypeError("Must inherited from a module.")
         setattr(self, module.name, module)  # register as module
-        self.add_creation(module)  # register as creation
+        self.attach(module)
         self.modules.append(module)  # register as module
-        self.notify()  # update attributes
         return module
+
+    @iter_func("modules")
+    def initialize(self):
+        return super().initialize()
