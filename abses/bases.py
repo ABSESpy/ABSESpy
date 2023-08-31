@@ -8,57 +8,28 @@ from __future__ import annotations
 
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, List, Optional, Set, Union
+from typing import List, Optional, Set, Union
 
 from agentpy.objects import make_list
 
 logger = logging.getLogger(__name__)
 
 
-class Creator:
-    def __init__(self):
-        self.created: List[Creation] = []
-        self._inheritance: List[str] = []
+class Mediator:
+    """中介者模块，可以转发事件和解析参数"""
 
-    def _check_creation(self, creation: Creation):
-        if not issubclass(creation.__class__, Creation):
-            raise TypeError(
-                f"Only creation can be added, input {creation.__class__}."
-            )
+    @abstractmethod
+    def transfer_event(self, sender: object, event: str):
+        """触发事件"""
 
-    @property
-    def inheritance(self) -> list:
-        return self._inheritance
+    @abstractmethod
+    def transfer_parsing(self, sender: object, params: dict):
+        """解析参数"""
 
-    @inheritance.setter
-    def inheritance(self, attrs: "List[str]|str") -> None:
-        self.inheritance.extend(make_list(attrs))
-        self.notify()
-
-    def add_creation(self, obj: Creation):
-        self._check_creation(creation=obj)
-        self.created.append(obj)
-        setattr(obj, "_creator", self)
-        self.notify()
-
-    def notify(self):
-        for obj in self.created:
-            obj.refresh(self)
-
-    def remove_creation(self, obj: Creation):
-        self._check_creation(creation=obj)
-        self.created.remove(obj)
-
-
-class Creation(metaclass=ABCMeta):
-    @property
-    def creator(self):
-        return self._creator
-
-    def refresh(self, creator: Creator):
-        for attr in creator.inheritance:
-            value = creator.__getattribute__(attr)
-            self.__setattr__(attr, value)
+    @abstractmethod
+    def transfer_request(self, sender: object, request: str):
+        """转发请求"""
+        return request
 
 
 class Notice:
@@ -116,17 +87,3 @@ class Observer(metaclass=ABCMeta):
         for var in notice.glob_vars:
             value = getattr(notice, var)
             setattr(self, var, value)
-
-
-class Mediator:
-    @abstractmethod
-    def transfer_event(self, sender: object, event: str):
-        pass
-
-    @abstractmethod
-    def transfer_parsing(self, sender: object, params: dict):
-        pass
-
-    @abstractmethod
-    def transfer_request(self, sender: object, request: str):
-        return request

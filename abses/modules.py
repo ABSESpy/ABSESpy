@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from agentpy import Model
 
@@ -32,6 +32,9 @@ class Module(Component, BaseObj):
         flag = "open" if self.opening else "closed"
         return f"<{self.name}: {flag}>"
 
+    def __getattr__(self, __name: str) -> Any:
+        return super().__getattribute__(__name)
+
     @property
     def opening(self) -> bool:
         """模块处于打开或关闭状态"""
@@ -53,6 +56,11 @@ class Module(Component, BaseObj):
     def initialize(self):
         """
         Initialization after handle parameters.
+        """
+
+    def step(self):
+        """
+        每当时间前进时触发
         """
 
 

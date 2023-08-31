@@ -5,13 +5,11 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Callable, Dict, Optional, TypeAlias, Union
+from typing import Callable, Dict, TypeAlias, Union
 
-import networkx as nx
 from agentpy import AttrDict
 
 from abses.actor import Actor
-from abses.bases import Creation
 
 from .container import AgentsContainer
 from .modules import CompositeModule, Module
@@ -21,10 +19,11 @@ Actors: TypeAlias = Union[ActorsList, Selection, Actor]
 Trigger: TypeAlias = Union[str, Callable]
 
 
-class HumanModule(Module, Creation):
+class HumanModule(Module):
+    """基本的人类模块"""
+
     def __init__(self, model, name=None):
         Module.__init__(self, model, name)
-        Creation.__init__(self)
         self._agents = AgentsContainer(model)
         self._collections: Dict[str, Selection] = AttrDict()
         self._rules: Dict[str, Trigger] = AttrDict()
@@ -37,13 +36,16 @@ class HumanModule(Module, Creation):
 
     @property
     def agents(self) -> AgentsContainer:
+        """所有的主体筛选器"""
         return self._agents
 
     @property
     def actors(self) -> ActorsList:
+        """所有的行动者"""
         return self.agents.to_list()
 
     def define(self, name: str, selection: Selection) -> ActorsList:
+        """定义一次主体查询"""
         selected = self.actors.select(selection)
         self._collections[name] = selection
         return selected
@@ -56,15 +58,19 @@ class HumanModule(Module, Creation):
     #     results = actors_to_trigger.trigger(then)
     #     return actors_to_trigger, results
 
-    def arena(self, actor_A: Actors, actor_B: Actors, interaction: Trigger):
-        actor_A.trigger(interaction, actor_B)
-        actor_B.trigger(interaction, actor_A)
+    def arena(self, actor_1: Actors, actor_2: Actors, interaction: Trigger):
+        """互动情景"""
+        actor_1.trigger(interaction, actor_2)
+        actor_2.trigger(interaction, actor_1)
 
     def require(self, attr: str) -> object:
+        """请求变量"""
         return self.mediator.transfer_request(self, attr)
 
 
 class BaseHuman(CompositeModule, HumanModule):
+    """基本的人类模块"""
+
     def __init__(self, model, name="human"):
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
