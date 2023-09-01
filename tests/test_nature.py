@@ -6,33 +6,51 @@
 # Website: https://cv.songshgeo.com/
 
 import numpy as np
+import pytest
 
 from abses.actor import Actor
-from abses.nature import BaseNature
+from abses.main import MainModel
+from abses.nature import BaseNature, PatchCell, PatchModule
 
 from .create_tested_instances import simple_main_model
 
 
-def test_nature_positions():
-    model = simple_main_model(test_nature_positions)
-    nature = model.nature
-    actors = model.agents.create(Actor, 5)
+class MockActor:
+    """用户"""
 
-    where = nature.geo.zeros()
-    where[0, 0] = True
-    try:
-        nature.random_positions(k=5, where=where, replace=False)
-    except Exception as e:
-        assert "larger" in str(e)
-    positions_replace = nature.random_positions(k=5, where=where, replace=True)
-    model.nature.add_agents(actors, positions_replace)
-    assert (actors.pos == (0, 0)).all()
-    actors[0].move_to((0, 1))
-    assert len(nature.grid[0, 0]) == 4
-    assert len(nature.lookup_agents(where)) == 4
-    assert len(nature[where]) == 4
-    assert len(nature.has_agent().arr.where()) == 2
-    actors_4 = nature[0, 0]
-    assert len(actors_4) == 4
-    assert actors_4.array("id").sum() == actors[1:].id.sum()
-    assert nature[0:2, :] == actors
+
+def test_patchcell_attachment():
+    """测试斑块可以连接到一个主体"""
+    cell = PatchCell()
+    actor = MockActor()
+    cell.link_to(actor, "actor_1")
+
+    assert "actor_1" in cell.links
+    assert len(cell.links) == 1
+    assert cell.linked("actor_1") == actor
+
+    with pytest.raises(KeyError):
+        cell.link_to(actor, "actor_1")
+
+    cell.detach("actor_1")
+    assert "actor_1" not in cell.links
+
+    with pytest.raises(KeyError):
+        cell.detach("actor_1")
+
+
+def test_patchmodule_properties():
+    """测试一个斑块模块"""
+    model = MainModel()
+    shape = (6, 5)
+    patch_module = PatchModule.from_resolution(model, shape=shape)
+
+    assert patch_module.shape == shape
+    assert patch_module.array_cells.shape == shape
+    assert isinstance(patch_module.random_positions(5), np.ndarray)
+
+    actor = MockActor()
+    patch_module.land_allotment(
+        agent=actor, link="land", where=np.ones(shape, dtype=bool)
+    )
+    assert np.all(patch_module.has_agent() == 1)
