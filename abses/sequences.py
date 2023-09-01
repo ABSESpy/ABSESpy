@@ -14,7 +14,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
-    Iterator,
     List,
     Optional,
     Self,
@@ -23,8 +22,8 @@ from typing import (
     overload,
 )
 
+import mesa_geo as mg
 import numpy as np
-from agentpy import AgentList
 
 from .tools.func import make_list, norm_choice
 
@@ -36,24 +35,25 @@ logger = logging.getLogger("__name__")
 Selection: TypeAlias = Union[str, Iterable[bool]]
 
 
-class ActorsList(AgentList):
+class ActorsList(list):
+    """主体列表"""
+
+    def __init__(self, model, objs=()):
+        super().__init__(objs)
+        self._model = model
+
     def __repr__(self):
         results = [f"({len(v)}){k}" for k, v in self.to_dict().items()]
         return f"<ActorsList: {'; '.join(results)}>"
 
     def __getattr__(self, name: str) -> np.ndarray:
         """Return callable list of attributes"""
-        if name[0] == "_":  # Private variables are looked up normally
-            super().__getattr__(name)
-        elif name in self.__dir__():
-            return super().__getattr__(name)
-        elif len(self) and hasattr(getattr(self[0], name, None), "__call__"):
-            return super().__getattr__(name)
-        else:
-            return ActorsList.array(self, name)
-
-    def __iter__(self) -> Iterator[Actor]:
-        return super().__iter__()
+        # Private variables are looked up normally
+        if name[0] == "_":
+            return getattr(super(), name)
+        if name in self.__dir__():
+            return getattr(super(), name)
+        return ActorsList.array(self, name)
 
     def __eq__(self, other: Iterable) -> bool:
         return (
@@ -84,14 +84,13 @@ class ActorsList(AgentList):
         """Check if the length of input is as same as the number of actors."""
         if not hasattr(self, "__len__"):
             raise ValueError(f"{type(length)} object is not iterable.")
-        elif length.__len__() != self.__len__():
+        if len(length) != len(self):
             if rep_error:
                 raise ValueError(
                     f"Length of the input {len(length)} mismatch {len(self)} actors."
                 )
             return False
-        else:
-            return True
+        return True
 
     def to_dict(self) -> Dict[str, Self]:
         """
@@ -101,7 +100,7 @@ class ActorsList(AgentList):
             Dict[str, Self]: key is the breed of actors, and values are corresponding actors.
         """
         dic = {}
-        for actor in self.__iter__():
+        for actor in iter(self):
             breed = actor.breed
             if breed not in dic:
                 dic[breed] = ActorsList(self.model, [actor])
@@ -144,31 +143,37 @@ class ActorsList(AgentList):
 
     def random_choose(
         self,
-        p: Optional[Iterable[float]] = None,
+        prob: Optional[Iterable[float]] = None,
         size: int = 1,
         replace: bool = True,
     ) -> Union[Actor, Self]:
+        """从主体中随机选择一个或多个。"""
         if size == 1:
-            return norm_choice(self, p=p, replace=replace)
-        elif size > 1:
-            chosen = norm_choice(self, p=p, size=size, replace=replace)
+            return norm_choice(self, p=prob, replace=replace)
+        if size > 1:
+            chosen = norm_choice(self, p=prob, size=size, replace=replace)
             return ActorsList(self.model, chosen)
+        raise ValueError(f"Invalid size {size}.")
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None
     ) -> Self:
+        """对比所有主体的某个属性的值。"""
         metrics = self.array(attr=metric)
         if than is None:
             return self.select(metrics == max(metrics))
-        elif isinstance(than, Number):
+        if isinstance(than, Number):
             return self.select(metrics > than)
-        elif isinstance(than, Actor):
+        if isinstance(than, mg.GeoAgent):
             diff = self.array(metric) - getattr(than, metric)
             return self.select(diff > 0)
+        raise ValueError(f"Invalid than type {type(than)}.")
 
     def update(self, attr: str, values: Iterable[any]) -> None:
+        """批量更新主体的属性"""
         self._is_same_length(values, rep_error=True)
-        [agent.__setattr__(attr, val) for agent, val in zip(self, values)]
+        for agent, val in zip(self, values):
+            setattr(agent, attr, val)
 
     def split(self, where: Iterable[int]) -> np.ndarray:
         """
@@ -183,28 +188,13 @@ class ActorsList(AgentList):
         to_split = np.array(self)
         return np.hsplit(to_split, where)
 
-    def array(
-        self, attr: str, how: "int|str" = "attr", *args, **kwargs
-    ) -> np.ndarray:
-        if how == "attr":
-            results = [getattr(actor, attr) for actor in self]
-        # elif how == "loc":
-        #     results = self.loc(attr)
-        # elif how == "mine":
-        #     results = self.mine(attr, *args, **kwargs)
-        # TODO: fixing cannot access local variable 'results' where it is not associated with a value
-        return np.array(results)
-
-    def position_to_coord(self, x_coords, y_coords):
-        # TODO move this to actor's property
-        X, Y = np.meshgrid(x_coords, y_coords)
-        lon = [X[x, y] for x, y in self.pos]
-        lat = [Y[x, y] for x, y in self.pos]
-        return lon, lat
+    def array(self, attr: str) -> np.ndarray:
+        """将所有主体的属性转换为数组"""
+        return np.array([getattr(actor, attr) for actor in self])
 
     def trigger(self, func_name: str, *args, **kwargs) -> np.ndarray:
+        """触发列表内所有主体的某个方法"""
         results = [
-            getattr(actor, func_name)(*args, **kwargs)
-            for actor in self.__iter__()
+            getattr(actor, func_name)(*args, **kwargs) for actor in iter(self)
         ]
         return np.array(results)

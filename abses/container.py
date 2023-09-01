@@ -84,7 +84,8 @@ class AgentsContainer(dict):
         self, breed_cls: Type[Actor], num: int = 1, singleton: bool = False
     ) -> Union[Actor, ActorsList]:
         """创建某类主体"""
-        agents = ActorsList(self._model, objs=num, cls=breed_cls)
+        objs = [breed_cls(self._model) for _ in range(num)]
+        agents = ActorsList(self._model, objs)
         self.add(agents, register=True)
         if singleton:
             return agents[0] if num == 1 else agents
