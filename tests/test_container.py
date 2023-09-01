@@ -6,34 +6,31 @@
 # Website: https://cv.songshgeo.com/
 
 
-import numpy as np
-
+from abses import MainModel
 from abses.container import AgentsContainer
 
-from .create_tested_instances import Actor, Admin, Farmer, simple_main_model
+from .create_tested_instances import Actor, Admin, Farmer
 
 
 def test_container_attributes():
-    model = simple_main_model(test_container_attributes)
-    ac = AgentsContainer(model=model)
-    assert model.agents is ac
-    assert ac.__len__() == 0
-    assert ac.__repr__() == "<AgentsContainer: >"
-    assert ac._model is model
-    a_farmer = ac.create(Farmer, signleton=True)
-    admins_5 = ac.create(Admin, 5)
+    """测试容器的属性"""
+    model = MainModel()
+    container = AgentsContainer(model=model)
+    assert model.agents is container
+    assert len(container) == 0
+    assert repr(container) == "<AgentsContainer: >"
+    assert container.model is model
+    a_farmer = container.create(Farmer, singleton=True)
+    admins_5 = container.create(Admin, 5)
     assert isinstance(a_farmer, Actor)
-    assert ac.__len__() == 6
-    assert ac.__repr__() == "<AgentsContainer: (1)Farmer; (5)Admin>"
-    assert ac.breeds == ("Farmer", "Admin")
-    assert ac._breeds == {"Farmer": Farmer, "Admin": Admin}
-    for admin in ac.Admin:
-        assert admin in admins_5
-    assert ac.Admin == admins_5
+    assert len(container) == 6
+    assert repr(container) == "<AgentsContainer: (1)Farmer; (5)Admin>"
+    assert container.breeds == ("Farmer", "Admin")
+    assert container.Admin == admins_5
 
     # 增删
     another_farmer = Farmer(model)
-    ac.add(another_farmer)
-    ac.remove(admins_5[0])
+    container.add(another_farmer)
+    container.remove(admins_5[0])
     admins_5[1:3].trigger("die")
-    assert ac.__repr__() == "<AgentsContainer: (2)Farmer; (2)Admin>"
+    assert repr(container) == "<AgentsContainer: (2)Farmer; (2)Admin>"

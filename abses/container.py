@@ -39,7 +39,7 @@ class AgentsContainer(AttrDict):
     _lock = threading.RLock()
 
     def __new__(cls: type[Self], model: MainModel) -> Self:
-        instance = cls._models.get(model, None)
+        instance = cls._models.get(model)
         if instance is None:
             instance = super().__new__(cls)
             with cls._lock:
@@ -70,7 +70,13 @@ class AgentsContainer(AttrDict):
 
     @property
     def breeds(self):
+        """多少种主体种类"""
         return tuple(self._breeds.keys())
+
+    @property
+    def model(self):
+        """对应的模型"""
+        return self._model
 
     def _register(self, actor: Actor) -> None:
         if actor.breed not in self._breeds:
@@ -78,14 +84,14 @@ class AgentsContainer(AttrDict):
             self[actor.breed] = set()
 
     def create(
-        self, breed_cls: Type[Actor], n: int = 1, signleton: bool = False
+        self, breed_cls: Type[Actor], num: int = 1, singleton: bool = False
     ) -> Union[Actor, ActorsList]:
-        agents = ActorsList(self._model, objs=n, cls=breed_cls)
+        """创建某类主体"""
+        agents = ActorsList(self._model, objs=num, cls=breed_cls)
         self.add(agents, register=True)
-        if signleton:
-            return agents[0] if n == 1 else agents
-        else:
-            return agents
+        if singleton:
+            return agents[0] if num == 1 else agents
+        return agents
 
     # def create_from(self, breeds: dict):
     #     for breed_cls, n in breeds.items():
@@ -94,6 +100,7 @@ class AgentsContainer(AttrDict):
     def to_list(
         self, breeds: Optional[Union[str, Iterable[str]]] = None
     ) -> ActorsList:
+        """将所有种类的主体转换为列表"""
         if breeds is None:
             breeds = self.breeds
         agents = ActorsList(self._model)
@@ -106,6 +113,7 @@ class AgentsContainer(AttrDict):
         agents: Union[Actor, ActorsList, Iterable[Actor]] = None,
         register: bool = False,
     ) -> None:
+        """添加主体"""
         dic = ActorsList(self._model, make_list(agents)).to_dict()
         for k, actors_lst in dic.items():
             if k not in self.breeds:
@@ -122,6 +130,7 @@ class AgentsContainer(AttrDict):
             self._model.nature.remove(agent)
 
     def select(self, selection: Selection) -> ActorsList:
+        """选择主体"""
         return self.to_list().select(selection)
 
 
@@ -133,7 +142,7 @@ def apply_agents(func) -> callable:
         manipulate_agents_func (wrapped function): should be a method of module.
     """
 
-    def apply(self, agents=None, *args, **kwargs):
+    def apply(self, *args, agents=None, **kwargs):
         if agents is None:
             agents = self.model.agents
             results = agents.apply(func, sender=self, *args, **kwargs)

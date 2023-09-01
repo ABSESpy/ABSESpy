@@ -230,8 +230,10 @@ class Actor(BaseObj, mg.GeoAgent):
 
     def die(self) -> None:
         """从世界消失"""
-        self._cell.remove(self)
         self.model.agents.remove(self)
+        if self.on_earth:
+            self._cell.remove(self)
+            del self
 
     def move_to(self, position: Optional[Tuple[int, int]]) -> bool:
         """移动到某个位置"""
