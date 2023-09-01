@@ -37,19 +37,3 @@ def noticeable_model():
     model.a = 1
     model.glob_vars = "a"
     return model
-
-
-def simple_main_model(
-    func: Optional[Union[Callable, str]] = None
-) -> MainModel:
-    if func is None:
-        name = "test"
-    elif isinstance(func, str):
-        name = func
-    else:
-        name = func.__name__
-    return MainModel(
-        base="tests",
-        name=name,
-        parameters={"nature": {"world": world}},
-    )

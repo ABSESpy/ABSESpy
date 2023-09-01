@@ -12,8 +12,6 @@ from abses.actor import Actor
 from abses.main import MainModel
 from abses.nature import BaseNature, PatchCell, PatchModule
 
-from .create_tested_instances import simple_main_model
-
 
 class MockActor:
     """用户"""

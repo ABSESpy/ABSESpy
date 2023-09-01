@@ -54,7 +54,7 @@ class MainModel(Model, Notice, States):
             name = self.__class__.__name__
 
         self._name: str = name
-        self._settings = parameters
+        self._settings = DictConfig(parameters)
         self._version: str = __version__
         self._human: BaseHuman = human_class(self)
         self._nature: BaseNature = nature_class(self)

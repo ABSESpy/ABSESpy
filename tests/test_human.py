@@ -7,9 +7,11 @@
 
 import numpy as np
 
+from abses import MainModel
 from abses.human import HumanModule
+from abses.nature import PatchModule
 
-from .create_tested_instances import Admin, Farmer, simple_main_model
+from .create_tested_instances import Admin, Farmer
 
 selection = {
     "breed": "Farmer",
@@ -18,7 +20,7 @@ selection = {
 
 
 def test_human_attributes():
-    model = simple_main_model()
+    model = MainModel()
     human = model.human
     assert human.agents is model.agents
     assert len(human.actors) == 0
@@ -29,7 +31,7 @@ def test_human_attributes():
 
 
 def test_human_define():
-    model = simple_main_model()
+    model = MainModel()
     human = model.human
     farmers = human.agents.create(Farmer, 5)
     admins = model.agents.create(Admin, 5)
@@ -44,18 +46,19 @@ def test_human_define():
 
 
 def test_human_rule():
-    model = simple_main_model(test_human_rule)
+    model = MainModel()
+    layer = PatchModule.from_resolution(model)
     human = model.human
     farmers = human.agents.create(Farmer, 5)
-    farmers.rule(
-        when="test == 1", then="move_to", position=(3, 3), disposable=True
+    farmers.trigger(
+        "put_on_layer",
+        layer=layer,
+        pos=(2, 3),
     )
+
+    farmers.trigger("rule", when="test == 1", then="die", disposable=True)
     # assert checked
     farmers.update("test", np.arange(5))
-    assert human.agents.to_list().on_earth.sum() == 1
-    farmers.rule(when="test == 2", then="die")
-    assert human.agents.__len__() == 4
-
-
-def test_human_arena():
-    pass
+    assert human.agents.to_list().on_earth.sum() == 4
+    farmers.trigger("rule", when="test == 2", then="die")
+    assert len(human.agents) == 3

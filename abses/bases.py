@@ -10,7 +10,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 from typing import List, Optional, Set, Union
 
-from agentpy.objects import make_list
+from abses.tools.func import make_list
 
 logger = logging.getLogger(__name__)
 

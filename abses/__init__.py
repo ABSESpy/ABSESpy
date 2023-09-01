@@ -30,7 +30,7 @@ __all__ = [
 ]
 __version__ = "v0.1.3"
 
-from .actor import Actor, link_to, perception
+from .actor import Actor, perception
 from .container import ActorsList, AgentsContainer
 from .human import BaseHuman, HumanModule
 from .main import MainModel

@@ -30,7 +30,6 @@ from typing import (
 import numpy as np
 from agentpy.model import Model
 
-from .patch import Patch
 from .tools.func import make_list, wrap_opfunc_to
 
 if TYPE_CHECKING:
@@ -41,7 +40,7 @@ MAXLENGTH = 5  # todo move it into system settings.
 
 logger = logging.getLogger(__name__)
 
-Data: TypeAlias = Union[Number, str, np.ndarray, Patch]
+Data: TypeAlias = Union[Number, str, np.ndarray]
 T: TypeAlias = datetime
 
 

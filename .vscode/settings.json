@@ -13,6 +13,8 @@
         "time",
         "projects",
         "data",
-        "agent"
+        "agent",
+        "modules",
+        "flow"
     ],
 }
