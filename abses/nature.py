@@ -5,17 +5,21 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import List, Optional, Self
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional, Self
 
 import mesa_geo as mg
 import numpy as np
 from mesa.space import Coordinate
 from nptyping import NDArray
 
-from abses.actor import Actor
-
 from .modules import CompositeModule, Module
+from .sequences import ActorsList
 from .tools.func import norm_choice
+
+if TYPE_CHECKING:
+    from abses.actor import Actor
 
 DEFAULT_WORLD = {
     "width": 10,
@@ -31,6 +35,7 @@ class PatchCell(mg.Cell):
     def __init__(self, pos=None, indices=None):
         super().__init__(pos, indices)
         self._attached_agents = {}
+        self._agents = set()
 
     def __repr__(self) -> str:
         return f"<PatchCell at {self.pos}>"
@@ -39,6 +44,19 @@ class PatchCell(mg.Cell):
     def links(self) -> List[str]:
         """所有关联类型"""
         return list(self._attached_agents.keys())
+
+    @property
+    def agents(self) -> ActorsList:
+        """该斑块上的所有主体"""
+        return ActorsList(self.model, self._agents)
+
+    def add(self, agent) -> None:
+        """将一个主体添加到该处"""
+        self._agents.add(agent)
+
+    def remove(self, agent) -> None:
+        """将一个此处的主体移除"""
+        self._agents.remove(agent)
 
     def link_to(
         self, agent: Actor, link: Optional[str] = None, update: bool = False
@@ -122,7 +140,7 @@ class PatchModule(Module, mg.RasterLayer):
 
     def random_positions(
         self,
-        k: int,
+        k: int = 1,
         where: str | np.ndarray = None,
         prob: str | np.ndarray = None,
         replace: bool = False,
@@ -162,6 +180,13 @@ class PatchModule(Module, mg.RasterLayer):
         cells = self.array_cells[mask]
         for cell in cells:
             cell.link_to(agent, link)
+
+    def move_agent(self, agent: Actor, position: Coordinate) -> None:
+        """移动主体"""
+        if agent.layer is not self:
+            raise TypeError(f"Agent {agent} is not on {self}.")
+        self.cells[agent.pos[0]][agent.pos[1]].remove(agent)
+        agent.put_on_layer(self, position)
 
 
 class BaseNature(CompositeModule, mg.GeoSpace):

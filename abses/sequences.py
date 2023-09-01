@@ -5,12 +5,14 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Iterable
 from numbers import Number
 from typing import (
+    TYPE_CHECKING,
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -24,8 +26,10 @@ from typing import (
 import numpy as np
 from agentpy import AgentList
 
-from .actor import Actor
 from .tools.func import make_list, norm_choice
+
+if TYPE_CHECKING:
+    from .actor import Actor
 
 logger = logging.getLogger("__name__")
 

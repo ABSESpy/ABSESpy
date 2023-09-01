@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import logging
-from numbers import Number
+import uuid
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,19 +16,20 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Self,
     Tuple,
     TypeAlias,
     Union,
-    overload,
 )
 
-import networkx as nx
-import numpy as np
-from agentpy import AgentSet, AttrDict
+import mesa_geo as mg
+from agentpy import AttrDict
+from mesa.space import Coordinate
+from shapely import Point
+
+from abses.nature import PatchCell, PatchModule
+from abses.sequences import ActorsList
 
 from .objects import BaseObj
-from .patch import Patch
 
 # A class that is used to store the position of the agent.
 
@@ -37,7 +38,6 @@ if TYPE_CHECKING:
     from abses.nature import PositionSet
 
     from .main import MainMediator
-    from .sequences import ActorsList
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
@@ -46,6 +46,7 @@ logger = logging.getLogger("__name__")
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
+    """解析字符串检索式"""
     selection_dict = {}
     if "==" not in selection:
         return {"breed": selection}
@@ -56,55 +57,79 @@ def parsing_string_selection(selection: str) -> Dict[str, Any]:
     return selection_dict
 
 
-def perception(func):
+def perception(func) -> Callable:
+    """感知世界"""
+
     @property
     def wrapper(self: Actor, *args, **kwargs):
+        """感知"""
         return func(self, *args, **kwargs)
 
     return wrapper
 
 
-def link_to(func):
-    # TODO and links, which can be searched through networkx
-    @property
-    def wrapper(self: Actor, *args, **kwargs):
-        return func(self, *args, **kwargs)
+# def check_rule(loop: bool = False) -> Callable:
+#     """检查规则"""
+#     def f(func: Callable) -> Callable:
+#         def wrapper(self: Actor, *args, **kwargs):
+#             triggered = self._check_rules("now")
+#             if loop:
+#                 while len(triggered) > 0:
+#                     triggered = self._check_rules("now")
+#             return func(self, *args, **kwargs)
 
-    return wrapper
+#         return wrapper
 
-
-def check_rule(loop: bool = False) -> Callable:
-    def f(func: Callable) -> Callable:
-        def wrapper(self: Actor, *args, **kwargs):
-            triggered = self._check_rules("now")
-            if loop:
-                while len(triggered) > 0:
-                    triggered = self._check_rules("now")
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    return f
+#     return f
 
 
-class Actor(BaseObj):
+class Actor(BaseObj, mg.GeoAgent):
+    """
+    社会-生态系统中的行动者
+    """
+
     # when checking the rules
     _freq_levels = {"now": 0, "update": 1, "move": 2, "any": 3}
 
-    def __init__(
-        self,
-        model,
-        observer: bool = True,
-        name: Optional[str] = None,
-        **kwargs,
-    ):
-        BaseObj.__init__(self, model, observer=observer, name=name)
-        self._pos: PositionSet = None
-        self._relationships: Dict[str, ActorsList] = AttrDict()
-        self._ownerships: Dict[str, Patch] = AttrDict()
+    def __init__(self, model, observer: bool = True) -> None:
+        unique_id = uuid.uuid4().int
+        mg.GeoAgent.__init__(
+            self, unique_id, model=model, geometry=None, crs=model.nature.crs
+        )
+        BaseObj.__init__(self, model, observer=observer)
+        self._relationships: Dict[str, ActorsList] = {}
+        self._ownerships: Dict[str, Any] = {}
         self._rules: Dict[str, Dict[str, Any]] = {}
-        self.mediator: MainMediator = self.model.mediator
-        self.setup(**kwargs)
+        self._cell: PatchCell = None
+        self._layer: PatchModule = None
+        # self.mediator: MainMediator = self.model.mediator
+
+    def _check_layer(self, layer: PatchModule) -> None:
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{layer} is not PatchModule.")
+
+    def put_on_layer(self, layer: PatchModule, pos: Tuple[int, int]):
+        """把主体放到某个栅格图层上"""
+        self._check_layer(layer=layer)
+        self._layer = layer
+        cell = self._cell = layer.cells[pos[0]][pos[1]]
+        cell.add(self)
+        self.geometry = Point(layer.transform * self.indices)
+
+    @property
+    def indices(self) -> Coordinate:
+        """(row, col)形式的坐标，从左上角往下，用于矩阵索引"""
+        return self._cell.indices
+
+    @property
+    def pos(self) -> Coordinate:
+        """(x, y)形式的坐标，从左下角向上，用于cells嵌套列表索引"""
+        return self._cell.pos
+
+    @pos.setter
+    def pos(self, pos) -> None:
+        if pos is not None:
+            raise AttributeError(f"Set pos by {self.put_on_layer.__name__}")
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
@@ -114,30 +139,31 @@ class Actor(BaseObj):
     @classmethod
     @property
     def breed(cls) -> str:
+        """主体的种类"""
         return cls.__name__
 
     @property
     def population(self):
+        """所有与自己同类的主体"""
         return self.model.agents[self.breed]
 
     @property
     def on_earth(self) -> bool:
-        return bool(self._pos)
-
-    @property
-    def pos(self) -> Tuple[int, int]:
-        return self._pos.index
+        """是否在世界上有自己的位置"""
+        return bool(self._cell)
 
     @property
     def here(self) -> ActorsList:
-        return self.neighbors(0) if self.on_earth is True else None
+        """所有这里的主体"""
+        return self._cell.agents
 
-    def random(self) -> float:
-        """Random number generator"""
-        return self.model.random.random()
+    @property
+    def layer(self) -> PatchModule:
+        """所在的栅格图层"""
+        return self._layer
 
     def _freq_level(self, level: str) -> int:
-        code = self._freq_levels.get(level, None)
+        code = self._freq_levels.get(level)
         if code is None:
             keys = tuple(self._freq_levels.keys())
             raise KeyError(f"freq level {level} is not available in {keys}")
@@ -154,40 +180,16 @@ class Actor(BaseObj):
                 triggered_rules.append(name)
                 # check if is a disposable rule
                 if rule.disposable is True:
-                    self.logger.debug(
-                        f"Rule '{name}' applied on '{self}' in {self.time}."
-                    )
+                    # self.logger.debug(
+                    #     f"Rule '{name}' applied on '{self}' in {self.time}."
+                    # )
                     del self._rules[name]
-                self.__getattr__(rule.then)(**parameters)
+                getattr(self, rule.then)(**parameters)
         # delete disposable rules
         return triggered_rules
 
-    def request(
-        self,
-        request: str,
-        header: Dict[str, Any],
-        receiver: Optional[str] = None,
-    ) -> Any:
-        if receiver is None:
-            response = self.mediator.transfer_request(self, request)
-        elif receiver in ["nature", "human"]:
-            results = self.mediator.trigger_functions(
-                users=receiver, func_name=request, **header
-            )
-            response = results.__getattribute__(receiver)
-        else:
-            raise ValueError(f"Unknown transfer request {receiver}")
-        return response
-
-    # def request(self, request: str, header=None, receiver=None) -> Any:
-    #     # header.update({'how': 'GET'})
-    #     return self.request(request, header, receiver)
-
-    # def post(self, request: str, value: Any, header=None, receiver=None):
-    #     header.update({'how': 'POST', request: value})
-    #     return self._request(request, header, receiver)
-
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
+        """根据一定条件选取主体"""
         if isinstance(selection, str):
             selection = parsing_string_selection(selection)
         results = []
@@ -211,6 +213,7 @@ class Actor(BaseObj):
         check_now: Optional[bool] = True,
         **kwargs,
     ):
+        """设置规则，一旦`when`的条件满足，就会触发`then`"""
         if name is None:
             name = f"rule ({len(self._rules) + 1})"
         self._rules[name] = AttrDict(
@@ -227,53 +230,26 @@ class Actor(BaseObj):
 
     def die(self) -> None:
         """从世界消失"""
+        self._cell.remove(self)
         self.model.agents.remove(self)
 
-    def neighbors(
-        self,
-        distance: int = 1,
-        approach: int = 4,
-        selection: Selection = None,
-        exclude: bool = True,
-    ):
-        # The area around within a certain distance.
-        header = {
-            "pos": self.pos,
-            "distance": distance,
-            "selection": selection,
-            "approach": approach,
-        }
-        agents = self.request(
-            request="neighbors", header=header, receiver="nature"
-        )
-        if exclude:
-            agents.remove(self)
-        return agents
-
-    def move_to(self, position: Optional[Tuple[int, int]] = None) -> bool:
+    def move_to(self, position: Optional[Tuple[int, int]]) -> bool:
         """移动到某个位置"""
-        if position is None:
-            position = self.request(
-                "random_positions", header={"k": 1}, receiver="nature"
-            )[0]
-        header = {"actor": self, "position": position}
-        pos_set = self.request("actor_to", header=header, receiver="nature")
-        self._pos = pos_set
+        if not self._layer:
+            raise ValueError("Layer is not set.")
+        self._layer.move_agent(self, position)
 
-    def link_to(self, name: str, other: Union[Self, Iterable[Self], Callable]):
-        # TODO finish this
-        pass
-
-    def loc(self, request: str, **kwargs):
+    def loc(self, attribute: str) -> Any:
         """寻找自己所在位置的斑块数据"""
-        header = {"sender": self, "position": self.pos}
-        response = self.request(request, header, **kwargs)
-        return response[self.pos]
+        if attribute not in self.layer.attributes:
+            raise AttributeError(f"Attribute {attribute} not found.")
+        return getattr(self._cell, attribute)
 
-    def alter_nature(self, patch: str, value: "int|float|bool") -> Patch:
-        patch = self.require(patch)
-        patch[self.pos] = value
-        return patch
+    def alter_nature(self, attr: str, value: Any) -> None:
+        """改变自己所在位置的斑块数据"""
+        if attr not in self._cell.attributes:
+            raise AttributeError(f"Attribute {attr} not found.")
+        setattr(self._cell, attr, value)
 
     # def find_tutor(self, others, metric, how="best"):
     #     better = others.better(metric, than=self)
