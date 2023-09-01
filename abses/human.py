@@ -7,7 +7,7 @@
 
 from typing import Callable, Dict, TypeAlias, Union
 
-from agentpy import AttrDict
+from omegaconf import DictConfig
 
 from abses.actor import Actor
 
@@ -25,8 +25,8 @@ class HumanModule(Module):
     def __init__(self, model, name=None):
         Module.__init__(self, model, name)
         self._agents = AgentsContainer(model)
-        self._collections: Dict[str, Selection] = AttrDict()
-        self._rules: Dict[str, Trigger] = AttrDict()
+        self._collections: Dict[str, Selection] = DictConfig({})
+        self._rules: Dict[str, Trigger] = DictConfig({})
 
     def __getattr__(self, name):
         if name[0] == "_" or name not in self._collections:

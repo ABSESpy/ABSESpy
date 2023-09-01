@@ -12,7 +12,7 @@ import threading
 from collections import deque
 from typing import TYPE_CHECKING, Any, Deque, Dict, List, Optional
 
-from agentpy import AttrDict
+from omegaconf import DictConfig
 from pandas import Period
 
 from .tools.func import wrap_opfunc_to
@@ -95,7 +95,7 @@ class TimeDriver(Period):
         Each model can only store one initialized TimeDriverManager instance.
         """
         if settings is None:
-            settings = AttrDict()
+            settings = DictConfig({})
         # if this is the first time to initialize.
         if cls._model.get(model) is None:
             start = parsing_settings(

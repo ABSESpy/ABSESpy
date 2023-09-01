@@ -22,8 +22,8 @@ from typing import (
 )
 
 import mesa_geo as mg
-from agentpy import AttrDict
 from mesa.space import Coordinate
+from omegaconf import DictConfig
 from shapely import Point
 
 from abses.nature import PatchCell, PatchModule
@@ -216,7 +216,7 @@ class Actor(BaseObj, mg.GeoAgent):
         """设置规则，一旦`when`的条件满足，就会触发`then`"""
         if name is None:
             name = f"rule ({len(self._rules) + 1})"
-        self._rules[name] = AttrDict(
+        self._rules[name] = DictConfig(
             {
                 "when": when,
                 "then": then,

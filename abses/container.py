@@ -20,8 +20,6 @@ from typing import (
     Union,
 )
 
-from agentpy import AttrDict
-
 from abses.actor import Actor
 from abses.sequences import ActorsList, Selection
 from abses.tools.func import make_list
@@ -32,7 +30,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("__name__")
 
 
-class AgentsContainer(AttrDict):
+class AgentsContainer(dict):
     """Singleton AgentsContainer for each model."""
 
     _models: Dict[MainModel, AgentsContainer] = {}
@@ -61,9 +59,8 @@ class AgentsContainer(AttrDict):
 
     def __getattr__(self, name: str) -> Any:
         if name[0] == "_" or name not in self._breeds:
-            return super().__getattr__(name)
-        else:
-            return self.to_list(name)
+            return getattr(self, name)
+        return self.to_list(name)
 
     def __contains__(self, name):
         return name in self.to_list()
@@ -92,10 +89,6 @@ class AgentsContainer(AttrDict):
         if singleton:
             return agents[0] if num == 1 else agents
         return agents
-
-    # def create_from(self, breeds: dict):
-    #     for breed_cls, n in breeds.items():
-    #         self.create_agents(breed_cls, n)
 
     def to_list(
         self, breeds: Optional[Union[str, Iterable[str]]] = None
