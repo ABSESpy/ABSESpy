@@ -6,11 +6,7 @@
 # Website: https://cv.songshgeo.com/
 from __future__ import annotations
 
-import logging
-from abc import abstractmethod
-from typing import Any, List, Optional
-
-from agentpy import Model
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from abses.tools.func import iter_func
 
@@ -19,11 +15,14 @@ from .components import Component
 from .objects import BaseObj
 from .states import States
 
+if TYPE_CHECKING:
+    from .main import MainModel
+
 
 class Module(Component, BaseObj):
     """基本的模块"""
 
-    def __init__(self, model: Model, name: Optional[str] = None):
+    def __init__(self, model: MainModel, name: Optional[str] = None):
         Component.__init__(self, model=model, name=name)
         BaseObj.__init__(self, model, observer=True, name=name)
         self._open: bool = True
@@ -68,7 +67,7 @@ class Module(Component, BaseObj):
 class CompositeModule(Module, States, Notice):
     """基本的组合模块，可以创建次级模块"""
 
-    def __init__(self, model: Model, name: str = None) -> None:
+    def __init__(self, model: MainModel, name: str = None) -> None:
         States.__init__(self)
         Notice.__init__(self)
         Module.__init__(self, model, name=name)

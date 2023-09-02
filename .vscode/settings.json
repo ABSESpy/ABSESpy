@@ -1,11 +1,16 @@
 {
     "cSpell.words": [
+        "dayofweek",
+        "dayofyear",
+        "daysinmonth",
         "georef",
         "ndimage",
         "nptyping",
         "opfunc",
+        "qyear",
         "rioxarray",
-        "roadmap"
+        "roadmap",
+        "weekofyear"
     ],
     "workbench.colorTheme": "Ayu Mirage",
     "conventionalCommits.scopes": [

@@ -11,7 +11,7 @@ from abses import MainModel
 from abses.human import HumanModule
 from abses.nature import PatchModule
 
-from .create_tested_instances import Admin, Farmer
+from .fixtures import Admin, Farmer
 
 selection = {
     "breed": "Farmer",

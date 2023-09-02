@@ -9,7 +9,7 @@
 from abses import MainModel
 from abses.container import AgentsContainer
 
-from .create_tested_instances import Actor, Admin, Farmer
+from .fixtures import Actor, Admin, Farmer
 
 
 def test_container_attributes():

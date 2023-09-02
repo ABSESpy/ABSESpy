@@ -9,7 +9,13 @@ from abses import MainModel
 from abses.actor import Actor
 from abses.sequences import ActorsList
 
-from .create_tested_instances import Farmer
+
+class Farmer(Actor):
+    """测试用，另一个类别的主体"""
+
+    def __init__(self, model, observer: bool = True) -> None:
+        super().__init__(model, observer)
+        self.metric = 0.1
 
 
 def test_sequences_attributes():

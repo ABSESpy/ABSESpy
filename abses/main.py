@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Optional, Tuple
 
-from agentpy import Model
+from mesa import Model
 from omegaconf import DictConfig
 
 from abses import __version__
@@ -40,9 +40,9 @@ class MainModel(Model, Notice, States):
         parameters: DictConfig = DictConfig({}),
         human_class: Optional[BaseHuman] = None,
         nature_class: Optional[BaseNature] = None,
-        run_id: Optional[Tuple[int, int]] = None,
+        **kwargs,
     ) -> None:
-        Model.__init__(self, _run_id=run_id)
+        Model.__init__(self)
         Notice.__init__(self)
         States.__init__(self)
 
@@ -127,16 +127,9 @@ class MainModel(Model, Notice, States):
         """时间前进"""
         for _ in range(steps):
             self.time.update()
-            self.t += 1
-            self.step()
-            self.update()
-        return self.time
 
-    def sim_step(self):
-        """Proceeds the simulation by one step, incrementing `Model.t` by 1
-        and then calling :func:`Model.step` and :func:`Model.update`."""
-        self.time_go()
-        if self.t >= self._steps:
-            self.running = False
-        elif self.time.period >= self.time.end:
-            self.running = False
+    def run_model(self) -> None:
+        """模型运行"""
+        while self.running:
+            self.time_go()
+            self.step()

@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, List, Optional, Self
 import mesa_geo as mg
 import numpy as np
 from mesa.space import Coordinate
-from nptyping import NDArray
 
 from .modules import CompositeModule, Module
 from .sequences import ActorsList
@@ -100,7 +99,7 @@ class PatchModule(Module, mg.RasterLayer):
         return self.width, self.height
 
     @property
-    def array_cells(self) -> NDArray:
+    def array_cells(self) -> np.ndarray:
         """所有格子的二维数组形式"""
         return np.array(self.cells)
 
