@@ -48,7 +48,7 @@ class Module(Component, BaseObj):
         if not isinstance(_open, bool):
             raise TypeError("Accept boolean parameters")
         if self._open is not _open:
-            logging.info("%s switch 'open' to %s.", self.name, _open)
+            self.logger.info("%s switch 'open' to %s.", self.name, _open)
             self._open = _open
         return self._open
 

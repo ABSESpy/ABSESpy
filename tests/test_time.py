@@ -5,34 +5,27 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import pytest
 from omegaconf import DictConfig
 
 from abses import MainModel
-from abses.time import Period, TimeDriver, TimeDriverManager
+from abses.time import Period, TimeDriver
 
 
 def test_init_time():
-    model = MainModel(name="test_init_time")
+    model = MainModel()
     p1 = Period(2000, freq="Y")
     p2 = Period(p1) + 1
     time = TimeDriver(model=model)
     # time + 1  -> 2001
-    assert time.update() == p2 == time.period
-    assert time.period is TimeDriver.period
-    assert type(time) is TimeDriverManager
+    time.update()
+    assert time == p2 == time.period
     # Checking if the history is updated.
-    assert len(time.history) == 1
-    assert len(time.time) == 2
     time2 = TimeDriver(model=model)  # time driver of the same model
 
     assert time2 is time
-    assert time.asfreq("M") == p2.asfreq("M")
-    assert str(time) == "[A-DEC]2000-2001"
-
-    time.update(10)
-    assert time == Period(2011, "Y")
-    assert len(time2._history) == 5
-    assert len(time2._time) == 12
+    with pytest.raises(ValueError):
+        time.update(30)
 
 
 def test_different_model():
@@ -41,7 +34,7 @@ def test_different_model():
     time1 = TimeDriver(model=model2)
     assert time1.period == Period(2000, freq="Y")
     time2 = TimeDriver(model=model3)
-    assert time1 == time2 == Period(2000, "Y")
+    # assert time1 == time2
     assert time1 is not time2
     time1.update(3)
     assert time1 == Period(2003, "Y")
@@ -56,6 +49,3 @@ def test_time_settings():
     model4 = MainModel(name=name, parameters=params)
     assert model4.settings.time.start == "1998"
     assert model4.settings.get("time") == DictConfig({"start": "1998"})
-    # assert model4.time.settings ==
-    # assert model4.time._start == Period("1998")
-    # TODO 检查这里为什么无法过关

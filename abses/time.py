@@ -10,13 +10,12 @@ from __future__ import annotations
 import logging
 import threading
 from collections import deque
-from typing import TYPE_CHECKING, Any, Deque, Dict, List, Optional
+from functools import total_ordering
+from typing import TYPE_CHECKING, Optional, Union
 
-from omegaconf import DictConfig
-from pandas import Period
+from pandas import Period, Timestamp
 
-from .tools.func import wrap_opfunc_to
-from .variable import MAXLENGTH
+from abses.components import Component
 
 if TYPE_CHECKING:
     from .main import MainModel
@@ -27,139 +26,195 @@ DEFAULT_FREQ = "Y"
 logger = logging.getLogger(__name__)
 
 
-def parsing_settings(
-    settings: Dict[str, Any], key: str, defaults: Optional[str]
-) -> Period:
-    freq = settings.get("freq", DEFAULT_FREQ)
-    values = settings.get(key, defaults)
-    return (
-        Period(freq=freq, **values)
-        if isinstance(values, dict)
-        else Period(value=values, freq=freq)
-    )
+@total_ordering
+class TimeDriver(Component):
+    """TimeDriver provides the functionality to manage time."""
 
+    _instances = {}
+    _lock = threading.Lock()
 
-class TimeDriverManager:
-    def __init__(self, model: MainModel, start, end) -> None:
-        self._start = start
-        self._end = end
-        self._data: Period = start
-        self._time: List[Period] = [start]
-        self._history: Deque[Period] = deque([], maxlen=MAXLENGTH)
-        self._model: MainModel = model
-        # instances operational func using the property '_data'
-        wrap_opfunc_to(self, "_data")
-
-    def __getattribute__(self, __name: str) -> Any:
-        # private attributes of TimeDriverManager
-        if __name.startswith("_"):
-            return super().__getattribute__(__name)
-        # using data explicit methods.
-        elif hasattr(self._data, __name):
-            return getattr(self._data, __name)
-        # accessible methods and attributes of TimeDriver
-        else:
-            TimeDriver._select_manager(self._model)
-            return getattr(TimeDriver, __name)
-
-    # cls(2000, 'Y') < Period(2001, 'Y')
-    def __lt__(self, other):
-        return self._data < other
-
-    # cls(2000, 'Y') == Period(2000, 'Y')
-    # cls(2000, 'Y') != Period(2000, 'M')
-    def __eq__(self, other):
-        return self._data == other
-
-    def __str__(self) -> str:
-        """[A-DEC]2000-2001"""
-        start = self._time[0]
-        end = self._time[-1]
-        return f"[{self.freqstr}]{start}-{end}"
-
-    def __repr__(self) -> str:
-        return self._data.__str__()
-
-
-class TimeDriver(Period):
-    _manager: TimeDriverManager = None
-    _model: Dict[int, TimeDriverManager] = {}
-    _lock = threading.RLock()
-
-    # 单例模式：https://www.jb51.net/article/202178.htm
-    def __new__(
-        cls, model: MainModel, settings: Dict[str, Any] = None
-    ) -> TimeDriverManager:
-        """A Singleton wrapped class, each model has its own driver.
-        This class has NO instance, but init a TimeDriverManager.
-        Each model can only store one initialized TimeDriverManager instance.
-        """
-        if settings is None:
-            settings = DictConfig({})
-        # if this is the first time to initialize.
-        if cls._model.get(model) is None:
-            start = parsing_settings(
-                settings, key="start", defaults=DEFAULT_START
-            )
-            end = parsing_settings(settings, key="end", defaults=DEFAULT_END)
-            driver = TimeDriverManager(model, start, end)
-            with cls._lock:
-                cls._model[model] = driver
-        # if this model has a TimeDriverManager.
-        else:
-            driver = cls._model[model]
-            cls._select_manager(model)
+    def __new__(cls, model: MainModel):
+        with cls._lock:
+            if not cls._instances.get(model):
+                driver = super(TimeDriver, cls).__new__(cls)
+                cls._instances[model] = driver
+            else:
+                driver = cls._instances[model]
         return driver
 
-    @classmethod
-    def _select_manager(cls, model: int) -> None:
-        """Switch to current model's manager."""
-        with cls._lock:
-            cls.manager = cls._model[model]
+    def __init__(self, model: MainModel):
+        super().__init__(model=model, name="time")
+        self._model: MainModel = model
+        self._current_period: Period = self.start_period
+        self._history = deque([self.start_period])
 
-    @classmethod
+    def __eq__(self, other: object) -> bool:
+        return self.period.__eq__(other)
+
+    def __lt__(self, other: object) -> bool:
+        return self.period.__lt__(other)
+
     @property
-    def period(cls) -> Period:
-        return cls.manager._data
+    def freq(self) -> str:
+        """The frequency of time"""
+        freq = self.params.get("freq")
+        if not freq:
+            freq = DEFAULT_FREQ
+            self.logger.warning(
+                "Frequency is not set, using the default %s.", freq
+            )
+        return freq
 
-    @classmethod
     @property
-    def history(cls) -> Deque[Period]:
-        return cls.manager._history
+    def start_period(self) -> Period:
+        """The start period"""
+        start = self.params.get("start")
+        if not start:
+            self.logger.warning(
+                "Start time is not set, using the default %s.", start
+            )
+            start = DEFAULT_START
+        return Period(start, freq=self.freq)
 
-    @classmethod
     @property
-    def time(cls) -> List[Period]:
-        return cls.manager._time
+    def end_period(self) -> Period:
+        """The start period"""
+        end = self.params.get("end")
+        if not end:
+            self.logger.warning(
+                "Ending time is not set, using the default %s.", end
+            )
+            end = DEFAULT_END
+        return Period(end, freq=self.freq)
 
-    @classmethod
     @property
-    def manager(cls) -> TimeDriverManager:
-        return cls._manager
+    def period(self) -> Period:
+        """The current period"""
+        return self._current_period
 
-    @classmethod
-    @property
-    def settings(cls) -> Dict[str, Any]:
-        return cls.manager._model.params.get("time", {})
+    def __repr__(self) -> str:
+        return repr(self._current_period)
 
-    @classmethod
-    @property
-    def end(cls) -> str:
-        return cls.manager._end
-
-    @classmethod
-    def update(cls, steps: Optional[int] = 1) -> Period:
-        """
-        Update the time period.
-
-        Args:
-            steps (Optional[int], optional): how many time steps to update. Defaults to 1.
-
-        Returns:
-            Period: after updating, the current time period.
-        """
+    def update(self, steps=1):
+        """更新时间"""
         for _ in range(steps):
-            cls.history.append(cls.period)
-            cls.manager._data = cls.period + 1
-            cls.time.append(cls.period)
-        return cls.manager._data
+            new_period = self._current_period + 1
+            if new_period > self.end_period:
+                raise ValueError("Exceeding the end period")
+            self._history.append(new_period)
+            self._current_period = new_period
+
+    @property
+    def day(self) -> int:
+        """当前是第几天"""
+        return self.period.day
+
+    @property
+    def dayofweek(self) -> int:
+        """当前是周几"""
+        return self.period.dayofweek
+
+    @property
+    def dayofyear(self) -> int:
+        """当前是年的第几天"""
+        return self.period.dayofyear
+
+    @property
+    def daysinmonth(self) -> int:
+        """当前月份的天数"""
+        return self.period.daysinmonth
+
+    @property
+    def days_in_month(self) -> int:
+        """目前是当前月份的第几天"""
+        return self.period.days_in_month
+
+    @property
+    def end_time(self) -> Timestamp:
+        """当前时间段的结束时间"""
+        return self.period.end_time
+
+    @property
+    def hour(self) -> int:
+        """当前是第几小时"""
+        return self.period.hour
+
+    @property
+    def minute(self) -> int:
+        """当前是第几分钟"""
+        return self.period.minute
+
+    @property
+    def month(self) -> int:
+        """当前月份"""
+        return self.period.month
+
+    @property
+    def quarter(self) -> int:
+        """当前季度"""
+        return self.period.quarter
+
+    @property
+    def qyear(self) -> int:
+        """当前是年的第几季度"""
+        return self.period.qyear
+
+    @property
+    def second(self) -> int:
+        """当前是第几秒"""
+        return self.period.second
+
+    @property
+    def ordinal(self) -> int:
+        """当前是年的第几周"""
+        return self.period.ordinal
+
+    @property
+    def is_leap_year(self) -> bool:
+        """是否是闰年"""
+        return self.period.is_leap_year
+
+    @property
+    def start_time(self) -> Timestamp:
+        """当前时间段的开始时间"""
+        return self.period.start_time
+
+    @property
+    def week(self) -> int:
+        """本年的第几周"""
+        return self.period.week
+
+    @property
+    def weekday(self) -> int:
+        """本年的第几周"""
+        return self.period.weekday
+
+    @property
+    def weekofyear(self) -> int:
+        """本年的第几周"""
+        return self.period.weekofyear
+
+    @property
+    def year(self) -> int:
+        """年份"""
+        return self.period.year
+
+    @property
+    def day_of_year(self) -> int:
+        """当前是年的第几天"""
+        return self.period.day_of_year
+
+    @property
+    def day_of_week(self) -> int:
+        """当前是周几"""
+        return self.period.day_of_week
+
+    def strftime(self, fmt: str) -> str:
+        """转化成字符串时间"""
+        return self.period.strftime(fmt)
+
+    def to_timestamp(
+        self, freq: Union[str, str] = None, how: Optional[str] = None
+    ) -> Timestamp:
+        """转化成时间点"""
+        return self.period.to_timestamp(freq, how)

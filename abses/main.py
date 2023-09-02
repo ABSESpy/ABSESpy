@@ -60,7 +60,7 @@ class MainModel(Model, Notice, States):
         self._nature: BaseNature = nature_class(self)
         self._agents = AgentsContainer(model=self)
         # setup mediator
-        self._time = TimeDriver(model=self, settings=self.settings.get("time"))
+        self._time = TimeDriver(model=self)
         # self.mediator = MainMediator(
         #     model=self, human=self.human, nature=self.nature
         # )
