@@ -25,3 +25,10 @@ def test_nature_attrs(water_quota_model: MainModel):
     """测试模型创建后属性"""
     model = water_quota_model
     assert model.nature.crs == "EPSG:4326"
+    assert model.nature.irr_lands.shape == (59, 3)  # 读取数据
+
+
+def test_geo_sphere(water_quota_model: MainModel):
+    """测试模型创建后属性"""
+    model = water_quota_model
+    assert model.geo_sphere.crs == "EPSG:4326"

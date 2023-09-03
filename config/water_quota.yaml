@@ -3,17 +3,18 @@ time:
   end: 2013-01-01
   freq: 'M'
 
+root: /Users/songshgeo/Documents/VSCode/ABSESpy
 
 nature:
   crs: EPSG:4326
 
 
-
 city_id: 'City_ID'
 crops_id:
-  rice: 12
-  wheat: 16
-  maize: 14
+  Rice: 12
+  Wheat: 16
+  Maize: 14
 
 db:
   irr_data: data/water_quota/irr_lands.csv
+  cities: zip://data/water_quota/YR_cities.zip
