@@ -5,7 +5,26 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import pandas as pd
+import pytest
+from hydra import compose, initialize
+
+from abses import BaseHuman, BaseNature, MainModel
 from abses.actor import Actor
+
+with initialize(version_base=None, config_path="../config"):
+    cfg = compose(config_name="water_quota")
+
+
+class Nature(BaseNature):
+    def __init__(self, model, name="nature", crs=cfg.nature.crs):
+        super().__init__(model, name="nature", crs=crs)
+        self.irr_data = pd.read_csv(cfg.db.irr_data, index_col=0)
+
+    def irr_lands(self):
+        index = self.irr_data["Year"] == self.time.year
+        data = self.irr_data.loc[index].set_index(cfg.city_id)
+        return data[list(cfg.crops_id)]
 
 
 class Farmer(Actor):
@@ -18,3 +37,10 @@ class Farmer(Actor):
 
 class Admin(Actor):
     """测试用，另一个类别的主体"""
+
+
+@pytest.fixture(name="water_quota_model")
+def setup_water_quota_model() -> MainModel:
+    """创造可供测试的黄河灌溉用水例子"""
+    # 加载项目层面的配置
+    return MainModel(parameters=cfg, nature_class=Nature)

@@ -1,0 +1,19 @@
+time:
+  start: 1979-12-01
+  end: 2013-01-01
+  freq: 'M'
+
+
+nature:
+  crs: EPSG:4326
+
+
+
+city_id: 'City_ID'
+crops_id:
+  rice: 12
+  wheat: 16
+  maize: 14
+
+db:
+  irr_data: data/water_quota/irr_lands.csv

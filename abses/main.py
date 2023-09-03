@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, Tuple
+from typing import Generic, Optional, Type, TypeVar
 
 from mesa import Model
 from omegaconf import DictConfig
@@ -28,8 +28,12 @@ from .tools.func import iter_func
 
 logger = logging.getLogger(__name__)
 
+# Dynamically load type hints from users' input type
+N = TypeVar("N")
+H = TypeVar("H")
 
-class MainModel(Model, Notice, States):
+
+class MainModel(Generic[N], Model, Notice, States):
     """
     主模型
     """
@@ -38,26 +42,21 @@ class MainModel(Model, Notice, States):
         self,
         name: Optional[str] = "model",
         parameters: DictConfig = DictConfig({}),
-        human_class: Optional[BaseHuman] = None,
-        nature_class: Optional[BaseNature] = None,
+        human_class: Type[H] = BaseHuman,
+        nature_class: Type[N] = BaseNature,
         **kwargs,
     ) -> None:
         Model.__init__(self)
         Notice.__init__(self)
         States.__init__(self)
-
-        if nature_class is None:
-            nature_class = BaseNature
-        if human_class is None:
-            human_class = BaseHuman
         if name is None:
             name = self.__class__.__name__
 
         self._name: str = name
         self._settings = DictConfig(parameters)
         self._version: str = __version__
-        self._human: BaseHuman = human_class(self)
-        self._nature: BaseNature = nature_class(self)
+        self._human = human_class(self)
+        self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
         # setup mediator
         self._time = TimeDriver(model=self)
@@ -95,12 +94,12 @@ class MainModel(Model, Notice, States):
         return self.agents.to_list()
 
     @property
-    def human(self) -> BaseHuman:
+    def human(self) -> H:
         """人类模块"""
         return self._human
 
     @property
-    def nature(self) -> BaseNature:
+    def nature(self) -> N:
         """自然模块"""
         return self._nature
 
