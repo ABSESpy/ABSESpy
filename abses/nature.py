@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Self
+from typing import TYPE_CHECKING, Any, List, Optional, Self
 
 import mesa_geo as mg
 import numpy as np
@@ -83,11 +83,13 @@ class PatchCell(mg.Cell):
             raise KeyError(f"{label} is not a registered link.")
         del self._attached_agents[label]
 
-    def linked(self, link: str) -> Actor:
+    def linked(
+        self, link: str, nodata: Optional[Any] = None, restrict: bool = False
+    ) -> Actor:
         """获取链接到该斑块的主体"""
-        if link not in self.links:
+        if restrict and link not in self.links:
             raise KeyError(f"Link {link} not exists in {self.links}.")
-        return self._attached_agents[link]
+        return self._attached_agents.get(link, nodata)
 
 
 class PatchModule(Module, mg.RasterLayer):
@@ -202,7 +204,24 @@ class PatchModule(Module, mg.RasterLayer):
         data = self.get_rasterio()
         out_image, _ = mask.mask(data, [geometry], **kwargs)
         mask_ = out_image.reshape(self.shape)
-        return self.array_cells[mask_.astype(bool)]
+        return list(self.array_cells[mask_.astype(bool)])
+
+    def link_by_geometry(
+        self, geo_agent: Actor, link: Optional[str] = None, **kwargs
+    ) -> None:
+        """将所有与给定几何形状相交的格子关联"""
+        if not hasattr(geo_agent, "geometry"):
+            raise TypeError(f"Agent {geo_agent} has no geometry.")
+        cells = self.geometric_cells(geo_agent.geometry, **kwargs)
+        for cell in cells:
+            cell.link_to(agent=geo_agent, link=link)
+
+    def batch_link_by_geometry(
+        self, geo_agents: List[Actor], link: Optional[str] = None, **kwargs
+    ) -> None:
+        """批量将根据几何形状将相交的格子分配给主体"""
+        for geo_agent in geo_agents:
+            self.link_by_geometry(geo_agent, link, **kwargs)
 
     def random_positions(
         self,

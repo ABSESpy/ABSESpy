@@ -15,7 +15,8 @@ from abses.nature import BaseNature, PatchCell, PatchModule
 
 
 class MockActor:
-    """用户"""
+    def __init__(self, geometry=None):
+        self.geometry = geometry
 
 
 def test_patchcell_attachment():
@@ -56,7 +57,7 @@ def test_patchmodule_properties():
 
 
 @pytest.fixture(name="raster_layer")
-def raster_layer():
+def simple_raster_layer():
     """测试一个斑块模块"""
     # Sample setup for RasterLayer (you may need to adjust based on your setup)
     model = MainModel()
@@ -81,3 +82,31 @@ def test_geometric_cells(raster_layer):
         assert geom.contains(
             box(x, y, x + 1, y + 1)
         ), f"Cell at {x}, {y} is not within the geometry!"
+
+
+def test_link_by_geometry(raster_layer):
+    """测试每一个斑块可以连接到一个主体"""
+    # Define a polygon (for this example, a box)
+    geom = box(2, 2, 8, 8)
+    agent = MockActor(geom)
+
+    raster_layer.link_by_geometry(agent, "link")
+
+    linked_cells = sum(
+        agent is cell.linked("link")
+        for cell in raster_layer.array_cells.flatten()
+    )
+
+    assert linked_cells > 0, "No cells were linked to the agent!"
+
+
+def test_batch_link_by_geometry(raster_layer):
+    """测试批量将一些斑块连接到某个主体"""
+    agents = [MockActor(box(2, 2, 4, 4)), MockActor(box(6, 6, 8, 8))]
+
+    raster_layer.batch_link_by_geometry(agents, "link")
+
+    agents_wrong = [MockActor(box(2, 2, 7, 7)), MockActor(box(6, 6, 8, 8))]
+    with pytest.raises(KeyError):
+        # 斑块6～7之间将被重复链接，这是不允许的
+        raster_layer.batch_link_by_geometry(agents_wrong, "link")
