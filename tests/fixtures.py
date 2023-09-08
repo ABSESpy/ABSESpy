@@ -43,6 +43,10 @@ class Admin(Actor):
     """测试用，另一个类别的主体"""
 
 
+class City(Actor):
+    """测试用，每个城市的主体"""
+
+
 @pytest.fixture(name="water_quota_model")
 def setup_water_quota_model() -> MainModel:
     """创造可供测试的黄河灌溉用水例子"""

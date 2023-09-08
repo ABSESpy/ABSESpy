@@ -8,6 +8,7 @@
         "nptyping",
         "opfunc",
         "qyear",
+        "rasterio",
         "rioxarray",
         "roadmap",
         "weekofyear"

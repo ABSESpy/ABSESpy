@@ -18,3 +18,4 @@ crops_id:
 db:
   irr_data: data/water_quota/irr_lands.csv
   cities: zip://data/water_quota/YR_cities.zip
+  population: data/water_quota/yr_pop_downscaled.tif

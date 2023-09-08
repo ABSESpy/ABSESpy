@@ -11,7 +11,10 @@ from typing import TYPE_CHECKING, List, Optional, Self
 
 import mesa_geo as mg
 import numpy as np
+import rasterio as rio
 from mesa.space import Coordinate
+from mesa_geo.raster_layers import Cell, RasterLayer
+from rasterio import mask
 
 from .modules import CompositeModule, Module
 from .sequences import ActorsList
@@ -19,6 +22,7 @@ from .tools.func import norm_choice
 
 if TYPE_CHECKING:
     from abses.actor import Actor
+    from abses.main import MainModel
 
 DEFAULT_WORLD = {
     "width": 10,
@@ -92,6 +96,12 @@ class PatchModule(Module, mg.RasterLayer):
     def __init__(self, model, name=None, **kwargs):
         Module.__init__(self, model, name=name)
         mg.RasterLayer.__init__(self, **kwargs)
+        self._file = None
+
+    @property
+    def file(self) -> str | None:
+        """文件路径"""
+        return self._file
 
     @property
     def shape(self) -> Coordinate:
@@ -128,6 +138,39 @@ class PatchModule(Module, mg.RasterLayer):
             cell_cls=cell_cls,
         )
 
+    @classmethod
+    def from_file(
+        cls,
+        raster_file: str,
+        cell_cls: type[Cell] = PatchCell,
+        attr_name: str | None = None,
+        model: None | MainModel = None,
+        name: str | None = None,
+    ) -> RasterLayer:
+        """从文件创建栅格图层"""
+        with rio.open(raster_file, "r") as dataset:
+            values = dataset.read()
+            _, height, width = values.shape
+            total_bounds = [
+                dataset.bounds.left,
+                dataset.bounds.bottom,
+                dataset.bounds.right,
+                dataset.bounds.top,
+            ]
+        obj = cls(
+            model=model,
+            name=name,
+            width=width,
+            height=height,
+            crs=dataset.crs,
+            total_bounds=total_bounds,
+            cell_cls=cell_cls,
+        )
+        obj._transform = dataset.transform
+        obj._file = raster_file
+        obj.apply_raster(values, attr_name=attr_name)
+        return obj
+
     def _attr_or_array(self, data: None | str | np.ndarray) -> np.ndarray:
         if data is None:
             return np.ones(self.shape)
@@ -136,6 +179,30 @@ class PatchModule(Module, mg.RasterLayer):
         if isinstance(data, str) and data in self.attributes:
             return self.get_raster(data)
         raise TypeError("Invalid data type or shape.")
+
+    def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
+        """获取属性对应的 Rasterio 栅格图层"""
+        data = self.get_raster(attr_name=attr_name)
+        with rio.MemoryFile() as mem_file:
+            with mem_file.open(
+                driver="GTiff",
+                height=data.shape[1],
+                width=data.shape[2],
+                count=data.shape[0],  # number of bands
+                dtype=str(data.dtype),
+                crs=self.crs,
+                transform=self.transform,
+            ) as dataset:
+                dataset.write(data)
+            # Open the dataset again for reading and return
+            return mem_file.open()
+
+    def geometric_cells(self, geometry, **kwargs) -> List[PatchCell]:
+        """获取所有与给定几何形状相交的格子"""
+        data = self.get_rasterio()
+        out_image, _ = mask.mask(data, [geometry], **kwargs)
+        mask_ = out_image.reshape(self.shape)
+        return self.array_cells[mask_.astype(bool)]
 
     def random_positions(
         self,
@@ -175,8 +242,8 @@ class PatchModule(Module, mg.RasterLayer):
         """
         将土地分配给主体
         """
-        mask = self._attr_or_array(where)
-        cells = self.array_cells[mask]
+        mask_ = self._attr_or_array(where)
+        cells = self.array_cells[mask_]
         for cell in cells:
             cell.link_to(agent, link)
 

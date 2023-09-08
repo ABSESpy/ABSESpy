@@ -62,6 +62,7 @@ pytest-sugar = "^0.9.7"
 ipykernel = "^6.25.1"
 jupyterlab = "^4.0.5"
 jupyterlab-execute-time = "^3.0.1"
+matplotlib = "^3.7.2"
 
 [build-system]
 requires = ["poetry-core"]
