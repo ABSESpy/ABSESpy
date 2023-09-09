@@ -387,7 +387,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         gdf: geopandas.GeoDataFrame,
         unique_id: str = "Index",
         agent_cls: type[Actor] = Actor,
-    ) -> List[Actor]:
+    ) -> ActorsList:
         """根据GeoDataFrame创建主体"""
         creator = mg.AgentCreator(
             model=self.model, agent_class=agent_cls, crs=self.crs
@@ -395,7 +395,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         agents = creator.from_GeoDataFrame(gdf=gdf, unique_id=unique_id)
         self.model.agents.register_a_breed(agent_cls)
         self.model.agents.add(agents)
-        return agents
+        return ActorsList(model=self.model, objs=agents)
 
     def create_module(
         self, module_class: Module, how: str | None = None, **kwargs

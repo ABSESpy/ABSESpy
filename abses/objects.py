@@ -7,13 +7,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 import mesa
 
 from abses.time import TimeDriver
 
 from .bases import Observer
+from .dynamic import DynamicVariable
 from .log import Log
 
 if TYPE_CHECKING:
@@ -38,14 +39,39 @@ class BaseObj(Observer, Log):
         if observer:
             model.attach(self)
         self._model = model
+        self._dynamic_variables: Dict[str, DynamicVariable] = {}
 
     @property
     def model(self) -> MainModel:
         """对应的模型"""
         return self._model
 
+    @property
+    def dynamic_variables(self) -> Dict[str, Any]:
+        """所有动态变量"""
+        for k, v in self._dynamic_variables.items():
+            return {k: v.now()}
+
     @model.setter
     def model(self, model: MainModel):
         if not isinstance(model, mesa.Model):
             raise TypeError("Model must be an instance of mesa.Model")
         self._model = model
+
+    def add_dynamic_variable(
+        self, name: str, data: Any, function: Callable
+    ) -> None:
+        """
+        添加一个动态变量
+        name: 变量名
+        data: 变量读取数据的源
+        function: 变量读取数据的函数
+        """
+        var = DynamicVariable(
+            obj=self, name=name, data=data, function=function
+        )
+        self._dynamic_variables[name] = var
+
+    def dynamic_var(self, name: str) -> Any:
+        """获取一个动态变量当前的值"""
+        return self._dynamic_variables[name].now()

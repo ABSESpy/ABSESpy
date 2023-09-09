@@ -21,6 +21,7 @@
         "data",
         "agent",
         "modules",
-        "flow"
+        "flow",
+        "variable"
     ],
 }

@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from hydra import compose, initialize
 
-from abses import BaseHuman, BaseNature, MainModel
+from abses import BaseNature, MainModel
 from abses.actor import Actor
 
 with initialize(version_base=None, config_path="../config"):
