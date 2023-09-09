@@ -20,7 +20,7 @@ class MockActor:
         self.test = 1
 
 
-def test_patchcell_attachment():
+def test_patch_cell_attachment():
     """测试斑块可以连接到一个主体"""
     cell = PatchCell()
     actor = MockActor()
@@ -40,7 +40,7 @@ def test_patchcell_attachment():
         cell.detach("actor_1")
 
 
-def test_patchmodule_properties():
+def test_patch_module_properties():
     """测试一个斑块模块"""
     model = MainModel()
     shape = (6, 5)
@@ -135,3 +135,12 @@ def test_read_attrs_from_linked_agent(linked_raster_layer):
 
     with pytest.raises(AttributeError):
         linked_cell.linked_attr("not_a_attr")
+
+
+def test_major_layer(raster_layer):
+    """测试选择主要图层"""
+    layer = raster_layer
+    model = layer.model
+    assert model.nature.total_bounds is None
+    model.nature.major_layer = layer
+    assert model.nature.total_bounds is layer.total_bounds

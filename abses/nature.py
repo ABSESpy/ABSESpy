@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Self
 
 import mesa_geo as mg
 import numpy as np
+import pyproj
 import rasterio as rio
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import Cell, RasterLayer
@@ -312,6 +313,44 @@ class PatchModule(Module, mg.RasterLayer):
 class BaseNature(CompositeModule, mg.GeoSpace):
     """最主要的自然模块"""
 
-    def __init__(self, model, name="nature", crs=CRS):
+    def __init__(self, model, name="nature"):
         CompositeModule.__init__(self, model, name=name)
+        crs = self.params.get("crs", CRS)
         mg.GeoSpace.__init__(self, crs=crs)
+        self._major_layer = None
+
+    @property
+    def major_layer(self) -> PatchModule | None:
+        """作为参考的最主要的图层"""
+        return self._major_layer
+
+    @major_layer.setter
+    def major_layer(self, layer: PatchModule):
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{layer} is not PatchModule.")
+        self._major_layer = layer
+        self.crs = layer.crs
+
+    @property
+    def total_bounds(self) -> np.ndarray | None:
+        if self._total_bounds:
+            return self._total_bounds
+        if hasattr(self, "major_layer") and self.major_layer:
+            return self.major_layer.total_bounds
+        return None
+
+    # @property
+    # def crs(self) -> CRS | None:
+    #     if self._crs:
+    #         return self._crs
+    #     if hasattr(self, "major_layer") and self.major_layer:
+    #         return self.major_layer.crs
+    #     return None
+
+    # @crs.setter
+    # def crs(self, crs):
+    #     """
+    #     Set the coordinate reference system of the object.
+    #     """
+
+    #     self._crs = pyproj.CRS.from_user_input(crs) if crs else None

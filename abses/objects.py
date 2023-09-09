@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+import mesa
+
 from abses.time import TimeDriver
 
 from .bases import Observer
@@ -35,3 +37,15 @@ class BaseObj(Observer, Log):
         self.time = TimeDriver(model)
         if observer:
             model.attach(self)
+        self._model = model
+
+    @property
+    def model(self) -> MainModel:
+        """对应的模型"""
+        return self._model
+
+    @model.setter
+    def model(self, model: MainModel):
+        if not isinstance(model, mesa.Model):
+            raise TypeError("Model must be an instance of mesa.Model")
+        self._model = model

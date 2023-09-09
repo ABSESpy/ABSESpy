@@ -19,8 +19,8 @@ with initialize(version_base=None, config_path="../config"):
 class Nature(BaseNature):
     """用作测试用的环境类，模仿 YellowRiver 项目测试一些关键功能"""
 
-    def __init__(self, model, name="nature", crs=cfg.nature.crs):
-        super().__init__(model, name="nature", crs=crs)
+    def __init__(self, model, name="nature"):
+        super().__init__(model, name=name)
         self.irr_data = pd.read_csv(cfg.db.irr_data, index_col=0)
 
     @property
