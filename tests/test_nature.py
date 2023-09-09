@@ -12,7 +12,7 @@ from shapely.geometry import Point, box
 
 from abses.actor import Actor
 from abses.main import MainModel
-from abses.nature import BaseNature, PatchCell, PatchModule
+from abses.nature import PatchCell, PatchModule
 
 
 class MockActor:
@@ -47,9 +47,13 @@ def test_patch_module_properties():
     shape = (6, 5)
     patch_module = PatchModule.from_resolution(model, shape=shape)
 
-    assert patch_module.shape == shape
+    assert patch_module.shape2d == shape
+    assert patch_module.shape3d == (1, *shape)
     assert patch_module.array_cells.shape == shape
     assert isinstance(patch_module.random_positions(5), np.ndarray)
+    coords = patch_module.coords
+    assert "x" in coords and "y" in coords
+    assert len(coords["x"]) == 5 and len(coords["y"]) == 6
 
     actor = MockActor()
     patch_module.land_allotment(
@@ -59,15 +63,27 @@ def test_patch_module_properties():
 
 
 @pytest.fixture(name="raster_layer")
-def simple_raster_layer():
+def simple_raster_layer() -> PatchModule:
     """测试一个斑块模块"""
     # Sample setup for RasterLayer (you may need to adjust based on your setup)
     model = MainModel()
     width, height = 10, 10
     layer = PatchModule.from_resolution(model=model, shape=(width, height))
     data = np.random.rand(1, height, width)
-    layer.apply_raster(data)
+    layer.apply_raster(data, "test_1")
     return layer
+
+
+def test_get_dataarray(raster_layer: PatchModule):
+    """测试获取数据数组"""
+    data = np.random.random(raster_layer.shape3d)
+    raster_layer.apply_raster(data, "test_2")
+    data = np.random.random(raster_layer.shape3d)
+    raster_layer.apply_raster(data, "test_3")
+    dataarray_2d = raster_layer.get_xarray("test_2")
+    assert dataarray_2d.shape == raster_layer.shape2d
+    dataarray_3d = raster_layer.get_xarray()
+    assert dataarray_3d.shape == (3, *raster_layer.shape2d)
 
 
 def test_geometric_cells(raster_layer):
@@ -123,7 +139,7 @@ def test_read_attrs_from_linked_agent(linked_raster_layer):
     _, raster_layer = linked_raster_layer
     array = raster_layer.linked_attr("test", link="link")
     assert isinstance(array, np.ndarray)
-    assert array.shape == raster_layer.shape
+    assert array.shape == raster_layer.shape2d
     assert np.nansum(array) == 36
 
     # 测试某个主体是否被正确链接并读取

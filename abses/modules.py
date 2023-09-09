@@ -68,9 +68,9 @@ class CompositeModule(Module, States, Notice):
     """基本的组合模块，可以创建次级模块"""
 
     def __init__(self, model: MainModel, name: str = None) -> None:
+        Module.__init__(self, model, name=name)
         States.__init__(self)
         Notice.__init__(self)
-        Module.__init__(self, model, name=name)
         self._modules: List[Module] = []
 
     @property
@@ -78,11 +78,21 @@ class CompositeModule(Module, States, Notice):
         """当前模块的次级模块"""
         return self._modules
 
-    def create_module(self, module_class: Module, *args, **kwargs) -> Module:
+    def create_module(
+        self, module_class: Module, how: Optional[str] = None, **kwargs
+    ) -> Module:
         """创建次级模块"""
-        module = module_class(model=self._model, *args, **kwargs)
-        if not issubclass(module.__class__, Module):
-            raise TypeError("Must inherited from a module.")
+        if not issubclass(module_class, Module):
+            raise TypeError(
+                f"Module class {module_class} must inherited from a module."
+            )
+        if not how:
+            module = module_class(model=self._model, **kwargs)
+        elif hasattr(module_class, how):
+            creating_method = getattr(module_class, how)
+            module = creating_method(model=self.model, **kwargs)
+        else:
+            raise TypeError(f"{how} is not a valid creating method.")
         setattr(self, module.name, module)  # register as module
         self.attach(module)
         self.modules.append(module)  # register as module
