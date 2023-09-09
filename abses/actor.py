@@ -26,7 +26,6 @@ from mesa.space import Coordinate
 from omegaconf import DictConfig
 from shapely import Point
 
-from abses.nature import PatchCell, PatchModule
 from abses.sequences import ActorsList
 
 from .objects import BaseObj
@@ -35,7 +34,7 @@ from .objects import BaseObj
 
 
 if TYPE_CHECKING:
-    from abses.nature import PositionSet
+    from abses.nature import PatchCell
 
     from .main import MainMediator
 
@@ -91,24 +90,33 @@ class Actor(BaseObj, mg.GeoAgent):
     # when checking the rules
     _freq_levels = {"now": 0, "update": 1, "move": 2, "any": 3}
 
-    def __init__(self, model, observer: bool = True) -> None:
-        unique_id = uuid.uuid4().int
+    def __init__(
+        self,
+        model,
+        observer: bool = True,
+        unique_id: Optional[int] = None,
+        **kwargs,
+    ) -> None:
+        if not unique_id:
+            unique_id = uuid.uuid4().int
+        crs = kwargs.pop("crs", model.nature.crs)
+        geometry = kwargs.pop("geometry", None)
         mg.GeoAgent.__init__(
-            self, unique_id, model=model, geometry=None, crs=model.nature.crs
+            self, unique_id, model=model, geometry=geometry, crs=crs
         )
         BaseObj.__init__(self, model, observer=observer)
         self._relationships: Dict[str, ActorsList] = {}
         self._ownerships: Dict[str, Any] = {}
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
-        self._layer: PatchModule = None
+        self._layer: mg.RasterLayer = None
         # self.mediator: MainMediator = self.model.mediator
 
-    def _check_layer(self, layer: PatchModule) -> None:
-        if not isinstance(layer, PatchModule):
-            raise TypeError(f"{layer} is not PatchModule.")
+    def _check_layer(self, layer: mg.RasterLayer) -> None:
+        if not isinstance(layer, mg.RasterLayer):
+            raise TypeError(f"{layer} is not mg.RasterLayer.")
 
-    def put_on_layer(self, layer: PatchModule, pos: Tuple[int, int]):
+    def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
         """把主体放到某个栅格图层上"""
         self._check_layer(layer=layer)
         self._layer = layer
@@ -158,7 +166,7 @@ class Actor(BaseObj, mg.GeoAgent):
         return self._cell.agents
 
     @property
-    def layer(self) -> PatchModule:
+    def layer(self) -> mg.RasterLayer:
         """所在的栅格图层"""
         return self._layer
 

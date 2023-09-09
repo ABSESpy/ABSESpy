@@ -5,9 +5,10 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import geopandas as gpd
 import numpy as np
 import pytest
-from shapely.geometry import box
+from shapely.geometry import Point, box
 
 from abses.actor import Actor
 from abses.main import MainModel
@@ -144,3 +145,32 @@ def test_major_layer(raster_layer):
     assert model.nature.total_bounds is None
     model.nature.major_layer = layer
     assert model.nature.total_bounds is layer.total_bounds
+
+
+def test_create_agents_from_gdf():
+    """测试从GeoDataFrame创建主体"""
+    # Step 1: Create a sample geopandas.GeoDataFrame with some dummy data
+    data = {
+        "name": ["agent_1", "agent_2", "agent_3"],
+        "age": [25, 30, 35],
+        "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
+    }
+    gdf = gpd.GeoDataFrame(data, crs="epsg:4326")
+
+    # Initialize BaseNature instance
+    model = MainModel()
+    nature = model.nature
+
+    # Step 2: Use the create_agents_from_gdf method
+    agents = nature.create_agents_from_gdf(
+        gdf, unique_id="name", agent_cls=Actor
+    )
+
+    # Step 3: Assert number of created agents
+    assert len(agents) == len(gdf)
+
+    # Step 4: Check each agent's attributes and geometry
+    for idx, agent in enumerate(agents):
+        assert agent.unique_id == gdf.iloc[idx]["name"]
+        assert agent.age == gdf.iloc[idx]["age"]
+        assert agent.geometry == gdf.iloc[idx]["geometry"]

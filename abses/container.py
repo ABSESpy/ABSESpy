@@ -80,6 +80,13 @@ class AgentsContainer(dict):
             self._breeds[actor.breed] = type(actor)
             self[actor.breed] = set()
 
+    def register_a_breed(self, actor_cls: type[Actor]) -> None:
+        """注册新的主体种类"""
+        if not issubclass(actor_cls, Actor):
+            raise TypeError(f"'{actor_cls}' not subclass of 'Actor'.")
+        self._breeds[actor_cls.breed] = actor_cls
+        self[actor_cls.breed] = set()
+
     def create(
         self, breed_cls: Type[Actor], num: int = 1, singleton: bool = False
     ) -> Union[Actor, ActorsList]:
