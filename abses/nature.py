@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from numbers import Number
 from typing import TYPE_CHECKING, Any, List, Optional, Self
 
 import mesa_geo as mg
@@ -84,12 +85,34 @@ class PatchCell(mg.Cell):
         del self._attached_agents[label]
 
     def linked(
-        self, link: str, nodata: Optional[Any] = None, restrict: bool = False
+        self, link: str, nodata: Optional[Any] = None, strict: bool = False
     ) -> Actor:
         """获取链接到该斑块的主体"""
-        if restrict and link not in self.links:
+        if strict and link not in self.links:
             raise KeyError(f"Link {link} not exists in {self.links}.")
         return self._attached_agents.get(link, nodata)
+
+    def linked_attr(
+        self,
+        attr,
+        link: Optional[str] = None,
+        nodata: Any = np.nan,
+        strict: bool = False,
+    ) -> Any:
+        """获取链接到该斑块的主体的属性"""
+        if not link and not self.links:
+            raise KeyError("No link exists.")
+        if not link:
+            link = self.links[0]
+        agent = self.linked(link=link, strict=strict)
+        if not agent:
+            return nodata
+        if not hasattr(agent, attr):
+            raise AttributeError(f"{agent} has no attribute {attr}.")
+        value = getattr(agent, attr)
+        if not isinstance(value, Number):
+            raise TypeError(f"Attribute {attr} is not number.")
+        return value
 
 
 class PatchModule(Module, mg.RasterLayer):
@@ -108,12 +131,12 @@ class PatchModule(Module, mg.RasterLayer):
     @property
     def shape(self) -> Coordinate:
         """形状"""
-        return self.width, self.height
+        return self.height, self.width
 
     @property
     def array_cells(self) -> np.ndarray:
         """所有格子的二维数组形式"""
-        return np.array(self.cells)
+        return np.array(self.cells).T
 
     @classmethod
     def from_resolution(
@@ -126,7 +149,7 @@ class PatchModule(Module, mg.RasterLayer):
         cell_cls: type[PatchCell] = PatchCell,
     ) -> Self:
         """从分辨率创建栅格图层"""
-        width, height = shape
+        height, width = shape
         total_bounds = [0, 0, width * resolution, height * resolution]
         if crs is None:
             crs = CRS
@@ -222,6 +245,18 @@ class PatchModule(Module, mg.RasterLayer):
         """批量将根据几何形状将相交的格子分配给主体"""
         for geo_agent in geo_agents:
             self.link_by_geometry(geo_agent, link, **kwargs)
+
+    def linked_attr(
+        self, attr: str, link: str, nodata: Any = np.nan
+    ) -> np.ndarray:
+        """获取链接到本图层的主体属性"""
+
+        def get_attr(cell: PatchCell, __name):
+            return cell.linked_attr(
+                __name, link=link, nodata=nodata, strict=False
+            )
+
+        return np.vectorize(get_attr)(self.array_cells, attr)
 
     def random_positions(
         self,

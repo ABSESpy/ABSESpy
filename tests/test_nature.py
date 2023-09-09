@@ -17,6 +17,7 @@ from abses.nature import BaseNature, PatchCell, PatchModule
 class MockActor:
     def __init__(self, geometry=None):
         self.geometry = geometry
+        self.test = 1
 
 
 def test_patchcell_attachment():
@@ -84,19 +85,23 @@ def test_geometric_cells(raster_layer):
         ), f"Cell at {x}, {y} is not within the geometry!"
 
 
-def test_link_by_geometry(raster_layer):
+@pytest.fixture(name="linked_raster_layer")
+def simple_linked_raster_layer(raster_layer):
     """测试每一个斑块可以连接到一个主体"""
     # Define a polygon (for this example, a box)
     geom = box(2, 2, 8, 8)
     agent = MockActor(geom)
-
     raster_layer.link_by_geometry(agent, "link")
+    return agent, raster_layer
 
+
+def test_link_by_geometry(linked_raster_layer):
+    """测试每一个斑块可以连接到一个主体"""
+    agent, raster_layer = linked_raster_layer
     linked_cells = sum(
         agent is cell.linked("link")
         for cell in raster_layer.array_cells.flatten()
     )
-
     assert linked_cells > 0, "No cells were linked to the agent!"
 
 
@@ -110,3 +115,23 @@ def test_batch_link_by_geometry(raster_layer):
     with pytest.raises(KeyError):
         # 斑块6～7之间将被重复链接，这是不允许的
         raster_layer.batch_link_by_geometry(agents_wrong, "link")
+
+
+def test_read_attrs_from_linked_agent(linked_raster_layer):
+    """测试从相连接的主体中读取属性"""
+    _, raster_layer = linked_raster_layer
+    array = raster_layer.linked_attr("test", link="link")
+    assert isinstance(array, np.ndarray)
+    assert array.shape == raster_layer.shape
+    assert np.nansum(array) == 36
+
+    # 测试某个主体是否被正确链接并读取
+    linked_cell = raster_layer.array_cells[4][4]
+    not_linked_cell = raster_layer.array_cells[1][1]
+
+    assert linked_cell.linked_attr("test") == 1
+    with pytest.raises(KeyError):
+        not_linked_cell.linked_attr("test")
+
+    with pytest.raises(AttributeError):
+        linked_cell.linked_attr("not_a_attr")
