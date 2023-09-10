@@ -199,8 +199,8 @@ class PatchModule(Module, mg.RasterLayer):
         cell_cls: PatchCell = PatchCell,
     ) -> Self:
         """复制一个已有图层的属性来创建新图层"""
-        if not isinstance(layer, cls):
-            raise TypeError("Must copy valid PatchModule.")
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{layer} is not a valid PatchModule.")
 
         return cls(
             model=model,
@@ -266,13 +266,17 @@ class PatchModule(Module, mg.RasterLayer):
         """
         if attr_name not in self._dynamic_variables:
             return super().get_raster(attr_name)
-        array = self.dynamic_var(attr_name)
+        return self.dynamic_var(attr_name=attr_name)
+
+    def dynamic_var(self, attr_name: str) -> Any:
+        """获取动态变量"""
+        array = super().dynamic_var(attr_name)
         # 判断算出来的是一个符合形状的矩阵
         self._attr_or_array(array)
         # 将矩阵转换为三维，并更新空间数据
         array_3d = array.reshape(self.shape3d)
         self.apply_raster(array_3d, attr_name=attr_name)
-        return array_3d
+        return array
 
     def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
         """获取属性对应的 Rasterio 栅格图层"""

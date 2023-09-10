@@ -72,6 +72,6 @@ class BaseObj(Observer, Log):
         )
         self._dynamic_variables[name] = var
 
-    def dynamic_var(self, name: str) -> Any:
+    def dynamic_var(self, attr_name: str) -> Any:
         """获取一个动态变量当前的值"""
-        return self._dynamic_variables[name].now()
+        return self._dynamic_variables[attr_name].now()
