@@ -6,11 +6,14 @@
 # Website: https://cv.songshgeo.com/
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pytest
+import xarray as xr
 from hydra import compose, initialize
 
 from abses import MainModel
+from abses.nature import PatchModule
 from abses.objects import BaseObj
 from abses.time import TimeDriver
 
@@ -18,15 +21,30 @@ with initialize(version_base=None, config_path="../config"):
     cfg = compose(config_name="water_quota")
 
 LANDS_DATA = pd.read_csv(cfg.db.irr_data, index_col=0)
+DATA_ET0 = xr.open_dataarray(cfg.db.et0, decode_coords="all")
 
 
 def get_lands_data(
-    data: pd.DataFrame, obj: BaseObj, time: TimeDriver
+    data: pd.DataFrame,
+    obj: BaseObj,
+    time: TimeDriver,
 ) -> pd.Series:
     """从数据中读取主体的土地情况"""
     index = data["Year"] == time.year
     data_tmp = data.loc[index].set_index("City_ID")
     return data_tmp.loc[f"C{obj.unique_id}", list(cfg.crops_id)]
+
+
+def update_et0_function(
+    data,
+    time,
+    obj: PatchModule,
+) -> np.ndarray:
+    """从数据中读取更新的 et0"""
+    time = time.start_time
+    xda = data.sel(time=time, method="nearest").rio.write_crs(obj.crs)
+    standard = obj.get_xarray()
+    return xda.rio.reproject_match(standard).to_numpy()
 
 
 @pytest.fixture(name="model")
@@ -64,3 +82,28 @@ def test_dynamic_city_lands(model: MainModel):
     # 再前进一步，到1980年2月，数据不用更新
     model.time_go()
     assert (agent.dynamic_var("lands") == data_1980).all()
+
+
+def test_dynamic_nc_data(model: MainModel):
+    """测试黄河灌溉用水主体可以自动从数据中读取 et0"""
+    module = model.nature.create_module(
+        how="from_file",
+        raster_file=cfg.db.population,
+    )
+    module.add_dynamic_variable(
+        name="et0", data=DATA_ET0, function=update_et0_function
+    )
+    model_now = module.dynamic_var("et0")
+    assert model_now.shape == module.shape2d
+
+    # 直接从数据中读取
+    data_now = DATA_ET0.sel(time=model.time.start_time, method="nearest")
+    data_now_crs = data_now.rio.write_crs(module.crs)
+    matched = data_now_crs.rio.reproject_match(module.get_xarray())
+
+    assert matched.shape == module.shape2d
+
+    # 注意两边的空值 np.nan 在对比时，是不认为相等的，需要填充空值后对比，发现数据就一样了
+    assert (
+        np.nan_to_num(model_now, 0.0) == np.nan_to_num(matched.to_numpy(), 0.0)
+    ).all()

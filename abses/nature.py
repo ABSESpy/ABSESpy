@@ -224,13 +224,33 @@ class PatchModule(Module, mg.RasterLayer):
         return obj
 
     def _attr_or_array(self, data: None | str | np.ndarray) -> np.ndarray:
+        """判断传入的数据类型，变成合理的数组"""
         if data is None:
             return np.ones(self.shape2d)
-        if isinstance(data, np.ndarray) and data.shape == self.shape2d:
-            return data
+        if isinstance(data, np.ndarray):
+            if data.shape == self.shape2d:
+                return data
+            else:
+                raise ValueError(
+                    f"Shape mismatch: {data.shape} [input] != {self.shape2d} [expected]."
+                )
         if isinstance(data, str) and data in self.attributes:
             return self.get_raster(data)
         raise TypeError("Invalid data type or shape.")
+
+    def get_raster(self, attr_name: str | None = None) -> np.ndarray:
+        """
+        获取属性对应的 Raster 栅格图层之前，如果是动态变量就先更新
+        """
+        if attr_name not in self._dynamic_variables:
+            return super().get_raster(attr_name)
+        array = self.dynamic_var(attr_name)
+        # 判断算出来的是一个符合形状的矩阵
+        self._attr_or_array(array)
+        # 将矩阵转换为三维，并更新空间数据
+        array_3d = array.reshape(self.shape3d)
+        self.apply_raster(array_3d, attr_name=attr_name)
+        return array_3d
 
     def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
         """获取属性对应的 Rasterio 栅格图层"""
@@ -398,7 +418,10 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         return ActorsList(model=self.model, objs=agents)
 
     def create_module(
-        self, module_class: Module, how: str | None = None, **kwargs
+        self,
+        module_class: Module = PatchModule,
+        how: str | None = None,
+        **kwargs,
     ) -> Module:
         """创建栅格图层的子模块"""
         module = super().create_module(module_class, how, **kwargs)

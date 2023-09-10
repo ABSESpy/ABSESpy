@@ -7,7 +7,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import inspect
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from .objects import BaseObj
@@ -16,11 +17,13 @@ if TYPE_CHECKING:
 class DynamicVariable:
     """根据时间自动更新的数据"""
 
-    def __init__(self, name, obj, data, function) -> None:
-        self._name = name
-        self._obj = obj
-        self._data = data
-        self._function = function
+    def __init__(
+        self, name: str, obj: BaseObj, data: Any, function: Callable
+    ) -> None:
+        self._name: str = name
+        self._obj: BaseObj = obj
+        self._data: Any = data
+        self._function: Callable = function
 
     @property
     def name(self):
@@ -53,10 +56,19 @@ class DynamicVariable:
         """时间"""
         return self.obj.time
 
+    def get_required_attributes(self, function: Callable):
+        """获取计算变量所需的属性"""
+        # Get the source code of the function
+        source_code = inspect.getsource(function)
+        # Check which attributes are used in the function
+        attributes = []
+        for attr in ["data", "obj", "time", "name"]:
+            if attr in source_code:
+                attributes.append(attr)
+        return attributes
+
     def now(self) -> Any:
         """当前值"""
-        return self.function(
-            obj=self.obj,
-            data=self.data,
-            time=self.time,
-        )
+        required_attrs = self.get_required_attributes(self.function)
+        args = {attr: getattr(self, attr) for attr in required_attrs}
+        return self.function(**args)
