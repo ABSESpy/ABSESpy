@@ -125,6 +125,8 @@ class Actor(BaseObj, mg.GeoAgent):
             raise TypeError(
                 f"Actor must be put on a PatchCell, instead of {type(cell)}"
             )
+        if self.on_earth:
+            self._cell.remove(self)
         self._cell = cell
         self._layer = cell.layer
         cell.add(self)
@@ -223,7 +225,7 @@ class Actor(BaseObj, mg.GeoAgent):
         self,
         agent: Self | mg.Cell,
         link: Optional[str] = None,
-        # update: bool = True,
+        mutual: bool = False,
         to_land: bool = False,
     ) -> None:
         """将行动者与其它行动者或地块建立连接"""
@@ -232,17 +234,20 @@ class Actor(BaseObj, mg.GeoAgent):
                 f"Agent must be mesa.Agent object, instead of {type(agent)}."
             )
         dictionary = self._lands if to_land else self._links
-        # if not update and link in dictionary:
-        #     raise KeyError(f"'{link}' is already in {dictionary.keys()}, use update mode when create new link.")
         if link not in dictionary:
             dictionary[link] = {agent}
         else:
             dictionary[link].add(agent)
+        # 相互联系
+        if mutual:
+            agent.link_to(self, link=link)
 
-    def linked_agents(self, link: str, land: bool = False) -> ActorsList:
+    def linked_agents(
+        self, link: str, land: bool = False, strict: bool = True
+    ) -> ActorsList:
         """获取相关联的所有其它主体"""
         dictionary = self._lands if land else self._links
-        if link not in dictionary:
+        if strict and link not in dictionary:
             raise KeyError(
                 f"{self} doesn't have any link '{link}' {'[land]' if land else ''}."
             )

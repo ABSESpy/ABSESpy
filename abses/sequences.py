@@ -143,8 +143,8 @@ class ActorsList(list):
 
     def random_choose(
         self,
-        prob: Optional[Iterable[float]] = None,
         size: int = 1,
+        prob: Optional[Iterable[float]] = None,
         replace: bool = True,
     ) -> Union[Actor, Self]:
         """从主体中随机选择一个或多个。"""

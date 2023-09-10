@@ -77,6 +77,11 @@ class PatchCell(mg.Cell):
         return list(self._attached_agents.keys())
 
     @property
+    def has_agent(self) -> bool:
+        """当前位置是否站着行动者"""
+        return bool(self.agents)
+
+    @property
     def agents(self) -> ActorsList:
         """该斑块上的所有主体"""
         return ActorsList(self.model, self._agents)
@@ -420,7 +425,6 @@ class PatchModule(Module, mg.RasterLayer):
         """移动主体"""
         if agent.layer is not self:
             raise TypeError(f"Agent {agent} is not on {self}.")
-        self.cells[agent.pos[0]][agent.pos[1]].remove(agent)
         agent.put_on_layer(self, position)
 
 
