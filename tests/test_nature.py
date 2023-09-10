@@ -190,3 +190,12 @@ def test_create_agents_from_gdf():
         assert agent.unique_id == gdf.iloc[idx]["name"]
         assert agent.age == gdf.iloc[idx]["age"]
         assert agent.geometry == gdf.iloc[idx]["geometry"]
+
+
+def test_copy_layer(raster_layer: PatchModule):
+    """测试复制图层"""
+    layer = raster_layer
+    layer2 = layer.model.nature.create_module(
+        PatchModule, how="copy_layer", layer=layer
+    )
+    assert layer.shape2d == layer2.shape2d

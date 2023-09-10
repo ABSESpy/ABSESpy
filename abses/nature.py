@@ -191,6 +191,28 @@ class PatchModule(Module, mg.RasterLayer):
         )
 
     @classmethod
+    def copy_layer(
+        cls,
+        model: MainModel,
+        layer: Self,
+        name: Optional[str] = None,
+        cell_cls: PatchCell = PatchCell,
+    ) -> Self:
+        """复制一个已有图层的属性来创建新图层"""
+        if not isinstance(layer, cls):
+            raise TypeError("Must copy valid PatchModule.")
+
+        return cls(
+            model=model,
+            name=name,
+            width=layer.width,
+            height=layer.height,
+            crs=layer.crs,
+            total_bounds=layer.total_bounds,
+            cell_cls=cell_cls,
+        )
+
+    @classmethod
     def from_file(
         cls,
         raster_file: str,
@@ -422,7 +444,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         module_class: Module = PatchModule,
         how: str | None = None,
         **kwargs,
-    ) -> Module:
+    ) -> PatchModule:
         """创建栅格图层的子模块"""
         module = super().create_module(module_class, how, **kwargs)
         # 如果是第一个创建的模块,则将其作为主要的图层
@@ -430,12 +452,3 @@ class BaseNature(mg.GeoSpace, CompositeModule):
             self.major_layer = module
         self.add_layer(module)
         return module
-
-    # def create_module_from_file(self, , **kwargs) -> PatchModule:
-    #     """创建栅格图层的子模块"""
-    #     setattr(self, module.name, module)  # register as module
-    #     self.attach(module)
-    #     self.modules.append(module)  # register as module
-    #     self.add_layer(module)
-    #     super().create_module
-    #     return module
