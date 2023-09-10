@@ -115,17 +115,27 @@ class Actor(BaseObj, mg.GeoAgent):
         self._layer: mg.RasterLayer = None
         # self.mediator: MainMediator = self.model.mediator
 
-    def _check_layer(self, layer: mg.RasterLayer) -> None:
-        if not isinstance(layer, mg.RasterLayer):
-            raise TypeError(f"{layer} is not mg.RasterLayer.")
+    def put_on(self, cell: PatchCell) -> None:
+        """直接置于某斑块上"""
+        if self.layer and self.layer is not cell.layer:
+            raise IndexError(
+                f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
+            )
+        if not isinstance(cell, mg.Cell):
+            raise TypeError(
+                f"Actor must be put on a PatchCell, instead of {type(cell)}"
+            )
+        self._cell = cell
+        self._layer = cell.layer
+        cell.add(self)
+        self.geometry = Point(cell.layer.transform * cell.indices)
 
     def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
         """把主体放到某个栅格图层上"""
-        self._check_layer(layer=layer)
-        self._layer = layer
-        cell = self._cell = layer.cells[pos[0]][pos[1]]
-        cell.add(self)
-        self.geometry = Point(layer.transform * self.indices)
+        if not isinstance(layer, mg.RasterLayer):
+            raise TypeError(f"{layer} is not mg.RasterLayer.")
+        cell = layer.cells[pos[0]][pos[1]]
+        self.put_on(cell=cell)
 
     @property
     def links(self) -> List[str]:

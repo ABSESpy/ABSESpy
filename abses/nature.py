@@ -48,9 +48,22 @@ class PatchCell(mg.Cell):
         super().__init__(pos, indices)
         self._attached_agents = {}
         self._agents = set()
+        self._layer = None
 
     def __repr__(self) -> str:
         return f"<PatchCell at {self.pos}>"
+
+    @property
+    def layer(self) -> PatchModule:
+        """所在图层"""
+        return self._layer
+
+    @layer.setter
+    def layer(self, layer: PatchModule) -> None:
+        """设置图层"""
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{type(layer)} is not valid layer.")
+        self._layer = layer
 
     @classmethod
     @property
@@ -136,6 +149,8 @@ class PatchModule(Module, mg.RasterLayer):
     def __init__(self, model, name=None, **kwargs):
         Module.__init__(self, model, name=name)
         mg.RasterLayer.__init__(self, **kwargs)
+        for cell in self.array_cells.flatten():
+            cell.layer = self
         self._file = None
 
     @property
