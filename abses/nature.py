@@ -281,6 +281,9 @@ class PatchModule(Module, mg.RasterLayer):
     def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
         """获取属性对应的 Rasterio 栅格图层"""
         data = self.get_raster(attr_name=attr_name)
+        # 如果获取到的是2维，重整为3维
+        if len(data.shape):
+            data = data.reshape(self.shape3d)
         with rio.MemoryFile() as mem_file:
             with mem_file.open(
                 driver="GTiff",
@@ -297,7 +300,7 @@ class PatchModule(Module, mg.RasterLayer):
 
     def geometric_cells(self, geometry, **kwargs) -> List[PatchCell]:
         """获取所有与给定几何形状相交的格子"""
-        data = self.get_rasterio()
+        data = self.get_rasterio(list(self.attributes)[0])
         out_image, _ = mask.mask(data, [geometry], **kwargs)
         mask_ = out_image.reshape(self.shape2d)
         return list(self.array_cells[mask_.astype(bool)])
