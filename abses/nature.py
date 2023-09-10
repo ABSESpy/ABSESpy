@@ -158,7 +158,7 @@ class PatchModule(Module, mg.RasterLayer):
             self.total_bounds[0], self.total_bounds[2], self.width
         )
         y_arr = np.linspace(
-            self.total_bounds[1], self.total_bounds[3], self.height
+            self.total_bounds[3], self.total_bounds[1], self.height
         )
         return {
             "y": y_arr,
