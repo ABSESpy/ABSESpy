@@ -52,6 +52,12 @@ class PatchCell(mg.Cell):
     def __repr__(self) -> str:
         return f"<PatchCell at {self.pos}>"
 
+    @classmethod
+    @property
+    def breed(cls) -> str:
+        """种类"""
+        return cls.__name__
+
     @property
     def links(self) -> List[str]:
         """所有关联类型"""
