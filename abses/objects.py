@@ -14,14 +14,14 @@ import mesa
 from abses.time import TimeDriver
 
 from .bases import Observer
+from .components import Component
 from .dynamic import DynamicVariable
-from .log import Log
 
 if TYPE_CHECKING:
     from abses.main import MainModel
 
 
-class BaseObj(Observer, Log):
+class BaseObj(Observer, Component):
     """
     基础对象，所有可以被用户自定义的对象都应该继承此类，包括：
     自然模块，人类模块，子模块，主体。
@@ -34,7 +34,7 @@ class BaseObj(Observer, Log):
         observer: Optional[bool] = True,
         name: Optional[str] = None,
     ):
-        Log.__init__(self, name=name)
+        Component.__init__(self, model=model, name=name)
         self.time = TimeDriver(model)
         if observer:
             model.attach(self)

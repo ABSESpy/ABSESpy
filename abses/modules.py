@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, List, Optional
 from abses.tools.func import iter_func
 
 from .bases import Notice
-from .components import Component
 from .objects import BaseObj
 from .states import States
 
@@ -19,11 +18,10 @@ if TYPE_CHECKING:
     from .main import MainModel
 
 
-class Module(Component, BaseObj):
+class Module(BaseObj):
     """基本的模块"""
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
-        Component.__init__(self, model=model, name=name)
         BaseObj.__init__(self, model, observer=True, name=name)
         self._open: bool = True
 
