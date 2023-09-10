@@ -16,11 +16,14 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Self,
+    Set,
     Tuple,
     TypeAlias,
     Union,
 )
 
+import mesa
 import mesa_geo as mg
 from mesa.space import Coordinate
 from omegaconf import DictConfig
@@ -105,8 +108,8 @@ class Actor(BaseObj, mg.GeoAgent):
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
         BaseObj.__init__(self, model, observer=observer)
-        self._relationships: Dict[str, ActorsList] = {}
-        self._ownerships: Dict[str, Any] = {}
+        self._links: Dict[str, Set] = {}
+        self._lands: Dict[str, Set] = {}
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
         self._layer: mg.RasterLayer = None
@@ -123,6 +126,16 @@ class Actor(BaseObj, mg.GeoAgent):
         cell = self._cell = layer.cells[pos[0]][pos[1]]
         cell.add(self)
         self.geometry = Point(layer.transform * self.indices)
+
+    @property
+    def links(self) -> List[str]:
+        """与其他行动者的关系"""
+        return list(self._links.keys())
+
+    @property
+    def lands(self) -> List[str]:
+        """相关的土地类型"""
+        return list(self._lands.keys())
 
     @property
     def indices(self) -> Coordinate:
@@ -195,6 +208,36 @@ class Actor(BaseObj, mg.GeoAgent):
                 getattr(self, rule.then)(**parameters)
         # delete disposable rules
         return triggered_rules
+
+    def link_to(
+        self,
+        agent: Self | mg.Cell,
+        link: Optional[str] = None,
+        # update: bool = True,
+        to_land: bool = False,
+    ) -> None:
+        """将行动者与其它行动者或地块建立连接"""
+        if not isinstance(agent, mesa.Agent):
+            raise TypeError(
+                f"Agent must be mesa.Agent object, instead of {type(agent)}."
+            )
+        dictionary = self._lands if to_land else self._links
+        # if not update and link in dictionary:
+        #     raise KeyError(f"'{link}' is already in {dictionary.keys()}, use update mode when create new link.")
+        if link not in dictionary:
+            dictionary[link] = {agent}
+        else:
+            dictionary[link].add(agent)
+
+    def linked_agents(self, link: str, land: bool = False) -> ActorsList:
+        """获取相关联的所有其它主体"""
+        dictionary = self._lands if land else self._links
+        if link not in dictionary:
+            raise KeyError(
+                f"{self} doesn't have any link '{link}' {'[land]' if land else ''}."
+            )
+        agents_lst = dictionary.get(link, [])
+        return ActorsList(model=self.model, objs=agents_lst)
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
         """根据一定条件选取主体"""

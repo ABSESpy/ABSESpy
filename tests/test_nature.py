@@ -20,6 +20,9 @@ class MockActor:
         self.geometry = geometry
         self.test = 1
 
+    def link_to(self, agent, link, to_land):
+        """用于测试"""
+
 
 def test_patch_cell_attachment():
     """测试斑块可以连接到一个主体"""
