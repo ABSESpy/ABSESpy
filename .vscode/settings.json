@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "coef",
         "dayofweek",
         "dayofyear",
         "daysinmonth",
@@ -23,6 +24,7 @@
         "modules",
         "flow",
         "variable",
-        "test"
+        "test",
+        "examples"
     ],
 }
