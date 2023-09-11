@@ -88,10 +88,14 @@ class AgentsContainer(dict):
         self[actor_cls.breed] = set()
 
     def create(
-        self, breed_cls: Type[Actor], num: int = 1, singleton: bool = False
+        self,
+        breed_cls: Type[Actor],
+        num: int = 1,
+        singleton: bool = False,
+        **kwargs,
     ) -> Union[Actor, ActorsList]:
         """创建某类主体"""
-        objs = [breed_cls(self._model) for _ in range(num)]
+        objs = [breed_cls(self._model, **kwargs) for _ in range(num)]
         agents = ActorsList(self._model, objs)
         self.add(agents, register=True)
         if singleton:
