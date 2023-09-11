@@ -309,9 +309,7 @@ class Actor(BaseObj, mg.GeoAgent):
 
     def loc(self, attribute: str) -> Any:
         """寻找自己所在位置的斑块数据"""
-        if attribute not in self.layer.attributes:
-            raise AttributeError(f"Attribute {attribute} not found.")
-        return getattr(self._cell, attribute)
+        return self._cell.get_attr(attribute)
 
     def alter_nature(self, attr: str, value: Any) -> None:
         """改变自己所在位置的斑块数据"""

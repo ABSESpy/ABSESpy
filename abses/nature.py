@@ -86,6 +86,15 @@ class PatchCell(mg.Cell):
         """该斑块上的所有主体"""
         return ActorsList(self.model, self._agents)
 
+    def get_attr(self, attr_name: str) -> Any:
+        """获取某个属性，如果是图层的动态数据，则先更新"""
+        if hasattr(self, attr_name):
+            return getattr(self, attr_name)
+        if attr_name in self.layer.dynamic_variables:
+            self.layer.dynamic_var(attr_name=attr_name)
+            return getattr(self, attr_name)
+        raise AttributeError(f"{attr_name} not exists or is a dynamic var.")
+
     def add(self, agent) -> None:
         """将一个主体添加到该处"""
         self._agents.add(agent)
