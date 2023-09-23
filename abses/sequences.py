@@ -146,12 +146,15 @@ class ActorsList(list):
         size: int = 1,
         prob: Optional[Iterable[float]] = None,
         replace: bool = True,
+        as_list: bool = False,
     ) -> Union[Actor, Self]:
         """从主体中随机选择一个或多个。"""
+        chosen = norm_choice(self, p=prob, size=size, replace=replace)
+        if as_list:
+            return ActorsList(self.model, objs=chosen)
         if size == 1:
-            return norm_choice(self, p=prob, replace=replace)
+            return chosen[0]
         if size > 1:
-            chosen = norm_choice(self, p=prob, size=size, replace=replace)
             return ActorsList(self.model, chosen)
         raise ValueError(f"Invalid size {size}.")
 

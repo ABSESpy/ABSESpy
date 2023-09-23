@@ -25,6 +25,7 @@ class YellowRiver(MainModel):
 
     @property
     def institution(self) -> str | None:
+        """黄河流域的制度"""
         if self.time.year <= 1987:
             return None
         if self.time.year <= 1998:
