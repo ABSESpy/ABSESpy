@@ -64,7 +64,7 @@ def get_from_csv_data(
     obj: BaseObj,
     time: TimeDriver,
 ) -> pd.Series:
-    """从数据中读取主体的土地情况"""
+    """Dynamically read city's water use intensity from csv file"""
     index = data["Year"] == time.year
     data_tmp = data.loc[index].set_index("City_ID")
     return data_tmp.loc[f"C{obj.unique_id}", list(cfg.crops_id)]
