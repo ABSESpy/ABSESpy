@@ -90,9 +90,12 @@ class PatchCell(mg.Cell):
         return ActorsList(self.model, agents)
 
     def get_attr(self, attr_name: str) -> Any:
-        """获取某个属性"""
-        x, y = self.indices
-        return self.layer.get_raster(attr_name=attr_name)[0, x, y]
+        """获取某个属性，如果是图层的动态数据，则先自动更新"""
+        if attr_name in self.layer.dynamic_variables:
+            self.layer.dynamic_var(attr_name=attr_name)
+        if not hasattr(self, attr_name):
+            raise AttributeError(f"{attr_name} not exists in {self.layer}.")
+        return getattr(self, attr_name)
 
     def add(self, agent: Actor) -> None:
         """将一个主体添加到该处"""

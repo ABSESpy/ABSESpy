@@ -49,6 +49,8 @@ class BaseObj(Observer, Component):
     @property
     def dynamic_variables(self) -> Dict[str, Any]:
         """所有动态变量"""
+        if not self._dynamic_variables:
+            return {}
         for k, v in self._dynamic_variables.items():
             return {k: v.now()}
 
