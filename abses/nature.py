@@ -415,9 +415,23 @@ class PatchModule(Module, mg.RasterLayer):
             replace=replace,
         )
 
-    def has_agent(self) -> np.ndarray:
+    def has_agent(
+        self, link: Optional[str] = None, xarray: bool = False
+    ) -> np.ndarray:
         """有多少个绑定的主体"""
-        return np.vectorize(lambda x: len(x.links))(self.array_cells)
+        if link is None:
+            data = np.vectorize(lambda x: len(x.agents))(self.array_cells)
+        else:
+            data = np.vectorize(lambda x: bool(x.linked(link)))(
+                self.array_cells
+            )
+        if xarray:
+            return xr.DataArray(
+                data=data,
+                coords=self.coords,
+                name=link or "has_agent",
+            ).rio.write_crs(self.crs)
+        return data
 
     def land_allotment(
         self, agent: Actor, link: str, where: None | str | np.ndarray = None
