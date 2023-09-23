@@ -127,7 +127,7 @@ class City(Actor):
         land_pattern = self.dynamic_var("lands")
         # num
         cells = self.linked_agents("city", land=True).random_choose(
-            len(self.farmers), as_list=True
+            len(self.farmers), as_list=True, replace=False
         )
         # for each split groups: add properties
         split_index = land_pattern.cumsum()[:-1]
