@@ -32,3 +32,11 @@ def test_geo_sphere(water_quota_model: MainModel):
     """测试模型创建后属性"""
     model = water_quota_model
     assert model.nature.crs == "EPSG:4326"
+
+
+def test_a_farmer_pumping():
+    """测试一个主体应该根据他的决策正确抽水"""
+
+
+def test_data_reader():
+    """测试数据读取，前三年都应该随着时间变化，读取到正确的城市、农民数量"""

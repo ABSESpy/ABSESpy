@@ -14,12 +14,16 @@ from typing import TYPE_CHECKING, Iterable, Tuple
 import numpy as np
 import pandas as pd
 from hydra import compose, initialize
+from pint import UnitRegistry
 
 from abses.actor import Actor, ActorsList
 from examples.water_quota.crops import Crop
 
 if TYPE_CHECKING:
     from examples.water_quota.nature import City
+
+ureg = UnitRegistry()  # 注册单位
+ureg.define("TMC = 1e8 m ** 3")
 
 with initialize(version_base=None, config_path="."):
     cfg = compose(config_name="config")
@@ -99,12 +103,8 @@ class Farmer(Actor):
     @property
     def deficits(self) -> float:
         """根据当年的降水量和对作物需水量（作物蒸散发）的认识，估计水亏缺"""
-        net_deficit = self.loc("ETc") - self.loc("prec")
+        net_deficit = self.loc("etc") - self.loc("prec")
         return 0.0 if net_deficit < 0 else net_deficit / self.params.loss_coef
-
-    @property
-    def official_quota(self):
-        return self.quota_min if self.time.year > 1987 else self.quota_max
 
     @property
     def decision(self) -> str:
@@ -176,3 +176,25 @@ class Farmer(Actor):
             groundwater = self.demands - quota
         self.surface_water = surface_water
         self.ground_water = groundwater
+
+    def decide_over_withdraw(self) -> float:
+        """人有多大胆，地有多大产"""
+        if self.decision == "C":
+            return 0.0
+        return (self.quota_max - self.quota_min) * self.boldness
+
+    def pumping(self):
+        """抽水速度 m3/day，这里一个简单实现，只算水的价格"""
+        volume = self.ground_water * ureg.mm
+        # q_well_m3 = (volume * self.area).to("m**3")
+        # num_days = calendar.monthrange(self.time.year, self.time.month)[1]
+        # speed = (q_well_m3 / num_days).magnitude
+        return self.params.gw_cost * volume.magnitude
+
+    def irrigating(self):
+        """灌溉:
+        1. 决定多取用多少配额
+        2. 根据雨情、配额决定各部分用水比例
+        """
+        over_quota = self.decide_over_withdraw()
+        self.decide_water_source(self.quota_min + over_quota)

@@ -62,7 +62,7 @@ def test_patch_module_properties():
     patch_module.land_allotment(
         agent=actor, link="land", where=np.ones(shape, dtype=bool)
     )
-    assert np.all(patch_module.has_agent() == 1)
+    assert np.all(patch_module.has_agent(link="land") == 1)
 
 
 @pytest.fixture(name="raster_layer")
@@ -202,3 +202,16 @@ def test_copy_layer(raster_layer: PatchModule):
         PatchModule, how="copy_layer", layer=layer
     )
     assert layer.shape2d == layer2.shape2d
+
+
+def test_loc():
+    """测试定位"""
+    model = MainModel()
+    width, height = 2, 3
+    layer = PatchModule.from_resolution(model=model, shape=(height, width))
+    data = np.arange(6).reshape(1, 3, 2)
+    layer.apply_raster(data, "test")
+
+    agent = Actor(model=model)
+    agent.put_on_layer(layer, (0, 0))
+    assert agent.loc("test") == 4

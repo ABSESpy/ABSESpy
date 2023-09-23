@@ -47,7 +47,7 @@ class PatchCell(mg.Cell):
     def __init__(self, pos=None, indices=None):
         super().__init__(pos, indices)
         self._attached_agents = {}
-        self._agents = set()
+        self._agents = {}
         self._layer = None
 
     def __repr__(self) -> str:
@@ -84,24 +84,28 @@ class PatchCell(mg.Cell):
     @property
     def agents(self) -> ActorsList:
         """该斑块上的所有主体"""
-        return ActorsList(self.model, self._agents)
+        agents = []
+        for _, agents_set in self._agents.items():
+            agents.extend(agents_set)
+        return ActorsList(self.model, agents)
 
     def get_attr(self, attr_name: str) -> Any:
-        """获取某个属性，如果是图层的动态数据，则先更新"""
-        if hasattr(self, attr_name):
-            return getattr(self, attr_name)
-        if attr_name in self.layer.dynamic_variables:
-            self.layer.dynamic_var(attr_name=attr_name)
-            return getattr(self, attr_name)
-        raise AttributeError(f"{attr_name} not exists or is a dynamic var.")
+        """获取某个属性"""
+        x, y = self.indices
+        return self.layer.get_raster(attr_name=attr_name)[0, x, y]
 
-    def add(self, agent) -> None:
+    def add(self, agent: Actor) -> None:
         """将一个主体添加到该处"""
-        self._agents.add(agent)
+        if agent.breed not in self._agents:
+            self._agents[agent.breed] = {agent}
+        else:
+            self._agents[agent.breed].add(agent)
 
-    def remove(self, agent) -> None:
+    def remove(self, agent: Actor) -> None:
         """将一个此处的主体移除"""
-        self._agents.remove(agent)
+        self._agents[agent.breed].remove(agent)
+        if not self._agents[agent.breed]:
+            del self._agents[agent.breed]
 
     def link_to(
         self, agent: Actor, link: Optional[str] = None, update: bool = False
@@ -142,6 +146,10 @@ class PatchCell(mg.Cell):
         strict: bool = False,
     ) -> Any:
         """获取链接到该斑块的主体的属性"""
+        if link in self._agents:
+            # TODO 之后应该加入主体上限集合
+            # 说明这是一个主体，先获取其属性，目前只取第一个主体
+            return getattr(list(self._agents[link])[0], attr)
         if not link and not self.links:
             raise KeyError("No link exists.")
         if not link:
@@ -185,7 +193,7 @@ class PatchModule(Module, mg.RasterLayer):
     @property
     def array_cells(self) -> np.ndarray:
         """所有格子的二维数组形式"""
-        return np.array(self.cells).T
+        return np.flipud(np.array(self.cells).T)
 
     @property
     def coords(self) -> Coordinate:
@@ -302,7 +310,7 @@ class PatchModule(Module, mg.RasterLayer):
         """
         if attr_name not in self._dynamic_variables:
             return super().get_raster(attr_name)
-        return self.dynamic_var(attr_name=attr_name)
+        return self.dynamic_var(attr_name=attr_name).reshape(self.shape3d)
 
     def dynamic_var(self, attr_name: str) -> Any:
         """获取动态变量"""
@@ -420,7 +428,7 @@ class PatchModule(Module, mg.RasterLayer):
     ) -> np.ndarray:
         """有多少个绑定的主体"""
         if link is None:
-            data = np.vectorize(lambda x: len(x.agents))(self.array_cells)
+            data = np.vectorize(lambda x: x.has_agent)(self.array_cells)
         else:
             data = np.vectorize(lambda x: bool(x.linked(link)))(
                 self.array_cells

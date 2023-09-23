@@ -10,21 +10,17 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from hydra import compose, initialize
-from pint import UnitRegistry
 
 from abses.actor import Actor
 from abses.nature import BaseNature, PatchCell, PatchModule
 from abses.objects import BaseObj
 from abses.sequences import ActorsList
 from abses.time import TimeDriver
-from examples.water_quota.farmer import Farmer
+from examples.water_quota.farmer import Farmer, ureg
 
 # 加载项目层面的配置
 with initialize(version_base=None, config_path="."):
     cfg = compose(config_name="config")
-
-ureg = UnitRegistry()  # 注册单位
-ureg.define("TMC = 1e8 m ** 3")
 
 CITIES = gpd.read_file(cfg.db.cities)
 DATA_ET0 = xr.open_dataarray(cfg.db.et0, decode_coords="all")
@@ -202,9 +198,9 @@ class Hydrology(PatchModule):
         """计算作物蒸散发"""
         et0 = self.dynamic_var("et0")
         ks = self.params.Ks
-        kc = self.linked_attr(attr="kc", link="here")
+        kc = self.linked_attr(attr="Kc", link="Farmer")
         etc = (et0 * ks * kc).reshape(self.shape3d)
-        self.apply_raster(etc, attr_name="ETc")
+        self.apply_raster(etc, attr_name="etc")
 
 
 class Nature(BaseNature):
