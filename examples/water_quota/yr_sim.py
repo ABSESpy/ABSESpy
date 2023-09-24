@@ -5,23 +5,25 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Dict, Optional, Type
-
 import numpy as np
-import pandas as pd
-from omegaconf import DictConfig
 
-from abses import ActorsList, MainModel
-from abses.human import BaseHuman
-from abses.nature import BaseNature
-from examples.water_quota.nature import Nature
+from abses import MainModel
+from abses.time import time_condition
+from examples.water_quota.yr_human import Society
+from examples.water_quota.yr_nature import Nature
+
+
+def normalize(arr: np.ndarray):
+    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
 
 
 class YellowRiver(MainModel):
     """模拟黄河的水资源分配"""
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(self, nature_class=Nature, *args, **kwargs)
+        super().__init__(
+            self, nature_class=Nature, human_class=Society, *args, **kwargs
+        )
 
     @property
     def institution(self) -> str | None:
@@ -34,11 +36,18 @@ class YellowRiver(MainModel):
             return "98-UBR"
         raise ValueError(f"{self.time.year} exceed the study period.")
 
-    @property
-    def output_now(self) -> pd.DataFrame:
-        cols = self.params.recording_attr
-        data = {
-            "Year": np.full(len(self.farmers), self.time.year),
-            "Month": np.full(len(self.farmers), self.time.month),
-        } | {col: self.farmers.array(col) for col in cols}
-        return pd.DataFrame(data)
+    @time_condition({"month": 12})
+    def update_scores(self):
+        """更新得分"""
+        farmers = self.agents.select("Farmer")
+        self.human.update_scores()
+        payoff = farmers.array("s") * farmers.array("e")
+        farmers.update("payoff", payoff)
+
+    def step(self):
+        farmers = self.agents.select("Farmer")
+        farmers.trigger("irrigating")
+        costs = np.array(farmers.pumping())
+        # 经济成本
+        norm_costs = normalize(costs)
+        farmers.update("e", 1 - norm_costs)

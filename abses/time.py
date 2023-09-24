@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import threading
 from collections import deque
-from functools import total_ordering
+from functools import total_ordering, wraps
 from typing import TYPE_CHECKING, Optional, Union
 
 from pandas import Period, Timestamp
@@ -24,6 +24,44 @@ DEFAULT_START = "2000-01-01 00:00:00"
 DEFAULT_END = "2023-01-01 00:00:00"
 DEFAULT_FREQ = "Y"
 logger = logging.getLogger(__name__)
+
+
+def time_condition(condition: dict, when_run: bool = True) -> callable:
+    """
+    A decorator to run a method based on a time condition.
+
+    Parameters:
+    - condition (dict): A dictionary containing conditions to check against the `time` attribute.
+                        The keys can be ['year', 'month', 'weekday', 'freqstr'].
+    - when_run (bool): If True, the decorated method will run when the condition is met.
+                       If False, the decorated method will not run when the condition is met.
+
+    Example usage:
+    @time_condition(condition={'year': 2023, 'month': 9})
+    def my_method(self):
+        print("This method runs only if the `time` attribute is in September 2023.")
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if not hasattr(self, "time"):
+                raise AttributeError("The `time` attribute must be existing.")
+            time = self.time
+            if not isinstance(time, TimeDriver):
+                raise TypeError("The `TimeDriver` must be existing.")
+
+            satisfied = all(
+                getattr(time, key, None) == value
+                for key, value in condition.items()
+            )
+
+            if (satisfied and when_run) or (not satisfied and not when_run):
+                return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 @total_ordering

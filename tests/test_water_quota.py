@@ -16,7 +16,7 @@ import pytest
 from abses import MainModel
 from examples.water_quota.crops import Crop
 from examples.water_quota.farmer import Farmer
-from examples.water_quota.nature import Nature
+from examples.water_quota.yr_nature import Nature
 
 from .fixtures import cfg, setup_water_quota_model
 

@@ -7,6 +7,7 @@
 
 from typing import Callable, Dict, TypeAlias, Union
 
+import networkx as nx
 from omegaconf import DictConfig
 
 from abses.actor import Actor
@@ -74,6 +75,7 @@ class BaseHuman(CompositeModule, HumanModule):
     def __init__(self, model, name="human"):
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
+        self.graph: nx.Graph = None
 
 
 #     def mock(self, agents, attrs, how="attr"):

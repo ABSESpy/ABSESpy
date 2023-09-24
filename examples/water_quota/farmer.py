@@ -20,7 +20,7 @@ from abses.actor import Actor, ActorsList
 from examples.water_quota.crops import Crop
 
 if TYPE_CHECKING:
-    from examples.water_quota.nature import City
+    from examples.water_quota.yr_nature import City
 
 ureg = UnitRegistry()  # 注册单位
 ureg.define("TMC = 1e8 m ** 3")
@@ -53,6 +53,8 @@ class Farmer(Actor):
         self._decision = None
         self.clear_mind()
         self.s: float = 0.0  # score
+        self.e: float = 0.0  # score
+        self.payoff: float = 0.0  # score
 
     @property
     def friends(self) -> ActorsList:

@@ -15,7 +15,7 @@ from abses.actor import Actor
 from abses.nature import BaseNature, PatchCell, PatchModule
 from abses.objects import BaseObj
 from abses.sequences import ActorsList
-from abses.time import TimeDriver
+from abses.time import TimeDriver, time_condition
 from examples.water_quota.farmer import Farmer, ureg
 
 # 加载项目层面的配置
@@ -98,6 +98,7 @@ class City(Actor):
         """所关联的农民"""
         return self.linked_agents("farmer")
 
+    @time_condition({"month": 12})
     def random_set_farmers(self) -> None:
         """根据自身的耕地情况，随机产生农民主体"""
         # 现在的农民
