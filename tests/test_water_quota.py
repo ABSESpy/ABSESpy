@@ -96,9 +96,7 @@ def test_decide_over_withdraw(farmer):
 @pytest.fixture(name="real_model")
 def real_model_for_test():
     """模拟一个黄河灌溉用水模型"""
-    model = MainModel(parameters=cfg, nature_class=Nature)
-    model.nature.initialize()
-    return model
+    return MainModel(parameters=cfg, nature_class=Nature)
 
 
 def test_data_reader(real_model: MainModel, farmer: Farmer):

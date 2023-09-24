@@ -55,9 +55,19 @@ class Module(BaseObj):
         Initialization after handle parameters.
         """
 
+    def _setup(self):
+        """
+        Initialization before handle parameters.
+        """
+
     def step(self):
         """
         每当时间前进时触发
+        """
+
+    def _end(self):
+        """
+        每当时间后退时触发
         """
 
 
@@ -99,3 +109,15 @@ class CompositeModule(Module, States, Notice):
     @iter_func("modules")
     def initialize(self):
         return super().initialize()
+
+    @iter_func("modules")
+    def _setup(self):
+        return super()._setup()
+
+    @iter_func("modules")
+    def step(self):
+        return super().step()
+
+    @iter_func("modules")
+    def _end(self):
+        return super()._end()

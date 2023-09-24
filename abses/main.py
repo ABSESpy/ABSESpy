@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Generic, Optional, Type, TypeVar
+from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from mesa import Model
 from omegaconf import DictConfig
@@ -22,7 +22,6 @@ from .nature import BaseNature
 from .sequences import ActorsList
 from .states import States
 from .time import TimeDriver
-from .tools.func import iter_func
 
 # from .mediator import MainMediator
 
@@ -46,7 +45,7 @@ class MainModel(Generic[N], Model, Notice, States):
         nature_class: Type[N] = BaseNature,
         **kwargs,
     ) -> None:
-        Model.__init__(self)
+        Model.__init__(self, **kwargs)
         Notice.__init__(self)
         States.__init__(self)
         if name is None:
@@ -58,15 +57,22 @@ class MainModel(Generic[N], Model, Notice, States):
         self._human = human_class(self)
         self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
-        # setup mediator
         self._time = TimeDriver(model=self)
-        # self.mediator = MainMediator(
-        #     model=self, human=self.human, nature=self.nature
-        # )
+        self._trigger("initialize", order=("nature", "human"))
+        self._trigger("set_state", code=1)  # initial state
 
     def __repr__(self):
         version = self._version
         return f"<{self.name}-{version}({self.state})>"
+
+    def _trigger(self, _func: str, order: Tuple[str] = None, **kwargs) -> None:
+        _obj = {"model": self, "nature": self.nature, "human": self.human}
+        if not order:
+            order = ("model", "nature", "human")
+        for name in order:
+            if name not in _obj:
+                raise ValueError(f"{name} is not a valid component.")
+            getattr(_obj[name], _func)(**kwargs)
 
     @property
     def name(self) -> str:
@@ -118,10 +124,6 @@ class MainModel(Generic[N], Model, Notice, States):
         """模型的参数"""
         return self.settings.get(self.name, DictConfig({}))
 
-    @iter_func("observers")
-    def step(self):
-        return super().step()
-
     def time_go(self, steps: int = 1) -> TimeDriver:
         """时间前进"""
         for _ in range(steps):
@@ -129,6 +131,27 @@ class MainModel(Generic[N], Model, Notice, States):
 
     def run_model(self) -> None:
         """模型运行"""
+        self.setup()
         while self.running:
             self.time_go()
             self.step()
+        self.end()
+
+    def setup(self):
+        """模型的初始化"""
+        self._trigger("_setup", order=("model", "nature", "human"))
+        self._trigger("set_state", code=2)
+
+    def end(self):
+        """模型的结束"""
+        self._trigger("_end", order=("nature", "human", "model"))
+        self._trigger("set_state", code=3)
+
+    def step(self):
+        """模型的一个步骤"""
+
+    def _setup(self):
+        """模型的初始化"""
+
+    def _end(self):
+        """模型的结束"""

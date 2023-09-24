@@ -13,6 +13,7 @@ from abses.time import Period, TimeDriver
 
 
 def test_init_time():
+    """测试初始化时间"""
     model = MainModel()
     p1 = Period(2000, freq="Y")
     p2 = Period(p1) + 1

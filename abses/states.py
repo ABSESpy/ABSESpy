@@ -5,10 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.bases import Mediator
-
 STATES = {
-    -1: "Waiting",
     0: "new",
     1: "init",
     2: "ready",
@@ -24,32 +21,21 @@ class States:
     _states = STATES
 
     def __init__(self):
-        self._state = -1  # init state waiting
-        self._mediator = Mediator()
-
-    @property
-    def mediator(self) -> Mediator:
-        """中介者"""
-        return self._mediator
-
-    @mediator.setter
-    def mediator(self, mediator) -> None:
-        self._mediator = mediator
+        self._state = 0  # new model
 
     @property
     def state(self) -> str:
         """模块状态"""
         return self._states[self._state]
 
-    @state.setter
-    def state(self, code):
+    def set_state(self, code: int) -> None:
+        """设置模块状态"""
         if code not in self._states:
             raise ValueError(f"Invalid state {code}, valid: {self._states}!")
         if code == self._state:
             raise ValueError(f"Setting state repeat: {self.state}!")
         if code < self._state:
             raise ValueError(
-                f"State cannot retreat from {self._states[code]} to {self.state}!"
+                f"State cannot retreat from {self.state} to {self._states[code]}!"
             )
         self._state = code
-        self.mediator.transfer_event(sender=self, event=self.state)

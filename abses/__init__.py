@@ -24,9 +24,7 @@ __all__ = [
     "Actor",
     "ActorsList",
     "AgentsContainer",
-    "link_to",
     "perception",
-    # "MyExperiment",
 ]
 __version__ = "v0.1.3"
 

@@ -24,7 +24,7 @@ def test_model_attrs():
     model = MainModel(parameters=cfg)
     # params 里 1 被 testing.yaml 第一层的 3 覆盖
     # 这个应该出现在
-    assert repr(model) == f"<model-{__version__}(Waiting)>"
+    assert repr(model) == f"<model-{__version__}(init)>"
     assert isinstance(model.settings, DictConfig)
     assert len(model.settings) == len(cfg)
     assert model.params == cfg.model

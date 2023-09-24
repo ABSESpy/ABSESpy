@@ -137,6 +137,8 @@ class TimeDriver(Component):
         """更新时间"""
         for _ in range(steps):
             new_period = self._current_period + 1
+            if new_period == self.end_period:
+                self._model.running = False
             if new_period > self.end_period:
                 raise ValueError("Exceeding the end period")
             self._history.append(new_period)
