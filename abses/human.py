@@ -75,7 +75,8 @@ class BaseHuman(CompositeModule, HumanModule):
     def __init__(self, model, name="human"):
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
-        self.graph: nx.Graph = None
+        self._bipartite_graphs: Dict[str, nx.Graph] = {}
+        self._direct_graphs: Dict[str, nx.Graph] = {}
 
 
 #     def mock(self, agents, attrs, how="attr"):

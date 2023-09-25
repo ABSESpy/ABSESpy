@@ -112,15 +112,12 @@ class Actor(BaseObj, mg.GeoAgent):
         self._lands: Dict[str, Set] = {}
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
-        self._layer: mg.RasterLayer = None
-        # self.mediator: MainMediator = self.model.mediator
 
     def put_on(self, cell: PatchCell | None = None) -> None:
         """直接置于某斑块上，或者移除世界"""
         if cell is None:
             # 将这个主体从世界上移除
             self._cell = None
-            self._layer = None
             return
         if self.layer and self.layer is not cell.layer:
             raise IndexError(
@@ -135,7 +132,6 @@ class Actor(BaseObj, mg.GeoAgent):
             self._cell = None
         cell.add(self)
         self._cell = cell
-        self._layer = cell.layer
         self.geometry = Point(cell.layer.transform * cell.indices)
 
     def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
@@ -144,6 +140,11 @@ class Actor(BaseObj, mg.GeoAgent):
             raise TypeError(f"{layer} is not mg.RasterLayer.")
         cell = layer.cells[pos[0]][pos[1]]
         self.put_on(cell=cell)
+
+    @property
+    def layer(self) -> mg.RasterLayer:
+        """所在的栅格图层"""
+        return None if self._cell is None else self._cell.layer
 
     @property
     def links(self) -> List[str]:
@@ -195,11 +196,6 @@ class Actor(BaseObj, mg.GeoAgent):
     def here(self) -> ActorsList:
         """所有这里的主体"""
         return self._cell.agents
-
-    @property
-    def layer(self) -> mg.RasterLayer:
-        """所在的栅格图层"""
-        return self._layer
 
     def _freq_level(self, level: str) -> int:
         code = self._freq_levels.get(level)
@@ -309,9 +305,9 @@ class Actor(BaseObj, mg.GeoAgent):
 
     def move_to(self, position: Optional[Tuple[int, int]]) -> bool:
         """移动到某个位置"""
-        if not self._layer:
+        if not self.layer:
             raise ValueError("Layer is not set.")
-        self._layer.move_agent(self, position)
+        self.layer.move_agent(self, position)
 
     def loc(self, attribute: str) -> Any:
         """寻找自己所在位置的斑块数据"""
