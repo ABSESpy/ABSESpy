@@ -4,6 +4,7 @@
         "dayofweek",
         "dayofyear",
         "daysinmonth",
+        "flipud",
         "georef",
         "ndimage",
         "nptyping",
