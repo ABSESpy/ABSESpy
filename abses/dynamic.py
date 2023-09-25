@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .objects import BaseObj
 
 
-class DynamicVariable:
+class _DynamicVariable:
     """根据时间自动更新的数据"""
 
     def __init__(
@@ -60,12 +60,11 @@ class DynamicVariable:
         """获取计算变量所需的属性"""
         # Get the source code of the function
         source_code = inspect.getsource(function)
-        # Check which attributes are used in the function
-        attributes = []
-        for attr in ["data", "obj", "time", "name"]:
-            if attr in source_code:
-                attributes.append(attr)
-        return attributes
+        return [
+            attr
+            for attr in ["data", "obj", "time", "name"]
+            if attr in source_code
+        ]
 
     def now(self) -> Any:
         """当前值"""

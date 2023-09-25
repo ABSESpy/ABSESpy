@@ -11,7 +11,7 @@
 import pytest
 from omegaconf import DictConfig
 
-from abses.components import Component
+from abses.components import _Component
 
 
 class MainModel:
@@ -26,7 +26,7 @@ def test_component_initialization():
     测试组件的初始化
     """
     model = MainModel(settings={})
-    component = Component(model, "test_component")
+    component = _Component(model, "test_component")
     assert isinstance(component.args, DictConfig)
     assert list(component.args.keys()) == component.__args__
 
@@ -43,7 +43,7 @@ def test_component_params():
     model = MainModel(
         settings={"test_component": {"param1": "value1", "param2": "value2"}}
     )
-    component = Component(model, "test_component")
+    component = _Component(model, "test_component")
     assert component.params == {"param1": "value1", "param2": "value2"}
 
 
@@ -51,14 +51,14 @@ def test_component_args_property():
     model = MainModel(
         settings={"test_component": {"param1": "value1", "param2": "value2"}}
     )
-    component = Component(model, "test_component")
+    component = _Component(model, "test_component")
     component.add_args(["param1"])
     assert component.args == DictConfig({"param1": "value1"})
 
 
 def test_component_args_setter_string():
     model = MainModel(settings={"test_component": {"param3": "value3"}})
-    component = Component(model, "test_component")
+    component = _Component(model, "test_component")
     component.add_args("param3")
     assert "param3" in component.args
 
@@ -67,7 +67,7 @@ def test_component_args_setter_iterable():
     model = MainModel(
         settings={"test_component": {"param4": "value4", "param5": "value5"}}
     )
-    component = Component(model, "test_component")
+    component = _Component(model, "test_component")
     component.add_args(["param4", "param5"])
     assert "param4" in component.args
     assert "param5" in component.args
@@ -75,6 +75,6 @@ def test_component_args_setter_iterable():
 
 def test_component_args_setter_invalid_arg():
     model = MainModel(settings={})
-    component = Component(model, "test_component")
+    component = _Component(model, "test_component")
     with pytest.raises(KeyError, match="Argument param6 not found."):
         component.add_args("param6")

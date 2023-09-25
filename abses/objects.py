@@ -11,17 +11,17 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 import mesa
 
-from abses.time import TimeDriver
+from abses.time import _TimeDriver
 
-from .bases import Observer
-from .components import Component
-from .dynamic import DynamicVariable
+from .bases import _Observer
+from .components import _Component
+from .dynamic import _DynamicVariable
 
 if TYPE_CHECKING:
     from abses.main import MainModel
 
 
-class BaseObj(Observer, Component):
+class BaseObj(_Observer, _Component):
     """
     基础对象，所有可以被用户自定义的对象都应该继承此类，包括：
     自然模块，人类模块，子模块，主体。
@@ -34,12 +34,12 @@ class BaseObj(Observer, Component):
         observer: Optional[bool] = True,
         name: Optional[str] = None,
     ):
-        Component.__init__(self, model=model, name=name)
-        self.time = TimeDriver(model)
+        _Component.__init__(self, model=model, name=name)
+        self.time = _TimeDriver(model)
         if observer:
             model.attach(self)
         self._model = model
-        self._dynamic_variables: Dict[str, DynamicVariable] = {}
+        self._dynamic_variables: Dict[str, _DynamicVariable] = {}
 
     @property
     def model(self) -> MainModel:
@@ -69,7 +69,7 @@ class BaseObj(Observer, Component):
         data: 变量读取数据的源
         function: 变量读取数据的函数
         """
-        var = DynamicVariable(
+        var = _DynamicVariable(
             obj=self, name=name, data=data, function=function
         )
         self._dynamic_variables[name] = var

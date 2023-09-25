@@ -11,14 +11,14 @@
 
 import pytest
 
-from abses.bases import Notice, Observer
+from abses.bases import _Notice, _Observer
 
 
 @pytest.fixture(name="objects_fixture")
 def setup_notice_observer():
     """创造两个可供测试的对象"""
-    observer = Observer()
-    notice = Notice()
+    observer = _Observer()
+    notice = _Notice()
     return notice, observer
 
 

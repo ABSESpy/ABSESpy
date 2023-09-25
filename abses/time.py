@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from pandas import Period, Timestamp
 
-from abses.components import Component
+from abses.components import _Component
 
 if TYPE_CHECKING:
     from .main import MainModel
@@ -48,7 +48,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
             if not hasattr(self, "time"):
                 raise AttributeError("The `time` attribute must be existing.")
             time = self.time
-            if not isinstance(time, TimeDriver):
+            if not isinstance(time, _TimeDriver):
                 raise TypeError("The `TimeDriver` must be existing.")
 
             satisfied = all(
@@ -65,7 +65,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
 
 
 @total_ordering
-class TimeDriver(Component):
+class _TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time."""
 
     _instances = {}
@@ -74,7 +74,7 @@ class TimeDriver(Component):
     def __new__(cls, model: MainModel):
         with cls._lock:
             if not cls._instances.get(model):
-                driver = super(TimeDriver, cls).__new__(cls)
+                driver = super(_TimeDriver, cls).__new__(cls)
                 cls._instances[model] = driver
             else:
                 driver = cls._instances[model]

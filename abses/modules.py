@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, List, Optional
 
 from abses.tools.func import iter_func
 
-from .bases import Notice
+from .bases import _Notice
 from .objects import BaseObj
 from .states import States
 
@@ -72,13 +72,13 @@ class Module(BaseObj):
 
 
 # Composite
-class CompositeModule(Module, States, Notice):
+class CompositeModule(Module, States, _Notice):
     """基本的组合模块，可以创建次级模块"""
 
     def __init__(self, model: MainModel, name: str = None) -> None:
         Module.__init__(self, model, name=name)
         States.__init__(self)
-        Notice.__init__(self)
+        _Notice.__init__(self)
         self._modules: List[Module] = []
 
     @property

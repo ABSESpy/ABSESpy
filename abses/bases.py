@@ -15,30 +15,13 @@ from abses.tools.func import make_list
 logger = logging.getLogger(__name__)
 
 
-class Mediator:
-    """中介者模块，可以转发事件和解析参数"""
-
-    @abstractmethod
-    def transfer_event(self, sender: object, event: str):
-        """触发事件"""
-
-    @abstractmethod
-    def transfer_parsing(self, sender: object, params: dict):
-        """解析参数"""
-
-    @abstractmethod
-    def transfer_request(self, sender: object, request: str):
-        """转发请求"""
-        return request
-
-
-class Notice:
+class _Notice:
     """通知模块，全局变量会被实时更新给观察者"""
 
     __glob_vars__: Set[str] = []
 
-    def __init__(self, observer: Optional[Observer] = None):
-        self.observers: Set[Observer] = set()
+    def __init__(self, observer: Optional[_Observer] = None):
+        self.observers: Set[_Observer] = set()
         self._glob_vars = set(self.__glob_vars__)
         if observer is not None:
             self.attach(observer)
@@ -64,12 +47,12 @@ class Notice:
             self._glob_vars.add(var)
         self.notify()
 
-    def attach(self, observer: Observer) -> None:
+    def attach(self, observer: _Observer) -> None:
         """添加一个观察者"""
         self.observers.add(observer)
         observer.notification(self)
 
-    def detach(self, observer: Observer) -> None:
+    def detach(self, observer: _Observer) -> None:
         """移除一个观察者"""
         self.observers.remove(observer)
 
@@ -79,10 +62,10 @@ class Notice:
             observer.notification(self)
 
 
-class Observer(metaclass=ABCMeta):
+class _Observer(metaclass=ABCMeta):
     """观察者，模型全局变量变化的时候，会自动变化"""
 
-    def notification(self, notice: Notice):
+    def notification(self, notice: _Notice):
         """每当全局变量变化的时候，收到通知"""
         for var in notice.glob_vars:
             value = getattr(notice, var)

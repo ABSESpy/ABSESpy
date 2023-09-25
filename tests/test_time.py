@@ -9,7 +9,7 @@ import pytest
 from omegaconf import DictConfig
 
 from abses import MainModel
-from abses.time import Period, TimeDriver
+from abses.time import Period, _TimeDriver
 
 
 def test_init_time():
@@ -17,12 +17,12 @@ def test_init_time():
     model = MainModel()
     p1 = Period(2000, freq="Y")
     p2 = Period(p1) + 1
-    time = TimeDriver(model=model)
+    time = _TimeDriver(model=model)
     # time + 1  -> 2001
     time.update()
     assert time == p2 == time.period
     # Checking if the history is updated.
-    time2 = TimeDriver(model=model)  # time driver of the same model
+    time2 = _TimeDriver(model=model)  # time driver of the same model
 
     assert time2 is time
     with pytest.raises(ValueError):
@@ -32,9 +32,9 @@ def test_init_time():
 def test_different_model():
     model2 = MainModel(name="test_different_model_1")
     model3 = MainModel(name="test_different_model_2")
-    time1 = TimeDriver(model=model2)
+    time1 = _TimeDriver(model=model2)
     assert time1.period == Period(2000, freq="Y")
-    time2 = TimeDriver(model=model3)
+    time2 = _TimeDriver(model=model3)
     # assert time1 == time2
     assert time1 is not time2
     time1.update(3)

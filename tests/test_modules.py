@@ -8,11 +8,11 @@
 import pytest
 from omegaconf import DictConfig
 
-from abses.bases import Notice
+from abses.bases import _Notice
 from abses.modules import CompositeModule, Module
 
 
-class MockModel(Notice):
+class MockModel(_Notice):
     """测试用模型"""
 
     @property

@@ -11,14 +11,14 @@ from typing import TYPE_CHECKING, Iterable, Optional, Set, Union
 
 from omegaconf import DictConfig
 
-from .log import Log
+from .log import _Log
 from .tools.func import make_list
 
 if TYPE_CHECKING:
     from abses.main import MainModel
 
 
-class Component(Log):
+class _Component(_Log):
     """
     The Base Component provides the basic functionality of storing a mediator's
     instance inside component objects.
@@ -27,7 +27,7 @@ class Component(Log):
     __args__ = []
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
-        Log.__init__(self, name=name)
+        _Log.__init__(self, name=name)
         self._args: Set[str] = set()
         self._model = model
         self.add_args(self.__args__)

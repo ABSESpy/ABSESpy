@@ -15,13 +15,13 @@ from omegaconf import DictConfig
 
 from abses import __version__
 
-from .bases import Notice
+from .bases import _Notice
 from .container import AgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
 from .states import States
-from .time import TimeDriver
+from .time import _TimeDriver
 
 # from .mediator import MainMediator
 
@@ -32,7 +32,7 @@ N = TypeVar("N")
 H = TypeVar("H")
 
 
-class MainModel(Generic[N], Model, Notice, States):
+class MainModel(Generic[N], Model, _Notice, States):
     """
     主模型
     """
@@ -46,7 +46,7 @@ class MainModel(Generic[N], Model, Notice, States):
         **kwargs,
     ) -> None:
         Model.__init__(self, **kwargs)
-        Notice.__init__(self)
+        _Notice.__init__(self)
         States.__init__(self)
         if name is None:
             name = self.__class__.__name__
@@ -57,7 +57,7 @@ class MainModel(Generic[N], Model, Notice, States):
         self._human = human_class(self)
         self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
-        self._time = TimeDriver(model=self)
+        self._time = _TimeDriver(model=self)
         self._trigger("initialize", order=("nature", "human"))
         self._trigger("set_state", code=1)  # initial state
 
@@ -115,7 +115,7 @@ class MainModel(Generic[N], Model, Notice, States):
     #     return self._registry
 
     @property
-    def time(self) -> TimeDriver:
+    def time(self) -> _TimeDriver:
         """时间模块"""
         return self._time
 
@@ -124,7 +124,7 @@ class MainModel(Generic[N], Model, Notice, States):
         """模型的参数"""
         return self.settings.get(self.name, DictConfig({}))
 
-    def time_go(self, steps: int = 1) -> TimeDriver:
+    def time_go(self, steps: int = 1) -> _TimeDriver:
         """时间前进"""
         for _ in range(steps):
             self.time.update()
