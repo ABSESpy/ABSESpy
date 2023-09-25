@@ -17,13 +17,11 @@ from typing import (
     List,
     Optional,
     Self,
-    Set,
     Tuple,
     TypeAlias,
     Union,
 )
 
-import mesa
 import mesa_geo as mg
 from mesa.space import Coordinate
 from omegaconf import DictConfig
@@ -108,10 +106,14 @@ class Actor(BaseObj, mg.GeoAgent):
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
         BaseObj.__init__(self, model, observer=observer)
-        self._links: Dict[str, Set] = {}
-        self._lands: Dict[str, Set] = {}
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
+        self._links: Dict[str, bool] = {}
+
+    @property
+    def links(self) -> List[str]:
+        """该主体所有连接类型"""
+        return self._links.keys()
 
     def put_on(self, cell: PatchCell | None = None) -> None:
         """直接置于某斑块上，或者移除世界"""
@@ -145,16 +147,6 @@ class Actor(BaseObj, mg.GeoAgent):
     def layer(self) -> mg.RasterLayer:
         """所在的栅格图层"""
         return None if self._cell is None else self._cell.layer
-
-    @property
-    def links(self) -> List[str]:
-        """与其他行动者的关系"""
-        return list(self._links.keys())
-
-    @property
-    def lands(self) -> List[str]:
-        """相关的土地类型"""
-        return list(self._lands.keys())
 
     @property
     def indices(self) -> Coordinate:
@@ -226,34 +218,23 @@ class Actor(BaseObj, mg.GeoAgent):
     def link_to(
         self,
         agent: Self | mg.Cell,
-        link: Optional[str] = None,
-        mutual: bool = False,
-        to_land: bool = False,
+        link: Optional[str],
+        mutual: bool = True,
     ) -> None:
         """将行动者与其它行动者或地块建立连接"""
-        if not isinstance(agent, mesa.Agent):
-            raise TypeError(
-                f"Agent must be mesa.Agent object, instead of {type(agent)}."
-            )
-        dictionary = self._lands if to_land else self._links
-        if link not in dictionary:
-            dictionary[link] = {agent}
-        else:
-            dictionary[link].add(agent)
-        # 相互联系
-        if mutual:
-            agent.link_to(self, link=link)
+        self.model.human.add_link(
+            link=link,
+            agent_1=self,
+            agent_2=agent,
+            mutual=mutual,
+        )
+        # add link as land if it is a cell
+        if link not in self._links:
+            self._links[link] = isinstance(agent, mg.Cell)
 
-    def linked_agents(
-        self, link: str, land: bool = False, strict: bool = True
-    ) -> ActorsList:
+    def linked(self, link: str) -> ActorsList:
         """获取相关联的所有其它主体"""
-        dictionary = self._lands if land else self._links
-        if strict and link not in dictionary:
-            raise KeyError(
-                f"{self} doesn't have any link '{link}' {'[land]' if land else ''}."
-            )
-        agents_lst = dictionary.get(link, [])
+        agents_lst = self.model.human.linked(link, self)
         return ActorsList(model=self.model, objs=agents_lst)
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:

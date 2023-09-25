@@ -59,7 +59,7 @@ class Farmer(Actor):
     @property
     def friends(self) -> ActorsList:
         """周围的朋友"""
-        return self.linked_agents("friend")
+        return self.linked("friend")
 
     @property
     def crop(self) -> Crop:
@@ -130,8 +130,7 @@ class Farmer(Actor):
     def add_friend_from(self, friends: Iterable[Actor]) -> None:
         """添加朋友"""
         for friend in friends:
-            self.link_to(friend, link="friend")
-            friend.link_to(self, link="friend")
+            self.link_to(friend, link="friend", mutual=True)
 
     def mutate_strategy(self, probability: float) -> None:
         """随机更新自己的策略"""

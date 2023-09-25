@@ -5,6 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from typing import Tuple
+
 import geopandas as gpd
 import numpy as np
 import pytest
@@ -20,7 +22,7 @@ class MockActor:
         self.geometry = geometry
         self.test = 1
 
-    def link_to(self, agent, link, to_land):
+    def link_to(self, agent, link):
         """用于测试"""
 
 
@@ -218,7 +220,7 @@ def test_loc():
 
 
 @pytest.fixture(name="cells")
-def my_cells():
+def my_cells() -> Tuple[PatchCell]:
     """模拟两个斑块"""
     model = MainModel()
     test = model.nature.create_module(
@@ -234,7 +236,7 @@ class Dog(Actor):
 
 
 @pytest.fixture(name="agents")
-def my_agents():
+def my_agents() -> Tuple[Dog]:
     """模拟两个主体"""
     model = MainModel()
     agent_1 = Dog(model=model)

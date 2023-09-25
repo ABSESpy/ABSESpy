@@ -5,8 +5,14 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+from typing import Tuple, TypeAlias
+
+import networkx as nx
+import pytest
+
 from abses import MainModel
 from abses.actor import Actor
+from abses.cells import PatchCell
 from abses.nature import PatchModule
 from abses.sequences import ActorsList
 
@@ -79,45 +85,37 @@ def test_actor_rule():
     assert actor.pos == (3, 3)
 
 
-# def test_actor_loop_rule():
-#     model = simple_main_model(test_actor_loop_rule)
-
-#     class MyActor(Actor):
-#         @perception
-#         def flag(self):
-#             return self.test < 3
-
-#         def testing(self):
-#             self.test += 1
-
-#         @check_rule(loop=True)
-#         def after_testing(self):
-#             self.passed = True
-
-#     actor = MyActor(model=model)
-#     actor.test = 0
-#     selection = {"flag": True}
-#     actor.rule(when=selection, then="testing", check_now=False)
-#     actor.after_testing()
-#     assert actor.test == 3
-#     assert actor.passed
+Links: TypeAlias = Tuple[MainModel, PatchCell, PatchCell, Actor, Actor]
 
 
-# def test_actor_request():
-#     model = simple_main_model(test_actor_request)
-#     actors = model.agents.create(Actor, 5)
-#     positions = [(4, 4), (4, 4), (4, 3), (5, 5), (5, 6)]
-#     model.nature.add_agents(actors, positions=positions)
+@pytest.fixture(name="links")
+def test_links() -> Links:
+    """测试主体的连接"""
+    model = MainModel()
+    test = model.nature.create_module(
+        how="from_resolution", name="test", shape=(1, 2)
+    )
+    cell_1 = test.cells[0][0]
+    cell_2 = test.cells[1][0]
+    agent_1 = Actor(model=model)
+    agent_2 = Actor(model=model)
+    return model, cell_1, cell_2, agent_1, agent_2
 
-#     center = actors[0]
-#     assert center.pos == (4, 4)
-#     neighbors = center.request(
-#         "neighbors", header={"pos": center.pos}, receiver="nature"
-#     )
-#     assert type(neighbors) is ActorsList
-#     assert len(neighbors) == 2
-#     assert (neighbors.pos == [(4, 4), (4, 4)]).all()  # default distance = 0
 
-#     assert len(center.neighbors()) == 2
-#     assert (center.neighbors().pos == [(4, 3), (4, 4)]).all()
-#     # assert actors[0] in neighbors and actors[2] in neighbors
+def test_linked(links: Links):
+    """测试主体的连接"""
+    model, cell_1, cell_2, agent_1, agent_2 = links
+    agent_1.link_to(cell_1, "land")
+    agent_2.link_to(cell_2, "land")
+    agent_1.link_to(agent_2, link="friend")
+
+    assert cell_1 in agent_1.linked("land")
+    assert cell_2 in agent_2.linked("land")
+    assert agent_1 in agent_2.linked("friend")
+    assert agent_2 in agent_1.linked("friend")
+
+    friends = model.human.get_graph("friend")
+    lands = model.human.get_graph("land")
+    assert model.human.links
+    assert len(nx.degree(friends)) == 2
+    assert len(nx.degree(lands)) == 4

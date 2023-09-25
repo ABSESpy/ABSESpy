@@ -109,7 +109,7 @@ class PatchCell(mg.Cell):
                 f"{link} already exists, set update to True for updating."
             )
         self._attached_agents[link] = agent
-        agent.link_to(self, link=link, to_land=True)
+        agent.link_to(self, link=link)
 
     def detach(self, label: str) -> None:
         """取消某个主体与该斑块的联系"""
