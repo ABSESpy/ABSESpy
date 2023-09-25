@@ -115,8 +115,13 @@ class Actor(BaseObj, mg.GeoAgent):
         self._layer: mg.RasterLayer = None
         # self.mediator: MainMediator = self.model.mediator
 
-    def put_on(self, cell: PatchCell) -> None:
-        """直接置于某斑块上"""
+    def put_on(self, cell: PatchCell | None = None) -> None:
+        """直接置于某斑块上，或者移除世界"""
+        if cell is None:
+            # 将这个主体从世界上移除
+            self._cell = None
+            self._layer = None
+            return
         if self.layer and self.layer is not cell.layer:
             raise IndexError(
                 f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
@@ -127,9 +132,10 @@ class Actor(BaseObj, mg.GeoAgent):
             )
         if self.on_earth:
             self._cell.remove(self)
+            self._cell = None
+        cell.add(self)
         self._cell = cell
         self._layer = cell.layer
-        cell.add(self)
         self.geometry = Point(cell.layer.transform * cell.indices)
 
     def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):

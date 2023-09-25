@@ -133,8 +133,8 @@ class MainModel(Generic[N], Model, Notice, States):
         """模型运行"""
         self.setup()
         while self.running:
-            self.time_go()
             self.step()
+            self.time_go()
         self.end()
 
     def setup(self):

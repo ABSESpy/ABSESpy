@@ -26,6 +26,11 @@ PROVINCES = [
 ]
 
 
+def normalize(arr: np.ndarray) -> np.ndarray:
+    """归一化"""
+    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+
+
 def link_groups(graph: nx.Graph, elements: Iterable, p: float = 1) -> nx.Graph:
     """以一定概率将迭代对象里面的要素两两之间建立连边"""
     for comb in list(combinations(elements, 2)):
@@ -34,44 +39,53 @@ def link_groups(graph: nx.Graph, elements: Iterable, p: float = 1) -> nx.Graph:
     return graph
 
 
-def Cobb_Douglas(parameter: float, times: int):
+def cobb_douglas(parameter: float, times: int):
+    """Cobb-Douglas函数"""
     return (1 - parameter) ** times
 
 
 def lost_reputation(cost, reputation, caught_times, punish_times):
     """损失声誉"""
     # lost reputation because of others' report
-    lost = Cobb_Douglas(reputation, caught_times)
+    lost = cobb_douglas(reputation, caught_times)
     # not willing to offensively report others
-    cost = Cobb_Douglas(cost, punish_times)
+    cost = cobb_douglas(cost, punish_times)
     return cost * lost
 
 
 class Society(BaseHuman):
+    """社会模块"""
+
     def __init__(self, model, name="human"):
         super().__init__(model, name=name)
 
     @property
     def farmers(self) -> ActorsList:
+        """农民"""
         return self.model.agents.select("Farmer")
 
     @property
     def defectors(self) -> ActorsList:
+        """反对者"""
         return self.farmers.select({"decision": "D"})
 
     @property
     def cooperators(self) -> ActorsList:
+        """合作者"""
         return self.farmers.select({"decision": "C"})
 
     @time_condition({"month": 12}, when_run=True)
-    def update(self):
-        """更新社会属性:
+    def step(self):
+        """
+        每年12月进行一次：
+        0. 更新社会属性，包括自己的社交网络
         1. 清空自己的思绪，做决定这个周期要做什么决定 D/C
         2. 如果自己合作，则评价其它朋友的做法，决定是否讨厌他们
         3. 根据自己是否讨厌/是否被人讨厌来更新社会得分
         3. 像表现更好的朋友学习（metric）
         4. 策略变异
         """
+        self.update_graph()
         # preparing parameters
         metric = self.params.metric
         mutation = self.params.mutation_probability
@@ -81,13 +95,22 @@ class Society(BaseHuman):
         # like / dislike friends
         self.farmers.trigger("judge_friends")
         # calculate social reputation
-        self.update_scores()
+        self.update_s()
         # learn from friends
         self.farmers.trigger("change_mind", metric=metric, how=how)
         # mutation strategy
         self.farmers.trigger("mutate_strategy", probability=mutation)
+        self.update_e()
 
-    def update_scores(self):
+    def update_e(self) -> None:
+        """更新经济得分"""
+        self.farmers.trigger("irrigating")
+        costs = np.array(self.farmers.trigger("pumping"))
+        # 经济成本
+        norm_costs = normalize(costs)
+        self.farmers.update("e", 1 - norm_costs)
+
+    def update_s(self):
         """更新社会得分：
         1. 如果自己被批评得过多，就会觉得不舒服
         2. 如果自己讨厌的朋友太多，也会觉得不舒服

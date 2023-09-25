@@ -215,3 +215,68 @@ def test_loc():
     agent = Actor(model=model)
     agent.put_on_layer(layer, (0, 0))
     assert agent.loc("test") == 4
+
+
+@pytest.fixture(name="cells")
+def my_cells():
+    """模拟两个斑块"""
+    model = MainModel()
+    test = model.nature.create_module(
+        how="from_resolution", name="test", shape=(1, 2)
+    )
+    cell_1 = test.cells[0][0]
+    cell_2 = test.cells[1][0]
+    return cell_1, cell_2
+
+
+class Dog(Actor):
+    """a dog for testing"""
+
+
+@pytest.fixture(name="agents")
+def my_agents():
+    """模拟两个主体"""
+    model = MainModel()
+    agent_1 = Dog(model=model)
+    agent_2 = Dog(model=model)
+    return agent_1, agent_2
+
+
+def test_add_agent(cells, agents):
+    """测试添加主体"""
+    agent1, agent2 = agents
+    assert agent1.breed == agent2.breed == "Dog"
+    cell1, cell2 = cells
+    # Test adding the first agent of a breed
+    agent1.put_on(cell1)
+    with pytest.raises(ValueError):
+        cell2.add(agent1)
+    assert agent1 in cell1.agents
+
+    cell1.add(agent2)
+    assert len(cell1.agents) == 2
+
+
+def test_remove_agent(agents, cells):
+    """测试移除主体"""
+    agent1, agent2 = agents
+    cell1, cell2 = cells
+    # Add some initial agents
+    agent1.put_on(cell1)
+    agent2.put_on(cell2)
+
+    # Test removing one agent
+    cell1.remove(agent1)
+    assert "Dog" not in cell1._agents
+    assert "Dog" in cell2._agents
+    assert agent1 not in cell1.agents
+
+    agent2.put_on(cell1)
+    assert agent2 in cell1.agents
+    assert agent2 not in cell2.agents
+    agent2.put_on(cell1)
+    assert not agent1.on_earth
+    assert agent2.on_earth
+    agent1.put_on(cell1)
+    assert len(cell1.agents) == 2
+    agent2.put_on(cell2)

@@ -99,6 +99,8 @@ class PatchCell(mg.Cell):
 
     def add(self, agent: Actor) -> None:
         """将一个主体添加到该处"""
+        if agent.on_earth:
+            raise ValueError(f"{agent} is already on earth.")
         if agent.breed not in self._agents:
             self._agents[agent.breed] = {agent}
         else:
@@ -106,7 +108,11 @@ class PatchCell(mg.Cell):
 
     def remove(self, agent: Actor) -> None:
         """将一个此处的主体移除"""
-        self._agents[agent.breed].remove(agent)
+        try:
+            self._agents[agent.breed].remove(agent)
+        except KeyError as err:
+            raise KeyError(f"{agent._cell} is not on {self}.") from err
+        agent.put_on()
         if not self._agents[agent.breed]:
             del self._agents[agent.breed]
 

@@ -5,16 +5,10 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import numpy as np
-
 from abses import MainModel
 from abses.time import time_condition
 from examples.water_quota.yr_human import Society
 from examples.water_quota.yr_nature import Nature
-
-
-def normalize(arr: np.ndarray):
-    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
 
 
 class YellowRiver(MainModel):
@@ -40,14 +34,10 @@ class YellowRiver(MainModel):
     def update_scores(self):
         """更新得分"""
         farmers = self.agents.select("Farmer")
-        self.human.update_scores()
         payoff = farmers.array("s") * farmers.array("e")
         farmers.update("payoff", payoff)
 
     def step(self):
-        farmers = self.agents.select("Farmer")
-        farmers.trigger("irrigating")
-        costs = np.array(farmers.pumping())
-        # 经济成本
-        norm_costs = normalize(costs)
-        farmers.update("e", 1 - norm_costs)
+        self.nature.step()
+        self.human.step()
+        self.update_scores()

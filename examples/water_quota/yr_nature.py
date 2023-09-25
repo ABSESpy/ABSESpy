@@ -108,7 +108,9 @@ class City(Actor):
         # 与当前的差值
         diff = land_pattern.sum() - len(farmers_now)
         if diff < 0:  # 如果当前农民更多，杀死它们
-            farmers_now.random_choose(abs(diff)).trigger("die")
+            farmers_now.random_choose(
+                abs(diff), as_list=True, replace=False
+            ).trigger("die")
         elif diff > 0:  # 如果需要创建更多主体
             new_farmers = self.model.agents.create(Farmer, num=diff, city=self)
             new_farmers.trigger(
@@ -233,3 +235,9 @@ class Nature(BaseNature):
         )
         super().initialize()
         self.hydro.batch_link_by_geometry(geo_agents=self.cities, link="city")
+
+    def step(self):
+        self.cities.trigger("random_set_farmers")
+        self.cities.trigger("shuffle_farmers")
+        self.hydro.calculate_etc()
+        self.cities.trigger("assign_quotas")

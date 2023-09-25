@@ -5,10 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Optional, Type
-
 import pytest
-from omegaconf import DictConfig
 
 from abses import BaseHuman, MainModel
 from abses.nature import BaseNature

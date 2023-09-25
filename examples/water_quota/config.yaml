@@ -45,6 +45,7 @@ hydro:
 
 farmer:
   loss_coef: 0.8
+  gw_cost: 0.2  # dollars/kWh (same as energy cost of groundwater pumping)
 
 city:
   quota_weighted_by: 'deficits'
