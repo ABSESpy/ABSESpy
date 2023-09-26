@@ -68,3 +68,8 @@ matplotlib = "^3.7.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.scriv]
+version = "literal: abses/__init__.py: __version__"
+format = "md"
+md_header_level = "2"

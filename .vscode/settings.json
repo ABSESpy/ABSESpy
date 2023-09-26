@@ -26,6 +26,7 @@
         "flow",
         "variable",
         "test",
-        "examples"
+        "examples",
+        "docs"
     ],
 }
