@@ -7,24 +7,24 @@
 
 from __future__ import annotations
 
-from numbers import Number
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import mesa_geo as mg
-import numpy as np
 
 from abses import Actor, ActorsList
+from abses.links import LinkNode
+from abses.sequences import agg_agents_attr
 
 if TYPE_CHECKING:
     from abses.nature import PatchModule
 
 
-class PatchCell(mg.Cell):
+class PatchCell(mg.Cell, LinkNode):
     """斑块"""
 
     def __init__(self, pos=None, indices=None):
-        super().__init__(pos, indices)
-        self._attached_agents = {}
+        mg.Cell.__init__(self, pos, indices)
+        LinkNode.__init__(self)
         self._agents = {}
         self._layer = None
 
@@ -41,6 +41,7 @@ class PatchCell(mg.Cell):
         """设置图层"""
         if not isinstance(layer, mg.RasterLayer):
             raise TypeError(f"{type(layer)} is not valid layer.")
+        self.container = layer.model.human
         self._layer = layer
 
     @classmethod
@@ -48,11 +49,6 @@ class PatchCell(mg.Cell):
     def breed(cls) -> str:
         """种类"""
         return cls.__name__
-
-    @property
-    def links(self) -> List[str]:
-        """所有关联类型"""
-        return list(self._attached_agents.keys())
 
     @property
     def has_agent(self) -> bool:
@@ -94,59 +90,30 @@ class PatchCell(mg.Cell):
         if not self._agents[agent.breed]:
             del self._agents[agent.breed]
 
-    def link_to(
-        self, agent: Actor, link: Optional[str] = None, update: bool = False
-    ) -> None:
-        """
-        将一个主体与该地块关联，一个地块只能关联到一个主体。
-        如果一个地块属于多个主体的情况，需要为多个主体建立一个虚拟主体。
-        即，我们假设产权是明晰的。
-        """
-        if link is None:
-            link = f"Link_{len(self._attached_agents)}"
-        if link in self.links and not update:
-            raise KeyError(
-                f"{link} already exists, set update to True for updating."
-            )
-        self._attached_agents[link] = agent
-        agent.link_to(self, link=link)
-
-    def detach(self, label: str) -> None:
-        """取消某个主体与该斑块的联系"""
-        if label not in self.links:
-            raise KeyError(f"{label} is not a registered link.")
-        del self._attached_agents[label]
-
-    def linked(
-        self, link: str, nodata: Optional[Any] = None, strict: bool = False
-    ) -> Actor:
+    def linked(self, link: str) -> ActorsList:
         """获取链接到该斑块的主体"""
-        if strict and link not in self.links:
-            raise KeyError(f"Link {link} not exists in {self.links}.")
-        return self._attached_agents.get(link, nodata)
+        if link is None:
+            return self.agents
+        elif not isinstance(link, str):
+            raise TypeError(f"{type(link)} is not valid link name.")
+        elif link not in self.links:
+            raise KeyError(f"{link} not exists in {self}.")
+        else:
+            agents = ActorsList(self.model, super().linked(link=link))
+        return agents
 
     def linked_attr(
         self,
-        attr,
+        attr: str,
         link: Optional[str] = None,
-        nodata: Any = np.nan,
-        strict: bool = False,
+        nodata: Any = None,
+        how: str = "only",
     ) -> Any:
         """获取链接到该斑块的主体的属性"""
-        if link in self._agents:
-            # TODO 之后应该加入主体上限集合
-            # 说明这是一个主体，先获取其属性，目前只取第一个主体
-            return getattr(list(self._agents[link])[0], attr)
-        if not link and not self.links:
-            raise KeyError("No link exists.")
-        if not link:
-            link = self.links[0]
-        agent = self.linked(link=link, strict=strict)
-        if not agent:
-            return nodata
-        if not hasattr(agent, attr):
-            raise AttributeError(f"{agent} has no attribute {attr}.")
-        value = getattr(agent, attr)
-        if not isinstance(value, Number):
-            raise TypeError(f"Attribute {attr} is not number.")
-        return value
+        try:
+            agents = self.linked(link=link)
+        except KeyError:
+            agents = ActorsList(self.model, [])
+        if nodata is None or agents:
+            return agg_agents_attr(agents=agents, attr=attr, how=how)
+        return nodata

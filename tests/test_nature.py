@@ -13,37 +13,31 @@ import pytest
 from shapely.geometry import Point, box
 
 from abses.actor import Actor
+from abses.links import LinkContainer, LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
 
 
-class MockActor:
+class MockActor(LinkNode):
+    """测试行动者"""
+
     def __init__(self, geometry=None):
+        super().__init__()
         self.geometry = geometry
         self.test = 1
-
-    def link_to(self, agent, link):
-        """用于测试"""
+        self.container = LinkContainer()
 
 
 def test_patch_cell_attachment():
     """测试斑块可以连接到一个主体"""
-    cell = PatchCell()
+    cell = LinkNode()
+    cell.container = LinkContainer()
     actor = MockActor()
     cell.link_to(actor, "actor_1")
 
     assert "actor_1" in cell.links
     assert len(cell.links) == 1
-    assert cell.linked("actor_1") == actor
-
-    with pytest.raises(KeyError):
-        cell.link_to(actor, "actor_1")
-
-    cell.detach("actor_1")
-    assert "actor_1" not in cell.links
-
-    with pytest.raises(KeyError):
-        cell.detach("actor_1")
+    assert actor in cell.linked("actor_1")
 
 
 def test_patch_module_properties():
@@ -112,7 +106,8 @@ def simple_linked_raster_layer(raster_layer):
     """测试每一个斑块可以连接到一个主体"""
     # Define a polygon (for this example, a box)
     geom = box(2, 2, 8, 8)
-    agent = MockActor(geom)
+    agent = Actor(model=raster_layer.model, geometry=geom)
+    agent.test = 1
     raster_layer.link_by_geometry(agent, "link")
     return agent, raster_layer
 
@@ -120,11 +115,9 @@ def simple_linked_raster_layer(raster_layer):
 def test_link_by_geometry(linked_raster_layer):
     """测试每一个斑块可以连接到一个主体"""
     agent, raster_layer = linked_raster_layer
-    linked_cells = sum(
-        agent is cell.linked("link")
-        for cell in raster_layer.array_cells.flatten()
-    )
-    assert linked_cells > 0, "No cells were linked to the agent!"
+    cells = agent.linked("link")
+    arr = raster_layer.linked_attr(attr="test", link="link")
+    assert np.nansum(arr) == len(cells)
 
 
 def test_batch_link_by_geometry(raster_layer):
@@ -132,11 +125,15 @@ def test_batch_link_by_geometry(raster_layer):
     agents = [MockActor(box(2, 2, 4, 4)), MockActor(box(6, 6, 8, 8))]
 
     raster_layer.batch_link_by_geometry(agents, "link")
+    arr = raster_layer.linked_attr(attr="test", link="link")
+    assert np.nansum(arr) == 8
 
-    agents_wrong = [MockActor(box(2, 2, 7, 7)), MockActor(box(6, 6, 8, 8))]
-    with pytest.raises(KeyError):
-        # 斑块6～7之间将被重复链接，这是不允许的
-        raster_layer.batch_link_by_geometry(agents_wrong, "link")
+    overlapped = [MockActor(box(2, 2, 7, 7)), MockActor(box(6, 6, 8, 8))]
+    raster_layer.batch_link_by_geometry(overlapped, "link")
+    with pytest.raises(ValueError):
+        arr2 = raster_layer.linked_attr(attr="test", link="link")
+    arr2 = raster_layer.linked_attr(attr="test", link="link", how="random")
+    assert np.nansum(arr2) == 25 + 4 - 1  # one agent is overlapped
 
 
 def test_read_attrs_from_linked_agent(linked_raster_layer):
@@ -151,12 +148,12 @@ def test_read_attrs_from_linked_agent(linked_raster_layer):
     linked_cell = raster_layer.array_cells[4][4]
     not_linked_cell = raster_layer.array_cells[1][1]
 
-    assert linked_cell.linked_attr("test") == 1
-    with pytest.raises(KeyError):
-        not_linked_cell.linked_attr("test")
+    assert linked_cell.linked_attr("test", link="link") == 1
+    with pytest.raises(ValueError):
+        not_linked_cell.linked_attr("test", link="link")
 
     with pytest.raises(AttributeError):
-        linked_cell.linked_attr("not_a_attr")
+        linked_cell.linked_attr("not_a_attr", link="link")
 
 
 def test_major_layer(raster_layer):

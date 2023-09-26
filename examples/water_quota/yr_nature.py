@@ -96,13 +96,13 @@ class City(Actor):
     @property
     def farmers(self) -> ActorsList:
         """所关联的农民"""
-        return self.linked_agents("farmer")
+        return self.linked("farmer")
 
     @time_condition({"month": 12})
     def random_set_farmers(self) -> None:
         """根据自身的耕地情况，随机产生农民主体"""
         # 现在的农民
-        farmers_now = self.linked_agents("farmer", strict=False)
+        farmers_now = self.linked("farmer")
         # 每类农民有多少个
         land_pattern = self.dynamic_var("lands")
         # 与当前的差值
@@ -125,7 +125,7 @@ class City(Actor):
         # 与本城市关联的土地
         land_pattern = self.dynamic_var("lands")
         # num
-        cells = self.linked_agents("city", land=True).random_choose(
+        cells = self.linked("city").random_choose(
             len(self.farmers), as_list=True, replace=False
         )
         # for each split groups: add properties
@@ -201,7 +201,7 @@ class Hydrology(PatchModule):
         """计算作物蒸散发"""
         et0 = self.dynamic_var("et0")
         ks = self.params.Ks
-        kc = self.linked_attr(attr="Kc", link="Farmer")
+        kc = self.linked_attr(attr="Kc", how="only")
         etc = (et0 * ks * kc).reshape(self.shape3d)
         self.apply_raster(etc, attr_name="etc")
 

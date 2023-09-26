@@ -243,13 +243,20 @@ class PatchModule(Module, mg.RasterLayer):
             self.link_by_geometry(geo_agent, link, **kwargs)
 
     def linked_attr(
-        self, attr: str, link: str, nodata: Any = np.nan
+        self,
+        attr: str,
+        link: Optional[str] = None,
+        nodata: Any = np.nan,
+        how: Optional[str] = "only",
     ) -> np.ndarray:
         """获取链接到本图层的主体属性"""
 
         def get_attr(cell: PatchCell, __name):
             return cell.linked_attr(
-                __name, link=link, nodata=nodata, strict=False
+                attr=__name,
+                link=link,
+                nodata=nodata,
+                how=how,
             )
 
         return np.vectorize(get_attr)(self.array_cells, attr)

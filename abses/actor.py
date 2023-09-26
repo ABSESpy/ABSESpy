@@ -16,7 +16,6 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Self,
     Tuple,
     TypeAlias,
     Union,
@@ -27,9 +26,9 @@ from mesa.space import Coordinate
 from omegaconf import DictConfig
 from shapely import Point
 
+from abses.links import LinkNode
+from abses.objects import BaseObj
 from abses.sequences import ActorsList
-
-from .objects import BaseObj
 
 # A class that is used to store the position of the agent.
 
@@ -37,7 +36,7 @@ from .objects import BaseObj
 if TYPE_CHECKING:
     from abses.nature import PatchCell
 
-    from .main import MainMediator
+    from .main import MainModel
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
@@ -83,7 +82,7 @@ def perception(func) -> Callable:
 #     return f
 
 
-class Actor(BaseObj, mg.GeoAgent):
+class Actor(mg.GeoAgent, BaseObj, LinkNode):
     """
     社会-生态系统中的行动者
     """
@@ -93,7 +92,7 @@ class Actor(BaseObj, mg.GeoAgent):
 
     def __init__(
         self,
-        model,
+        model: MainModel,
         observer: bool = True,
         unique_id: Optional[int] = None,
         **kwargs,
@@ -106,14 +105,10 @@ class Actor(BaseObj, mg.GeoAgent):
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
         BaseObj.__init__(self, model, observer=observer)
+        LinkNode.__init__(self)
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
-        self._links: Dict[str, bool] = {}
-
-    @property
-    def links(self) -> List[str]:
-        """该主体所有连接类型"""
-        return self._links.keys()
+        self.container = model.human
 
     def put_on(self, cell: PatchCell | None = None) -> None:
         """直接置于某斑块上，或者移除世界"""
@@ -168,12 +163,6 @@ class Actor(BaseObj, mg.GeoAgent):
         if name[0] != "_" and hasattr(self, "_rules"):
             self._check_rules(check_when="any")
 
-    @classmethod
-    @property
-    def breed(cls) -> str:
-        """主体的种类"""
-        return cls.__name__
-
     @property
     def population(self):
         """所有与自己同类的主体"""
@@ -214,28 +203,6 @@ class Actor(BaseObj, mg.GeoAgent):
                 getattr(self, rule.then)(**parameters)
         # delete disposable rules
         return triggered_rules
-
-    def link_to(
-        self,
-        agent: Self | mg.Cell,
-        link: Optional[str],
-        mutual: bool = True,
-    ) -> None:
-        """将行动者与其它行动者或地块建立连接"""
-        self.model.human.add_link(
-            link=link,
-            agent_1=self,
-            agent_2=agent,
-            mutual=mutual,
-        )
-        # add link as land if it is a cell
-        if link not in self._links:
-            self._links[link] = isinstance(agent, mg.Cell)
-
-    def linked(self, link: str) -> ActorsList:
-        """获取相关联的所有其它主体"""
-        agents_lst = self.model.human.linked(link, self)
-        return ActorsList(model=self.model, objs=agents_lst)
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
         """根据一定条件选取主体"""
@@ -299,6 +266,10 @@ class Actor(BaseObj, mg.GeoAgent):
         if attr not in self._cell.attributes:
             raise AttributeError(f"Attribute {attr} not found.")
         setattr(self._cell, attr, value)
+
+    def linked(self, link: str) -> ActorsList:
+        """获取相关联的所有其它主体，并转换为ActorsList"""
+        return ActorsList(self.model, super().linked(link))
 
     # def find_tutor(self, others, metric, how="best"):
     #     better = others.better(metric, than=self)

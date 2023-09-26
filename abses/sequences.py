@@ -35,6 +35,23 @@ logger = logging.getLogger("__name__")
 Selection: TypeAlias = Union[str, Iterable[bool]]
 
 
+def get_only_agent(agents: ActorsList) -> Actor:
+    """Get only one agent."""
+    if len(agents) == 0:
+        raise ValueError("No agent found.")
+    if len(agents) == 1:
+        return agents[0]
+    raise ValueError("More than one agent.")
+
+
+def agg_agents_attr(agents: ActorsList, attr, how: str = "only") -> Any:
+    """聚合属性"""
+    if how == "only":
+        return getattr(get_only_agent(agents), attr)
+    if how == "random":
+        return getattr(np.random.choice(agents), attr)
+
+
 class ActorsList(list):
     """主体列表"""
 
