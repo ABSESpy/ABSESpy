@@ -35,11 +35,15 @@ class BaseObj(_Observer, _Component):
         name: Optional[str] = None,
     ):
         _Component.__init__(self, model=model, name=name)
-        self.time = _TimeDriver(model)
         if observer:
             model.attach(self)
         self._model = model
         self._dynamic_variables: Dict[str, _DynamicVariable] = {}
+
+    @property
+    def time(self) -> _TimeDriver:
+        """时间驱动器"""
+        return self.model.time
 
     @property
     def model(self) -> MainModel:

@@ -247,6 +247,8 @@ class Actor(mg.GeoAgent, BaseObj, LinkNode):
     def die(self) -> None:
         """从世界消失"""
         self.model.agents.remove(self)
+        for link in self.links:
+            self.container.get_graph(link).remove_node(self)
         if self.on_earth:
             self._cell.remove(self)
             del self
