@@ -10,6 +10,8 @@
     "tmp",
     "logs",
     "plugins",
-    "src"
+    "src",
+    "abses",
+    "notebooks"
   ]
 }

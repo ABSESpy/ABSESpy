@@ -9,5 +9,11 @@
   "obsidian-pandoc-reference-list",
   "better-fn",
   "workspaces-plus",
-  "OA-file-hider"
+  "OA-file-hider",
+  "obsidian-kanban",
+  "obsidian-tasks-plugin",
+  "tasks-calendar-wrapper",
+  "calendar",
+  "periodic-notes",
+  "homepage"
 ]

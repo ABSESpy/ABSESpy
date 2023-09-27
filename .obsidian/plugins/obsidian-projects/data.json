@@ -111,6 +111,9 @@
               }
             ]
           },
+          "sort": {
+            "criteria": []
+          },
           "id": "aa08bf32-c155-4b49-8fff-a133968ea0d7",
           "name": "Table",
           "type": "table"
@@ -173,6 +176,9 @@
               }
             ]
           },
+          "sort": {
+            "criteria": []
+          },
           "id": "5362b1d6-d762-4820-8791-67e386431dc3",
           "name": "State",
           "type": "board"
@@ -186,6 +192,8 @@
     "projectSizeLimit": 1000,
     "frontmatter": {
       "quoteStrings": "PLAIN"
-    }
+    },
+    "commands": [],
+    "linkBehavior": "open-editor"
   }
 }
