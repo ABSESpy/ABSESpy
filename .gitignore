@@ -151,6 +151,5 @@ docs/design
 img/**/*.pdf
 data
 
-poetry.lock
 changelog.d
 .obsidian/workspace
