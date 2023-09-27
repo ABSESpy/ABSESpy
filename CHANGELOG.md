@@ -1,2 +1,29 @@
+# Change Logs
 
-# 2023-09-26
+## v-0.1.0 🎉
+
+### New Features
+
+- [x] #feat✨  #agent🤖️  Create, remove, add `Actor` in `Container`
+- [x] #feat✨  #agent🤖️  Select `Actor` in `ActorsList` by adding selection syntax
+- [x] #feat✨  #agent🤖️  read attributes from current `PatchCell`.
+- [x] #feat✨  #Nature🌍 Automatically reads spatial data as raster variables
+- [x] #feat✨  #Nature🌍 Adding, removing `Actors` into nature spaces.
+
+### Documentation changes
+
+- [x] #docs📄  #project🎉 Logging.
+- [x] #docs📄 #project🎉 Basic introduction of `ABSESpy`
+
+
+## v-0.1.1 🎉
+
+### Documentation changes
+
+- [x] #docs📄 update README document
+
+## v-0.1.2 🎉
+
+### Fixed bugs
+
+- [x] #bug🐛 fixed log setup twice
