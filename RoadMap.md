@@ -20,11 +20,13 @@ kanban-plugin: basic
 
 - [ ] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
 - [ ] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
+- [ ] #bug🐛 Debug
 
 
 ## Testing
 
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
+- [ ] #feat✨ #project🎉  @{📅 2023-09-30} Adding a new feature
 
 
 ## Published

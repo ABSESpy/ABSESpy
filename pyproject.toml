@@ -70,5 +70,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.scriv]
-version = "literal: project.toml: tool.poetry.version"
+version = "literal: pyproject.toml: tool.poetry.version"
 format = "md"
