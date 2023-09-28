@@ -8,7 +8,8 @@
 import numpy as np
 import pytest
 
-from abses import BaseObj, MainModel
+from abses import MainModel
+from abses.objects import _BaseObj
 from abses.time import time_condition
 from abses.tools.func import iter_func, norm_choice
 
@@ -53,7 +54,7 @@ def test_random_choosers():
 def fixture_mock_object():
     model = MainModel(parameters={"time": {"freq": "M"}})
 
-    class MockObject(BaseObj):
+    class MockObject(_BaseObj):
         def __init__(self, model):
             super().__init__(model)
 

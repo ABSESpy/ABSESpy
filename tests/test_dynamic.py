@@ -14,7 +14,7 @@ from hydra import compose, initialize
 
 from abses import MainModel
 from abses.nature import PatchModule
-from abses.objects import BaseObj
+from abses.objects import _BaseObj
 from abses.time import _TimeDriver
 
 with initialize(version_base=None, config_path="../config"):
@@ -26,7 +26,7 @@ DATA_ET0 = xr.open_dataarray(cfg.db.et0, decode_coords="all")
 
 def get_lands_data(
     data: pd.DataFrame,
-    obj: BaseObj,
+    obj: _BaseObj,
     time: _TimeDriver,
 ) -> pd.Series:
     """从数据中读取主体的土地情况"""

@@ -14,6 +14,7 @@ kanban-plugin: basic
 - [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework.
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/).
+- [ ] #feat✨ #Nature🌍 Solving nodata
 
 
 ## Planned

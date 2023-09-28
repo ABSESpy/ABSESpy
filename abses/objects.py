@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from abses.main import MainModel
 
 
-class BaseObj(_Observer, _Component):
+class _BaseObj(_Observer, _Component):
     """
     基础对象，所有可以被用户自定义的对象都应该继承此类，包括：
     自然模块，人类模块，子模块，主体。

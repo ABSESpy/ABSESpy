@@ -11,17 +11,17 @@ import inspect
 from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
-    from .objects import BaseObj
+    from .objects import _BaseObj
 
 
 class _DynamicVariable:
     """根据时间自动更新的数据"""
 
     def __init__(
-        self, name: str, obj: BaseObj, data: Any, function: Callable
+        self, name: str, obj: _BaseObj, data: Any, function: Callable
     ) -> None:
         self._name: str = name
-        self._obj: BaseObj = obj
+        self._obj: _BaseObj = obj
         self._data: Any = data
         self._function: Callable = function
 
@@ -36,8 +36,8 @@ class _DynamicVariable:
         return self._obj
 
     @obj.setter
-    def obj(self, obj: BaseObj):
-        if not isinstance(obj, BaseObj):
+    def obj(self, obj: _BaseObj):
+        if not isinstance(obj, _BaseObj):
             raise TypeError("Only accept observer object")
         self._obj = obj
 

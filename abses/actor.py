@@ -27,7 +27,7 @@ from omegaconf import DictConfig
 from shapely import Point
 
 from abses.links import LinkNode
-from abses.objects import BaseObj
+from abses.objects import _BaseObj
 from abses.sequences import ActorsList
 
 # A class that is used to store the position of the agent.
@@ -82,7 +82,7 @@ def perception(func) -> Callable:
 #     return f
 
 
-class Actor(mg.GeoAgent, BaseObj, LinkNode):
+class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     """
     社会-生态系统中的行动者
     """
@@ -104,7 +104,7 @@ class Actor(mg.GeoAgent, BaseObj, LinkNode):
         mg.GeoAgent.__init__(
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
-        BaseObj.__init__(self, model, observer=observer)
+        _BaseObj.__init__(self, model, observer=observer)
         LinkNode.__init__(self)
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None

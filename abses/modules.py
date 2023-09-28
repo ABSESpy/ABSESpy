@@ -6,31 +6,28 @@
 # Website: https://cv.songshgeo.com/
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from abses.tools.func import iter_func
 
 from .bases import _Notice
-from .objects import BaseObj
+from .objects import _BaseObj
 from .states import States
 
 if TYPE_CHECKING:
     from .main import MainModel
 
 
-class Module(BaseObj):
+class Module(_BaseObj):
     """基本的模块"""
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
-        BaseObj.__init__(self, model, observer=True, name=name)
+        _BaseObj.__init__(self, model, observer=True, name=name)
         self._open: bool = True
 
     def __repr__(self) -> str:
         flag = "open" if self.opening else "closed"
         return f"<{self.name}: {flag}>"
-
-    def __getattr__(self, __name: str) -> Any:
-        return super().__getattribute__(__name)
 
     @property
     def opening(self) -> bool:
