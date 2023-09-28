@@ -117,3 +117,21 @@ class PatchCell(mg.Cell, LinkNode):
         if nodata is None or agents:
             return agg_agents_attr(agents=agents, attr=attr, how=how)
         return nodata
+
+    def get_neighboring_cells(
+        self,
+        moore: bool = False,
+        radius: int = 1,
+        include_center: bool = False,
+        annular: bool = False,
+    ) -> ActorsList:
+        """获取该斑块周围的格子"""
+        cells = self.layer.get_neighboring_cells(
+            self.pos, moore=moore, radius=radius, include_center=include_center
+        )
+        if annular:
+            interiors = self.layer.get_neighboring_cells(
+                self.pos, moore=moore, radius=radius - 1, include_center=False
+            )
+            return ActorsList(self.model, set(cells) - set(interiors))
+        return ActorsList(self.model, cells)

@@ -8,8 +8,31 @@ import logging
 from typing import Any, Iterable
 
 import numpy as np
+from scipy import ndimage
 
 logger = logging.getLogger(__name__)
+
+
+def get_buffer(
+    array: np.ndarray,
+    radius: int = 1,
+    moor: bool = False,
+    annular: bool = False,
+) -> np.ndarray:
+    """Get a buffer around the array."""
+    if radius <= 0:
+        raise ValueError(f"Radius must be positive, not {radius}.")
+    connectivity = 2 if moor else 1
+    struct = ndimage.generate_binary_structure(2, connectivity)
+    result = ndimage.binary_dilation(
+        array, structure=struct, iterations=radius
+    )
+    if annular and radius > 1:
+        interior = ndimage.binary_dilation(
+            array, structure=struct, iterations=radius - 1
+        )
+        return result & ~interior
+    return result
 
 
 def make_list(element, keep_none=False):
