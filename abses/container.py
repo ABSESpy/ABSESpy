@@ -113,6 +113,10 @@ class AgentsContainer(dict):
             agents.extend(self[breed])
         return agents
 
+    def trigger(self, *args, **kwargs) -> None:
+        """触发事件"""
+        return self.to_list().trigger(*args, **kwargs)
+
     def add(
         self,
         agents: Union[Actor, ActorsList, Iterable[Actor]] = None,
