@@ -29,4 +29,5 @@
         "examples",
         "docs"
     ],
+    "editor.defaultFormatter": "ms-python.black-formatter",
 }
