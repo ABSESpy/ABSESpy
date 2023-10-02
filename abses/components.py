@@ -21,17 +21,13 @@ if TYPE_CHECKING:
 class _Component(_Log):
     """
     Class _Component is used to represent a component of the model. Extends _Log class to be able to log any issues.
-    This class helps to designate certain parameters of the model as components and handle them separately.
+    Components are foundational pieces in constructing the model's entities.
     It is initialized with a model and a optional name.
     """
 
     __args__ = []
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
-        """
-        Initialize component. A component is a foundational element of the model's entities.
-        A component will take the model's parameters as arguments so as to not overwrite them.
-        """
         _Log.__init__(self, name=name)
         self._args: Set[str] = set()
         self._model = model
@@ -39,11 +35,7 @@ class _Component(_Log):
 
     @property
     def params(self) -> dict:
-        """Returns the model's parameters.
-
-        Parameters:
-        ___________
-        None
+        """Returns read-only model's parameters.
 
         Returns:
         ___________
@@ -54,11 +46,7 @@ class _Component(_Log):
 
     @property
     def args(self) -> DictConfig:
-        """Returns component's arguments.
-
-        Parameters
-        ----------
-        None
+        """Returns read-only component's arguments.
 
         Returns
         -------

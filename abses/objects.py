@@ -23,9 +23,8 @@ if TYPE_CHECKING:
 
 class _BaseObj(_Observer, _Component):
     """
-    基础对象，所有可以被用户自定义的对象都应该继承此类，包括：
-    自然模块，人类模块，子模块，主体。
-    其特点是这些模块可以访问模型的全局变量、时间驱动器，以及有各种自定义变量。
+    Base class for model's objects.
+    Model object's have access to global model's parameters and time driver.
     """
 
     def __init__(
@@ -42,17 +41,35 @@ class _BaseObj(_Observer, _Component):
 
     @property
     def time(self) -> _TimeDriver:
-        """时间驱动器"""
+        """Returns read-only model's time driver.
+
+        Returns
+        -------
+        _TimeDriver
+            Model's time driver.
+        """
         return self.model.time
 
     @property
     def model(self) -> MainModel:
-        """对应的模型"""
+        """Returns read-only model object.
+
+        Returns
+        -------
+        MainModel
+            ABSES model object.
+        """
         return self._model
 
     @property
     def dynamic_variables(self) -> Dict[str, Any]:
-        """所有动态变量"""
+        """Returns read-only model's dynamic variables.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary of model's dynamic variables.
+        """
         if not self._dynamic_variables:
             return {}
         for k, v in self._dynamic_variables.items():
@@ -60,6 +77,13 @@ class _BaseObj(_Observer, _Component):
 
     @model.setter
     def model(self, model: MainModel):
+        """Sets the model object.
+
+        Parameters
+        ----------
+        model : MainModel
+            ABSES model object.
+        """
         if not isinstance(model, mesa.Model):
             raise TypeError("Model must be an instance of mesa.Model")
         self._model = model
@@ -67,11 +91,16 @@ class _BaseObj(_Observer, _Component):
     def add_dynamic_variable(
         self, name: str, data: Any, function: Callable
     ) -> None:
-        """
-        添加一个动态变量
-        name: 变量名
-        data: 变量读取数据的源
-        function: 变量读取数据的函数
+        """Adds new dynamic variable.
+
+        Parameters
+        ----------
+        name : str
+            Name of the variable.
+        data : Any
+            Data source for callable function.
+        function : Callable
+            Function to calculate the dynamic variable.
         """
         var = _DynamicVariable(
             obj=self, name=name, data=data, function=function
@@ -79,5 +108,11 @@ class _BaseObj(_Observer, _Component):
         self._dynamic_variables[name] = var
 
     def dynamic_var(self, attr_name: str) -> Any:
-        """获取一个动态变量当前的值"""
+        """Returns output of a dynamic variable.
+
+        Parameters
+        ----------
+        attr_name : str
+            Dynamic variable's name.
+        """
         return self._dynamic_variables[attr_name].now()
