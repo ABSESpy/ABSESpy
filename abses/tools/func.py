@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 import logging
-from typing import Any, Iterable
+from typing import Any, Iterable, List
 
 import numpy as np
 from scipy import ndimage

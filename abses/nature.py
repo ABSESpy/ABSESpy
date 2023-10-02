@@ -52,6 +52,16 @@ class PatchModule(Module, mg.RasterLayer):
         self._file = None
 
     @property
+    def cell_properties(self) -> set[str]:
+        """属性"""
+        return self.cell_cls.__attribute_properties__()
+
+    @property
+    def attributes(self) -> set[str]:
+        """属性"""
+        return self._attributes | self.cell_properties
+
+    @property
     def file(self) -> str | None:
         """文件路径"""
         return self._file

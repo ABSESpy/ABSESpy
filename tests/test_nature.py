@@ -13,6 +13,7 @@ import pytest
 from shapely.geometry import Point, box
 
 from abses.actor import Actor
+from abses.cells import raster_attribute
 from abses.links import LinkContainer, LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
@@ -26,6 +27,38 @@ class MockActor(LinkNode):
         self.geometry = geometry
         self.test = 1
         self.container = LinkContainer()
+
+
+class MockPatchCell(PatchCell):
+    """测试斑块"""
+
+    @raster_attribute
+    def x(self) -> int:
+        return 1
+
+    @raster_attribute
+    def y(self) -> int:
+        return 2
+
+
+def test_setup_attributes():
+    """测试斑块提取属性"""
+    instance = MockPatchCell()
+    properties = instance.__attribute_properties__()
+    assert isinstance(properties, set)
+    assert instance.x == 1
+    assert instance.y == 2
+    assert "x" in properties
+    assert "y" in properties
+    model = MainModel()
+    shape = (6, 5)
+    patch_module = PatchModule.from_resolution(
+        model, shape=shape, cell_cls=MockPatchCell
+    )
+    assert "x" in patch_module.attributes
+    assert "y" in patch_module.attributes
+    assert len(patch_module.attributes) == 2
+    assert patch_module.get_raster("x").sum() == 30
 
 
 def test_patch_cell_attachment():

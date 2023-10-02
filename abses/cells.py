@@ -19,6 +19,12 @@ if TYPE_CHECKING:
     from abses.nature import PatchModule
 
 
+def raster_attribute(func):
+    """将方法变为斑块可以提取的属性"""
+    func.is_decorated = True
+    return property(func)
+
+
 class PatchCell(mg.Cell, LinkNode):
     """斑块"""
 
@@ -30,6 +36,16 @@ class PatchCell(mg.Cell, LinkNode):
 
     def __repr__(self) -> str:
         return f"<PatchCell at {self.pos}>"
+
+    @classmethod
+    def __attribute_properties__(cls) -> set[str]:
+        """属性"""
+        return {
+            name
+            for name, method in cls.__dict__.items()
+            if isinstance(method, property)
+            and getattr(method.fget, "is_decorated", False)
+        }
 
     @property
     def layer(self) -> PatchModule:
@@ -50,10 +66,9 @@ class PatchCell(mg.Cell, LinkNode):
         """种类"""
         return cls.__name__
 
-    @property
-    def has_agent(self) -> bool:
+    def has_agent(self, breed: str) -> bool:
         """当前位置是否站着行动者"""
-        return bool(self.agents)
+        return breed in self._agents
 
     @property
     def agents(self) -> ActorsList:
