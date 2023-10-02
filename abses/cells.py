@@ -66,9 +66,9 @@ class PatchCell(mg.Cell, LinkNode):
         """种类"""
         return cls.__name__
 
-    def has_agent(self, breed: str) -> bool:
+    def has_agent(self, breed: Optional[str] = None) -> bool:
         """当前位置是否站着行动者"""
-        return breed in self._agents
+        return bool(self._agents) if breed is None else breed in self._agents
 
     @property
     def agents(self) -> ActorsList:
