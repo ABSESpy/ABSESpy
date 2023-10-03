@@ -20,8 +20,9 @@ if TYPE_CHECKING:
 
 class _Component(_Log):
     """
-    The Base Component provides the basic functionality of storing a mediator's
-    instance inside component objects.
+    Class _Component is used to represent a component of the model. Extends _Log class to be able to log any issues.
+    Components are foundational pieces in constructing the model's entities.
+    It is initialized with a model and a optional name.
     """
 
     __args__ = []
@@ -34,16 +35,38 @@ class _Component(_Log):
 
     @property
     def params(self) -> dict:
-        """本模块的参数"""
+        """Returns read-only model's parameters.
+
+        Returns:
+        ___________
+        dict:
+            Dictionary of model's parameters.
+        """
         return self._model.settings.get(self.name, DictConfig({}))
 
     @property
     def args(self) -> DictConfig:
-        """必须包含的参数名"""
+        """Returns read-only component's arguments.
+
+        Returns
+        -------
+        DictConfig
+            Component's arguments dictionary.
+        """
         return DictConfig({arg: self.params[arg] for arg in self._args})
 
     def add_args(self, args: Union[str, Iterable[str]]) -> None:
-        """添加新的参数名"""
+        """Add model's parameters as component's arguments.
+
+        Parameters
+        ----------
+        args : Union[str, Iterable[str]]
+            Model's parameters to be added as component's arguments.
+
+        Returns
+        _______
+        None
+        """
         args_set = set(make_list(args))
         for arg in args_set:
             if arg not in self.params:
