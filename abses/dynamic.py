@@ -15,7 +15,13 @@ if TYPE_CHECKING:
 
 
 class _DynamicVariable:
-    """根据时间自动更新的数据"""
+    """Time dependent variable
+
+    A time dependent function will take the model time driver as
+    an input and return its value. The function can also take other
+    variables as inputs. The function can be defined as a static
+    method of a class or a function.
+    """
 
     def __init__(
         self, name: str, obj: _BaseObj, data: Any, function: Callable
@@ -27,12 +33,21 @@ class _DynamicVariable:
 
     @property
     def name(self):
-        """变量名称"""
+        """Get the name of the variable
+
+        Returns
+        -------
+        name: str
+        """
         return self._name
 
     @property
     def obj(self):
-        """所属模块"""
+        """Returns a base object instance
+
+        Returns
+        -------
+        obj: _BaseObj"""
         return self._obj
 
     @obj.setter
@@ -43,21 +58,39 @@ class _DynamicVariable:
 
     @property
     def data(self):
-        """数据"""
+        """Returns unused data
+
+        Returns
+        -------
+        data: Any
+        """
         return self._data
 
     @property
     def function(self):
-        """函数"""
+        """Get the function that calculates the variable
+
+        Returns
+        -------
+        function: Callable
+        """
         return self._function
 
     @property
     def time(self):
-        """时间"""
+        """Get the model time driver
+
+        Returns
+        -------
+        time: abses.time._TimeDriver"""
         return self.obj.time
 
     def get_required_attributes(self, function: Callable):
-        """获取计算变量所需的属性"""
+        """Get the function required attributes
+
+        Returns
+        -------
+        required_attributes: list[str]"""
         # Get the source code of the function
         source_code = inspect.getsource(function)
         return [
@@ -67,7 +100,11 @@ class _DynamicVariable:
         ]
 
     def now(self) -> Any:
-        """当前值"""
+        """Return the dynamic variable function's output
+
+        Returns
+        -------
+        output: Any"""
         required_attrs = self.get_required_attributes(self.function)
         args = {attr: getattr(self, attr) for attr in required_attrs}
         return self.function(**args)
