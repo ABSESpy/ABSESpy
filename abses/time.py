@@ -94,7 +94,13 @@ class _TimeDriver(_Component):
 
     @property
     def freq(self) -> str:
-        """The frequency of time"""
+        """Returns time frequency of the time driver.
+
+        Returns
+        -------
+        freq : str
+            Time frequency of the time driver.
+        """
         freq = self.params.get("freq")
         if not freq:
             freq = DEFAULT_FREQ
@@ -105,7 +111,13 @@ class _TimeDriver(_Component):
 
     @property
     def start_period(self) -> Period:
-        """The start period"""
+        """Returns the starting time period for the model.
+
+        Returns
+        -------
+        start_period : pandas.Period
+            The starting time period for the model.
+        """
         start = self.params.get("start")
         if not start:
             self.logger.warning(
@@ -116,7 +128,13 @@ class _TimeDriver(_Component):
 
     @property
     def end_period(self) -> Period:
-        """The start period"""
+        """Returns the final time period for the model.
+
+        Returns
+        -------
+        end_period : pandas.Period
+            The final time period for the model.
+        """
         end = self.params.get("end")
         if not end:
             self.logger.warning(
@@ -127,14 +145,31 @@ class _TimeDriver(_Component):
 
     @property
     def period(self) -> Period:
-        """The current period"""
+        """Returns the current time period for the model.
+
+        Returns
+        -------
+        period : pandas.Period
+            The current time period for the model.
+        """
         return self._current_period
 
     def __repr__(self) -> str:
         return repr(self._current_period)
 
     def update(self, steps=1):
-        """更新时间"""
+        """Updates model time by one step. The default.
+
+        Parameters
+        ----------
+        steps : int, optional (default=1)
+            The number of steps to update the model time.
+
+
+        Returns
+        -------
+        None
+        """
         for _ in range(steps):
             new_period = self._current_period + 1
             if new_period == self.end_period:
@@ -146,115 +181,231 @@ class _TimeDriver(_Component):
 
     @property
     def day(self) -> int:
-        """当前是第几天"""
+        """Returns the current day for the model.
+
+        Returns
+        -------
+        day : int
+            The day for the model.
+        """
         return self.period.day
 
     @property
     def dayofweek(self) -> int:
-        """当前是周几"""
+        """Returns the number for the day of the week for the model.
+
+        Returns
+        -------
+        dayofweek : int
+            The day of the week for the model.
+        """
         return self.period.dayofweek
 
     @property
     def dayofyear(self) -> int:
-        """当前是年的第几天"""
+        """Returns the day of the year for the model.
+
+        Returns
+        -------
+        dayofyear : int
+            The day of the year for the model.
+        """
         return self.period.dayofyear
 
     @property
     def daysinmonth(self) -> int:
-        """当前月份的天数"""
+        """Get the total number of days of the month that this period falls on for the model.
+
+        Returns
+        -------
+        daysinmonth : int
+            Days elapsed since the beginning of the month.
+        """
         return self.period.daysinmonth
 
     @property
     def days_in_month(self) -> int:
-        """目前是当前月份的第几天"""
+        """Get the total number of days in the month that this period falls on for the model.
+
+        Returns
+        -------
+        days_in_month : int
+            Days in this months
+        """
         return self.period.days_in_month
 
     @property
     def end_time(self) -> Timestamp:
-        """当前时间段的结束时间"""
+        """Get the Timestamp for the end of the period.
+
+        Returns
+        -------
+        end_time: pandas.Timestamp
+            The Timestamp for the end of the period.
+        """
         return self.period.end_time
 
     @property
     def hour(self) -> int:
-        """当前是第几小时"""
+        """Get the hour of the day component of the Period.
+
+        Returns
+        -------
+        hour : int
+            The hour of the day component of the Period.
+        """
         return self.period.hour
 
     @property
     def minute(self) -> int:
-        """当前是第几分钟"""
+        """Get minute of the hour component of the Period.
+
+        Returns
+        -------
+        minute: int
+            The minute of the hour component of the Period.
+        """
         return self.period.minute
 
     @property
     def month(self) -> int:
-        """当前月份"""
+        """Return the month the current model's Period falls on.
+
+        Returns
+        -------
+        month: int
+            The month the current model's Period falls on.
+        """
         return self.period.month
 
     @property
     def quarter(self) -> int:
-        """当前季度"""
+        """Return the quarter the current model's Period falls on.
+
+        Returns
+        -------
+        quarter: int
+            The quarter the current model's Period falls on.
+        """
         return self.period.quarter
 
     @property
     def qyear(self) -> int:
-        """当前是年的第几季度"""
+        """Fiscal year a model's Period lies in according to its starting-quarter.
+
+        Returns
+        -------
+        qyear: int
+            The fiscal year a model's Period lies in according to its starting-quarter.
+        """
         return self.period.qyear
 
     @property
     def second(self) -> int:
-        """当前是第几秒"""
+        """Get the second component of a model's Period.
+
+        Returns
+        -------
+        second: int
+            The second component of a model's Period.
+        """
         return self.period.second
 
     @property
     def ordinal(self) -> int:
-        """当前是年的第几周"""
+        """Returns period ordinal, which is the number of periods elapsed since a starting period.
+
+        Returns
+        -------
+        ordinal : int
+        """
         return self.period.ordinal
 
     @property
     def is_leap_year(self) -> bool:
-        """是否是闰年"""
+        """Return True if the period's year is in a leap year.
+
+        Returns
+        -------
+        is_leap_year : bool
+        """
         return self.period.is_leap_year
 
     @property
     def start_time(self) -> Timestamp:
-        """当前时间段的开始时间"""
+        """Get the Timestamp for the start of the period.
+
+        Returns
+        -------
+        start_time : pandas.Timestamp"""
         return self.period.start_time
 
     @property
     def week(self) -> int:
-        """本年的第几周"""
+        """Get the week of the year on the given Period.
+
+        Returns
+        -------
+        week : int
+        """
         return self.period.week
 
     @property
     def weekday(self) -> int:
-        """本年的第几周"""
+        """Day of the week the period lies in, with Monday=0 and Sunday=6.
+
+        Returns
+        -------
+        weekday : int
+        """
         return self.period.weekday
 
     @property
     def weekofyear(self) -> int:
-        """本年的第几周"""
+        """Get the week of the year on the given Period.
+
+        Returns
+        -------
+        weekofyear : int
+        """
         return self.period.weekofyear
 
     @property
     def year(self) -> int:
-        """年份"""
+        """Return the year this Period falls on.
+
+        Returns
+        -------
+        year : int
+        """
         return self.period.year
 
     @property
     def day_of_year(self) -> int:
-        """当前是年的第几天"""
+        """Return the day of the year.
+
+        Returns
+        -------
+        day_of_year : int
+        """
         return self.period.day_of_year
 
     @property
     def day_of_week(self) -> int:
-        """当前是周几"""
+        """Day of the week the period lies in, with Monday=0 and Sunday=6.
+
+        Returns
+        -------
+        day_of_week : int
+        """
         return self.period.day_of_week
 
     def strftime(self, fmt: str) -> str:
-        """转化成字符串时间"""
+        """Returns a string representing the pandas.Period, controlled by an explicit format string."""
         return self.period.strftime(fmt)
 
     def to_timestamp(
         self, freq: Union[str, str] = None, how: Optional[str] = None
     ) -> Timestamp:
-        """转化成时间点"""
+        """Returns the Timestamp representation of the pandas.Period"""
         return self.period.to_timestamp(freq, how)
