@@ -19,9 +19,9 @@ cas: ../background#complex-adaptive-systems#complex-adaptive-systems(cas)
 ## What is an Agent-based Model (ABM)
 
 > [!INFO]Definition
-> An agent-based model (often referred to as **ABM**) is composed of autonomous agents, **who are diverse and interact with one another and their environment**.
+> An agent-based model (often called **ABM**) comprises diverse autonomous agents interacting with one another and their environment**.
 
-ABM is simulated over time: at each time step or event, agents take decisions and act based on their attributes and/or in response or anticipation of other agents’ behaviours or changes in the environment. The micro-level actions and interactions of many agents **give rise to macro-level patterns** and dynamics, which are typically the focus of analysis. The agents thus respond diversely to the contexts (*usually depicted by the model's parameters and variables*) they jointly created, and their actions' outcomes then lead to an [emergence]({{emergence}}) of the macro-pattern.
+ABM is simulated over time: agents make decisions and act based on their attributes and/or in response or anticipation of other agents’ behaviors or changes in the environment at each time step or event. Many agents' micro-level actions and interactions give rise to macro-level patterns and dynamics, typically the focus of analysis. The agents thus respond diversely to the contexts (*usually depicted by the model's parameters and variables*) they jointly created, and their actions' outcomes then lead to an [emergence]({{emergence}}) of the macro pattern.
 
 ## What are Social-ecological Systems (SESs)
 
@@ -35,11 +35,11 @@ ABM is simulated over time: at each time step or event, agents take decisions an
 **Several characteristics of AMB make it an essential method for SES research:**
 
 1. It focuses on the change of an SES over time from mutual adaptations of agents and their environments.
-2. its ability to generate [emergent]({{emergence}}) system-level outcomes from micro-level interactions and macro-level feedback.
+2. It can generate [emergent]({{emergence}}) system-level outcomes from micro-level interactions and macro-level feedback.
 3. its ability to represent the diversity and heterogeneity of human and non-human actors and the spatial characteristics of an SES.
 4. its capacity serves as a virtual laboratory in which researchers and stakeholders can experiment with an SES to explore possible consequences of interventions.
 
-## When and How ABM to study SES
+## When and How ABM to Study SES
 
 Agent-based models of SES are often developed for one of the following **purposes** ^[@biggs2021]:
 

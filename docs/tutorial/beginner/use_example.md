@@ -1,5 +1,5 @@
 ---
-title: dependencies
+title: usage
 authors: SongshGeo
 date: 2023-01-10
 long_name: Agent-Based Social-ecological systems Modelling Framework in Python
@@ -14,32 +14,5 @@ email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
 
-
-**`ABSESpy` framework is based on many excellent open-source projects:**
-
-## Core dependencies
-
-- agentpy
-- pandas
-- numpy
-- xarray
-
-## File I/O
-
-- geopandas
-- rasterio
-- pyyaml
-- rioxarray
-- geocube
-- cf_xarray
-- pint-pandas
-- netCDF4
-
-## Algorithms
-
-- scipy
-
-## Visualisation
-
-- matplotlib
-- seaborn
+> [!INFO]In Progress
+> This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/SongshGeo/ABSESpy/issues).

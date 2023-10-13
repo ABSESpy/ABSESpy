@@ -13,7 +13,7 @@ kanban-plugin: basic
 - [ ] #feat✨  Auto-update dynamic variables
 - [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
-- [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/).
+- [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨ #Nature🌍 Solving nodata
 - [ ] #refactor♻️  Use [Pendulum](https://pendulum.eustace.io/) instead of `pandas.Period`
 - [ ] #feat✨  Give users an option of real-dates or just a counter
