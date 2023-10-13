@@ -52,3 +52,7 @@ report:
 
 jupyter:
 	poetry run jupyter lab
+
+diagram:
+	pyreverse -o png -p ABSESpy abses
+	mv *.png img/.
