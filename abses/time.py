@@ -66,6 +66,58 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
 
 @total_ordering
 class _TimeDriver(_Component):
+    """TimeDriver provides the functionality to manage time.
+
+    This class is responsible for managing the time of a simulation model. It keeps track of the current time period,
+    updates it according to a given frequency, and provides properties to access different components of the current
+    time period (e.g., day, hour, etc.). The `_TimeDriver` class is a singleton, meaning that there can be only one
+    instance of it per simulation model. This is enforced by the `__new__` method, which returns an existing instance
+    if it already exists for the given model, or creates a new one otherwise.
+
+    Parameters
+    ----------
+    model : MainModel
+        The simulation model that this time driver belongs to.
+
+    Attributes
+    ----------
+    _instances : dict
+        A dictionary that maps simulation models to their corresponding time drivers.
+    _lock : threading.Lock
+        A lock object to ensure thread safety when creating new instances of the `_TimeDriver` class.
+
+    Methods
+    -------
+    freq() -> str
+        Returns the time frequency of the time driver.
+    start_period() -> Period
+        Returns the starting time period for the model.
+    end_period() -> Period
+        Returns the final time period for the model.
+    period() -> Period
+        Returns the current time period for the model.
+    update(steps=1) -> None
+        Updates the current time period by a given number of steps.
+    day() -> int
+        Returns the current day for the model.
+    dayofweek() -> int
+        Returns the number for the day of the week for the model.
+    dayofyear() -> int
+        Returns the day of the year for the model.
+    daysinmonth() -> int
+        Returns the total number of days of the month that this period falls on for the model.
+    days_in_month() -> int
+        Returns the total number of days in the month that this period falls on for the model.
+    end_time() -> Timestamp
+        Returns the Timestamp for the end of the period.
+    hour() -> int
+        Returns the hour of the day component of the Period.
+    minute() -> int
+        Returns the minute of the hour component of the Period.
+    """
+
+
+class _TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time."""
 
     _instances = {}

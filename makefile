@@ -16,7 +16,7 @@ setup-dependencies:
 	poetry install
 
 setup-pre-commit:
-	poetry add --group dev flake8 isort nbstripout pydocstyle pre-commit-hooks interrogate sourcery mypy bandit black
+	poetry add --group dev flake8 isort nbstripout pydocstyle pre-commit-hooks interrogate sourcery mypy bandit black pylint
 
 install-jupyter:
 	poetry add ipykernel --group dev
