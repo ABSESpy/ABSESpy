@@ -12,22 +12,23 @@ kanban-plugin: basic
 - [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
 - [ ] #feat✨  Auto-update dynamic variables
 - [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
-- [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework.
+- [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/).
 - [ ] #feat✨ #Nature🌍 Solving nodata
+- [ ] #refactor♻️  Use [Pendulum](https://pendulum.eustace.io/) instead of `pandas.Period`
+- [ ] #feat✨  Give users an option of real-dates or just a counter
 
 
 ## Planned
 
 - [ ] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
 - [ ] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
-- [ ] #bug🐛 Debug
+- [ ] #refactor♻️ Using modules to manipulate agent
 
 
 ## Testing
 
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
-- [ ] #feat✨ #project🎉  @{📅 2023-09-30} Adding a new feature
 
 
 ## Published
