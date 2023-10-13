@@ -3,50 +3,39 @@ site_name: AB-SESpy
 nav:
     - Home:
         - AB-SESpy: index.md
-        # - Dependencies: docs/dependencies.md
-        # - Install: docs/install.md
-        # - Design: docs/design.md
-        # - Usage: docs/usage.md
-        # - Features: docs/features.md
-    # - About:
-        - Introduction: docs/about.md
-        - Background: docs/background.md
-        - License: docs/license.md
-        - Contribution: docs/contribution.md
-        - Acknowledge: docs/acknowledge.md
-    - User Guide:
-        - Structure model: tutorial/user_guide.md
-        - Setup a Model:
-          - Getting started: tutorial/notebooks/model.ipynb
-          - Setup parameters: tutorial/notebooks/parameters.ipynb
-          # - Control simulation flow: tutorial/notebooks/workflow.ipynb
-        - Human behavior:
-          - Actors Container: tutorial/notebooks/human/actors.ipynb
+        - Navigation: navigation.md
+        - Features: home/features.md
+        - Install: home/install.md
+        - Dependencies: home/dependencies.md
+        - License: home/license.md
+        - Acknowledge: home/acknowledge.md
+        # - RoadMap: home/roadmap.md
+        # - Changelog: home/changelog.md
+    - Wiki:
+        - Context of ABSESpy: wiki/about.md
+        - Terms and definitions: wiki/background.md
+    - Tutorials:
+        - Beginner:
+          - Run an example: tutorial/beginner/use_example.md
+          - Setup a model: tutorial/beginner/write_example.md
+          - Setup parameters: tutorial/beginner/setup_parameters.md
+        - Advanced:
+          - Visualize your model: tutorial/advanced/visualize.md
+          - Add modules: tutorial/advanced/add_modules.md
+          - Add variables: tutorial/advanced/dynamic_variable.md
+          - Batch run: tutorial/advanced/batch_run.md
+        - Lessons:
           - Manipulate actors: tutorial/notebooks/human/rules.ipynb
-          # - Positions and movement: tutorial/notebooks/human/movement.ipynb
-          - Human Behavior: tutorial/notebooks/human/CCR_example.ipynb
-        - Natural processes:
+          - Actors Container: tutorial/notebooks/human/actors.ipynb
           - Manipulate GeoData: tutorial/notebooks/nature/geodata.ipynb
-          # - Patch variables: tutorial/notebooks/nature/patch.ipynb
-        - Experiment: tutorial/notebooks/experiment.ipynb
     - API references:
         - Model: api/model.md
-        # - Structures: api/structures.md
-        - Agent: api/agent.md
-        - Agents: api/agents.md
-        - Human: api/human.md
-        - Nature:
-          - Boundary: api/boundary.md
-          - Patch: api/patch.md
-        - Variables: api/variables.md
-        # - Experiment: api/experiment.md
-    # - Examples:
-    #     - Climate negotiation: examples/negotiation.md
-    #     - Groundwater withdraw: examples/groundwater.md
-    #     - Yellow River Quotas: examples/yr_sim.md
-    - Change Log:
-        - Road Map: docs/roadmap.md
-        - v0.1.0: logs/v-0.1.0.md
+    - Examples:
+        - Examples gallery: examples/gallery.md
+    - Packages:
+        - Add-in agent modules: packages/agent.md
+        - Add-in human modules: packages/human.md
+        - Add-in nature modules: packages/nature.md
 theme:
     name: "material"
     logo: "https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/logo_abses.svg"
