@@ -44,6 +44,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         parameters: DictConfig = DictConfig({}),
         human_class: Type[H] = BaseHuman,
         nature_class: Type[N] = BaseNature,
+        run_id: Optional[int] = None,
         **kwargs,
     ) -> None:
         Model.__init__(self, **kwargs)
@@ -59,6 +60,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
         self._time = _TimeDriver(model=self)
+        self._run_id: int | None = run_id
         self._trigger("initialize", order=("nature", "human"))
         self._trigger("set_state", code=1)  # initial state
 
@@ -74,6 +76,11 @@ class MainModel(Generic[N], Model, _Notice, States):
             if name not in _obj:
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
+
+    @property
+    def run_id(self) -> int | None:
+        """批量运行时，当前模型的运行ID"""
+        return self._run_id
 
     @property
     def name(self) -> str:
