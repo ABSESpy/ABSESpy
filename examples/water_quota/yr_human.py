@@ -138,7 +138,7 @@ class Society(BaseHuman):
 
     def update_graph(self):
         """更新社会网络"""
-        graph = self.graph = nx.Graph()
+        graph = nx.Graph()
         for province in PROVINCES:
             cities = self.agents.select(
                 {"breed": "City", "Province_n": province}
