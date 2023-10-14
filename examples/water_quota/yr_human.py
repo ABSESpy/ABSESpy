@@ -27,8 +27,16 @@ PROVINCES = [
 
 
 def normalize(arr: np.ndarray) -> np.ndarray:
-    """归一化"""
-    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+    """Min-max normalization"""
+    min_val = np.min(arr)
+    max_val = np.max(arr)
+
+    if max_val == min_val:
+        # If all elements are equal (including all zeros),
+        # return an array of the same shape with all zeros.
+        return np.zeros_like(arr)
+
+    return (arr - min_val) / (max_val - min_val)
 
 
 def link_groups(graph: nx.Graph, elements: Iterable, p: float = 1) -> nx.Graph:

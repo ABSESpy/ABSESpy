@@ -16,6 +16,7 @@ import pytest
 from abses import MainModel
 from examples.water_quota.crops import Crop
 from examples.water_quota.farmer import Farmer
+from examples.water_quota.yr_human import normalize
 from examples.water_quota.yr_nature import Nature
 
 from .fixtures import cfg, setup_water_quota_model
@@ -144,3 +145,19 @@ def test_init_social_persons(real_model):
             assert not criticized
         else:
             assert criticized
+
+
+@pytest.mark.parametrize(
+    "arr, expected",
+    [
+        (np.array([0, 1, 2, 3, 4]), np.array([0.0, 0.25, 0.5, 0.75, 1.0])),
+        (np.array([0, 0, 0, 0, 0]), np.array([0, 0, 0, 0, 0])),
+        (np.array([3, 3, 3, 3, 3]), np.array([0, 0, 0, 0, 0])),
+    ],
+)
+def test_score_calc(real_model, arr, expected):
+    """Testing calculate social score"""
+    model = real_model
+    agents = model.agents.create(Farmer, 5)
+    agents.update("s", normalize(arr))
+    assert (agents.array("s") == expected).all()
