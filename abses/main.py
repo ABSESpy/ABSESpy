@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from mesa import Model
@@ -128,6 +129,9 @@ class MainModel(Generic[N], Model, _Notice, States):
         """时间前进"""
         for _ in range(steps):
             self.time.update()
+            # print the current time when go.
+            sys.stdout.write("\r" + self.time.strftime("%Y-%m-%d %H:%M:%S"))
+            sys.stdout.flush()
 
     def run_model(self) -> None:
         """模型运行"""
