@@ -30,21 +30,19 @@ class HumanModule(Module):
         self._collections: Dict[str, Selection] = DictConfig({})
         self._rules: Dict[str, Trigger] = DictConfig({})
 
-    def __getattr__(self, name):
-        if name[0] == "_" or name not in self._collections:
-            return getattr(self, name)
-        selection = self._collections[name]
-        return self.actors.select(selection)
-
     @property
     def agents(self) -> AgentsContainer:
-        """所有的主体筛选器"""
+        """agents container"""
         return self._agents
 
-    @property
-    def actors(self) -> ActorsList:
-        """所有的行动者"""
-        return self.agents.to_list()
+    def actors(self, name: str | None = None) -> ActorsList:
+        """Different selections of agents"""
+        if name is None:
+            return self.agents.to_list()
+        if name not in self._collections:
+            raise KeyError(f"{name} is not defined.")
+        selection = self._collections[name]
+        return self.actors().select(selection)
 
     def _must_be_actor(self, actor: Actor) -> None:
         if not isinstance(actor, Actor):
@@ -60,7 +58,9 @@ class HumanModule(Module):
 
     def define(self, name: str, selection: Selection) -> ActorsList:
         """定义一次主体查询"""
-        selected = self.actors.select(selection)
+        if name in self._collections:
+            raise KeyError(f"{name} is already defined.")
+        selected = self.actors().select(selection)
         self._collections[name] = selection
         return selected
 

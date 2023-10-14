@@ -141,10 +141,6 @@ class ActorsList(list):
         selected = [a for a, s in zip(self, bool_) if s]
         return ActorsList(self.model, selected)
 
-    def now(self) -> Self:
-        """Only select actors who is already setup on the earth."""
-        return self.select(self.on_earth)
-
     def ids(self, ids: Iterable[int]) -> List[Actor]:
         """
         Select by a `ids` list of Agent.

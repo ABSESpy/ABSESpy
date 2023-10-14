@@ -43,9 +43,6 @@ Trigger: TypeAlias = Union[Callable, str]
 logger = logging.getLogger("__name__")
 
 
-from typing import Any, Dict
-
-
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
     """
     Parses a string selection expression and returns a dictionary of key-value pairs.
