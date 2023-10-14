@@ -116,10 +116,6 @@ class _TimeDriver(_Component):
         Returns the minute of the hour component of the Period.
     """
 
-
-class _TimeDriver(_Component):
-    """TimeDriver provides the functionality to manage time."""
-
     _instances = {}
     _lock = threading.Lock()
 

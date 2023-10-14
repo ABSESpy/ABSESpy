@@ -135,6 +135,10 @@ class AgentsContainer(dict):
         Returns:
             None
         """
+        if not issubclass(actor_cls, Actor):
+            raise TypeError(f"'{actor_cls}' not subclass of 'Actor'.")
+        self._breeds[actor_cls.breed] = actor_cls
+        self[actor_cls.breed] = set()
 
     def create(
         self,
