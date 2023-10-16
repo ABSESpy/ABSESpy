@@ -9,7 +9,6 @@ kanban-plugin: basic
 - [ ] #docs📄 Adding Simplified Chinese README
 - [ ] #test🧪  #build🏗  Test on other Python versions
 - [ ] #feat✨  #human👨  The module automatically generates complex networks for all main bodies
-- [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
 - [ ] #feat✨  Auto-update dynamic variables
 - [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
@@ -17,18 +16,20 @@ kanban-plugin: basic
 - [ ] #feat✨ #Nature🌍 Solving nodata
 - [ ] #refactor♻️  Use [Pendulum](https://pendulum.eustace.io/) instead of `pandas.Period`
 - [ ] #feat✨  Give users an option of real-dates or just a counter
+- [ ] #feat✨  MaxLenSet for each cell
 
 
 ## Planned
 
 - [ ] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
-- [ ] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
 - [ ] #refactor♻️ Using modules to manipulate agent
+- [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
 
 
 ## Testing
 
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
+- [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
 
 
 ## Published
@@ -36,6 +37,7 @@ kanban-plugin: basic
 **完成**
 - [x] #refactor♻️ Remove `variable` class and replace it with `DynamicVariable`.
 - [x] #refactor♻️ Remove `TimeDriverManager` and adding type hint to `TimeDriver`
+- [x] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
 - [x] #build🏗 #project🎉 Removed dependence of `AgentPy`.
 
 
