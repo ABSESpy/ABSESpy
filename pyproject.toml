@@ -38,7 +38,7 @@ license = "Apache 2.0 License"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = "^3.9"
 prettytable = "^3.6.0"
 pint = "^0.20.1"
 netcdf4 = "^1.6.2"
