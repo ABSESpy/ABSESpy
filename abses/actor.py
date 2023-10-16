@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -42,9 +41,6 @@ Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
 
 logger = logging.getLogger("__name__")
-
-
-from typing import Dict, Any
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
@@ -159,14 +155,14 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         unique_id: Optional[int] = None,
         **kwargs,
     ) -> None:
+        _BaseObj.__init__(self, model, observer=observer)
         if not unique_id:
-            unique_id = uuid.uuid4().int
+            unique_id = self.model.next_id()
         crs = kwargs.pop("crs", model.nature.crs)
         geometry = kwargs.pop("geometry", None)
         mg.GeoAgent.__init__(
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
-        _BaseObj.__init__(self, model, observer=observer)
         LinkNode.__init__(self)
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
@@ -340,7 +336,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     ):
         """
         Set up a rule that is activated at time period `when` and triggers a function `then`.\
-        
+
         Parameters
         ----------
         when: Union[str, Iterable[bool]]

@@ -30,21 +30,19 @@ class HumanModule(Module):
         self._collections: Dict[str, Selection] = DictConfig({})
         self._rules: Dict[str, Trigger] = DictConfig({})
 
-    def __getattr__(self, name):
-        if name[0] == "_" or name not in self._collections:
-            return super().__getattr__(name)
-        selection = self._collections[name]
-        return self.actors.select(selection)
-
     @property
     def agents(self) -> AgentsContainer:
-        """所有的主体筛选器"""
+        """agents container"""
         return self._agents
 
-    @property
-    def actors(self) -> ActorsList:
-        """所有的行动者"""
-        return self.agents.to_list()
+    def actors(self, name: str | None = None) -> ActorsList:
+        """Different selections of agents"""
+        if name is None:
+            return self.agents.to_list()
+        if name not in self._collections:
+            raise KeyError(f"{name} is not defined.")
+        selection = self._collections[name]
+        return self.actors().select(selection)
 
     def _must_be_actor(self, actor: Actor) -> None:
         if not isinstance(actor, Actor):
@@ -60,22 +58,11 @@ class HumanModule(Module):
 
     def define(self, name: str, selection: Selection) -> ActorsList:
         """定义一次主体查询"""
-        selected = self.actors.select(selection)
+        if name in self._collections:
+            raise KeyError(f"{name} is already defined.")
+        selected = self.actors().select(selection)
         self._collections[name] = selection
         return selected
-
-    # def rule(self, actors: Actors, when: Selection, then: Trigger, name: Optional[str] = None):
-    #     if name is None:
-    #         pass
-    #     self.define(name=name)
-    #     actors_to_trigger = actors.select(when)
-    #     results = actors_to_trigger.trigger(then)
-    #     return actors_to_trigger, results
-
-    def arena(self, actor_1: Actors, actor_2: Actors, interaction: Trigger):
-        """互动情景"""
-        actor_1.trigger(interaction, actor_2)
-        actor_2.trigger(interaction, actor_1)
 
 
 class BaseHuman(CompositeModule, HumanModule, LinkContainer):

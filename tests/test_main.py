@@ -32,6 +32,9 @@ def test_model_attrs():
     assert isinstance(model.nature, BaseNature)
     assert model.version == __version__
     assert model.time.strftime("%Y") == "2000"
+    assert model.run_id is None
+    model2 = MainModel(parameters=cfg, run_id=1)
+    assert model2.run_id == 1
 
 
 def test_time_go():
