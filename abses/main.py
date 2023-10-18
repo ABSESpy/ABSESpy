@@ -113,11 +113,6 @@ class MainModel(Generic[N], Model, _Notice, States):
         """自然模块"""
         return self._nature
 
-    # @property
-    # def registry(self) -> VariablesRegistry:
-    #     """变量模块"""
-    #     return self._registry
-
     @property
     def time(self) -> _TimeDriver:
         """时间模块"""
