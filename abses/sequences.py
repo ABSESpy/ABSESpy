@@ -162,7 +162,9 @@ class ActorsList(list):
         as_list: bool = False,
     ) -> Union[Actor, Self]:
         """从主体中随机选择一个或多个。"""
-        chosen = norm_choice(self, p=prob, size=size, replace=replace)
+        chosen = norm_choice(
+            np.array(self), p=prob, size=size, replace=replace
+        )
         if as_list:
             return ActorsList(self.model, objs=chosen)
         if size == 1:
