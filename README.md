@@ -4,21 +4,21 @@
 <div style="text-align: center;">
     <!-- License Badge -->
     <a href="http://www.apache.org/licenses/">
-        <img src="https://img.shields.io/github/license/songshgeo/absespy" alt="license">
+        <img src="https://img.shields.io/github/license/absespy/ABSESpy" alt="license">
     </a>
     <!-- Downloads Badge -->
-    <img src="https://img.shields.io/github/downloads/songshgeo/absespy/total" alt="downloads">
+    <img src="https://img.shields.io/github/downloads/absespy/ABSESpy/total" alt="downloads">
     <!-- Code Size Badge -->
-    <img src="https://img.shields.io/github/languages/code-size/songshgeo/absespy" alt="codesize">
+    <img src="https://img.shields.io/github/languages/code-size/absespy/ABSESpy" alt="codesize">
     <!-- Tag Badge -->
-    <img src="https://img.shields.io/github/v/tag/songshgeo/absespy" alt="tag">
+    <img src="https://img.shields.io/github/v/tag/absespy/ABSESpy" alt="tag">
     <br>
     <!-- Website Badge -->
     <a href="https://cv.songshgeo.com/">
         <img src="https://img.shields.io/badge/Website-SongshGeo-brightgreen.svg" alt="github">
     </a>
     <!-- Stars Badge -->
-    <img src="https://img.shields.io/github/stars/songshgeo/absespy?style=social" alt="stars">
+    <img src="https://img.shields.io/github/stars/absespy/ABSESpy?style=social" alt="stars">
     <!-- Twitter Badge -->
     <a href="https://twitter.com/shuangsong11">
         <img src="https://img.shields.io/twitter/follow/shuangsong11?style=social" alt="twitter">
@@ -27,7 +27,7 @@
 
 <!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-An Agent-Based computational framework makes modeling artificial **[Social-ecological systems](https://songshgeo.github.io/ABSESpy/docs/about/)** easier.
+An Agent-Based computational framework makes modeling artificial **[Social-ecological systems](https://absespy.github.io/ABSESpy/docs/about/)** easier.
 
 ## Why `ABSESpy`?
 
@@ -35,8 +35,8 @@ Agent-based model (ABM) is essential for social-ecological systems (SES) researc
 
 - Allow users to develop modules separately and coupling them together.
 - Automatically portray interactions between social actors and natural cells with `Networkx`
-- By applying a [human behavior modeling framework]((https://songshgeo.github.io/ABSESpy/docs/background/#human-behaviour-framework)), users can define, select, and track agents of the model in more intuitive ways.
-- Manage and test complex parameters [with a `yaml` file](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/parameters/).
+- By applying a [human behavior modeling framework]((https://absespy.github.io/ABSESpy/docs/background/#human-behaviour-framework)), users can define, select, and track agents of the model in more intuitive ways.
+- Manage and test complex parameters [with a `yaml` file](https://absespy.github.io/ABSESpy/tutorial/notebooks/parameters/).
 - access information between cells and social actors by their locations
 - Auto-update real-world datasets and relate the ticks counter to the real-world time.
 ## Basic Usage & Documents
@@ -47,7 +47,7 @@ Install with pip or your favorite PyPI package manager.
 pip install abses
 ```
 
-Access the [Documentation here](https://songshgeo.github.io/ABSESpy/).
+Access the [Documentation here](https://absespy.github.io/ABSESpy/).
 
 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/DQg0xJ.jpg" alt="Drawing" style="width: 600px;"/>
 
@@ -58,8 +58,8 @@ Access the [Documentation here](https://songshgeo.github.io/ABSESpy/).
 
 If you need any help when using `ABSESpy`, don't hesitate to get in touch with us through:
 
-- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/SongshGeo/ABSESpy/discussions).
-- Report bugs, suggest features, or view the source code [on _GitHub_ Issues](https://github.com/SongshGeo/ABSESpy/issues).
+- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/absespy/ABSESpy/discussions).
+- Report bugs, suggest features, or view the source code [on _GitHub_ Issues](https://github.com/absespy/ABSESpy/issues).
 - Use the [mailing list](https://groups.google.com/g/absespy) for less well-defined questions or ideas or to announce other projects of interest to `ABSESpy` users.
 
 ## License

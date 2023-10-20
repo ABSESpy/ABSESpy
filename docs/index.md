@@ -20,7 +20,7 @@ glightbox: false
 
 **Useful links**: [Install](home/install.md) | [Source Repository](https://github.com/ABSESpy/ABSESpy) | [Issues & Ideas](https://github.com/ABSESpy/ABSESpy/issues) | [Q&A Support](https://github.com/ABSESpy/ABSESpy/discussions) | [Mailing List](https://groups.google.com/g/absespy)
 
-`ABSESpy` is an Agent-Based modeling (ABM) framework that makes modeling artificial **[Social-ecological systems](https://songshgeo.github.io/ABSESpy/docs/about/)** (SES) easier.
+`ABSESpy` is an Agent-Based modeling (ABM) framework that makes modeling artificial **[Social-ecological systems](https://absespy.github.io/ABSESpy/docs/about/)** (SES) easier.
 
 <div style="display: flex; justify-content: center;">
 <table>
