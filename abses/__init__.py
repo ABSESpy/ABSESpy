@@ -9,9 +9,9 @@
 ABSESpy - Agent-based Social-ecological System framework in Python
 Copyright (c) 2021-2023 Shuang Song
 
-Documentation: https://songshgeo.github.io/ABSESpy
-Examples: https://songshgeo.github.io/ABSESpy/tutorial/user_guide/
-Source: https://github.com/SongshGeo/ABSESpy
+Documentation: https://absespy.github.io/ABSESpy
+Examples: https://absespy.github.io/ABSESpy/tutorial/user_guide/
+Source: https://github.com/absespy/ABSESpy
 """
 
 __all__ = [
