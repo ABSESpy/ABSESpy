@@ -1,4 +1,8 @@
 # Navigation
+
+> [!INFO]In Progress
+> This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/SongshGeo/ABSESpy/issues).
+
 ## About
 - [Is `ABSESpy` for me?](home/audience.md)
 - [Highlight features](home/features.md)
@@ -36,6 +40,7 @@
 ## Contribution
 
 There are several ways to contribute to `ABSESpy` -bug reports, bug fixes, documentation improvements, enhancements, and ideas are welcome:
+
 - [Discuss in the community](contribution/community.md)
 - [Feature suggestions and bug report](contribution/suggestions.md)
 - [Code or docs contribution](contribution/contribution.md)
@@ -44,6 +49,3 @@ There are several ways to contribute to `ABSESpy` -bug reports, bug fixes, docum
 ## API References
 
 - [Time Control](api/time.md)
-
-> [!INFO]In Progress
-> This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/SongshGeo/ABSESpy/issues).
