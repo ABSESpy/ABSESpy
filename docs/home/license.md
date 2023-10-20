@@ -13,6 +13,7 @@ github: https://github.com/SongshGeo
 email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
+# License
 
 Copyright 2023, `ABSESpy` [Shuang Song](https://cv.songshgeo.com/)
 
@@ -22,4 +23,4 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-`ABSESpy` bundles portions of `AgentPy`, `pandas`, `NumPy` and `Xarray`; the full text of these licenses is included in the licenses directory.
+`ABSESpy` bundles portions of `Mesa`, `mesa-geo`, `pandas`, `NumPy`, and `Xarray`; the full text of these licenses are included in the licenses directory.

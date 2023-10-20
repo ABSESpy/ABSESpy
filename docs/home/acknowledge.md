@@ -15,7 +15,11 @@ website: https://cv.songshgeo.com
 ---
 
 ## Sponsors
-This research has been supported by the National Natural Science Foundation of China (grant no. 42041007)
 
-## Contributors
-- [Shuang Song]({{website}})
+- This research has been supported by the National Natural Science Foundation of China (grant no. 42041007)
+
+## Thanks to all contributors
+
+<a href="https://github.com/ABSESpy/ABSESpy/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ABSESpy/ABSESpy" />
+</a>
