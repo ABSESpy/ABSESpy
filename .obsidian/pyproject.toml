@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "obsidian-vault-template"
+version = "0.1.0"
+description = "A obsidian vault template for python project's documentation, work with MkDocs."
+authors = ["Shuang Song <songshgeo@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "obsidian_vault_template", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.21.2"
+pytest = "^7.2.1"
+flake8 = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -5,15 +5,15 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Callable, Dict, Optional, TypeAlias, Union
+from typing import Callable, Dict, TypeAlias, Union
 
-import networkx as nx
-from agentpy import AttrDict
+from omegaconf import DictConfig
 
 from abses.actor import Actor
-from abses.bases import Creation
 
+from .cells import PatchCell
 from .container import AgentsContainer
+from .links import LinkContainer
 from .modules import CompositeModule, Module
 from .sequences import ActorsList, Selection
 
@@ -21,68 +21,54 @@ Actors: TypeAlias = Union[ActorsList, Selection, Actor]
 Trigger: TypeAlias = Union[str, Callable]
 
 
-class HumanModule(Module, Creation):
+class HumanModule(Module):
+    """基本的人类模块"""
+
     def __init__(self, model, name=None):
         Module.__init__(self, model, name)
-        Creation.__init__(self)
         self._agents = AgentsContainer(model)
-        self._collections: Dict[str, Selection] = AttrDict()
-        self._rules: Dict[str, Trigger] = AttrDict()
-
-    def __getattr__(self, name):
-        if name[0] == "_" or name not in self._collections:
-            return super().__getattr__(name)
-        selection = self._collections[name]
-        return self.actors.select(selection)
+        self._collections: Dict[str, Selection] = DictConfig({})
+        self._rules: Dict[str, Trigger] = DictConfig({})
 
     @property
     def agents(self) -> AgentsContainer:
+        """agents container"""
         return self._agents
 
-    @property
-    def actors(self) -> ActorsList:
-        return self.agents.to_list()
+    def actors(self, name: str | None = None) -> ActorsList:
+        """Different selections of agents"""
+        if name is None:
+            return self.agents.to_list()
+        if name not in self._collections:
+            raise KeyError(f"{name} is not defined.")
+        selection = self._collections[name]
+        return self.actors().select(selection)
+
+    def _must_be_actor(self, actor: Actor) -> None:
+        if not isinstance(actor, Actor):
+            raise TypeError(
+                f"Actor must be a subclass of Actor, instead of {type(actor)}."
+            )
+
+    def _must_be_cell(self, cell: PatchCell) -> None:
+        if not isinstance(cell, PatchCell):
+            raise TypeError(
+                f"Cell must be a subclass of Cell, instead of {type(cell)}."
+            )
 
     def define(self, name: str, selection: Selection) -> ActorsList:
-        selected = self.actors.select(selection)
+        """定义一次主体查询"""
+        if name in self._collections:
+            raise KeyError(f"{name} is already defined.")
+        selected = self.actors().select(selection)
         self._collections[name] = selection
         return selected
 
-    # def rule(self, actors: Actors, when: Selection, then: Trigger, name: Optional[str] = None):
-    #     if name is None:
-    #         pass
-    #     self.define(name=name)
-    #     actors_to_trigger = actors.select(when)
-    #     results = actors_to_trigger.trigger(then)
-    #     return actors_to_trigger, results
 
-    def arena(self, actor_A: Actors, actor_B: Actors, interaction: Trigger):
-        actor_A.trigger(interaction, actor_B)
-        actor_B.trigger(interaction, actor_A)
+class BaseHuman(CompositeModule, HumanModule, LinkContainer):
+    """基本的人类模块"""
 
-    def require(self, attr: str) -> object:
-        return self.mediator.transfer_require(self, attr)
-
-
-class BaseHuman(CompositeModule, HumanModule):
     def __init__(self, model, name="human"):
+        LinkContainer.__init__(self)
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
-
-
-#     def mock(self, agents, attrs, how="attr"):
-#         tutors = self.to_agents(agents.tutor.now)
-#         for attr in make_list(attrs):
-#             values = tutors.array(attr, how)
-#             agents.update(attr, values)
-
-
-# def skip_if_close(func):
-#     def skip_module_method(self, *args, **kwargs):
-#         if self.opening:
-#             func(self, *args, **kwargs)
-#         else:
-#             if self.log_flag:
-#                 self.logger.warning(f"{self}.")
-
-#     return skip_module_method

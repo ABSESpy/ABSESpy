@@ -19,20 +19,17 @@ __all__ = [
     "MainModel",
     "BaseHuman",
     "BaseNature",
-    "HumanModule",
     "PatchModule",
     "Actor",
     "ActorsList",
     "AgentsContainer",
-    "link_to",
+    "PatchCell",
     "perception",
-    # "MyExperiment",
 ]
-__version__ = "v0.1.3"
+__version__ = "v0.2.0.alpha"
 
-from .actor import Actor, link_to, perception
+from .actor import Actor, perception
 from .container import ActorsList, AgentsContainer
-from .human import BaseHuman, HumanModule
+from .human import BaseHuman
 from .main import MainModel
-from .nature import BaseNature, PatchModule
-from .objects import *
+from .nature import BaseNature, PatchCell, PatchModule

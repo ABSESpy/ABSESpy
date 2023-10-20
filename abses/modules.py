@@ -6,24 +6,23 @@
 # Website: https://cv.songshgeo.com/
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import List, Optional, Set, Union
+from typing import TYPE_CHECKING, List, Optional
 
-import numpy as np
-from agentpy import Model
-from prettytable import PrettyTable
+from abses.tools.func import iter_func
 
-from .bases import Creator
-from .components import Component, MainComponent, iter_func
-from .objects import BaseObj
-from .tools.func import make_list
+from .bases import _Notice
+from .objects import _BaseObj
+from .states import States
+
+if TYPE_CHECKING:
+    from .main import MainModel
 
 
-class Module(Component, BaseObj):
-    def __init__(self, model: Model, name: Optional[str] = None):
-        Component.__init__(self, name=name)
-        BaseObj.__init__(self, model, observer=True, name=name)
-        self._model: Model = model
+class Module(_BaseObj):
+    """基本的模块"""
+
+    def __init__(self, model: MainModel, name: Optional[str] = None):
+        _BaseObj.__init__(self, model, observer=True, name=name)
         self._open: bool = True
 
     def __repr__(self) -> str:
@@ -32,59 +31,90 @@ class Module(Component, BaseObj):
 
     @property
     def opening(self) -> bool:
+        """模块处于打开或关闭状态"""
         return self._open
-
-    def _after_parsing(self):
-        self.switch_open_to(self.params.pop("open", None))
-        self.recording = self.params.pop("record", [])
-        self.reporting = self.recording  # recording vars also reported
-        self.reporting = self.params.pop("report", [])
-
-    @iter_func("modules")
-    def report_vars(self):
-        for var in self._reporting:
-            value = getattr(self, var)
-            self.model.report(var, value)
 
     @iter_func("modules")
     def switch_open_to(self, _open: Optional[bool] = None) -> bool:
-        """#TODO 思考和说明模块关闭后有何不同"""
+        """开启或关闭模块，同时开启或关闭所有子模块"""
         if _open is None:
             return False
-        elif not isinstance(_open, bool):
+        if not isinstance(_open, bool):
             raise TypeError("Accept boolean parameters")
-        else:
-            if self._open is not _open:
-                self.logger.info(f"{self} switch 'open' to {_open}.")
-                self._open = _open
+        if self._open is not _open:
+            self.logger.info("%s switch 'open' to %s.", self.name, _open)
+            self._open = _open
         return self._open
+
+    # @abstractmethod
+    def initialize(self):
+        """
+        Initialization after handle parameters.
+        """
+
+    def _setup(self):
+        """
+        Initialization before handle parameters.
+        """
+
+    def step(self):
+        """
+        每当时间前进时触发
+        """
+
+    def _end(self):
+        """
+        每当时间后退时触发
+        """
 
 
 # Composite
-class CompositeModule(Module, MainComponent, Creator):
-    def __init__(self, model: Model, name: str = None) -> None:
-        MainComponent.__init__(self, name=name)
-        Creator.__init__(self)
+class CompositeModule(Module, States, _Notice):
+    """基本的组合模块，可以创建次级模块"""
+
+    def __init__(self, model: MainModel, name: str = None) -> None:
         Module.__init__(self, model, name=name)
+        States.__init__(self)
+        _Notice.__init__(self)
         self._modules: List[Module] = []
 
     @property
     def modules(self) -> List[Module]:
+        """当前模块的次级模块"""
         return self._modules
 
-    def summary_modules(self) -> PrettyTable:
-        table = PrettyTable()
-        table.field_names = ["Name", "Opening", "Params"]
-        for module in self.modules:
-            table.add_row([module.name, module.opening, len(module.params)])
-        return table
-
-    def create_module(self, module_class: Module, *args, **kwargs) -> Module:
-        module = module_class(model=self.model, *args, **kwargs)
-        if not issubclass(module.__class__, Module):
-            raise TypeError("Must inherited from a module.")
+    def create_module(
+        self, module_class: Module, how: Optional[str] = None, **kwargs
+    ) -> Module:
+        """创建次级模块"""
+        if not issubclass(module_class, Module):
+            raise TypeError(
+                f"Module class {module_class} must inherited from a module."
+            )
+        if not how:
+            module = module_class(model=self._model, **kwargs)
+        elif hasattr(module_class, how):
+            creating_method = getattr(module_class, how)
+            module = creating_method(model=self.model, **kwargs)
+        else:
+            raise TypeError(f"{how} is not a valid creating method.")
         setattr(self, module.name, module)  # register as module
-        self.add_creation(module)  # register as creation
+        self.attach(module)
         self.modules.append(module)  # register as module
-        self.notify()  # update attributes
         return module
+
+    @iter_func("modules")
+    def initialize(self):
+        return super().initialize()
+
+    @iter_func("modules")
+    def _setup(self):
+        return super()._setup()
+
+    @iter_func("modules")
+    def step(self):
+        return super().step()
+
+    @iter_func("modules")
+    def _end(self):
+        return super()._end()

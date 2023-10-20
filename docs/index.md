@@ -2,7 +2,7 @@
 title: index
 authors: SongshGeo
 long_name: Agent-Based Social-ecological systems Modelling Framework in Python
-name: AB-SESpy
+name: ABSESpy Documentation
 state: review
 banner_icon: 💻
 banner_y: 0.52
@@ -10,40 +10,47 @@ SES: social-ecological systems
 github: https://github.com/SongshGeo
 email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
+glightbox: false
 ---
+![ABSES_banner](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-10-19%20at%2019.08.12@2x.png)
 
-![pixel_abses2](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/pixel_abses2.svg)
+<!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-## Features
+**Date**: October 19, 2023, **Version**: 0.2.0
 
-<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/DQg0xJ.jpg" alt="Drawing" style="width: 800px;"/>
+**Useful links**: [Install](home/install.md) | [Source Repository](https://github.com/ABSESpy/ABSESpy) | [Issues & Ideas](https://github.com/ABSESpy/ABSESpy/issues) | [Q&A Support](https://github.com/ABSESpy/ABSESpy/discussions) | [Mailing List](https://groups.google.com/g/absespy)
 
-`ABSESpy` makes it easier to build artificial **[Social-ecological systems](docs/about.md#what-are-social-ecological-systems-sess)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
+`ABSESpy` is an Agent-Based modeling (ABM) framework that makes modeling artificial **[Social-ecological systems](https://songshgeo.github.io/ABSESpy/docs/about/)** (SES) easier.
 
-- Modelling environment for agents with **[geo data](tutorial/notebooks/nature/geodata.ipynb)**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- Modelling **[human behaviour](tutorial/notebooks/human/CCR_example.ipynb)** of agents with [cognition, contagion and responses](docs/background.md#human-behaviour-framework).
-- Easily manage all [parameters, arguments](tutorial/notebooks/parameters.ipynb), and variables with a `yaml` settings file.
-
-[More features ...](logs/v-0.1.0.md)
-
-## Getting Start
-
-The getting started guide aims to get you using `{{name}}` productively as quickly as possible. It is designed as an entry point for new users and introduces `{{name}}`’s main concepts.
-
-> [!INFO]Note
-> If you are unfamiliar with the social-ecological systems' framework or Agent-based modelling method, we strongly suggest you browse our [core concepts](docs/background.md) and [tutorial](tutorial/user_guide.md) before building your model.
-
-- {{name}} depends on several excellent open-sourced Python packages: [dependencies](docs/dependencies.md)
-- Installing the {{name}} package: [install](docs/install.md)
-- Run our testing models: [primary usage](tutorial/notebooks/model.ipynb)
-- Design your model according to our [User Guide](tutorial/user_guide.md) and [API References](api/model.md)
-
-<!-- ## Model Library
-
-We provide several [examples](examples/negotiation.md) for reference to new users. We likewise encourage users to let us know about links to social-ecological system models/papers developed using `{{name}}`, and we will list them here. -->
-
-## About AB**SES**py
-
-- Welcome to reporting bugs or other issues in our [GitHub discussion forum](https://github.com/SongshGeo/ABSESpy/discussions).
-- For enthusiastic developers and contributors, please follow the [contribution guide](docs/contribution.md) when adding new features or fixing bugs.
-- Many lovely people made this project possible through financial support, contributions, and advice. A list of acknowledgements can be found [here](docs/acknowledge.md).
+<div style="display: flex; justify-content: center;">
+<table>
+    <tr>
+        <td style="text-align: center;">
+            <a href="examples/gallery.md">
+                <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/D6J1Gj.png" alt="Step 1" width="300"/>
+            </a>
+            <p>Pure beginner of ABM or SES</p>
+        </td>
+        <td style="text-align: center;">
+            <a href="https://cv.songshgeo.com/">
+                <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/9324755_wiki_wikipedia_book_directory_ebook_icon.png" alt="Step 2" width="300"/>
+            </a>
+            <p>Know basic ideas but don't know how to start</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center;">
+            <a href="https://cv.songshgeo.com/">
+                <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/1238311_div_div%20coding_html_html%20coding_source%20code_icon.png" alt="Step 3" width="300"/>
+            </a>
+            <p>Source code and API documentation</p>
+        </td>
+        <td style="text-align: center;">
+            <a href="https://cv.songshgeo.com/">
+                <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/942329_computer_internet_laptop_learn_teach_icon.png" alt="Step 4" width="300"/>
+            </a>
+            <p>Check out the tutorials</p>
+        </td>
+    </tr>
+</table>
+</div>

@@ -1,0 +1,34 @@
+time:
+  start: 1979-12-01
+  end: 2013-01-01
+  freq: 'M'
+
+root: /Users/songshgeo/Documents/VSCode/ABSESpy
+
+nature:
+  crs: EPSG:4326
+
+
+hydro:
+  Ks: 0.8
+
+city:
+  quota_weighted_by: 'deficits'
+
+farmer:
+  loss_coef: 0.8
+  gw_cost: 0.2  # dollars/kWh (same as energy cost of groundwater pumping)
+
+city_id: 'City_ID'
+crops_id:
+  Rice: 12
+  Wheat: 16
+  Maize: 14
+
+db:
+  crops: data/water_quota/crops
+  irr_data: data/water_quota/irr_lands.csv
+  cities: zip://data/water_quota/YR_cities.zip
+  population: data/water_quota/yr_pop_downscaled.tif
+  et0: data/water_quota/FAO56_PM_pet0.nc
+  prec: data/water_quota/prec_montly_01deg.nc

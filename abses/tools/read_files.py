@@ -9,74 +9,14 @@ import logging
 import os
 from typing import Iterable
 
-import xarray as xr
-import yaml
-
-from .func import make_list
+from abses.tools.func import make_list
 
 logger = logging.getLogger(__name__)
 
 
-def is_valid_yaml(path: any) -> bool:
-    """
-    Judge if the input is a valid yaml file path.
-
-    Args:
-        path (any): element to judge.
-
-    Returns:
-        bool: if is a valid yaml file path, returns True.
-    """
-    if not isinstance(path, str):
-        return False
-    elif not path.endswith(".yaml"):
-        return False
-    elif not os.path.isfile(path):
-        raise ValueError(
-            f"{path} contains '.yaml' but is not a valid yaml file path."
-        )
-    else:
-        return True
-
-
-def redirect_yaml(param: dict) -> None:
-    """
-    Clean dictionary, if valid-yaml file path exists, replace it with a new dictionary.
-
-    Args:
-        param (dict): dictionary to clean.
-    """
-    for key, val in param.items():
-        if isinstance(val, dict):
-            redirect_yaml(val)
-        elif is_valid_yaml(val):
-            param[key] = read_yaml(val, True)
-
-
-def read_yaml(path: str, nesting: bool = True) -> dict:
-    """
-    Load parameters from yaml settings file.
-
-    Arguments:
-        yaml_file -- File path.
-        detecting_nesting (bool, optional): wether to detect nesting `yaml` files. Defaults to True.
-
-    Raises:
-        KeyError: Cannot find a param by key.
-    """
-    # Read yaml file
-    with open(path, "r", encoding="utf-8") as file:
-        yaml_data = file.read()
-        params = yaml.load(yaml_data, Loader=yaml.FullLoader)
-        file.close()
-    if nesting:
-        redirect_yaml(params)
-    return params
-
-
 def get_files_in_folder(
     dir_path,
-    suffix: "str|Iterable[str]" = "",
+    suffix: str | Iterable[str] = "",
     iteration: bool = True,
     full_path: bool = False,
 ) -> list[str]:

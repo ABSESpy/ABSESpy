@@ -7,135 +7,112 @@
 
 from __future__ import annotations
 
-import logging
-from collections import deque
-from typing import (
-    Any,
-    Callable,
-    Deque,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
-import pandas as pd
-from agentpy import AttrDict
-from agentpy.model import Model
-from agentpy.objects import Object
-from prettytable import PrettyTable
+import mesa
 
-from abses.time import TimeDriver
-from abses.tools.func import make_list
+from abses.time import _TimeDriver
 
-from .bases import Observer
-from .log import Log
-from .variable import MAXLENGTH, Data, Variable, VariablesRegistry
+from .bases import _Observer
+from .components import _Component
+from .dynamic import _DynamicVariable
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from abses.main import MainModel
 
 
-class BaseObj(Observer, Log, Object):
+class _BaseObj(_Observer, _Component):
+    """
+    Base class for model's objects.
+    Model object's have access to global model's parameters and time driver.
+    """
+
     def __init__(
         self,
-        model: Model,
+        model: MainModel,
         observer: Optional[bool] = True,
         name: Optional[str] = None,
     ):
-        Object.__init__(self, model=model)
-        Log.__init__(self, name=name)
-        self._registry: VariablesRegistry = VariablesRegistry(model=model)
-        self._vars_history: Dict[str, Deque[Variable]] = AttrDict()
-        self._time: TimeDriver = TimeDriver(model=model)
-        self.glob_vars: List[str] = []
-        self._recording: Set[str] = set()
-        self._reporting: Set[str] = set()
+        _Component.__init__(self, model=model, name=name)
         if observer:
             model.attach(self)
-
-    def __getattr__(self, __name: str) -> Any:
-        # if __name in self.vars:
-        #     now = super().__getattribute__(__name)
-        #     var = self.to_variable(__name, now)
-        #     return var.get_value()
-        return super().__getattribute__(__name)
+        self._model = model
+        self._dynamic_variables: Dict[str, _DynamicVariable] = {}
 
     @property
-    def vars(self) -> List[str]:
-        return self._registry[self]
+    def time(self) -> _TimeDriver:
+        """Returns read-only model's time driver.
+
+        Returns
+        -------
+        _TimeDriver
+            Model's time driver.
+        """
+        return self.model.time
 
     @property
-    def time(self) -> TimeDriver:
-        return self._time
+    def model(self) -> MainModel:
+        """Returns read-only model object.
+
+        Returns
+        -------
+        MainModel
+            ABSES model object.
+        """
+        return self._model
 
     @property
-    def output(self) -> pd.DataFrame:
-        return pd.DataFrame(self.log, index=self.time.time[:-1])
+    def dynamic_variables(self) -> Dict[str, Any]:
+        """Returns read-only model's dynamic variables.
 
-    @property
-    def recording(self) -> Set[str]:
-        return self._recording
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary of model's dynamic variables.
+        """
+        if not self._dynamic_variables:
+            return {}
+        for k, v in self._dynamic_variables.items():
+            return {k: v.now()}
 
-    @recording.setter
-    def recording(self, variables: Union[str, Iterable[str]]) -> None:
-        self._recording = self.recording.union(set(make_list(variables)))
+    @model.setter
+    def model(self, model: MainModel):
+        """Sets the model object.
 
-    @property
-    def reporting(self) -> Set[str]:
-        return self._reporting
+        Parameters
+        ----------
+        model : MainModel
+            ABSES model object.
+        """
+        if not isinstance(model, mesa.Model):
+            raise TypeError("Model must be an instance of mesa.Model")
+        self._model = model
 
-    @reporting.setter
-    def reporting(self, variables: Union[str, Iterable[str]]) -> None:
-        self._reporting = self.reporting.union(make_list(variables))
+    def add_dynamic_variable(
+        self, name: str, data: Any, function: Callable
+    ) -> None:
+        """Adds new dynamic variable.
 
-    def _when_time_go(self):
-        self.record(self._recording)
-        for var in self._registry[self]:
-            value_now = self.__getattr__(var)
-            self._vars_history[var].append(value_now)
-
-    def to_variable(self, name, now: Optional[Data] = None) -> Data:
-        self._registry.check_variable(name, value=now)
-        history = self._vars_history[name]
-        return Variable(owner=self, history=history, now=now)
-
-    def register_a_var(
-        self,
-        name: str,
-        init_data: Optional[Data] = None,
-        long_name: Optional[str] = None,
-        units: Optional[str] = None,
-        check_func: Optional[Iterable[Callable]] = None,
-    ) -> Variable:
-        dtype = type(init_data)
-        self._registry.register(
-            owner=self,
-            var_name=name,
-            long_name=long_name,
-            units=units,
-            dtype=dtype,
-            check_func=check_func,
+        Parameters
+        ----------
+        name : str
+            Name of the variable.
+        data : Any
+            Data source for callable function.
+        function : Callable
+            Function to calculate the dynamic variable.
+        """
+        var = _DynamicVariable(
+            obj=self, name=name, data=data, function=function
         )
-        self._vars_history[name] = deque([], maxlen=MAXLENGTH)
-        self.__setattr__(name, init_data)
-        return self.to_variable(name=name, now=init_data)
+        self._dynamic_variables[name] = var
 
-    def report(
-        self,
-        max_width: int = 30,
-        decimal: int = 4,
-    ) -> PrettyTable:
-        table = PrettyTable()
-        table.field_names = ["Variable", "Value"]
-        for attr, val in self.__dict__.items():
-            if attr in ("id", "type"):
-                continue
-            if attr.startswith("_"):
-                continue
-            table.add_row([attr, val])
-        table.max_width = max_width
-        table.title = f"{self.type} {self.id}:"
-        table.float_format = f".{decimal}"
-        return table
+    def dynamic_var(self, attr_name: str) -> Any:
+        """Returns output of a dynamic variable.
+
+        Parameters
+        ----------
+        attr_name : str
+            Dynamic variable's name.
+        """
+        return self._dynamic_variables[attr_name].now()

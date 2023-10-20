@@ -5,288 +5,298 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from copy import deepcopy
-from functools import cached_property
-from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from __future__ import annotations
 
+import logging
+from typing import TYPE_CHECKING, Any, List, Optional, Self
+
+import geopandas
+import mesa_geo as mg
 import numpy as np
-import xarray
-from agentpy import AttrDict
-from agentpy.grid import AgentSet
+import rasterio as rio
+import rioxarray
+import xarray as xr
+from mesa.space import Coordinate
+from mesa_geo.raster_layers import Cell
+from rasterio import mask
 
-from abses.actor import Actor
-from abses.bases import Creation, Creator
-from abses.boundary import Boundaries
-from abses.engine import GeoEngine
-from abses.geo import Geo
+from abses.modules import CompositeModule, Module
 
-from .algorithms.spatial import points_to_polygons, polygon_to_mask
-from .container import AgentsContainer
-from .modules import CompositeModule, Module
-from .patch import Patch, get_buffer
-from .sequences import ActorsList, Selection
+from .actor import Actor
+from .cells import PatchCell
+from .sequences import ActorsList
 from .tools.func import norm_choice
 
+if TYPE_CHECKING:
+    from abses.main import MainModel
+
+logger = logging.getLogger(__name__)
+logger.info("Using rioxarray version: %s", rioxarray.__version__)
+
 DEFAULT_WORLD = {
-    "width": 9,
-    "height": 9,
-    "resolution": 10,
-    # 'units': 'm',
+    "width": 10,
+    "height": 10,
+    "resolution": 1,
 }
+CRS = "epsg:4326"
 
 
-class PositionSet(AgentSet):
-    def __init__(self, model, index, accessible, *args, **kwargs):
-        super().__init__(model, *args, **kwargs)
-        self._index: Tuple[int, int] = index
-        self._accessible: bool = accessible
-
-    @property
-    def index(self):
-        return self._index
-
-    @property
-    def accessible(self):
-        return self._accessible
-
-    def add(self, actor: Actor):
-        if self._accessible is False:
-            raise KeyError(f"{self.index} is not accessible.")
-        else:
-            super().add(actor)
-
-
-class PatchModule(Module, Creator, Creation):
-    _valid_type = (bool, int, float, str, "float32")
-    _valid_dtype = tuple([np.dtype(t) for t in _valid_type])
+class PatchModule(Module, mg.RasterLayer):
+    """基础的空间模块"""
 
     def __init__(self, model, name=None, **kwargs):
         Module.__init__(self, model, name=name)
-        Creator.__init__(self)
-        self._geo = Geo(model)
-        self._mask = None
-        # Other attrs
-        self._attrs = kwargs.copy()
-        self._patches = AttrDict()
+        mg.RasterLayer.__init__(self, **kwargs)
+        for cell in self.array_cells.flatten():
+            cell.layer = self
+        self._file = None
 
     @property
-    def geo(self):
-        return self._geo
+    def cell_properties(self) -> set[str]:
+        """属性"""
+        return self.cell_cls.__attribute_properties__()
 
     @property
-    def mask(self) -> xarray.DataArray:
-        if self._mask is None:
-            self._mask = self.geo.zeros(bool)
-        mask = self._mask | self.geo.mask
-        return mask.rio.write_crs(self.geo.crs)
+    def attributes(self) -> set[str]:
+        """属性"""
+        return self._attributes | self.cell_properties
 
     @property
-    def accessible(self):
-        return ~self.mask
+    def file(self) -> str | None:
+        """文件路径"""
+        return self._file
 
     @property
-    def attrs(self):
-        return self._attrs
+    def shape2d(self) -> Coordinate:
+        """形状"""
+        return self.height, self.width
 
-    def _check_dtype(self, values) -> None:
-        dtype = values.dtype
-        if dtype not in self._valid_dtype:
-            raise TypeError(f"Invalid value type {dtype}.")
+    @property
+    def shape3d(self) -> Coordinate:
+        """形状"""
+        return 1, self.height, self.width
 
-    def _check_type(self, value) -> type:
-        val_type = type(value)
-        if val_type not in self._valid_type:
-            raise ValueError(f"Invalid type {val_type}")
+    @property
+    def array_cells(self) -> np.ndarray:
+        """所有格子的二维数组形式"""
+        return np.flipud(np.array(self.cells).T)
 
-    def _check_shape(self, values):
-        if values.shape != self.geo.shape:
-            raise ValueError(
-                f"Invalid shape {values.shape}, mismatch with shape {self.shape}."
-            )
+    @property
+    def coords(self) -> Coordinate:
+        """维度"""
+        x_arr = np.linspace(
+            self.total_bounds[0], self.total_bounds[2], self.width
+        )
+        y_arr = np.linspace(
+            self.total_bounds[3], self.total_bounds[1], self.height
+        )
+        return {
+            "y": y_arr,
+            "x": x_arr,
+        }
 
-    def create_patch(
+    @classmethod
+    def from_resolution(
+        cls,
+        model,
+        name=None,
+        shape: Coordinate = (10, 10),
+        crs=None,
+        resolution=1,
+        cell_cls: type[PatchCell] = PatchCell,
+    ) -> Self:
+        """从分辨率创建栅格图层"""
+        height, width = shape
+        total_bounds = [0, 0, width * resolution, height * resolution]
+        if crs is None:
+            crs = CRS
+        return cls(
+            model,
+            name=name,
+            width=width,
+            height=height,
+            crs=crs,
+            total_bounds=total_bounds,
+            cell_cls=cell_cls,
+        )
+
+    @classmethod
+    def copy_layer(
+        cls,
+        model: MainModel,
+        layer: Self,
+        name: Optional[str] = None,
+        cell_cls: PatchCell = PatchCell,
+    ) -> Self:
+        """复制一个已有图层的属性来创建新图层"""
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{layer} is not a valid PatchModule.")
+
+        return cls(
+            model=model,
+            name=name,
+            width=layer.width,
+            height=layer.height,
+            crs=layer.crs,
+            total_bounds=layer.total_bounds,
+            cell_cls=cell_cls,
+        )
+
+    @classmethod
+    def from_file(
+        cls,
+        raster_file: str,
+        cell_cls: type[Cell] = PatchCell,
+        attr_name: str | None = None,
+        model: None | MainModel = None,
+        name: str | None = None,
+    ) -> Self:
+        """从文件创建栅格图层"""
+        with rio.open(raster_file, "r") as dataset:
+            values = dataset.read()
+            _, height, width = values.shape
+            total_bounds = [
+                dataset.bounds.left,
+                dataset.bounds.bottom,
+                dataset.bounds.right,
+                dataset.bounds.top,
+            ]
+        obj = cls(
+            model=model,
+            name=name,
+            width=width,
+            height=height,
+            crs=dataset.crs,
+            total_bounds=total_bounds,
+            cell_cls=cell_cls,
+        )
+        obj._transform = dataset.transform
+        obj._file = raster_file
+        obj.apply_raster(values, attr_name=attr_name)
+        return obj
+
+    def _attr_or_array(self, data: None | str | np.ndarray) -> np.ndarray:
+        """判断传入的数据类型，变成合理的数组"""
+        if data is None:
+            return np.ones(self.shape2d)
+        if isinstance(data, np.ndarray):
+            if data.shape == self.shape2d:
+                return data
+            else:
+                raise ValueError(
+                    f"Shape mismatch: {data.shape} [input] != {self.shape2d} [expected]."
+                )
+        if isinstance(data, str) and data in self.attributes:
+            return self.get_raster(data)
+        raise TypeError("Invalid data type or shape.")
+
+    def get_raster(self, attr_name: str | None = None) -> np.ndarray:
+        """
+        获取属性对应的 Raster 栅格图层之前，如果是动态变量就先更新
+        """
+        if attr_name not in self._dynamic_variables:
+            return super().get_raster(attr_name)
+        return self.dynamic_var(attr_name=attr_name).reshape(self.shape3d)
+
+    def dynamic_var(self, attr_name: str) -> Any:
+        """获取动态变量"""
+        array = super().dynamic_var(attr_name)
+        # 判断算出来的是一个符合形状的矩阵
+        self._attr_or_array(array)
+        # 将矩阵转换为三维，并更新空间数据
+        array_3d = array.reshape(self.shape3d)
+        self.apply_raster(array_3d, attr_name=attr_name)
+        return array
+
+    def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
+        """获取属性对应的 Rasterio 栅格图层"""
+        data = self.get_raster(attr_name=attr_name)
+        # 如果获取到的是2维，重整为3维
+        if len(data.shape):
+            data = data.reshape(self.shape3d)
+        with rio.MemoryFile() as mem_file:
+            with mem_file.open(
+                driver="GTiff",
+                height=data.shape[1],
+                width=data.shape[2],
+                count=data.shape[0],  # number of bands
+                dtype=str(data.dtype),
+                crs=self.crs,
+                transform=self.transform,
+            ) as dataset:
+                dataset.write(data)
+            # Open the dataset again for reading and return
+            return mem_file.open()
+
+    def geometric_cells(self, geometry, **kwargs) -> List[PatchCell]:
+        """获取所有与给定几何形状相交的格子"""
+        data = self.get_rasterio(list(self.attributes)[0])
+        out_image, _ = mask.mask(data, [geometry], **kwargs)
+        mask_ = out_image.reshape(self.shape2d)
+        return list(self.array_cells[mask_.astype(bool)])
+
+    def link_by_geometry(
+        self, geo_agent: Actor, link: Optional[str] = None, **kwargs
+    ) -> None:
+        """将所有与给定几何形状相交的格子关联"""
+        if not hasattr(geo_agent, "geometry"):
+            raise TypeError(f"Agent {geo_agent} has no geometry.")
+        cells = self.geometric_cells(geo_agent.geometry, **kwargs)
+        for cell in cells:
+            cell.link_to(agent=geo_agent, link=link)
+
+    def batch_link_by_geometry(
+        self, geo_agents: List[Actor], link: Optional[str] = None, **kwargs
+    ) -> None:
+        """批量将根据几何形状将相交的格子分配给主体"""
+        for geo_agent in geo_agents:
+            self.link_by_geometry(geo_agent, link, **kwargs)
+
+    def linked_attr(
         self,
-        values: Union[np.ndarray, str, bool, float, int],
-        name: str,
-        xarray: bool = True,
-        add: bool = False,
-    ) -> Patch:
-        if not hasattr(values, "shape"):
-            # only int|float|str|bool are supported
-            self._check_type(values)
-            values = np.full(self.geo.shape, values)
-        else:
-            # nd-array like data
-            self._check_dtype(values)
-            self._check_shape(values)
-        patch = Patch(values, name=name, father=self, xarray=xarray)
-        self.add_creation(patch)
-        if add:
-            self._patches[name] = patch
-        return patch
+        attr: str,
+        link: Optional[str] = None,
+        nodata: Any = np.nan,
+        how: Optional[str] = "only",
+    ) -> np.ndarray:
+        """获取链接到本图层的主体属性"""
 
-    @property
-    def patches(self):
-        return self._patches
-
-    # @patches.setter
-    # def patches(self, patch_name: str) -> None:
-    #     self.creator.transfer_var(self, patch_name)
-    #     self._patches.append(patch_name)
-
-    # @property
-    # def num_attrs(self):
-    #     return self._num_attrs
-
-    # @property
-    # def bool_attrs(self):
-    #     return self._bool_attrs
-
-    def init_variables(self):
-        # Hydraulic attributions.
-        for attr in self.num_attrs:
-            value = self.params.get(attr, 0.0)
-            self.create_patch(value, attr, add=True)
-
-        # Type mask with bool dtype.
-        for attr in self.bool_attrs:
-            value = self.params.get(attr, False)
-            self.create_patch(False, attr, add=True)
-
-    def read_patch(self, path, name) -> None:
-        path = GeoEngine(path, self.model)
-        # dataset = path.get_dataset()
-        array = path.read2array()
-        patch = self.create_patch(array, name=name)
-        self._patches[name] = patch
-        return patch
-        # self.register_a_var(name=patch.name, value=patch.value)
-        # self.patches = patch.name
-        # setattr(self, patch.name, patch)
-
-    # def get_patch(self, attr):
-    #     return getattr(self, attr)
-
-    # def update_patch(
-    #     self,
-    #     patch_name: str,
-    #     value: "str|int|float|bool|np.ndarray",
-    #     mask: np.ndarray = None,
-    # ):
-    #     if patch_name in self.patches:
-    #         self.logger.warning(
-    #             f"{patch_name} was created by this module, use 'patch.update()' method instead."
-    #         )
-    #     else:
-    #         self.mediator.transfer_update(
-    #             self, patch_name, value=value, mask=mask
-    #         )
-    #     pass
-
-
-class BaseNature(CompositeModule, PatchModule):
-    def __init__(self, model, name="nature", **kwargs):
-        PatchModule.__init__(self, model=model, **kwargs)
-        CompositeModule.__init__(self, model, name=name)
-        self._boundary: Boundaries = None
-        self._grid: np.ndarray = None
-
-    # @property
-    # def patches(self):
-    #     return tuple(self._patches.keys())
-
-    def __getitem__(self, key: Union[Tuple[int, int], slice]) -> ActorsList:
-        items = self.grid[key]
-        if isinstance(items, AgentSet):
-            return ActorsList(self.model, items)
-        else:
-            return self._aggregate_agents(items)
-
-    @property
-    def boundary(self) -> Boundaries:
-        return self._boundary
-
-    @property
-    def grid(self) -> np.ndarray:
-        return self._grid
-
-    def _aggregate_agents(self, items: np.ndarray) -> ActorsList:
-        """Aggregating searched `PositionSet`s into an `ActorsList`."""
-        agents = ActorsList(self.model)
-        for item in items.flatten():
-            agents.extend(item)
-        return agents
-
-    def _setup_grid(self, shape: Tuple[int, int]):
-        """A numpy 2-d Grid where agents are saved in."""
-        array = np.empty(shape=shape, dtype=object)
-        access = self.accessible.to_numpy()
-        it = np.nditer(array, flags=["refs_ok", "multi_index"])
-        for _ in it:
-            index = it.multi_index
-            array[index] = PositionSet(
-                model=self.model, accessible=access[index], index=index
+        def get_attr(cell: PatchCell, __name):
+            return cell.linked_attr(
+                attr=__name,
+                link=link,
+                nodata=nodata,
+                how=how,
             )
-        self._grid = array
 
-    def _after_parsing(self):
-        """After parsing parameters, setup grid and geographic settings."""
-        settings = deepcopy(self.params.get("world", DEFAULT_WORLD))
-        self.geo.auto_setup(settings=settings)
-        boundary_settings = self.params.get("boundary", {})
-        self._boundary = Boundaries(shape=self.geo.shape, **boundary_settings)
-        self._setup_grid(shape=self.geo.shape)
+        return np.vectorize(get_attr)(self.array_cells, attr)
 
-    def get_patch(self, attr: str, **kwargs) -> Patch:
-        # TODO: finish this method
-        if attr in self.patches:
-            return self._patches[attr]
-        for module in self.modules:
-            if attr in module.patches:
-                return module._patches[attr]
-        raise ValueError(f"Unknown patch {attr}.")
-
-    def actor_to(self, actor: Actor, position: Tuple[int, int]):
-        # TODO: refactor this function
-        if actor.on_earth is True:
-            self.grid[actor.pos].remove(actor)
-        self.grid[position].add(actor)
-
-    # def transfer_var(self, sender: object, var: str) -> None:
-    #     if var not in self.patches:
-    #         self._patches[var] = sender
-    #     else:
-    #         module = self._patches[var]
-    #         if sender is module:
-    #             self.logger.warning(
-    #                 f"Transfer exists {var} of {module}, please use 'update' function to do so."
-    #             )
-    #         self.logger.error(
-    #             f"{sender} wants to transfer an exists var '{var}', which was created by {module}!"
-    #         )
-
-    # def transfer_update(
-    #     self, sender: object, patch_name: str, **kwargs
-    # ) -> None:
-    #     # update a patch
-    #     if patch_name in self.patches:
-    #         owner = self._patches[patch_name]
-    #         getattr(owner, patch_name).update(**kwargs)
-    #         self.logger.debug(
-    #             f"{sender} requires {patch_name} of {owner} to update."
-    #         )
+    def get_xarray(self, attr_name: str | None = None) -> xr.DataArray:
+        """获取 xarray 栅格图层，并设置空间投影"""
+        data = self.get_raster(attr_name=attr_name)
+        if attr_name:
+            name = attr_name
+            data = data.reshape(self.shape2d)
+            coords = self.coords
+        else:
+            coords = {"variable": list(self.attributes)}
+            coords |= self.coords
+            name = self.name
+        return xr.DataArray(
+            data=data,
+            name=name,
+            coords=coords,
+        ).rio.write_crs(self.crs)
 
     def random_positions(
         self,
-        k: int,
-        where: np.ndarray = None,
-        probabilities: np.ndarray = None,
-        only_empty: bool = False,
+        k: int = 1,
+        where: str | np.ndarray = None,
+        prob: str | np.ndarray = None,
         replace: bool = False,
-    ) -> List[Tuple[int, int]]:
+    ) -> List[Coordinate]:
         """
-        Choose 'k' patches in the world randomly.
+        Choose 'k' PatchCell in the layer randomly.
 
         Args:
             k (int): number of patches to choose.
@@ -294,111 +304,108 @@ class BaseNature(CompositeModule, PatchModule):
             replace (bool, optional): If a patch can be chosen more than once. Defaults to False.
 
         Returns:
-            List[Tuple[int, int]]: iterable coordinates of chosen patches.
+            List[Coordinate]: iterable coordinates of chosen patches.
         """
-        where = self.accessible if where is None else self.accessible & where
-        if only_empty:
-            where = where & ~self.has_agent().astype(bool)
-        where = self.create_patch(where, "where")
-        potential_pos = list(where.arr.where())
-        if probabilities is not None:
-            probabilities = probabilities[where]
-        pos_index = norm_choice(
-            np.arange(len(potential_pos)),
+        where = self._attr_or_array(where).flatten()
+        prob = self._attr_or_array(prob).flatten()
+        masked_prob = np.where(where, np.nan, prob)
+        return norm_choice(
+            self.array_cells.flatten(),
             size=k,
-            p=probabilities,
+            p=masked_prob,
             replace=replace,
         )
-        return [potential_pos[i] for i in pos_index]
 
-    def add_agents(self, agents: ActorsList, positions=None, **kwargs):
-        if positions is None:
-            positions = self.random_positions(len(agents), **kwargs)
-        for actor, pos in zip(agents, positions):
-            actor.settle_down(pos)
-        # msg = f"Randomly placed {len(agents)} '{agents.breed()}' in nature."
-        # self.mediator.transfer_event(self, msg)
+    def has_agent(
+        self, link: Optional[str] = None, xarray: bool = False
+    ) -> np.ndarray:
+        """有多少个绑定的主体"""
+        if link is None:
+            data = np.vectorize(lambda x: x.has_agent)(self.array_cells)
+        else:
+            data = np.vectorize(lambda x: bool(x.linked(link)))(
+                self.array_cells
+            )
+        if xarray:
+            return xr.DataArray(
+                data=data,
+                coords=self.coords,
+                name=link or "has_agent",
+            ).rio.write_crs(self.crs)
+        return data
 
     def land_allotment(
-        self, agents: ActorsList, where: np.ndarray = None
-    ) -> AgentsContainer:
+        self, agent: Actor, link: str, where: None | str | np.ndarray = None
+    ) -> None:
         """
-        > For each cell in the grid, find the nearest agent and assign that agent's id to the cell
-
-        :param mask: a boolean array that indicates which cells should be assigned an owner
-        :return: The pattern of the agents.
+        将土地分配给主体
         """
-        where = self.geo.wrap_data(where, masked=True)
-        points = agents.array("pos")
-        polygons = points_to_polygons(points)
-        for i, agent in enumerate(agents):
-            owned_land = polygon_to_mask(polygons[i], shape=self.shape)
-            owned_land = owned_land & where
-            agent.attach_places(name="owned", place=owned_land)
+        mask_ = self._attr_or_array(where)
+        cells = self.array_cells[mask_]
+        for cell in cells:
+            cell.link_to(agent, link)
 
-    def lookup_agents(
-        self, where: np.ndarray, selection: Optional[Selection] = None
-    ) -> ActorsList:
-        """
-        Search agents.
+    def move_agent(self, agent: Actor, position: Coordinate) -> None:
+        """移动主体"""
+        if agent.layer is not self:
+            raise TypeError(f"Agent {agent} is not on {self}.")
+        agent.put_on_layer(self, position)
 
-        Args:
-            where (np.ndarray): bool mask, when a cell is False, ignore agents here.
-            selection (Optional[Selection], optional): filter results after search. see `ActorsList.select()` for more information. Defaults to None, meaning that no further selection, just returns the actual agents distribution.
 
-        Returns:
-            ActorsList: all qualified agents.
-        """
-        where = self.geo.wrap_data(where, masked=True)
-        where_bool = where.to_numpy().astype(bool)
-        agents = self._aggregate_agents(self.grid[where_bool])
-        return agents if selection is None else agents.select(selection)
+class BaseNature(mg.GeoSpace, CompositeModule):
+    """最主要的自然模块"""
 
-    def neighbors(
+    def __init__(self, model, name="nature"):
+        CompositeModule.__init__(self, model, name=name)
+        crs = self.params.get("crs", CRS)
+        mg.GeoSpace.__init__(self, crs=crs)
+        self._major_layer = None
+
+    @property
+    def major_layer(self) -> PatchModule | None:
+        """作为参考的最主要的图层"""
+        return self._major_layer
+
+    @major_layer.setter
+    def major_layer(self, layer: PatchModule):
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{layer} is not PatchModule.")
+        self._major_layer = layer
+        self.crs = layer.crs
+
+    @property
+    def total_bounds(self) -> np.ndarray | None:
+        if self._total_bounds:
+            return self._total_bounds
+        if hasattr(self, "major_layer") and self.major_layer:
+            return self.major_layer.total_bounds
+        return None
+
+    def create_agents_from_gdf(
         self,
-        pos: Tuple[int, int],
-        distance: int = 0,
-        approach: int = 4,
-        selection: Optional[Selection] = None,
+        gdf: geopandas.GeoDataFrame,
+        unique_id: str = "Index",
+        agent_cls: type[Actor] = Actor,
     ) -> ActorsList:
-        """
-        Find all agents nearby with a given position and distance.
-
-        Args:
-            pos (Tuple[int, int]): a specific position in the world.
-            distance (int, optional): distances to search. Defaults to 0.
-            neighbors (int, optional): neighbor rule. Defaults to 4.
-            breed (str, optional): filter results after search. see `ActorsList.select()` for more information. Defaults to None, meaning that no further selection, just returns the actual agents distribution.
-
-        Returns:
-            ActorsList: all qualified agents.
-        """
-        position = self.geo.zeros()
-        position[pos] = True
-        buffer = get_buffer(
-            array=position, buffer=distance, neighbors=approach
+        """根据GeoDataFrame创建主体"""
+        creator = mg.AgentCreator(
+            model=self.model, agent_class=agent_cls, crs=self.crs
         )
-        return self.lookup_agents(buffer, selection=selection)
+        agents = creator.from_GeoDataFrame(gdf=gdf, unique_id=unique_id)
+        self.model.agents.register_a_breed(agent_cls)
+        self.model.agents.add(agents)
+        return ActorsList(model=self.model, objs=agents)
 
-    def has_agent(self, selection: Optional[Selection] = None) -> Patch:
-        """
-        How many qualified agents are available in each cell.
-
-        Args:
-            selection (Optional[Selection], optional): selection, see `ActorsList.select()` for more information. Defaults to None, meaning that no further selection, just returns the actual agents distribution.
-
-        Returns:
-            Patch[int]: number of qualified agents in each cell.
-        """
-
-        def counts_agent(agents, selection):
-            agents = ActorsList(self.model, agents)
-            return (
-                len(agents.select(selection))
-                if selection is not None
-                else len(agents)
-            )
-
-        has_agents = np.vectorize(counts_agent)(self.grid, selection)
-        patch = self.create_patch(has_agents, "has_agent", True)
-        return patch
+    def create_module(
+        self,
+        module_class: Module = PatchModule,
+        how: str | None = None,
+        **kwargs,
+    ) -> PatchModule:
+        """创建栅格图层的子模块"""
+        module = super().create_module(module_class, how, **kwargs)
+        # 如果是第一个创建的模块,则将其作为主要的图层
+        if not self.layers:
+            self.major_layer = module
+        self.add_layer(module)
+        return module

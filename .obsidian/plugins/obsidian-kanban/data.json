@@ -1,0 +1,51 @@
+{
+  "new-note-folder": "changelog.d",
+  "lane-width": 350,
+  "hide-tags-in-title": true,
+  "tag-colors": [
+    {
+      "tagKey": "#feat✨",
+      "color": "rgba(255, 255, 255, 1)",
+      "backgroundColor": "rgba(121, 172, 120, 1)"
+    },
+    {
+      "tagKey": "#docs📄",
+      "color": "",
+      "backgroundColor": "rgba(79, 112, 156, 1)"
+    },
+    {
+      "tagKey": "#zap⚡️",
+      "color": "",
+      "backgroundColor": "rgba(121, 63, 223, 1)"
+    },
+    {
+      "tagKey": "#bug🐛",
+      "color": "",
+      "backgroundColor": "rgba(149, 35, 35, 1)"
+    },
+    {
+      "tagKey": "#refactor♻️",
+      "color": "",
+      "backgroundColor": "rgba(0, 66, 37, 1)"
+    },
+    {
+      "tagKey": "#test🧪",
+      "color": "",
+      "backgroundColor": "rgba(1, 106, 112, 1)"
+    }
+  ],
+  "hide-card-count": false,
+  "date-colors": [
+    {
+      "isToday": false,
+      "distance": 7,
+      "unit": "days",
+      "direction": "after",
+      "backgroundColor": "rgba(198, 61, 47, 1)"
+    }
+  ],
+  "hide-date-in-title": true,
+  "show-relative-date": true,
+  "date-format": "📅 YYYY-MM-DD",
+  "new-note-template": "template/changelog_template.md"
+}

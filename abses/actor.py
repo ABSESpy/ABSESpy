@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import logging
-from numbers import Number
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,23 +15,27 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Self,
     Tuple,
     TypeAlias,
     Union,
-    overload,
 )
 
-import networkx as nx
-import numpy as np
-from agentpy import AgentSet, AttrDict
+import mesa_geo as mg
+from mesa.space import Coordinate
+from omegaconf import DictConfig
+from shapely import Point
 
-from .objects import BaseObj
-from .patch import Patch
+from abses.links import LinkNode
+from abses.objects import _BaseObj
+from abses.sequences import ActorsList
+
+# A class that is used to store the position of the agent.
+
 
 if TYPE_CHECKING:
-    from .main import MainMediator
-    from .sequences import ActorsList
+    from abses.nature import PatchCell
+
+    from .main import MainModel
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
@@ -41,6 +44,19 @@ logger = logging.getLogger("__name__")
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
+    """
+    Parses a string selection expression and returns a dictionary of key-value pairs.
+
+    Parameters
+    ----------
+    selection: str
+       String specifying which breeds to select.
+
+    Returns
+    -------
+    selection_dict: dict
+         Dictionary
+    """
     selection_dict = {}
     if "==" not in selection:
         return {"breed": selection}
@@ -51,85 +67,212 @@ def parsing_string_selection(selection: str) -> Dict[str, Any]:
     return selection_dict
 
 
-def perception(func):
+def perception(func) -> Callable:
+    """感知世界"""
+
     @property
     def wrapper(self: Actor, *args, **kwargs):
+        """感知"""
         return func(self, *args, **kwargs)
 
     return wrapper
 
 
-def link_to(func):
-    # TODO and links, which can be searched through networkx
-    @property
-    def wrapper(self: Actor, *args, **kwargs):
-        return func(self, *args, **kwargs)
+# def check_rule(loop: bool = False) -> Callable:
+#     """检查规则"""
+#     def f(func: Callable) -> Callable:
+#         def wrapper(self: Actor, *args, **kwargs):
+#             triggered = self._check_rules("now")
+#             if loop:
+#                 while len(triggered) > 0:
+#                     triggered = self._check_rules("now")
+#             return func(self, *args, **kwargs)
 
-    return wrapper
+#         return wrapper
 
-
-def check_rule(loop: bool = False) -> Callable:
-    def f(func: Callable) -> Callable:
-        def wrapper(self: Actor, *args, **kwargs):
-            triggered = self._check_rules("now")
-            if loop:
-                while len(triggered) > 0:
-                    triggered = self._check_rules("now")
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    return f
+#     return f
 
 
-class Actor(BaseObj):
+class Actor(mg.GeoAgent, _BaseObj, LinkNode):
+    """
+    An actor in a social-ecological system.
+
+    Attributes
+    ----------
+    _freq_levels : dict
+        A dictionary that maps frequency levels to integer codes. The frequency levels are used to determine when rules
+        should be checked. The available frequency levels are "now", "update", "move", and "any".
+    _rules : dict
+        A dictionary that maps rule names to dictionaries that contain information about the rule. Each rule dictionary
+        contains the following keys: "when", "then", "params", "frequency", and "disposable". The "when" key maps to a
+        selection criteria that determines when the rule should be applied. The "then" key maps to the name of a method
+        that should be called when the rule is triggered. The "params" key maps to a dictionary of parameters that
+        should be passed to the method. The "frequency" key maps to an integer code that determines when the rule should
+        be checked. The "disposable" key is a boolean that determines whether the rule should be deleted after it is
+        triggered.
+    _cell : PatchCell
+        The cell where the actor is located.
+    container : HumanContainer
+        The container that the actor belongs to.
+    layer : mg.RasterLayer
+        The layer where the actor is located.
+    indices : Coordinate
+        The indices of the cell where the actor is located.
+    pos : Coordinate
+        The position of the cell where the actor is located.
+    population : list
+        A list of actors of the same breed as the actor.
+    on_earth : bool
+        Whether the actor is standing on a cell.
+    here : ActorsList
+        A list of actors that are on the same cell as the actor.
+
+    Methods
+    -------
+    __init__(self, model: MainModel, observer: bool = True, unique_id: Optional[int] = None, **kwargs) -> None
+        Initializes a new actor.
+    put_on(self, cell: PatchCell | None = None) -> None
+        Places the actor on a cell.
+    put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
+        Specifies a new cell for the actor to be located on.
+    __setattr__(self, name, value)
+        Sets an attribute of the actor.
+    _freq_level(self, level: str) -> int
+        Returns the integer code for a given frequency level.
+    _check_rules(self, check_when: str) -> List[str]
+        Checks the actor's rules.
+    selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
+        Selects the actor according to specified criteria.
+    """
+
     # when checking the rules
     _freq_levels = {"now": 0, "update": 1, "move": 2, "any": 3}
 
     def __init__(
         self,
-        model,
+        model: MainModel,
         observer: bool = True,
-        name: Optional[str] = None,
+        unique_id: Optional[int] = None,
         **kwargs,
-    ):
-        BaseObj.__init__(self, model, observer=observer, name=name)
-        self._on_earth: bool = False
-        self._pos: Tuple[int, int] = None
-        self._relationships: Dict[str, ActorsList] = AttrDict()
-        self._ownerships: Dict[str, Patch] = AttrDict()
+    ) -> None:
+        _BaseObj.__init__(self, model, observer=observer)
+        if not unique_id:
+            unique_id = self.model.next_id()
+        crs = kwargs.pop("crs", model.nature.crs)
+        geometry = kwargs.pop("geometry", None)
+        mg.GeoAgent.__init__(
+            self, unique_id, model=model, geometry=geometry, crs=crs
+        )
+        LinkNode.__init__(self)
         self._rules: Dict[str, Dict[str, Any]] = {}
-        self.mediator: MainMediator = self.model.mediator
-        self.setup(**kwargs)
+        self._cell: PatchCell = None
+        self.container = model.human
+
+    def put_on(self, cell: PatchCell | None = None) -> None:
+        """
+        Place agent on a cell (same layer)
+
+        Parameters
+        ----------
+        cell : PatchCell
+            The cell where the agent is to be located.
+
+        Raises
+        ------
+        IndexError
+            If the agent is to be moved between different layers.
+        TypeError
+            If the agent is to be put on a non-PatchCell object.
+
+        Returns
+        -------
+        None
+        """
+        if cell is None:
+            # Remove agent
+            self._cell = None
+            return
+        if self.layer and self.layer is not cell.layer:
+            raise IndexError(
+                f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
+            )
+        if not isinstance(cell, mg.Cell):
+            raise TypeError(
+                f"Actor must be put on a PatchCell, instead of {type(cell)}"
+            )
+        if self.on_earth:
+            self._cell.remove(self)
+            self._cell = None
+        cell.add(self)
+        self._cell = cell
+        self.geometry = Point(cell.layer.transform * cell.indices)
+
+    def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
+        """
+        Specifies a new cell for the agent to be located on.
+
+        Parameters
+        ----------
+        layer : mg.RasterLayer
+            The layer where the agent is to be located.
+        pos : Tuple[int, int]
+            The position of the cell where the agent is to be located.
+
+        Raises
+        ------
+        TypeError
+
+        Returns
+        -------
+        None
+        """
+        if not isinstance(layer, mg.RasterLayer):
+            raise TypeError(f"{layer} is not mg.RasterLayer.")
+        cell = layer.cells[pos[0]][pos[1]]
+        self.put_on(cell=cell)
+
+    @property
+    def layer(self) -> mg.RasterLayer:
+        """Get the layer where the agent is located."""
+        return None if self._cell is None else self._cell.layer
+
+    @property
+    def indices(self) -> Coordinate:
+        """Coordinates in the form of (row, col) are used for indexing a matrix, with the origin at the top left corner and increasing downwards."""
+        return self._cell.indices
+
+    @property
+    def pos(self) -> Coordinate:
+        """Coordinates in the form of (x, y) indexed from the bottom left corner."""
+        return self._cell.pos
+
+    @pos.setter
+    def pos(self, pos) -> None:
+        if pos is not None:
+            raise AttributeError(f"Set pos by {self.put_on_layer.__name__}")
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
         if name[0] != "_" and hasattr(self, "_rules"):
             self._check_rules(check_when="any")
 
-    @classmethod
-    @property
-    def breed(cls) -> str:
-        return cls.__name__
-
     @property
     def population(self):
+        """List of agents of the same breed"""
         return self.model.agents[self.breed]
 
     @property
     def on_earth(self) -> bool:
-        return self._on_earth
-
-    @property
-    def pos(self) -> Tuple[int, int]:
-        return self._pos
+        """Whether agent stands on a cell"""
+        return bool(self._cell)
 
     @property
     def here(self) -> ActorsList:
-        return self.neighbors(0) if self.on_earth is True else None
+        """Other agents on the same cell as the agent."""
+        return self._cell.agents
 
     def _freq_level(self, level: str) -> int:
-        code = self._freq_levels.get(level, None)
+        code = self._freq_levels.get(level)
         if code is None:
             keys = tuple(self._freq_levels.keys())
             raise KeyError(f"freq level {level} is not available in {keys}")
@@ -146,40 +289,28 @@ class Actor(BaseObj):
                 triggered_rules.append(name)
                 # check if is a disposable rule
                 if rule.disposable is True:
-                    self.logger.debug(
-                        f"Rule '{name}' applied on '{self}' in {self.time}."
-                    )
+                    # self.logger.debug(
+                    #     f"Rule '{name}' applied on '{self}' in {self.time}."
+                    # )
                     del self._rules[name]
-                self.__getattr__(rule.then)(**parameters)
+                getattr(self, rule.then)(**parameters)
         # delete disposable rules
         return triggered_rules
 
-    def request(
-        self,
-        request: str,
-        header: Dict[str, Any],
-        receiver: Optional[str] = None,
-    ) -> Any:
-        if receiver is None:
-            response = self.mediator.transfer_request(self, request)
-        elif receiver in ["nature", "human"]:
-            results = self.mediator.trigger_functions(
-                users=receiver, func_name=request, **header
-            )
-            response = results.__getattribute__(receiver)
-        else:
-            raise ValueError(f"Unknown transfer request {receiver}")
-        return response
-
-    # def request(self, request: str, header=None, receiver=None) -> Any:
-    #     # header.update({'how': 'GET'})
-    #     return self.request(request, header, receiver)
-
-    # def post(self, request: str, value: Any, header=None, receiver=None):
-    #     header.update({'how': 'POST', request: value})
-    #     return self._request(request, header, receiver)
-
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
+        """
+        Either select the agent according to specified criteria
+
+        Parameters
+        ----------
+        selection: Union[str, Dict[str, Any]]
+            Either a string or a dictionary of key-value pairs that represent agent attributes to be checked against.
+
+        Returns
+        -------
+        bool
+            Whether the agent is selected or not
+        """
         if isinstance(selection, str):
             selection = parsing_string_selection(selection)
         results = []
@@ -203,9 +334,34 @@ class Actor(BaseObj):
         check_now: Optional[bool] = True,
         **kwargs,
     ):
+        """
+        Set up a rule that is activated at time period `when` and triggers a function `then`.\
+
+        Parameters
+        ----------
+        when: Union[str, Iterable[bool]]
+            Condition to be checked
+        then: Union[callable, str]
+            Trigger to be activated
+        name: Optional[str]
+            Name for the set of rules
+        frequency: str
+            Any of the following: 'now', 'update', 'move', 'any'
+        disposanle: bool
+            Is this set of rules disposable
+        check_now: Optional[bool]
+            Whether to check the rules now
+        **kwargs: Any
+            Addional keyword arguments to be passed to the trigger function
+
+        Returns
+        -------
+        Optional[List]
+            A list of triggered rules
+        """
         if name is None:
             name = f"rule ({len(self._rules) + 1})"
-        self._rules[name] = AttrDict(
+        self._rules[name] = DictConfig(
             {
                 "when": when,
                 "then": then,
@@ -217,59 +373,100 @@ class Actor(BaseObj):
         if check_now is True:
             self._check_rules("now")
 
-    def die(self):
+    def die(self) -> None:
+        """
+        Kills the agent (self)
+
+        Returns
+        -------
+        None
+        """
         self.model.agents.remove(self)
+        for link in self.links:
+            self.container.get_graph(link).remove_node(self)
+        if self.on_earth:
+            self._cell.remove(self)
+            del self
 
-    def neighbors(
-        self,
-        distance: int = 1,
-        approach: int = 4,
-        selection: Selection = None,
-        exclude: bool = True,
-    ):
-        # The area around within a certain distance.
-        header = {
-            "pos": self.pos,
-            "distance": distance,
-            "selection": selection,
-            "approach": approach,
-        }
-        agents = self.request(
-            request="neighbors", header=header, receiver="nature"
-        )
-        if exclude:
-            agents.remove(self)
-        return agents
+    def move_to(self, position: Optional[Tuple[int, int]]) -> bool:
+        """
+        Move agent to a new position
 
-    def settle_down(self, position: Optional[Tuple[int, int]]) -> bool:
-        header = {"actor": self, "position": position}
-        self.request("actor_to", header=header, receiver="nature")
-        self._pos = position
-        self._on_earth = True
+        Parameters
+        ----------
+        position : Optional[Tuple[int, int]]
+            The new position to move to.
 
-    def move(self, pos: Optional[Tuple[int, int]] = None):
-        if self.on_earth is False:
-            raise ValueError(f"Position of {self} is not set.")
-        if pos is None:
-            pos = self.request(
-                "random_positions", header={"k": 1}, receiver="nature"
-            )[0]
-        self.settle_down(pos)
+        Raises
+        ------
+        ValueError
+            If the position
 
-    def link_to(self, name: str, other: Union[Self, Iterable[Self], Callable]):
-        pass
+        """
+        if not self.layer:
+            raise ValueError("Layer is not set.")
+        self.layer.move_agent(self, position)
 
-    def loc(self, request: str, **kwargs):
-        header = {"sender": self, "position": self.pos}
-        response = self.request(request, header, **kwargs)
-        return response[self.pos]
-        # elif len(patch_obj.shape) == 3:
-        #     return patch_obj[:, self.pos[0], self.pos[1]]
+    def loc(self, attribute: str) -> Any:
+        """
+        Get attribute data for the cell where the actor is located.
 
-    def alter_nature(self, patch: str, value: "int|float|bool") -> Patch:
-        patch = self.require(patch)
-        patch[self.pos] = value
-        return patch
+        Parameters
+        ----------
+        attribute : str
+            The name of the attribute to get.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found in the cell.
+
+        Returns
+        -------
+        Any
+        """
+        return self._cell.get_attr(attribute)
+
+    def alter_nature(self, attr: str, value: Any) -> None:
+        """
+        Alter the nature of the parameters of the cell where the actor is located.
+
+        Parameters
+        ----------
+        attr : str
+            The name of the parameter to change.
+
+        value : Any
+            The new value to assign to the parameter.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found in the cell.
+
+        Returns
+        -------
+        None
+        """
+        if attr not in self._cell.attributes:
+            raise AttributeError(f"Attribute {attr} not found.")
+        setattr(self._cell, attr, value)
+
+    def linked(self, link: str) -> ActorsList:
+        """
+        Get all other actors linked to this actor.
+
+        Parameters
+        ----------
+        link : str
+            The link to search for.
+
+        Returns
+        -------
+        ActorsList
+            A list of all actors linked to this actor.
+        """
+        return ActorsList(self.model, super().linked(link))
 
     # def find_tutor(self, others, metric, how="best"):
     #     better = others.better(metric, than=self)

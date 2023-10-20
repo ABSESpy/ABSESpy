@@ -5,27 +5,13 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from abses.tools.func import *
-from abses.tools.read_files import *
+import numpy as np
+import pytest
 
-CONFIG = r"config/testing.yaml"
-
-
-def test_parse_yaml():
-    params = read_yaml(CONFIG, nesting=False)
-    params_all = read_yaml(CONFIG, nesting=True)
-    assert is_valid_yaml(params["world"])
-    assert is_valid_yaml(params["groundwater"]["world"])
-    assert is_valid_yaml(params["groundwater"]["nesting"]["world"])
-    assert isinstance(params["world"], str)
-    assert isinstance(params_all["world"], dict)
-    assert isinstance(params_all["groundwater"]["world"], dict)
-    assert isinstance(params_all["groundwater"]["nesting"]["world"], dict)
-    # testing parse a invalid yaml file path.
-    try:
-        is_valid_yaml("bad_file.yaml")
-    except ValueError as e:
-        assert "bad_file.yaml" in e.__str__()
+from abses import MainModel
+from abses.objects import _BaseObj
+from abses.time import time_condition
+from abses.tools.func import iter_func, norm_choice
 
 
 def test_iter_function():
@@ -52,50 +38,6 @@ def test_iter_function():
     assert comp2.check == comp1.check == "hello added auto."
 
 
-def test_wrap_opfunc():
-    class Calculation:
-        def __init__(self):
-            self.attr = 1
-
-    cal = Calculation()
-
-    try:
-        cal + 1
-    except TypeError as e:
-        assert "unsupported operand type(s)" in e.__str__()
-
-    # wraping the '__add__' method.
-    opname = "__add__"
-    wrapper = opfunc_using_attr("attr", binary_op=True)
-    wrapped_func = wrapper(getattr(1, opname))
-    setattr(cal.__class__, opname, wrapped_func)
-    assert cal + 1 == 2
-
-    cal2 = Calculation()
-    success = wrap_opfunc_to(cal2, "attr")
-    assert "add" in success
-    assert "radd" in success
-    assert cal2 + 1 == 1 + cal2 == 2
-
-    class MyClass(object):
-        def __init__(self, attr: any):
-            self.attr: any = attr
-
-    int_obj = MyClass(1)
-    str_obj = MyClass("test")
-    float_obj = MyClass(0.1)
-
-    opfunc_int = wrap_opfunc_to(int_obj, "attr")
-    assert "mul" in opfunc_int
-    assert "mod" in opfunc_int
-    assert "pow" in opfunc_int
-    assert int_obj + 1 == 1 + int_obj == 2
-    wrap_opfunc_to(str_obj, "attr")
-    assert str_obj * 2 == "testtest"
-    wrap_opfunc_to(float_obj, "attr")
-    assert float_obj * 10 == 1.0
-
-
 def test_random_choosers():
     p = [0.0, -1.0, -1.0, -1.0]
     p2 = [300.0, -1.0, -1.0, -1]
@@ -106,3 +48,51 @@ def test_random_choosers():
     r4 = norm_choice(a=np.arange(4), size=2, p=p2, replace=False)
     assert (np.array([0.0, 0.0]) == r3).all()
     assert 0 in r4
+
+
+@pytest.fixture(name="mock_object")
+def fixture_mock_object():
+    model = MainModel(parameters={"time": {"freq": "M"}})
+
+    class MockObject(_BaseObj):
+        def __init__(self, model):
+            super().__init__(model)
+
+        @time_condition(condition={"year": 2000, "month": 1})
+        def my_method(self):
+            return "This method runs only if the `time` attribute is in September 2023."
+
+    return MockObject(model=model)
+
+
+# Happy path tests
+def test_time_condition_happy_path(mock_object):
+    # Arrange
+
+    # Act
+    result = mock_object.my_method()
+
+    # Assert
+    assert (
+        result
+        == "This method runs only if the `time` attribute is in September 2023."
+    )
+    mock_object.model.time_go()
+    assert not mock_object.my_method()
+
+
+# Error cases
+def test_time_condition_error_cases():
+    class MockObj:
+        def __init__(self) -> None:
+            self.time = None
+
+        def my_method():
+            return "should not be called"
+
+    # Arrange
+    mock_object = MockObj()
+
+    # Act and Assert
+    with pytest.raises(TypeError):
+        mock_object.my_method()

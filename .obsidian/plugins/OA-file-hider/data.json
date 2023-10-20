@@ -1,0 +1,17 @@
+{
+  "hidden": true,
+  "hiddenList": [
+    "config",
+    "data",
+    "dist",
+    "LICENSES",
+    "site",
+    "tests",
+    "tmp",
+    "logs",
+    "plugins",
+    "src",
+    "abses",
+    "notebooks"
+  ]
+}

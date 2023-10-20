@@ -141,7 +141,6 @@ tmp
 img/resources
 analysis/notebooks/**.ipynb
 data/source
-docs/.obsidian
 .virtual_documents
 *.nc
 # model ouput data
@@ -152,6 +151,11 @@ docs/design
 img/**/*.pdf
 data
 
-poetry.lock
 changelog.d
-.obsidian
+.obsidian/workspace
+
+examples\exploratory\*.ipynb
+
+img/classes_ABSESpy.png
+packages_ABSESpy.png
+.DS_Store

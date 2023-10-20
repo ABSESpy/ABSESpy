@@ -36,7 +36,7 @@ Three main components `BaseHuman`, `BaseNature` and `MainModel` are included. Ge
 
 - Understanding of the structure of the `ABSESpy` [management and storage `Actor` (i.e., agents)](notebooks//human/actors.ipynb)
 - Defining the [collections of actors, rules of action, perception](notebooks//human/rules.ipynb) ... as if they were real people
-- Applying [Cognition, Contagion and behavioral Response (CCR Framework)](../docs/background.md#human-behaviour-framework) with `ABSESpy`, here is an [demo model](notebooks/human/CCR_example.ipynb).
+- Applying [Cognition, Contagion and behavioral Response (CCR Framework)](../wiki/background.md#human-behaviour-framework) with `ABSESpy`, here is an [demo model](notebooks/human/CCR_example.ipynb).
 
 ## Experiment
 
