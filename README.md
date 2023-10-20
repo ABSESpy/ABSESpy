@@ -1,36 +1,28 @@
 ![ABSES_banner](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-10-19%20at%2019.08.12@2x.png)
 
-<div style="text-align: center;">
 
+<div style="text-align: center;">
     <!-- License Badge -->
     <a href="http://www.apache.org/licenses/">
         <img src="https://img.shields.io/github/license/songshgeo/absespy" alt="license">
     </a>
-
     <!-- Downloads Badge -->
     <img src="https://img.shields.io/github/downloads/songshgeo/absespy/total" alt="downloads">
-
     <!-- Code Size Badge -->
     <img src="https://img.shields.io/github/languages/code-size/songshgeo/absespy" alt="codesize">
-
     <!-- Tag Badge -->
     <img src="https://img.shields.io/github/v/tag/songshgeo/absespy" alt="tag">
-
     <br>
-
     <!-- Website Badge -->
     <a href="https://cv.songshgeo.com/">
         <img src="https://img.shields.io/badge/Website-SongshGeo-brightgreen.svg" alt="github">
     </a>
-
     <!-- Stars Badge -->
     <img src="https://img.shields.io/github/stars/songshgeo/absespy?style=social" alt="stars">
-
     <!-- Twitter Badge -->
     <a href="https://twitter.com/shuangsong11">
         <img src="https://img.shields.io/twitter/follow/shuangsong11?style=social" alt="twitter">
     </a>
-
 </div>
 
 <!-- Language: [English Readme](#) | [简体中文](README_ch) -->
