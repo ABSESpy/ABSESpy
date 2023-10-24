@@ -1,55 +1,66 @@
-![abses_github_repo](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/abses_github_repo.png)
+![ABSES_banner](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-10-19%20at%2019.08.12@2x.png)
 
-[![license](https://img.shields.io/github/license/songshgeo/absespy)](http://www.apache.org/licenses/) ![downloads](https://img.shields.io/github/downloads/songshgeo/absespy/total) ![codesize](https://img.shields.io/github/languages/code-size/songshgeo/absespy) ![tag](https://img.shields.io/github/v/tag/songshgeo/absespy)
-[![github](https://img.shields.io/badge/Website-SongshGeo-brightgreen.svg)](https://cv.songshgeo.com/) ![stars](https://img.shields.io/github/stars/songshgeo/absespy?style=social) [![twitter](https://img.shields.io/twitter/follow/shuangsong11?style=social)](https://twitter.com/shuangsong11)
+
+<div style="text-align: center;">
+    <!-- License Badge -->
+    <a href="http://www.apache.org/licenses/">
+        <img src="https://img.shields.io/github/license/absespy/ABSESpy" alt="license">
+    </a>
+    <!-- Downloads Badge -->
+    <img src="https://img.shields.io/github/downloads/absespy/ABSESpy/total" alt="downloads">
+    <!-- Code Size Badge -->
+    <img src="https://img.shields.io/github/languages/code-size/absespy/ABSESpy" alt="codesize">
+    <!-- Tag Badge -->
+    <img src="https://img.shields.io/github/v/tag/absespy/ABSESpy" alt="tag">
+    <br>
+    <!-- Website Badge -->
+    <a href="https://cv.songshgeo.com/">
+        <img src="https://img.shields.io/badge/Website-SongshGeo-brightgreen.svg" alt="github">
+    </a>
+    <!-- Stars Badge -->
+    <img src="https://img.shields.io/github/stars/absespy/ABSESpy?style=social" alt="stars">
+    <!-- Twitter Badge -->
+    <a href="https://twitter.com/shuangsong11">
+        <img src="https://img.shields.io/twitter/follow/shuangsong11?style=social" alt="twitter">
+    </a>
+</div>
 
 <!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-`ABSESpy` makes it easier to build artificial **[Social-ecological systems](https://songshgeo.github.io/ABSESpy/docs/about/)** with real **GeoSpatial datasets** and fully incorporate **human behaviour**.
+An Agent-Based computational framework makes modeling artificial **[Social-ecological systems](https://absespy.github.io/ABSESpy/docs/about/)** easier.
 
 ## Why `ABSESpy`?
 
-**Several characteristics of Agent-Based model (ABM) make it an essential method for social-ecological systems (SES) research:**
+Agent-based model (ABM) is essential for social-ecological systems (SES) research. `ABSESpy` is designed for modeling **couples humans and nature systems** by:
 
-1. It focuses on the change of an SES over time from mutual adaptations of agents and their environments.
-2. its ability to generate emergent system-level outcomes from micro-level interactions and macro-level feedback.
-3. its ability to represent the diversity and heterogeneity of human and non-human actors and the spatial characteristics of an SES ...
+- Allow users to develop modules separately and coupling them together.
+- Automatically portray interactions between social actors and natural cells with `Networkx`
+- By applying a [human behavior modeling framework]((https://absespy.github.io/ABSESpy/docs/background/#human-behaviour-framework)), users can define, select, and track agents of the model in more intuitive ways.
+- Manage and test complex parameters [with a `yaml` file](https://absespy.github.io/ABSESpy/tutorial/notebooks/parameters/).
+- access information between cells and social actors by their locations
+- Auto-update real-world datasets and relate the ticks counter to the real-world time.
+## Basic Usage & Documents
 
-However, there is currently no modelling framework that **combines geo-spatial data and actor behaviour** (`actor` is the term for agents in the SES framework) well. `ABSESpy` is designed for spatial modelling that **couples human and nature** by:
+Install with pip or your favorite PyPI package manager.
 
-- Modelling environment for agents with **[geo data](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/nature/geodata/)**: `Shapefile`, `GeoTiff`, `NetCDF`.
-- Modelling **[human behaviour](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/human/CCR_example/)** of agents with [cognition, contagion and responses](https://songshgeo.github.io/ABSESpy/docs/background/#human-behaviour-framework).
-- Easily manage all [parameters, arguments](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/parameters/), and variables with a `yaml` settings file.
-
-## Install
-
-Install with pip or your favourite PyPI package manager.
 ```
 pip install abses
 ```
 
-## Basic usage & Documents
-
-You can see how to use `ABSESpy` in these simple [tutorials](https://songshgeo.github.io/ABSESpy/tutorial/user_guide/):
-
-1. [Organize an Agent-based model](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/model/) and [easily manage parameters](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/parameters/).
-2. Using [geo-spatial data](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/nature/geodata/) as the environment.
-3. Simply applying a [human behavior framework](https://songshgeo.github.io/ABSESpy/tutorial/notebooks/human/CCR_example/).
+Access the [Documentation here](https://absespy.github.io/ABSESpy/).
 
 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/DQg0xJ.jpg" alt="Drawing" style="width: 600px;"/>
-
-Access the [full Documentation here](https://songshgeo.github.io/ABSESpy/).
 
 ## Get in touch
 
 - **For enthusiastic developers and contributors**, all contributions, bug reports, bug fixes, documentation improvements, enhancements, and ideas are welcome.
-- **For SES researchers**, welcome to use this package in social-ecological system (SES) studies. If you have a model published, feel free to contribute it to our model library through [mailing list](https://groups.google.com/g/absespy).
+- **SES researchers** are welcome to use this package in social-ecological system (SES) studies. It would be appreciated if you contribute a published model to our gallery.
 
 If you need any help when using `ABSESpy`, don't hesitate to get in touch with us through:
 
-- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/SongshGeo/ABSESpy/discussions).
-- Report bugs, suggest features or view the source code [on _GitHub_](https://github.com/SongshGeo/ABSESpy/issues).
-- For less well-defined questions or ideas or to announce other projects of interest to xarray users, use the [mailing list](https://groups.google.com/g/absespy).
+- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/absespy/ABSESpy/discussions).
+- Report bugs, suggest features, or view the source code [on _GitHub_ Issues](https://github.com/absespy/ABSESpy/issues).
+- Use the [mailing list](https://groups.google.com/g/absespy) for less well-defined questions or ideas or to announce other projects of interest to `ABSESpy` users.
 
 ## License
 
@@ -61,4 +72,10 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-`ABSESpy` bundles portions of `AgentPy`, `pandas`, `NumPy` and `Xarray`; the full text of these licenses is included in the licenses directory.
+`ABSESpy` bundles portions of `Mesa`, `mesa-geo`, `pandas`, `NumPy`, and `Xarray`; the full text of these licenses are included in the licenses directory.
+
+## Thanks to all contributors
+
+<a href="https://github.com/ABSESpy/ABSESpy/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ABSESpy/ABSESpy" />
+</a>

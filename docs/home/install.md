@@ -13,3 +13,9 @@ github: https://github.com/SongshGeo
 email: songshgeo@gmail.com
 website: https://cv.songshgeo.com
 ---
+
+Install with pip or your favorite PyPI package manager.
+
+```
+pip install abses
+```

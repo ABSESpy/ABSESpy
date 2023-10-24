@@ -21,7 +21,6 @@ kanban-plugin: basic
 
 ## Planned
 
-- [ ] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
 - [ ] #refactor♻️ Using modules to manipulate agent
 - [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
 
@@ -38,6 +37,7 @@ kanban-plugin: basic
 - [x] #refactor♻️ Remove `variable` class and replace it with `DynamicVariable`.
 - [x] #refactor♻️ Remove `TimeDriverManager` and adding type hint to `TimeDriver`
 - [x] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
+- [x] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
 - [x] #build🏗 #project🎉 Removed dependence of `AgentPy`.
 
 

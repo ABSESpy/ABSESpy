@@ -17,5 +17,5 @@ website: https://cv.songshgeo.com
 ## Where to start?
 
 - Feel free to ask questions on the [mailing list](https://groups.google.com/g/absespy).
-- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/SongshGeo/ABSESpy/discussions).
+- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/absespy/ABSESpy/discussions).
 - For less well-defined questions or ideas or to announce other projects of interest to users, use the [mailing list](https://groups.google.com/g/absespy).

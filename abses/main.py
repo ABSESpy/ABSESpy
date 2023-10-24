@@ -40,7 +40,6 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     def __init__(
         self,
-        name: Optional[str] = "model",
         parameters: DictConfig = DictConfig({}),
         human_class: Type[H] = BaseHuman,
         nature_class: Type[N] = BaseNature,
@@ -50,10 +49,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         Model.__init__(self, **kwargs)
         _Notice.__init__(self)
         States.__init__(self)
-        if name is None:
-            name = self.__class__.__name__
 
-        self._name: str = name
         self._settings = DictConfig(parameters)
         self._version: str = __version__
         self._human = human_class(self)
@@ -85,7 +81,7 @@ class MainModel(Generic[N], Model, _Notice, States):
     @property
     def name(self) -> str:
         """模型名字"""
-        return self._name
+        return self.__class__.__name__
 
     @property
     def version(self) -> str:
@@ -117,11 +113,6 @@ class MainModel(Generic[N], Model, _Notice, States):
         """自然模块"""
         return self._nature
 
-    # @property
-    # def registry(self) -> VariablesRegistry:
-    #     """变量模块"""
-    #     return self._registry
-
     @property
     def time(self) -> _TimeDriver:
         """时间模块"""
@@ -130,7 +121,7 @@ class MainModel(Generic[N], Model, _Notice, States):
     @property
     def params(self) -> DictConfig:
         """模型的参数"""
-        return self.settings.get(self.name, DictConfig({}))
+        return self.settings.get("model", DictConfig({}))
 
     def time_go(self, steps: int = 1) -> _TimeDriver:
         """时间前进"""

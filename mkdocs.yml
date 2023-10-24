@@ -93,7 +93,7 @@ extra:
     - provider: mike
 
 markdown_extensions:
-  - abbr
+  # - abbr
   - attr_list
   - admonition
   - md_in_html
@@ -114,9 +114,9 @@ markdown_extensions:
   - md_in_html
   - pymdownx.tasklist:
       custom_checkbox: true
-  - pymdownx.snippets:
-      auto_append:
-        - abbreviations.md
+  # - pymdownx.snippets:
+  #     auto_append:
+  #       - abbreviations.md
 # extra:
 #   social:
 #     - type: 'github'
@@ -125,4 +125,4 @@ markdown_extensions:
 #       link: 'https://twitter.com/squidfunk'
 #     - type: 'linkedin'
 #       link: 'https://www.linkedin.com/in/squidfunk'
-repo_url: https://github.com/SongshGeo/ABSESpy
+repo_url: https://github.com/absespy/ABSESpy
