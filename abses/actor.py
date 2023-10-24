@@ -67,21 +67,6 @@ def perception(func) -> Callable:
     return wrapper
 
 
-# def check_rule(loop: bool = False) -> Callable:
-#     """检查规则"""
-#     def f(func: Callable) -> Callable:
-#         def wrapper(self: Actor, *args, **kwargs):
-#             triggered = self._check_rules("now")
-#             if loop:
-#                 while len(triggered) > 0:
-#                     triggered = self._check_rules("now")
-#             return func(self, *args, **kwargs)
-
-#         return wrapper
-
-#     return f
-
-
 class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     """
     社会-生态系统中的行动者
@@ -272,85 +257,3 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     def linked(self, link: str) -> ActorsList:
         """获取相关联的所有其它主体，并转换为ActorsList"""
         return ActorsList(self.model, super().linked(link))
-
-    # def find_tutor(self, others, metric, how="best"):
-    #     better = others.better(metric, than=self)
-    #     if len(better) == 0:
-    #         tutor = self
-    #     else:
-    #         if how == "best":
-    #             better = others.better(metric, than=None)
-    #             weights = None
-    #         elif how == "diff":
-    #             diff = better.diff(metric, self)
-    #             weights = diff
-    #         # elif how == "fermi":
-    #         #     diff = better.diff(metric, self)
-    #         #     weights = fermi_ruler(diff)
-    #         else:
-    #             raise ValueError(f"Unknown evolve strategy {how}.")
-    #         tutor = better.random_choose(p=weights)
-    #     self.tutor.update(tutor)
-    #     return tutor
-
-
-# class LandOwner(Actor):
-#     def setup(self):
-#         super().setup()
-#         self._owned_land: Patch = None
-#         self._area: Number = None
-#         self.land_neighbors = ActorsList(self.model)
-
-#     @property
-#     def area(self):
-#         return self._area
-
-#     @property
-#     def owned_land(self):
-#         return self._owned_land
-
-#     @owned_land.setter
-#     def owned_land(self, value: "np.ndarray[bool]|bool"):
-#         name = f"land_of_{self.breed}<{self.id}>"
-#         self._owned_land = self.model.nature.create_patch(value, name=name)
-#         self._area = self.owned_land.sum() * self.owned_land.cell_area
-
-#     @property
-#     def __iter_lands__(self):
-#         return self.owned_land.cells
-
-#     def residents(self, breed: str = None):
-#         return self.model.nature.lookup_agents(self.owned_land, breed=breed)
-
-#     def mine(self, patch: str, apply: callable = None) -> np.ndarray:
-#         mine = self.require(patch)[self.owned_land]
-#         if apply is not None:
-#             return apply(mine)
-#         else:
-#             return mine
-
-#     def add_connections(self, graph: nx.Graph, agents: Iterable[Actor]):
-#         graph.add_edges_from([(self, agent) for agent in agents])
-
-#     def alter_nature(
-#         self, patch: str, value: "int|float|bool|Iterable", land=False
-#     ) -> None:
-#         if land:
-#             mask = self.owned_land
-#             patch = self.require(patch)
-#             patch.update(value, mask=mask)
-#         else:
-#             super().alter_nature(patch, value)
-
-#     def find_land_neighbors(self, ownerships, graph: nx.Graph = None) -> None:
-#         owned = self.owned_land
-#         mask = owned.arr.buffer() & ~owned
-#         neighbors_id = np.unique(ownerships[mask])
-#         neighbors = self.population.ids(neighbors_id)
-#         self.land_neighbors.extend(neighbors)
-#         self.add_connections(graph, neighbors)
-
-#     def find_tutor(self, metric, others=None, how="best"):
-#         if others is None:
-#             others = self.land_neighbors
-#         return super().find_tutor(others, metric, how)
