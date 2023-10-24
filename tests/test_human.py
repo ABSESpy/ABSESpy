@@ -8,7 +8,6 @@
 import numpy as np
 
 from abses import MainModel
-from abses.human import HumanModule
 from abses.nature import PatchModule
 
 from .fixtures import Admin, Farmer
@@ -23,11 +22,10 @@ def test_human_attributes():
     model = MainModel()
     human = model.human
     assert human.agents is model.agents
-    assert len(human.actors) == 0
+    assert len(human.actors()) == 0
     human.agents.create(Farmer, 5)
     model.agents.create(Admin, 5)
     assert len(human.agents) == 10
-    assert len(human.actors.now()) == 0
 
 
 def test_human_define():
@@ -40,9 +38,9 @@ def test_human_define():
     admins.update("test", np.arange(5))
 
     human.define("test", "Farmer")
-    assert human.test == farmers
+    assert human.actors("test") == farmers
     human.agents.remove(farmers[0])
-    assert human.test == farmers[1:]
+    assert human.actors("test") == farmers[1:]
 
 
 def test_human_rule():

@@ -154,6 +154,7 @@ data
 changelog.d
 .obsidian/workspace
 
+examples\exploratory\*.ipynb
 
 img/classes_ABSESpy.png
 packages_ABSESpy.png

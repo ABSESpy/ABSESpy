@@ -29,11 +29,6 @@ def test_sequences_attributes():
     assert isinstance(actors5, ActorsList)
     assert repr(mixed_actors) == "<ActorsList: (5)Actor; (3)Farmer>"
     assert mixed_actors.to_dict() == {"Actor": actors5, "Farmer": farmers3}
-    assert all(
-        mixed_actors.on_earth
-        == [False, False, False, False, False, False, False, False]
-    )
-    assert len(mixed_actors.now()) == 0
     assert mixed_actors.select("Farmer") == farmers3
     each_one = mixed_actors.select(
         [True, False, False, False, False, True, False, False]

@@ -19,7 +19,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://agentpy.readthedocs.io/",
-    download_url="https://github.com/SongshGeo/ABSESpy",
+    download_url="https://github.com/absespy/ABSESpy",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD License",

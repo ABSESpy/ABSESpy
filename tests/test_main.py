@@ -24,7 +24,7 @@ def test_model_attrs():
     model = MainModel(parameters=cfg)
     # params 里 1 被 testing.yaml 第一层的 3 覆盖
     # 这个应该出现在
-    assert repr(model) == f"<model-{__version__}(init)>"
+    assert repr(model) == f"<MainModel-{__version__}(init)>"
     assert isinstance(model.settings, DictConfig)
     assert len(model.settings) == len(cfg)
     assert model.params == cfg.model
@@ -32,6 +32,9 @@ def test_model_attrs():
     assert isinstance(model.nature, BaseNature)
     assert model.version == __version__
     assert model.time.strftime("%Y") == "2000"
+    assert model.run_id is None
+    model2 = MainModel(parameters=cfg, run_id=1)
+    assert model2.run_id == 1
 
 
 def test_time_go():

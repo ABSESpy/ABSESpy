@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from mesa import Model
@@ -39,25 +40,23 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     def __init__(
         self,
-        name: Optional[str] = "model",
         parameters: DictConfig = DictConfig({}),
         human_class: Type[H] = BaseHuman,
         nature_class: Type[N] = BaseNature,
+        run_id: Optional[int] = None,
         **kwargs,
     ) -> None:
         Model.__init__(self, **kwargs)
         _Notice.__init__(self)
         States.__init__(self)
-        if name is None:
-            name = self.__class__.__name__
 
-        self._name: str = name
         self._settings = DictConfig(parameters)
         self._version: str = __version__
         self._human = human_class(self)
         self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
         self._time = _TimeDriver(model=self)
+        self._run_id: int | None = run_id
         self._trigger("initialize", order=("nature", "human"))
         self._trigger("set_state", code=1)  # initial state
 
@@ -75,9 +74,14 @@ class MainModel(Generic[N], Model, _Notice, States):
             getattr(_obj[name], _func)(**kwargs)
 
     @property
+    def run_id(self) -> int | None:
+        """批量运行时，当前模型的运行ID"""
+        return self._run_id
+
+    @property
     def name(self) -> str:
         """模型名字"""
-        return self._name
+        return self.__class__.__name__
 
     @property
     def version(self) -> str:
@@ -109,11 +113,6 @@ class MainModel(Generic[N], Model, _Notice, States):
         """自然模块"""
         return self._nature
 
-    # @property
-    # def registry(self) -> VariablesRegistry:
-    #     """变量模块"""
-    #     return self._registry
-
     @property
     def time(self) -> _TimeDriver:
         """时间模块"""
@@ -122,12 +121,15 @@ class MainModel(Generic[N], Model, _Notice, States):
     @property
     def params(self) -> DictConfig:
         """模型的参数"""
-        return self.settings.get(self.name, DictConfig({}))
+        return self.settings.get("model", DictConfig({}))
 
     def time_go(self, steps: int = 1) -> _TimeDriver:
         """时间前进"""
         for _ in range(steps):
             self.time.update()
+            # print the current time when go.
+            sys.stdout.write("\r" + self.time.strftime("%Y-%m-%d %H:%M:%S"))
+            sys.stdout.flush()
 
     def run_model(self) -> None:
         """模型运行"""

@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -45,7 +44,19 @@ logger = logging.getLogger("__name__")
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
-    """解析字符串检索式"""
+    """
+    Parses a string selection expression and returns a dictionary of key-value pairs.
+
+    Parameters
+    ----------
+    selection: str
+       String specifying which breeds to select.
+
+    Returns
+    -------
+    selection_dict: dict
+         Dictionary
+    """
     selection_dict = {}
     if "==" not in selection:
         return {"breed": selection}
@@ -69,7 +80,54 @@ def perception(func) -> Callable:
 
 class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     """
-    社会-生态系统中的行动者
+    An actor in a social-ecological system.
+
+    Attributes
+    ----------
+    _freq_levels : dict
+        A dictionary that maps frequency levels to integer codes. The frequency levels are used to determine when rules
+        should be checked. The available frequency levels are "now", "update", "move", and "any".
+    _rules : dict
+        A dictionary that maps rule names to dictionaries that contain information about the rule. Each rule dictionary
+        contains the following keys: "when", "then", "params", "frequency", and "disposable". The "when" key maps to a
+        selection criteria that determines when the rule should be applied. The "then" key maps to the name of a method
+        that should be called when the rule is triggered. The "params" key maps to a dictionary of parameters that
+        should be passed to the method. The "frequency" key maps to an integer code that determines when the rule should
+        be checked. The "disposable" key is a boolean that determines whether the rule should be deleted after it is
+        triggered.
+    _cell : PatchCell
+        The cell where the actor is located.
+    container : HumanContainer
+        The container that the actor belongs to.
+    layer : mg.RasterLayer
+        The layer where the actor is located.
+    indices : Coordinate
+        The indices of the cell where the actor is located.
+    pos : Coordinate
+        The position of the cell where the actor is located.
+    population : list
+        A list of actors of the same breed as the actor.
+    on_earth : bool
+        Whether the actor is standing on a cell.
+    here : ActorsList
+        A list of actors that are on the same cell as the actor.
+
+    Methods
+    -------
+    __init__(self, model: MainModel, observer: bool = True, unique_id: Optional[int] = None, **kwargs) -> None
+        Initializes a new actor.
+    put_on(self, cell: PatchCell | None = None) -> None
+        Places the actor on a cell.
+    put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
+        Specifies a new cell for the actor to be located on.
+    __setattr__(self, name, value)
+        Sets an attribute of the actor.
+    _freq_level(self, level: str) -> int
+        Returns the integer code for a given frequency level.
+    _check_rules(self, check_when: str) -> List[str]
+        Checks the actor's rules.
+    selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
+        Selects the actor according to specified criteria.
     """
 
     # when checking the rules
@@ -82,23 +140,41 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         unique_id: Optional[int] = None,
         **kwargs,
     ) -> None:
+        _BaseObj.__init__(self, model, observer=observer)
         if not unique_id:
-            unique_id = uuid.uuid4().int
+            unique_id = self.model.next_id()
         crs = kwargs.pop("crs", model.nature.crs)
         geometry = kwargs.pop("geometry", None)
         mg.GeoAgent.__init__(
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
-        _BaseObj.__init__(self, model, observer=observer)
         LinkNode.__init__(self)
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
         self.container = model.human
 
     def put_on(self, cell: PatchCell | None = None) -> None:
-        """直接置于某斑块上，或者移除世界"""
+        """
+        Place agent on a cell (same layer)
+
+        Parameters
+        ----------
+        cell : PatchCell
+            The cell where the agent is to be located.
+
+        Raises
+        ------
+        IndexError
+            If the agent is to be moved between different layers.
+        TypeError
+            If the agent is to be put on a non-PatchCell object.
+
+        Returns
+        -------
+        None
+        """
         if cell is None:
-            # 将这个主体从世界上移除
+            # Remove agent
             self._cell = None
             return
         if self.layer and self.layer is not cell.layer:
@@ -117,7 +193,24 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         self.geometry = Point(cell.layer.transform * cell.indices)
 
     def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
-        """把主体放到某个栅格图层上"""
+        """
+        Specifies a new cell for the agent to be located on.
+
+        Parameters
+        ----------
+        layer : mg.RasterLayer
+            The layer where the agent is to be located.
+        pos : Tuple[int, int]
+            The position of the cell where the agent is to be located.
+
+        Raises
+        ------
+        TypeError
+
+        Returns
+        -------
+        None
+        """
         if not isinstance(layer, mg.RasterLayer):
             raise TypeError(f"{layer} is not mg.RasterLayer.")
         cell = layer.cells[pos[0]][pos[1]]
@@ -125,17 +218,17 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
 
     @property
     def layer(self) -> mg.RasterLayer:
-        """所在的栅格图层"""
+        """Get the layer where the agent is located."""
         return None if self._cell is None else self._cell.layer
 
     @property
     def indices(self) -> Coordinate:
-        """(row, col)形式的坐标，从左上角往下，用于矩阵索引"""
+        """Coordinates in the form of (row, col) are used for indexing a matrix, with the origin at the top left corner and increasing downwards."""
         return self._cell.indices
 
     @property
     def pos(self) -> Coordinate:
-        """(x, y)形式的坐标，从左下角向上，用于cells嵌套列表索引"""
+        """Coordinates in the form of (x, y) indexed from the bottom left corner."""
         return self._cell.pos
 
     @pos.setter
@@ -150,17 +243,17 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
 
     @property
     def population(self):
-        """所有与自己同类的主体"""
+        """List of agents of the same breed"""
         return self.model.agents[self.breed]
 
     @property
     def on_earth(self) -> bool:
-        """是否在世界上有自己的位置"""
+        """Whether agent stands on a cell"""
         return bool(self._cell)
 
     @property
     def here(self) -> ActorsList:
-        """所有这里的主体"""
+        """Other agents on the same cell as the agent."""
         return self._cell.agents
 
     def _freq_level(self, level: str) -> int:
@@ -190,7 +283,19 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         return triggered_rules
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
-        """根据一定条件选取主体"""
+        """
+        Either select the agent according to specified criteria
+
+        Parameters
+        ----------
+        selection: Union[str, Dict[str, Any]]
+            Either a string or a dictionary of key-value pairs that represent agent attributes to be checked against.
+
+        Returns
+        -------
+        bool
+            Whether the agent is selected or not
+        """
         if isinstance(selection, str):
             selection = parsing_string_selection(selection)
         results = []
@@ -214,7 +319,31 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         check_now: Optional[bool] = True,
         **kwargs,
     ):
-        """设置规则，一旦`when`的条件满足，就会触发`then`"""
+        """
+        Set up a rule that is activated at time period `when` and triggers a function `then`.\
+
+        Parameters
+        ----------
+        when: Union[str, Iterable[bool]]
+            Condition to be checked
+        then: Union[callable, str]
+            Trigger to be activated
+        name: Optional[str]
+            Name for the set of rules
+        frequency: str
+            Any of the following: 'now', 'update', 'move', 'any'
+        disposanle: bool
+            Is this set of rules disposable
+        check_now: Optional[bool]
+            Whether to check the rules now
+        **kwargs: Any
+            Addional keyword arguments to be passed to the trigger function
+
+        Returns
+        -------
+        Optional[List]
+            A list of triggered rules
+        """
         if name is None:
             name = f"rule ({len(self._rules) + 1})"
         self._rules[name] = DictConfig(
@@ -230,7 +359,13 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             self._check_rules("now")
 
     def die(self) -> None:
-        """从世界消失"""
+        """
+        Kills the agent (self)
+
+        Returns
+        -------
+        None
+        """
         self.model.agents.remove(self)
         for link in self.links:
             self.container.get_graph(link).remove_node(self)
@@ -239,21 +374,81 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             del self
 
     def move_to(self, position: Optional[Tuple[int, int]]) -> bool:
-        """移动到某个位置"""
+        """
+        Move agent to a new position
+
+        Parameters
+        ----------
+        position : Optional[Tuple[int, int]]
+            The new position to move to.
+
+        Raises
+        ------
+        ValueError
+            If the position
+
+        """
         if not self.layer:
             raise ValueError("Layer is not set.")
         self.layer.move_agent(self, position)
 
     def loc(self, attribute: str) -> Any:
-        """寻找自己所在位置的斑块数据"""
+        """
+        Get attribute data for the cell where the actor is located.
+
+        Parameters
+        ----------
+        attribute : str
+            The name of the attribute to get.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found in the cell.
+
+        Returns
+        -------
+        Any
+        """
         return self._cell.get_attr(attribute)
 
     def alter_nature(self, attr: str, value: Any) -> None:
-        """改变自己所在位置的斑块数据"""
+        """
+        Alter the nature of the parameters of the cell where the actor is located.
+
+        Parameters
+        ----------
+        attr : str
+            The name of the parameter to change.
+
+        value : Any
+            The new value to assign to the parameter.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found in the cell.
+
+        Returns
+        -------
+        None
+        """
         if attr not in self._cell.attributes:
             raise AttributeError(f"Attribute {attr} not found.")
         setattr(self._cell, attr, value)
 
     def linked(self, link: str) -> ActorsList:
-        """获取相关联的所有其它主体，并转换为ActorsList"""
+        """
+        Get all other actors linked to this actor.
+
+        Parameters
+        ----------
+        link : str
+            The link to search for.
+
+        Returns
+        -------
+        ActorsList
+            A list of all actors linked to this actor.
+        """
         return ActorsList(self.model, super().linked(link))
