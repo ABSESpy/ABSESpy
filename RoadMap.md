@@ -17,6 +17,7 @@ kanban-plugin: basic
 - [ ] #refactor♻️  Use [Pendulum](https://pendulum.eustace.io/) instead of `pandas.Period`
 - [ ] #feat✨  Give users an option of real-dates or just a counter
 - [ ] #feat✨  MaxLenSet for each cell
+- [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
 
 
 ## Planned

@@ -30,6 +30,13 @@ nav:
           - Manipulate GeoData: tutorial/notebooks/nature/geodata.ipynb
     - API references:
         - Model: api/model.md
+        - Natural Modules: api/nature.md
+        - Human Modules: api/human.md
+        - Cells: api/cells.md
+        - Actor (Agent): api/agents.md
+        - Actors Operation: api/sequences.md
+        - Time Control: api/time.md
+        - Dynamic Variables: api/variables.md
     - Examples:
         - Examples gallery: examples/gallery.md
     - Packages:
