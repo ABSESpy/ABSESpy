@@ -15,9 +15,10 @@ from functools import total_ordering, wraps
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pendulum
-from loguru import logger
+import rich
 
 from abses.components import _Component
+from abses.logging import logger
 
 if TYPE_CHECKING:
     from .main import MainModel
@@ -190,7 +191,10 @@ class TimeDriver(_Component):
             raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
 
     def stdout(self) -> None:
-        sys.stdout.write("\r" + self.strftime("%Y-%m-%d %H:%M:%S"))
+        """Print the current time."""
+        report = f"tick[{self.tick}] " + self.strftime("%Y-%m-%d %H:%M:%S")
+        # logger.info(report)
+        sys.stdout.write("\r" + report)
         sys.stdout.flush()
 
     def _parse_time_settings(self) -> None:
