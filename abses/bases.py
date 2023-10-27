@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from typing import List, Optional, Set, Union
 
 from abses.tools.func import make_list

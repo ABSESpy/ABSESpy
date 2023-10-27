@@ -12,7 +12,6 @@ kanban-plugin: basic
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨ #Nature🌍 Solving nodata
-- [ ] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
 - [ ] #feat✨  Give users an option of real-dates or just a counter
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
@@ -24,6 +23,7 @@ kanban-plugin: basic
 - [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
 - [ ] #feat✨  Auto-update dynamic variables
 - [ ] #bug🐛 [[Fixing the twice logging bug]]
+- [ ] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
 - [ ] #feat✨ Not allow to appear any same module name
 
 
