@@ -15,7 +15,6 @@ from functools import total_ordering, wraps
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pendulum
-import rich
 
 from abses.components import _Component
 from abses.logging import logger
@@ -149,13 +148,26 @@ class TimeDriver(_Component):
         self._parse_time_settings()
 
     def __repr__(self) -> str:
-        return repr(self.dt)
+        if self.ticking_mode == 'tick':
+            return f"<TimeDriver: tick[{self.tick}]>"
+        elif self.ticking_mode == 'duration':
+            return f"<TimeDriver: {self.strftime('%Y-%m-%d %H:%M:%S')}>"
+        return f"<TimeDriver: irregular[{self.tick}] {self.strftime('%Y-%m-%d %H:%M:%S')}>"
 
     def __eq__(self, other: object) -> bool:
         return self.dt.__eq__(other)
 
     def __lt__(self, other: object) -> bool:
         return self.dt.__lt__(other)
+
+    @property
+    def should_end(self) -> bool:
+        """Should the model end or not."""
+        if not self.end_dt:
+            return False
+        if isinstance(self.end_dt, datetime):
+            return self.dt >= self.end_dt
+        return self._tick >= self.end_dt
 
     @property
     def tick(self) -> int:
@@ -167,25 +179,29 @@ class TimeDriver(_Component):
         """Returns the ticking mode of the time driver."""
         if self.duration:
             return "duration"
-        return "now" if self._record else "tick"
+        return "irregular" if self._irregular else "tick"
 
     @property
     def history(self) -> List[datetime]:
         """Returns the history of the time driver."""
         return list(self._history)
 
-    def go(self, ticks: int = 1) -> None:
+    def go(self, ticks: int = 1, **kwargs) -> None:
         """Increments the tick."""
+        if ticks < 0:
+            raise ValueError("Ticks cannot be negative.")
+        if ticks == 0 and self.ticking_mode != "irregular":
+            raise ValueError("Ticks cannot be zero unless the ticking mode is 'irregular'.")
         if ticks > 1:
             for _ in range(ticks):
-                self.go()
+                self.go(ticks=1, **kwargs)
             return
-        self._tick += 1
+        self._tick += ticks
         if self.ticking_mode == "duration":
             self.dt += self.duration
             self._history.append(self.dt)
-        elif self.ticking_mode == "now":
-            self.dt = pendulum.instance(datetime.now(), tz=None)
+        elif self.ticking_mode == "irregular":
+            self.dt += pendulum.duration(**kwargs)
             self._history.append(self.dt)
         elif self.ticking_mode != "tick":
             raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
@@ -211,9 +227,9 @@ class TimeDriver(_Component):
         self.parse_duration(self.params)
         logger.debug(f"duration: {self.duration}")
 
-        # Parse the record settings
-        self._record = self.params.get("record")
-        logger.debug("record: {}", self._record)
+        # Parse the irregular settings
+        self._irregular = self.params.get("irregular")
+        logger.debug("irregular: {}", self._irregular)
         logger.debug("Ticking mode: {}", self.ticking_mode)
 
         self.dt = self.start_dt
@@ -269,7 +285,7 @@ class TimeDriver(_Component):
         return self._end_dt
 
     @end_dt.setter
-    def end_dt(self, dt: datetime | None) -> None:
+    def end_dt(self, dt: datetime | int | None) -> None:
         """Get the Timestamp for the end of the period.
 
         Returns
@@ -277,7 +293,11 @@ class TimeDriver(_Component):
         end_time: pandas.Timestamp
             The Timestamp for the end of the period.
         """
-        if isinstance(dt, datetime):
+        if isinstance(dt, int) and dt <= 0:
+            raise ValueError("End time cannot be negative.")
+        if isinstance(dt, int):
+            self._end_dt = dt
+        elif isinstance(dt, datetime):
             self._end_dt = pendulum.instance(dt, tz=None)
         elif dt is None:
             self._end_dt = None

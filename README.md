@@ -33,12 +33,12 @@ An Agent-Based computational framework makes modeling artificial **[Social-ecolo
 
 Agent-based model (ABM) is essential for social-ecological systems (SES) research. `ABSESpy` is designed for modeling **couples humans and nature systems** by:
 
-- Allow users to develop modules separately and coupling them together.
+- [Architectural Elegance for Modular Socio-Ecological Systems Modeling](https://absespy.github.io/ABSESpy/features/architectural_elegance.md).
+- [Mastering Time in SES Modeling with Real-world Precision and Dynamic Updates](https://absespy.github.io/ABSESpy/features/time_control.md).
 - Automatically portray interactions between social actors and natural cells with `Networkx`
 - By applying a [human behavior modeling framework]((https://absespy.github.io/ABSESpy/docs/background/#human-behaviour-framework)), users can define, select, and track agents of the model in more intuitive ways.
 - Manage and test complex parameters [with a `yaml` file](https://absespy.github.io/ABSESpy/tutorial/notebooks/parameters/).
 - access information between cells and social actors by their locations
-- Auto-update real-world datasets and relate the ticks counter to the real-world time.
 ## Basic Usage & Documents
 
 Install with pip or your favorite PyPI package manager.

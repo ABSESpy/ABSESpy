@@ -7,6 +7,7 @@ nav:
         - Features:
           - Overview: features/features.md
           - Architectural elegance: features/architectural_elegance.md
+          - Control real-world time: features/time_control.md
         - Install: home/install.md
         - Dependencies: home/dependencies.md
         - License: home/license.md
@@ -28,9 +29,7 @@ nav:
           - Batch run: tutorial/advanced/batch_run.md
         - Lessons:
           - Organize your model structure: tutorial/lessons/organize_model_structure.ipynb
-          - Manipulate actors: tutorial/notebooks/human/rules.ipynb
-          - Actors Container: tutorial/notebooks/human/actors.ipynb
-          - Manipulate GeoData: tutorial/notebooks/nature/geodata.ipynb
+          - Control real-world time: tutorial/lessons/time_control.ipynb
     - API references:
         - Model: api/model.md
         - Natural Modules: api/nature.md
