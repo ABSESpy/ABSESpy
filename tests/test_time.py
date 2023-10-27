@@ -9,7 +9,6 @@ from datetime import datetime
 
 import pendulum
 import pytest
-from omegaconf import DictConfig
 
 from abses import MainModel
 from abses.time import _TimeDriver
@@ -81,15 +80,23 @@ def test_init_yearly_time(yearly_time):
     duration = pendulum.duration(years=1)
 
     assert yearly_time.tick == 0
-    assert yearly_time.start_dt == pendulum.datetime(year=2000, month=1, day=1)
-    assert yearly_time.end_dt == pendulum.datetime(year=2020, month=1, day=1)
+    assert yearly_time.start_dt == pendulum.datetime(
+        year=2000, month=1, day=1, tz=None
+    )
+    assert yearly_time.end_dt == pendulum.datetime(
+        year=2020, month=1, day=1, tz=None
+    )
     assert yearly_time.duration == duration
     assert len(yearly_time.history) == 1
     assert yearly_time.history[0] == yearly_time.start_dt
 
     yearly_time.go()
     assert yearly_time.tick == 1
-    assert yearly_time.dt == pendulum.datetime(year=2001, month=1, day=1)
-    assert yearly_time.end_dt == pendulum.datetime(year=2020, month=1, day=1)
+    assert yearly_time.dt == pendulum.datetime(
+        year=2001, month=1, day=1, tz=None
+    )
+    assert yearly_time.end_dt == pendulum.datetime(
+        year=2020, month=1, day=1, tz=None
+    )
     assert yearly_time.duration == duration
     assert len(yearly_time.history) == 2

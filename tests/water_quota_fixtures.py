@@ -49,7 +49,7 @@ class Hydrology(PatchModule):
 
         def select_data_now(data, time):
             """选择当前时间的 NetCDF 数据，并转换成数组"""
-            return data.sel(time=time.start_time, method="nearest").to_numpy()
+            return data.sel(time=time.dt, method="nearest").to_numpy()
 
         for name, data in self.__netCDF_datasets__.items():
             self.add_dynamic_variable(

@@ -41,9 +41,9 @@ def test_time_go():
     """测试模型运行"""
     model = MainModel(parameters=cfg)
     assert model.time.year == 2000
-    model.time_go()
+    model.time.go()
     assert model.time.year == model.human.time.year == 2001
     assert model.human.time is model.nature.time
 
-    model.time_go(6)
+    model.time.go(6)
     assert model.time.year == 2007

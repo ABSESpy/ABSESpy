@@ -123,20 +123,12 @@ class MainModel(Generic[N], Model, _Notice, States):
         """模型的参数"""
         return self.settings.get("model", DictConfig({}))
 
-    def time_go(self, steps: int = 1) -> _TimeDriver:
-        """时间前进"""
-        for _ in range(steps):
-            self.time.update()
-            # print the current time when go.
-            sys.stdout.write("\r" + self.time.strftime("%Y-%m-%d %H:%M:%S"))
-            sys.stdout.flush()
-
     def run_model(self) -> None:
         """模型运行"""
         self.setup()
         while self.running:
             self.step()
-            self.time_go()
+            self.time.go()
         self.end()
 
     def setup(self):

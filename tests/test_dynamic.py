@@ -41,7 +41,7 @@ def update_et0_function(
     obj: PatchModule,
 ) -> np.ndarray:
     """从数据中读取更新的 et0"""
-    time = time.start_time
+    time = time.dt
     xda = data.sel(time=time, method="nearest").rio.write_crs(obj.crs)
     standard = obj.get_xarray()
     return xda.rio.reproject_match(standard).to_numpy()
@@ -75,12 +75,12 @@ def test_dynamic_city_lands(model: MainModel):
     assert (agent.dynamic_var("lands") == data_1979).all()
 
     # 时间前进一步，到1980年1月，应该更新数据
-    model.time_go()
+    model.time.go()
     data_1980 = get_test_data(agent, 1980)
     assert (agent.dynamic_var("lands") == data_1980).all()
 
     # 再前进一步，到1980年2月，数据不用更新
-    model.time_go()
+    model.time.go()
     assert (agent.dynamic_var("lands") == data_1980).all()
 
 
@@ -97,7 +97,7 @@ def test_dynamic_nc_data(model: MainModel):
     assert model_now.shape == module.shape2d
 
     # 直接从数据中读取
-    data_now = DATA_ET0.sel(time=model.time.start_time, method="nearest")
+    data_now = DATA_ET0.sel(time=model.time.dt, method="nearest")
     data_now_crs = data_now.rio.write_crs(module.crs)
     matched = data_now_crs.rio.reproject_match(module.get_xarray())
 

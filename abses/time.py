@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import sys
 import threading
 from collections import deque
 from datetime import datetime
@@ -22,9 +23,16 @@ from abses.components import _Component
 if TYPE_CHECKING:
     from .main import MainModel
 
-DEFAULT_START = "2000-01-01 00:00:00"
-DEFAULT_END = "2023-01-01 00:00:00"
-DEFAULT_FREQ = "Y"
+
+VALID_DT_ATTRS = (
+    "years",
+    "months",
+    "weeks",
+    "days",
+    "hours",
+    "minutes",
+    "seconds",
+)
 
 
 def time_condition(condition: dict, when_run: bool = True) -> callable:
@@ -47,13 +55,15 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             if not hasattr(self, "time"):
-                raise AttributeError("The `time` attribute must be existing.")
+                raise AttributeError(
+                    "The object doesn't have a TimeDriver object as `time` attribute."
+                )
             time = self.time
             if not isinstance(time, _TimeDriver):
                 raise TypeError("The `TimeDriver` must be existing.")
 
             satisfied = all(
-                getattr(time, key, None) == value
+                getattr(time.dt, key, None) == value
                 for key, value in condition.items()
             )
 
@@ -65,7 +75,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
     return decorator
 
 
-# @total_ordering
+@total_ordering
 class _TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time.
 
@@ -141,6 +151,12 @@ class _TimeDriver(_Component):
     def __repr__(self) -> str:
         return repr(self.dt)
 
+    def __eq__(self, other: object) -> bool:
+        return self.dt.__eq__(other)
+
+    def __lt__(self, other: object) -> bool:
+        return self.dt.__lt__(other)
+
     @property
     def tick(self) -> int:
         """Returns the current tick."""
@@ -158,17 +174,25 @@ class _TimeDriver(_Component):
         """Returns the history of the time driver."""
         return list(self._history)
 
-    def go(self) -> None:
+    def go(self, ticks: int = 1) -> None:
         """Increments the tick."""
+        if ticks > 1:
+            for _ in range(ticks):
+                self.go()
+            return
         self._tick += 1
         if self.ticking_mode == "duration":
             self.dt += self.duration
             self._history.append(self.dt)
         elif self.ticking_mode == "now":
-            self.dt = pendulum.now()
+            self.dt = pendulum.instance(datetime.now(), tz=None)
             self._history.append(self.dt)
         elif self.ticking_mode != "tick":
             raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
+
+    def _stdout_time(self) -> None:
+        sys.stdout.write("\r" + self.strftime("%Y-%m-%d %H:%M:%S"))
+        sys.stdout.flush()
 
     def _parse_time_settings(self) -> None:
         """Setup the time driver."""
@@ -199,15 +223,7 @@ class _TimeDriver(_Component):
 
     def parse_duration(self, duration: Dict[str, int]) -> None:
         """Set the duration of the time driver."""
-        valid_attributes = (
-            "years",
-            "months",
-            "weeks",
-            "days",
-            "hours",
-            "minutes",
-            "seconds",
-        )
+        valid_attributes = VALID_DT_ATTRS
         valid_dict = {}
         for attribute in valid_attributes:
             value = duration.get(attribute, 0)
@@ -234,11 +250,11 @@ class _TimeDriver(_Component):
     def start_dt(self, dt: datetime | None) -> None:
         """Set the starting time."""
         if isinstance(dt, datetime):
-            self._start_dt = dt
+            self._start_dt = pendulum.instance(dt, tz=None)
         elif dt is None:
-            self._start_dt = pendulum.now()
+            self._start_dt = pendulum.instance(datetime.now(), tz=None)
         elif isinstance(dt, str):
-            self._start_dt = pendulum.parse(dt)
+            self._start_dt = pendulum.parse(dt, tz=None)
         else:
             raise TypeError(
                 "Start time must be a datetime object or a string."
@@ -259,11 +275,11 @@ class _TimeDriver(_Component):
             The Timestamp for the end of the period.
         """
         if isinstance(dt, datetime):
-            self._end_dt = dt
+            self._end_dt = pendulum.instance(dt, tz=None)
         elif dt is None:
             self._end_dt = None
         elif isinstance(dt, str):
-            self._end_dt = pendulum.parse(dt)
+            self._end_dt = pendulum.parse(dt, tz=None)
         else:
             raise TypeError("End time must be a datetime object or a string.")
 
@@ -274,7 +290,7 @@ class _TimeDriver(_Component):
         Returns
         -------
         period : pendulum.datetime
-            The current real-world time for the model.
+            The current real-world time for the model without timezone information.
         """
         return self._dt
 
@@ -425,15 +441,6 @@ class _TimeDriver(_Component):
         is_leap_year : bool
         """
         return self.dt.is_leap_year
-
-    @property
-    def start_time(self) -> datetime:
-        """Get the Timestamp for the start of the period.
-
-        Returns
-        -------
-        start_time : pandas.Timestamp"""
-        return self.dt.start_time
 
     @property
     def week(self) -> int:
