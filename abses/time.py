@@ -7,12 +7,12 @@
 
 from __future__ import annotations
 
-import logging
 import threading
 from collections import deque
 from functools import total_ordering, wraps
 from typing import TYPE_CHECKING, Optional, Union
 
+from loguru import logger
 from pandas import Period, Timestamp
 
 from abses.components import _Component
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 DEFAULT_START = "2000-01-01 00:00:00"
 DEFAULT_END = "2023-01-01 00:00:00"
 DEFAULT_FREQ = "Y"
-logger = logging.getLogger(__name__)
 
 
 def time_condition(condition: dict, when_run: bool = True) -> callable:
@@ -152,9 +151,7 @@ class _TimeDriver(_Component):
         freq = self.params.get("freq")
         if not freq:
             freq = DEFAULT_FREQ
-            self.logger.warning(
-                "Frequency is not set, using the default %s.", freq
-            )
+            logger.info("Frequency is not set, using the default {}.", freq)
         return freq
 
     @property
@@ -168,9 +165,7 @@ class _TimeDriver(_Component):
         """
         start = self.params.get("start")
         if not start:
-            self.logger.warning(
-                "Start time is not set, using the default %s.", start
-            )
+            logger.info("Start time is not set, using the default {}.", start)
             start = DEFAULT_START
         return Period(start, freq=self.freq)
 
@@ -185,9 +180,7 @@ class _TimeDriver(_Component):
         """
         end = self.params.get("end")
         if not end:
-            self.logger.warning(
-                "Ending time is not set, using the default %s.", end
-            )
+            logger.info("Ending time is not set, using the default {}.", end)
             end = DEFAULT_END
         return Period(end, freq=self.freq)
 
