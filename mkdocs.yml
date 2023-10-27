@@ -4,7 +4,9 @@ nav:
     - Home:
         - AB-SESpy: index.md
         - Navigation: navigation.md
-        - Features: home/features.md
+        - Features:
+          - Overview: features/features.md
+          - Architectural elegance: features/architectural_elegance.md
         - Install: home/install.md
         - Dependencies: home/dependencies.md
         - License: home/license.md
@@ -25,11 +27,19 @@ nav:
           - Add variables: tutorial/advanced/dynamic_variable.md
           - Batch run: tutorial/advanced/batch_run.md
         - Lessons:
+          - Organize your model structure: tutorial/lessons/organize_model_structure.ipynb
           - Manipulate actors: tutorial/notebooks/human/rules.ipynb
           - Actors Container: tutorial/notebooks/human/actors.ipynb
           - Manipulate GeoData: tutorial/notebooks/nature/geodata.ipynb
     - API references:
         - Model: api/model.md
+        - Natural Modules: api/nature.md
+        - Human Modules: api/human.md
+        - Cells: api/cells.md
+        - Actor (Agent): api/agents.md
+        - Actors Operation: api/sequences.md
+        - Time Control: api/time.md
+        - Dynamic Variables: api/variables.md
     - Examples:
         - Examples gallery: examples/gallery.md
     - Packages:

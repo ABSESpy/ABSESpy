@@ -5,10 +5,10 @@
 
 ## About
 - [Is `ABSESpy` for me?](home/audience.md)
-- [Highlight features](home/features.md)
+- [Highlight features](features.md)
 - [Installment of `ABSESpy`](home/install.md)
 - [Dependencies](home/dependencies.md)
-- [Acknowledgment](home/features.md)
+- [Acknowledgment](features.md)
 - [License](home/license.md)
 
 ## Wiki
