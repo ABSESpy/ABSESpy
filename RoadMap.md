@@ -8,13 +8,11 @@ kanban-plugin: basic
 
 - [ ] #docs📄 Adding Simplified Chinese README
 - [ ] #test🧪  #build🏗  Test on other Python versions
-- [ ] #feat✨  #human👨  The module automatically generates complex networks for all main bodies
-- [ ] #feat✨  Auto-update dynamic variables
 - [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨ #Nature🌍 Solving nodata
-- [ ] #refactor♻️  Use [Pendulum](https://pendulum.eustace.io/) instead of `pandas.Period`
+- [ ] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
 - [ ] #feat✨  Give users an option of real-dates or just a counter
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
@@ -24,12 +22,16 @@ kanban-plugin: basic
 
 - [ ] #refactor♻️ Using modules to manipulate agent
 - [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
+- [ ] #feat✨  Auto-update dynamic variables
+- [ ] #bug🐛 [[Fixing the twice logging bug]]
+- [ ] #feat✨ Not allow to appear any same module name
 
 
 ## Testing
 
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
 - [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
+- [ ] #feat✨  #human👨  The module automatically generates complex networks for all main bodies
 
 
 ## Published
