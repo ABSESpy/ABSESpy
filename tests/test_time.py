@@ -11,14 +11,14 @@ import pendulum
 import pytest
 
 from abses import MainModel
-from abses.time import _TimeDriver
+from abses.time import TimeDriver
 
 
 @pytest.fixture(name="default_time")
 def set_default_time():
     """创建一个默认的时间模块"""
     model = MainModel()
-    return _TimeDriver(model=model)
+    return TimeDriver(model=model)
 
 
 @pytest.fixture(name="yearly_time")
@@ -35,7 +35,7 @@ def set_year_time():
     return model.time
 
 
-def test_init_default_time(default_time: _TimeDriver):
+def test_init_default_time(default_time: TimeDriver):
     """测试初始化时间"""
     # 当前的时间
     assert default_time.dt.day == datetime.now().day
@@ -52,7 +52,7 @@ def test_init_default_time(default_time: _TimeDriver):
     assert default_time.ticking_mode == "tick"
 
 
-def test_default_time_go(default_time: _TimeDriver):
+def test_default_time_go(default_time: TimeDriver):
     """测试默认时间的运行"""
     default_time.go()
     assert default_time.tick == 1
@@ -66,8 +66,8 @@ def test_different_model():
     """测试不同的模型使用不同的计数器"""
     model2 = MainModel(name="test_different_model_1")
     model3 = MainModel(name="test_different_model_2")
-    time1 = _TimeDriver(model=model2)
-    time2 = _TimeDriver(model=model3)
+    time1 = TimeDriver(model=model2)
+    time2 = TimeDriver(model=model3)
     # assert time1 == time2
     assert time1 is not time2
     time1.go()

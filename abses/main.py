@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from mesa import Model
@@ -22,7 +21,7 @@ from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
 from .states import States
-from .time import _TimeDriver
+from .time import TimeDriver
 
 # from .mediator import MainMediator
 
@@ -55,7 +54,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._human = human_class(self)
         self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
-        self._time = _TimeDriver(model=self)
+        self._time = TimeDriver(model=self)
         self._run_id: int | None = run_id
         self._trigger("initialize", order=("nature", "human"))
         self._trigger("set_state", code=1)  # initial state
@@ -114,7 +113,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         return self._nature
 
     @property
-    def time(self) -> _TimeDriver:
+    def time(self) -> TimeDriver:
         """时间模块"""
         return self._time
 
@@ -129,6 +128,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         while self.running:
             self.step()
             self.time.go()
+            self.time.stdout()
         self.end()
 
     def setup(self):

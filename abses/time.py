@@ -14,7 +14,6 @@ from datetime import datetime
 from functools import total_ordering, wraps
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-import pandas as pd
 import pendulum
 from loguru import logger
 
@@ -59,7 +58,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
                     "The object doesn't have a TimeDriver object as `time` attribute."
                 )
             time = self.time
-            if not isinstance(time, _TimeDriver):
+            if not isinstance(time, TimeDriver):
                 raise TypeError("The `TimeDriver` must be existing.")
 
             satisfied = all(
@@ -76,7 +75,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
 
 
 @total_ordering
-class _TimeDriver(_Component):
+class TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time.
 
     This class is responsible for managing the time of a simulation model. It keeps track of the current time period,
@@ -133,7 +132,7 @@ class _TimeDriver(_Component):
     def __new__(cls, model: MainModel):
         with cls._lock:
             if not cls._instances.get(model):
-                driver = super(_TimeDriver, cls).__new__(cls)
+                driver = super(TimeDriver, cls).__new__(cls)
                 cls._instances[model] = driver
             else:
                 driver = cls._instances[model]
@@ -190,7 +189,7 @@ class _TimeDriver(_Component):
         elif self.ticking_mode != "tick":
             raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
 
-    def _stdout_time(self) -> None:
+    def stdout(self) -> None:
         sys.stdout.write("\r" + self.strftime("%Y-%m-%d %H:%M:%S"))
         sys.stdout.flush()
 
