@@ -12,18 +12,17 @@ kanban-plugin: basic
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨ #Nature🌍 Solving nodata
-- [ ] #feat✨  Give users an option of real-dates or just a counter
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
+- [ ] #refactor♻️ Checking `mypy` strictly and static types.
+- [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
 
 
 ## Planned
 
 - [ ] #refactor♻️ Using modules to manipulate agent
 - [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
-- [ ] #feat✨  Auto-update dynamic variables
-- [ ] #bug🐛 [[Fixing the twice logging bug]]
-- [ ] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
+- [ ] #docs📄  introduce the feature of MoHuB
 - [ ] #feat✨ Not allow to appear any same module name
 
 
@@ -32,6 +31,7 @@ kanban-plugin: basic
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
 - [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
 - [ ] #feat✨  #human👨  The module automatically generates complex networks for all main bodies
+- [ ] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
 
 
 ## Published
@@ -41,7 +41,10 @@ kanban-plugin: basic
 - [x] #refactor♻️ Remove `TimeDriverManager` and adding type hint to `TimeDriver`
 - [x] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
 - [x] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
+- [x] #feat✨  Auto-update dynamic variables
 - [x] #build🏗 #project🎉 Removed dependence of `AgentPy`.
+- [x] #bug🐛 [[Fixing the twice logging bug]]
+- [x] #feat✨  Give users an option of real-dates or just a counter
 
 
 ***
