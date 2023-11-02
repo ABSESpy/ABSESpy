@@ -9,9 +9,7 @@ kanban-plugin: basic
 - [ ] #docs📄 Adding Simplified Chinese README
 - [ ] #test🧪  #build🏗  Test on other Python versions
 - [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
-- [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
-- [ ] #feat✨ #Nature🌍 Solving nodata
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
 - [ ] #refactor♻️ Checking `mypy` strictly and static types.
@@ -22,8 +20,10 @@ kanban-plugin: basic
 
 - [ ] #refactor♻️ Using modules to manipulate agent
 - [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
+- [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #docs📄  introduce the feature of MoHuB
 - [ ] #feat✨ Not allow to appear any same module name
+- [ ] #feat✨  [[better log control]]
 
 
 ## Testing
