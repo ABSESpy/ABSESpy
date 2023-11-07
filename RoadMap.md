@@ -31,7 +31,6 @@ kanban-plugin: basic
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
 - [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
 - [ ] #feat✨  #human👨  The module automatically generates complex networks for all main bodies
-- [ ] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
 
 
 ## Published
@@ -44,6 +43,7 @@ kanban-plugin: basic
 - [x] #feat✨  Auto-update dynamic variables
 - [x] #build🏗 #project🎉 Removed dependence of `AgentPy`.
 - [x] #bug🐛 [[Fixing the twice logging bug]]
+- [x] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
 - [x] #feat✨  Give users an option of real-dates or just a counter
 
 

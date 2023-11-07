@@ -1,5 +1,5 @@
 {
-  "new-note-folder": "changelog.d",
+  "new-note-folder": "docs/drafts",
   "lane-width": 350,
   "hide-tags-in-title": true,
   "tag-colors": [
