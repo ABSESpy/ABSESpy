@@ -24,6 +24,7 @@ kanban-plugin: basic
 - [ ] #docs📄  introduce the feature of MoHuB
 - [ ] #feat✨ Not allow to appear any same module name
 - [ ] #feat✨  [[better log control]]
+- [ ] #bug🐛 Time running cannot stop.
 
 
 ## Testing

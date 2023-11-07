@@ -5,12 +5,16 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 import logging
-from typing import Any, Iterable, List
+import re
+from typing import Any, Iterable
 
 import numpy as np
 from scipy import ndimage
 
 logger = logging.getLogger(__name__)
+
+
+CAMEL_NAME = re.compile(r"(?<!^)(?=[A-Z])")
 
 
 def get_buffer(
@@ -117,3 +121,9 @@ def iter_func(elements: str) -> callable:
         return broadcast_func
 
     return broadcast
+
+
+def camel_to_snake(name):
+    """Convert camel name to snake name."""
+    # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
+    return CAMEL_NAME.sub("_", name).lower()

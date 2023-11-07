@@ -6,7 +6,7 @@
 # Website: https://cv.songshgeo.com/
 from __future__ import annotations
 
-import logging
+from functools import wraps
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -25,22 +25,23 @@ from mesa.space import Coordinate
 from omegaconf import DictConfig
 from shapely import Point
 
+from abses.decision import DecisionFactory
 from abses.links import LinkNode
 from abses.objects import _BaseObj
 from abses.sequences import ActorsList
+from abses.tools.func import make_list
 
 # A class that is used to store the position of the agent.
 
 
 if TYPE_CHECKING:
+    from abses.decision import Decision
     from abses.nature import PatchCell
 
     from .main import MainModel
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
-
-logger = logging.getLogger("__name__")
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
@@ -67,15 +68,28 @@ def parsing_string_selection(selection: str) -> Dict[str, Any]:
     return selection_dict
 
 
-def perception(func) -> Callable:
-    """感知世界"""
+def perception_result(name, result, nodata: Any = 0.0) -> Any:
+    """clean the result of a perception."""
+    if hasattr(result, "__iter__"):
+        # raise ABSESpyError('No')
+        raise ValueError(
+            f"Perception result of '{name}' got type {type(result)} as return."
+        )
+    return nodata if result is None else result
 
-    @property
-    def wrapper(self: Actor, *args, **kwargs):
-        """感知"""
-        return func(self, *args, **kwargs)
 
-    return wrapper
+def perception(nodata: Any) -> Callable:
+    """Change the decorated function into a perception attribute."""
+
+    def decorator(func) -> Callable:
+        @wraps(func)
+        def wrapper(self: Actor, *args, **kwargs):
+            result = func(self, *args, **kwargs)
+            return perception_result(func.__name__, result, nodata=nodata)
+
+        return wrapper
+
+    return decorator
 
 
 class Actor(mg.GeoAgent, _BaseObj, LinkNode):
@@ -215,6 +229,15 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             raise TypeError(f"{layer} is not mg.RasterLayer.")
         cell = layer.cells[pos[0]][pos[1]]
         self.put_on(cell=cell)
+
+    @property
+    def decisions(self) -> DecisionFactory:
+        """Decisions that this actor makes."""
+        decisions = make_list(getattr(self, "__decisions__", None))
+        return DecisionFactory(self, decisions)
+
+    # alias of decisions
+    d = decisions
 
     @property
     def layer(self) -> mg.RasterLayer:
