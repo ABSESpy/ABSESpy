@@ -100,3 +100,23 @@ def test_init_yearly_time(yearly_time):
     )
     assert yearly_time.duration == duration
     assert len(yearly_time.history) == 2
+
+
+def test_time_end_automatically():
+    """测试时间模块的自动结束"""
+    parameters = {
+        "time": {
+            "years": 1,
+            "start": "2000",
+            "end": "2020",
+        }
+    }
+    model = MainModel(parameters=parameters)
+    time = model.time
+    model.run_model()
+    assert time.tick == 20
+    assert time.year == 2020
+
+    model = MainModel({"time": {"end": 20}})
+    model.run_model()
+    assert time.tick == 20

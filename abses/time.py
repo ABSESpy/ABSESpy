@@ -148,9 +148,9 @@ class TimeDriver(_Component):
         self._parse_time_settings()
 
     def __repr__(self) -> str:
-        if self.ticking_mode == 'tick':
+        if self.ticking_mode == "tick":
             return f"<TimeDriver: tick[{self.tick}]>"
-        elif self.ticking_mode == 'duration':
+        elif self.ticking_mode == "duration":
             return f"<TimeDriver: {self.strftime('%Y-%m-%d %H:%M:%S')}>"
         return f"<TimeDriver: irregular[{self.tick}] {self.strftime('%Y-%m-%d %H:%M:%S')}>"
 
@@ -191,11 +191,14 @@ class TimeDriver(_Component):
         if ticks < 0:
             raise ValueError("Ticks cannot be negative.")
         if ticks == 0 and self.ticking_mode != "irregular":
-            raise ValueError("Ticks cannot be zero unless the ticking mode is 'irregular'.")
+            raise ValueError(
+                "Ticks cannot be zero unless the ticking mode is 'irregular'."
+            )
         if ticks > 1:
             for _ in range(ticks):
                 self.go(ticks=1, **kwargs)
             return
+        # tick = 1
         self._tick += ticks
         if self.ticking_mode == "duration":
             self.dt += self.duration
@@ -205,6 +208,9 @@ class TimeDriver(_Component):
             self._history.append(self.dt)
         elif self.ticking_mode != "tick":
             raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
+        # end going
+        if self.should_end:
+            self._model.running = False
 
     def stdout(self) -> None:
         """Print the current time."""
