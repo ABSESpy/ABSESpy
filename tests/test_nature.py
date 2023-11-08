@@ -14,6 +14,7 @@ from shapely.geometry import Point, box
 
 from abses.actor import Actor
 from abses.cells import raster_attribute
+from abses.errors import ABSESpyError
 from abses.links import LinkContainer, LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
@@ -281,7 +282,7 @@ def test_add_agent(cells, agents):
     cell1, cell2 = cells
     # Test adding the first agent of a breed
     agent1.put_on(cell1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ABSESpyError):
         cell2.add(agent1)
     assert agent1 in cell1.agents
 
