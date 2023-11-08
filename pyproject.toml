@@ -94,6 +94,7 @@ mkdocs-macros-plugin = "^1.0.4"
 mkdocs-jupyter = "^0.24.5"
 mkdocs-callouts = "^1.9.1"
 mkdocs-glightbox = "^0.3.4"
+mike = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]

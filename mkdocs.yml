@@ -89,6 +89,9 @@ plugins:
     - glightbox
     # https://squidfunk.github.io/mkdocs-material/setup/setting-up-tags/
     - tags
+    - mike:
+        alias_type: symlink
+        canonical_version: latest
 
 extra:
   alternate:

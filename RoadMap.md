@@ -14,6 +14,7 @@ kanban-plugin: basic
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
 - [ ] #refactor♻️ Checking `mypy` strictly and static types.
 - [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
+- [ ] #refactor♻️ [[use `dataclass` or `pydantic` rather than dictionaries]]
 
 
 ## Planned
@@ -23,7 +24,9 @@ kanban-plugin: basic
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #docs📄  introduce the feature of MoHuB
 - [ ] #feat✨ Not allow to appear any same module name
+- [ ] #build🏗 Make dependencies more flexible.
 - [ ] #feat✨  [[better log control]]
+- [ ] #docs📄 Formatting api documentation
 
 
 ## Testing
