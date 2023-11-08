@@ -95,6 +95,8 @@ mkdocs-jupyter = "^0.24.5"
 mkdocs-callouts = "^1.9.1"
 mkdocs-glightbox = "^0.3.4"
 mike = "^2.0.0"
+mkdocs-exclude = "^1.0.2"
+mkdocs-simple-hooks = "^0.1.5"
 
 [build-system]
 requires = ["poetry-core"]

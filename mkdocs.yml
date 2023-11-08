@@ -74,12 +74,27 @@ plugins:
     - search
     - mkdocstrings:
         handlers:
-            python:
-              setup_commands:
-                - import sys
-                - sys.path.insert(0, "..")
+          python:
+            paths: [.]
+            options:
+              members_order: source
+              separate_signature: true
+              filters: ["!^_"]
+              docstring_options:
+                ignore_init_summary: true
+              merge_init_into_class: true
+              extensions:
+                - docs/plugins/griffe_doclinks.py
+    - exclude:
+        glob:
+          - theme/announce.html
+          - plugins/*
+          - __pycache__/*
     - bibtex:
         bib_file: "docs/refs.bib"
+    - mkdocs-simple-hooks:
+        hooks:
+          on_pre_build: 'docs.plugins.checks:on_pre_build'
     - macros
     - mkdocs-jupyter:
       # include_source: True
@@ -120,13 +135,28 @@ markdown_extensions:
       alternate_style: true
   - footnotes
   - toc:
-      permalink: "#"
       baselevel: 2
       separator: "-"
+      permalink: true
+      title: Page contents
   - attr_list
   - md_in_html
   - pymdownx.tasklist:
       custom_checkbox: true
+
+  # 以下配置参考 https://github.com/pydantic/pydantic/blob/main/mkdocs.yml#L6C6-L6C6
+  - tables
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      pygments_lang_class: true
+  - pymdownx.extra
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
   # - pymdownx.snippets:
   #     auto_append:
   #       - abbreviations.md

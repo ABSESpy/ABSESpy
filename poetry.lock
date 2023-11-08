@@ -2534,6 +2534,19 @@ mkdocs = ">=1"
 tests = ["pytest"]
 
 [[package]]
+name = "mkdocs-exclude"
+version = "1.0.2"
+description = "A mkdocs plugin that lets you exclude files or trees."
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkdocs-exclude-1.0.2.tar.gz", hash = "sha256:ba6fab3c80ddbe3fd31d3e579861fd3124513708271180a5f81846da8c7e2a51"},
+]
+
+[package.dependencies]
+mkdocs = "*"
+
+[[package]]
 name = "mkdocs-git-authors-plugin"
 version = "0.7.2"
 description = "Mkdocs plugin to display git authors of a page"
@@ -2689,6 +2702,23 @@ mkdocs = ">=1.1.1"
 dev = ["autoflake", "black", "isort", "pytest", "twine (>=1.13.0)"]
 release = ["twine (>=1.13.0)"]
 test = ["autoflake", "black", "isort", "pytest"]
+
+[[package]]
+name = "mkdocs-simple-hooks"
+version = "0.1.5"
+description = "Define your own hooks for mkdocs, without having to create a new package."
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkdocs-simple-hooks-0.1.5.tar.gz", hash = "sha256:dddbdf151a18723c9302a133e5cf79538be8eb9d274e8e07d2ac3ac34890837c"},
+    {file = "mkdocs_simple_hooks-0.1.5-py3-none-any.whl", hash = "sha256:efeabdbb98b0850a909adee285f3404535117159d5cb3a34f541d6eaa644d50a"},
+]
+
+[package.dependencies]
+mkdocs = ">=1.2"
+
+[package.extras]
+test = ["pytest (>=4.0)", "pytest-cov"]
 
 [[package]]
 name = "mkdocstrings"
@@ -5231,4 +5261,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "c78088fc5a83c2cb84adb1a98825b7a42800419b1e15d408b91827905dd23892"
+content-hash = "1b893f865cbfe733671e634623e9baf8a2ea7e510ad7b22f290d57a2203a6b3f"

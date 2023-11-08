@@ -33,9 +33,10 @@ from abses.sequences import ActorsList
 
 
 if TYPE_CHECKING:
+    from abses.links import LinkContainer
+    from abses.main import MainModel
     from abses.nature import PatchCell
 
-    from .main import MainModel
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
@@ -80,58 +81,32 @@ def perception(func) -> Callable:
 
 class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     """
-    An actor in a social-ecological system.
+    An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
-    Attributes
-    ----------
-    _freq_levels : dict
-        A dictionary that maps frequency levels to integer codes. The frequency levels are used to determine when rules
-        should be checked. The available frequency levels are "now", "update", "move", and "any".
-    _rules : dict
-        A dictionary that maps rule names to dictionaries that contain information about the rule. Each rule dictionary
-        contains the following keys: "when", "then", "params", "frequency", and "disposable". The "when" key maps to a
-        selection criteria that determines when the rule should be applied. The "then" key maps to the name of a method
-        that should be called when the rule is triggered. The "params" key maps to a dictionary of parameters that
-        should be passed to the method. The "frequency" key maps to an integer code that determines when the rule should
-        be checked. The "disposable" key is a boolean that determines whether the rule should be deleted after it is
-        triggered.
-    _cell : PatchCell
-        The cell where the actor is located.
-    container : HumanContainer
-        The container that the actor belongs to.
-    layer : mg.RasterLayer
-        The layer where the actor is located.
-    indices : Coordinate
-        The indices of the cell where the actor is located.
-    pos : Coordinate
-        The position of the cell where the actor is located.
-    population : list
-        A list of actors of the same breed as the actor.
-    on_earth : bool
-        Whether the actor is standing on a cell.
-    here : ActorsList
-        A list of actors that are on the same cell as the actor.
-
-    Methods
-    -------
-    __init__(self, model: MainModel, observer: bool = True, unique_id: Optional[int] = None, **kwargs) -> None
-        Initializes a new actor.
-    put_on(self, cell: PatchCell | None = None) -> None
-        Places the actor on a cell.
-    put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
-        Specifies a new cell for the actor to be located on.
-    __setattr__(self, name, value)
-        Sets an attribute of the actor.
-    _freq_level(self, level: str) -> int
-        Returns the integer code for a given frequency level.
-    _check_rules(self, check_when: str) -> List[str]
-        Checks the actor's rules.
-    selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
-        Selects the actor according to specified criteria.
+    Attributes:
+        _freq_levels:
+            A dictionary that maps frequency levels to integer codes. The frequency levels are used to determine when rules should be checked.
+            The available frequency levels are "now", "update", "move", and "any".
+        _cell:
+            The cell where the actor is located.
+        container:
+            The container that the actor belongs to.
+        layer:
+            The layer where the actor is located.
+        indices:
+            The indices of the cell where the actor is located.
+        pos:
+            The position of the cell where the actor is located.
+        population:
+            A list of actors of the same breed as the actor.
+        on_earth:
+            Whether the actor is standing on a cell.
+        here:
+            A list of actors that are on the same cell as the actor.
     """
 
     # when checking the rules
-    _freq_levels = {"now": 0, "update": 1, "move": 2, "any": 3}
+    _freq_levels: Dict[str, int] = {"now": 0, "update": 1, "move": 2, "any": 3}
 
     def __init__(
         self,
@@ -151,7 +126,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         LinkNode.__init__(self)
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
-        self.container = model.human
+        self.container: LinkContainer = model.human
 
     def put_on(self, cell: PatchCell | None = None) -> None:
         """
@@ -242,7 +217,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             self._check_rules(check_when="any")
 
     @property
-    def population(self):
+    def population(self) -> ActorsList:
         """List of agents of the same breed"""
         return self.model.agents[self.breed]
 
