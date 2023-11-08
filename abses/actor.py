@@ -25,6 +25,7 @@ from mesa.space import Coordinate
 from omegaconf import DictConfig
 from shapely import Point
 
+from abses.errors import ABSESpyError
 from abses.links import LinkNode
 from abses.objects import _BaseObj
 from abses.sequences import ActorsList
@@ -128,69 +129,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         self._cell: PatchCell = None
         self.container: LinkContainer = model.human
 
-    def put_on(self, cell: PatchCell | None = None) -> None:
-        """
-        Place agent on a cell (same layer)
-
-        Parameters
-        ----------
-        cell : PatchCell
-            The cell where the agent is to be located.
-
-        Raises
-        ------
-        IndexError
-            If the agent is to be moved between different layers.
-        TypeError
-            If the agent is to be put on a non-PatchCell object.
-
-        Returns
-        -------
-        None
-        """
-        if cell is None:
-            # Remove agent
-            self._cell = None
-            return
-        if self.layer and self.layer is not cell.layer:
-            raise IndexError(
-                f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
-            )
-        if not isinstance(cell, mg.Cell):
-            raise TypeError(
-                f"Actor must be put on a PatchCell, instead of {type(cell)}"
-            )
-        if self.on_earth:
-            self._cell.remove(self)
-            self._cell = None
-        cell.add(self)
-        self._cell = cell
-        self.geometry = Point(cell.layer.transform * cell.indices)
-
-    def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
-        """
-        Specifies a new cell for the agent to be located on.
-
-        Parameters
-        ----------
-        layer : mg.RasterLayer
-            The layer where the agent is to be located.
-        pos : Tuple[int, int]
-            The position of the cell where the agent is to be located.
-
-        Raises
-        ------
-        TypeError
-
-        Returns
-        -------
-        None
-        """
-        if not isinstance(layer, mg.RasterLayer):
-            raise TypeError(f"{layer} is not mg.RasterLayer.")
-        cell = layer.cells[pos[0]][pos[1]]
-        self.put_on(cell=cell)
-
     @property
     def layer(self) -> mg.RasterLayer:
         """Get the layer where the agent is located."""
@@ -231,6 +169,60 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         """Other agents on the same cell as the agent."""
         return self._cell.agents
 
+    def put_on(self, cell: PatchCell | None = None) -> None:
+        """
+        Place agent on a cell. If the agent is already located at a cell, it should be located to a cell with the same layer.
+
+        Parameters:
+            cell:
+                The cell where the agent is to be located. If None (default), remove the subject from the current layer.
+
+        Raises:
+            IndexError:
+                If the agent is to be moved between different layers.
+            TypeError:
+                If the agent is to be put on a non-PatchCell object.
+        """
+        if cell is None:
+            # Remove agent
+            self._cell = None
+            return
+        if self.layer and self.layer is not cell.layer:
+            raise IndexError(
+                f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
+            )
+        if not isinstance(cell, mg.Cell):
+            raise TypeError(
+                f"Actor must be put on a PatchCell, instead of {type(cell)}"
+            )
+        if self.on_earth:
+            self._cell.remove(self)
+            self._cell = None
+        cell.add(self)
+        self._cell = cell
+        self.geometry = Point(cell.layer.transform * cell.indices)
+
+    def put_on_layer(
+        self, layer: mg.RasterLayer, pos: Tuple[int, int]
+    ) -> None:
+        """
+        Specifies a new cell for the agent to be located on.
+
+        Parameters:
+            layer:
+                The layer where the agent is to be located.
+            pos:
+                The position of the cell where the agent is to be located.
+
+        Raises:
+            TypeError:
+                If the layer is not a valid RasterLayer type.
+        """
+        if not isinstance(layer, mg.RasterLayer):
+            raise TypeError(f"{layer} is not mg.RasterLayer.")
+        cell = layer.cells[pos[0]][pos[1]]
+        self.put_on(cell=cell)
+
     def _freq_level(self, level: str) -> int:
         code = self._freq_levels.get(level)
         if code is None:
@@ -259,16 +251,13 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
         """
-        Either select the agent according to specified criteria
+        Either select the agent according to specified criteria.
 
-        Parameters
-        ----------
-        selection: Union[str, Dict[str, Any]]
-            Either a string or a dictionary of key-value pairs that represent agent attributes to be checked against.
+        Parameters:
+            selection:
+                Either a string or a dictionary of key-value pairs that represent agent attributes to be checked against.
 
-        Returns
-        -------
-        bool
+        Returns:
             Whether the agent is selected or not
         """
         if isinstance(selection, str):
@@ -335,11 +324,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
 
     def die(self) -> None:
         """
-        Kills the agent (self)
-
-        Returns
-        -------
-        None
+        Kills the agent (self).
         """
         self.model.agents.remove(self)
         for link in self.links:
@@ -348,20 +333,17 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             self._cell.remove(self)
             del self
 
-    def move_to(self, position: Optional[Tuple[int, int]]) -> bool:
+    def move_to(self, position: Optional[Coordinate]) -> bool:
         """
-        Move agent to a new position
+        Move agent to a new position.
 
-        Parameters
-        ----------
-        position : Optional[Tuple[int, int]]
-            The new position to move to.
+        Parameters:
+            position:
+                The new position to move to.
 
-        Raises
-        ------
-        ValueError
-            If the position
-
+        Raises:
+            ValueError:
+                The main body is not on the same layer, please use the put_on method first.
         """
         if not self.layer:
             raise ValueError("Layer is not set.")
@@ -371,42 +353,35 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         """
         Get attribute data for the cell where the actor is located.
 
-        Parameters
-        ----------
-        attribute : str
-            The name of the attribute to get.
+        Parameters:
+            attribute : str
+                The name of the attribute to get.
 
-        Raises
-        ------
-        AttributeError
-            If the attribute is not found in the cell.
-
-        Returns
-        -------
-        Any
+        Raises:
+            AttributeError:
+                If the attribute is not found in the cell where this agent is located.
+            ABSESpyError:
+                The agent is not in the environment.
         """
-        return self._cell.get_attr(attribute)
+        if self.on_earth:
+            return self._cell.get_attr(attribute)
+        raise ABSESpyError(
+            f"You should locate this agent ({self}) to somewhere before get associated attribute."
+        )
 
     def alter_nature(self, attr: str, value: Any) -> None:
         """
         Alter the nature of the parameters of the cell where the actor is located.
 
-        Parameters
-        ----------
-        attr : str
-            The name of the parameter to change.
+        Parameters:
+            attr:
+                The name of the parameter to change.
+            value:
+                The new value to assign to the parameter.
 
-        value : Any
-            The new value to assign to the parameter.
-
-        Raises
-        ------
-        AttributeError
-            If the attribute is not found in the cell.
-
-        Returns
-        -------
-        None
+        Raises:
+            AttributeError:
+                If the attribute is not found in the cell.
         """
         if attr not in self._cell.attributes:
             raise AttributeError(f"Attribute {attr} not found.")
@@ -416,14 +391,11 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         """
         Get all other actors linked to this actor.
 
-        Parameters
-        ----------
-        link : str
-            The link to search for.
+        Parameters:
+            link:
+                The link to search for.
 
-        Returns
-        -------
-        ActorsList
+        Returns:
             A list of all actors linked to this actor.
         """
         return ActorsList(self.model, super().linked(link))

@@ -15,6 +15,7 @@ kanban-plugin: basic
 - [ ] #refactor♻️ Checking `mypy` strictly and static types.
 - [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
 - [ ] #refactor♻️ [[use `dataclass` or `pydantic` rather than dictionaries]]
+- [ ] #refactor♻️  `alter_nature` with specific spatial selection input
 
 
 ## Planned

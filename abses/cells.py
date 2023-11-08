@@ -79,7 +79,9 @@ class PatchCell(mg.Cell, LinkNode):
         return ActorsList(self.model, agents)
 
     def get_attr(self, attr_name: str) -> Any:
-        """获取某个属性，如果是图层的动态数据，则先自动更新"""
+        """获取某个属性，如果是图层的动态数据，则先自动更新
+        AttributeError: Attribute value of the associated patch cell.
+        """
         if attr_name in self.layer.dynamic_variables:
             self.layer.dynamic_var(attr_name=attr_name)
         if not hasattr(self, attr_name):
