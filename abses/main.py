@@ -34,7 +34,28 @@ H = TypeVar("H")
 
 class MainModel(Generic[N], Model, _Notice, States):
     """
-    主模型
+    Base class of a main ABSESpy model.
+
+    Attributes:
+        name:
+            name of the model. By default, it's the lowercase of class name. E.g.: TestModel -> testmodel.
+        settings:
+            Structured parameters of the model. Other module or submodules can search the configurations here structurally.
+            For an example, if the settings is a nested DictConfig like {'nature': {'test': 3}}, users can access the parameter 'test = 3' by `model.nature.params.test`.
+        human:
+            The Human module.
+        nature:
+            The nature module.
+        time:
+            Time driver.
+        params:
+            Parameters of the model.
+        run_id:
+            The run id of the current model. It's useful in batch run.
+        agents:
+            The container of all agents. One model only has one specific container where all alive agents are stored.
+        actors:
+            All agents as a list. A model can create multiple lists referring different actors.
     """
 
     def __init__(
@@ -74,78 +95,79 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     @property
     def run_id(self) -> int | None:
-        """批量运行时，当前模型的运行ID"""
+        """The run id of the current model. It's useful in batch run."""
         return self._run_id
 
     @property
     def name(self) -> str:
-        """模型名字"""
+        """name of the model. By default, it's the lowercase of class name. E.g.: TestModel -> testmodel."""
         return self.__class__.__name__
 
     @property
     def version(self) -> str:
-        """模型版本"""
+        """Report the current version of this model."""
         return self._version
 
     @property
     def settings(self) -> DictConfig:
-        """模型的所有参数"""
+        """Structured parameters of the model. Other module or submodules can search the configurations here structurally.
+
+        For an example, if the settings is a nested DictConfig like {'nature': {'test': 3}}, users can access the parameter 'test = 3' by `model.nature.params.test`.
+        """
         return self._settings
 
     @property
     def agents(self) -> AgentsContainer:
-        """模型的所有主体"""
+        """The container of all agents. One model only has one specific container where all alive agents are stored."""
         return self._agents
 
     @property
     def actors(self) -> ActorsList:
-        """列出当前所有主体"""
+        """All agents as a list. A model can create multiple lists referring different actors."""
         return self.agents.to_list()
 
     @property
     def human(self) -> H:
-        """人类模块"""
+        """The Human class"""
         return self._human
 
     @property
     def nature(self) -> N:
-        """自然模块"""
+        """The Nature module"""
         return self._nature
 
     @property
     def time(self) -> TimeDriver:
-        """时间模块"""
+        """The time driver & controller"""
         return self._time
 
     @property
     def params(self) -> DictConfig:
-        """模型的参数"""
+        """The global parameters of this model."""
         return self.settings.get("model", DictConfig({}))
 
     def run_model(self) -> None:
-        """模型运行"""
-        self.setup()
+        """Start running the model, until the end situation is triggered."""
+        self._setup()
         while self.running:
             self.step()
             self.time.go()
             self.time.stdout()
-        self.end()
+        self._end()
 
     def setup(self):
-        """模型的初始化"""
-        self._trigger("_setup", order=("model", "nature", "human"))
-        self._trigger("set_state", code=2)
-
-    def end(self):
-        """模型的结束"""
-        self._trigger("_end", order=("nature", "human", "model"))
-        self._trigger("set_state", code=3)
+        """Users can custom what to do when the model is setup and going to start running."""
 
     def step(self):
-        """模型的一个步骤"""
+        """A step of the model."""
+
+    def end(self):
+        """Users can custom what to do when the model is end."""
 
     def _setup(self):
-        """模型的初始化"""
+        self._trigger("setup", order=("model", "nature", "human"))
+        self._trigger("set_state", code=2)
 
     def _end(self):
-        """模型的结束"""
+        self._trigger("end", order=("nature", "human", "model"))
+        self._trigger("set_state", code=3)

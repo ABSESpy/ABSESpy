@@ -17,6 +17,8 @@ kanban-plugin: basic
 - [ ] #refactor♻️ [[use `dataclass` or `pydantic` rather than dictionaries]]
 - [ ] #refactor♻️  `alter_nature` with specific spatial selection input
 - [ ] #refactor♻️  merge `batch_link_by_geometry` and `link_by_geometry` into one method.
+- [ ] #feat✨  report versions
+- [ ] #test🧪  re-test workflow
 
 
 ## Planned
