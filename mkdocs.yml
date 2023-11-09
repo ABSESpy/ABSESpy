@@ -39,7 +39,7 @@ nav:
         - Actor (Agent): api/agents.md
         - Actors Operation: api/sequences.md
         - Time Control: api/time.md
-        - Dynamic Variables: api/variables.md
+        # - Dynamic Variables: api/variables.md
     - Examples:
         - Examples gallery: examples/gallery.md
     - Packages:

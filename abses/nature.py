@@ -528,10 +528,11 @@ class PatchModule(Module, mg.RasterLayer):
 
 class BaseNature(mg.GeoSpace, CompositeModule):
     """The Base Nature Module.
-    Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
-    This is NOT a raster layer, but can be seen as a container of different raster layers.
-    Users can create new raster layer (i.e., `PatchModule`) by `create_module` method.
-    By default, an initialized ABSESpy model will init an instance of this `BaseNature` as `nature` module.
+    Note:
+        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
+        This is NOT a raster layer, but can be seen as a container of different raster layers.
+        Users can create new raster layer (i.e., `PatchModule`) by `create_module` method.
+        By default, an initialized ABSESpy model will init an instance of this `BaseNature` as `nature` module.
 
     Attributes:
         major_layer:

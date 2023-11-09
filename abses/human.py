@@ -5,7 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Callable, Dict, TypeAlias, Union
+from typing import Callable, Dict, Set, TypeAlias, Union
 
 from omegaconf import DictConfig
 
@@ -22,20 +22,34 @@ Trigger: TypeAlias = Union[str, Callable]
 
 
 class HumanModule(Module):
-    """基本的人类模块"""
+    """The `Human` sub-module base class.
+
+    Note:
+        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
+
+    Attributes:
+        agents:
+            The agents container of this ABSESpy model.
+        collections:
+            Actor collections defined.
+    """
 
     def __init__(self, model, name=None):
         Module.__init__(self, model, name)
         self._agents = AgentsContainer(model)
         self._collections: Dict[str, Selection] = DictConfig({})
-        self._rules: Dict[str, Trigger] = DictConfig({})
 
     @property
     def agents(self) -> AgentsContainer:
-        """agents container"""
+        """The agents container of this ABSESpy model."""
         return self._agents
 
-    def actors(self, name: str | None = None) -> ActorsList:
+    @property
+    def collections(self) -> Set[str]:
+        """Actor collections defined."""
+        return set(self._collections.keys())
+
+    def actors(self, name: str | None = None) -> ActorsList[Actor]:
         """Different selections of agents"""
         if name is None:
             return self.agents.to_list()
@@ -57,7 +71,36 @@ class HumanModule(Module):
             )
 
     def define(self, name: str, selection: Selection) -> ActorsList:
-        """定义一次主体查询"""
+        """Define a query of actors and save it into collections.
+
+        Parameters:
+            name:
+                defined name of this group of actors.
+            selection:
+                Selection query of `Actor`.
+
+        Raises:
+            KeyError:
+                If the name is already defined.
+
+        Returns:
+            The list of actors who are satisfied the query condition.
+
+        Example:
+            ```
+            # Create 5 actors to query
+            model=MainModel()
+            model.agents.create(Actor, 5)
+
+            module = HumanModule(model=model)
+            actors = module.define(name='first', selection='ids=0')
+            >>> len(actors)
+            >>> 1
+
+            >>> module.actors('first') == actors
+            >>> True
+            ```
+        """
         if name in self._collections:
             raise KeyError(f"{name} is already defined.")
         selected = self.actors().select(selection)
@@ -66,7 +109,11 @@ class HumanModule(Module):
 
 
 class BaseHuman(CompositeModule, HumanModule, LinkContainer):
-    """基本的人类模块"""
+    """The Base Human Module.
+
+    Note:
+        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
+    """
 
     def __init__(self, model, name="human"):
         LinkContainer.__init__(self)
