@@ -12,10 +12,11 @@ kanban-plugin: basic
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
-- [ ] #refactor♻️ Checking `mypy` strictly and static types.
+- [ ] #refactor♻️ [[Checking `mypy` strictly and static types.]]
 - [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
 - [ ] #refactor♻️ [[use `dataclass` or `pydantic` rather than dictionaries]]
 - [ ] #refactor♻️  `alter_nature` with specific spatial selection input
+- [ ] #refactor♻️  merge `batch_link_by_geometry` and `link_by_geometry` into one method.
 
 
 ## Planned

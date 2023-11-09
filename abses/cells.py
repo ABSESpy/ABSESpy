@@ -29,7 +29,24 @@ def raster_attribute(func):
             def test:
                 return 1
 
-        PatchModule
+        # Using this test cell to create a PatchModule.
+        module = PatchModule.from_resolution(
+            model=MainModel(),
+            shape=(3, 3),
+            cell_cls=TestCell,
+        )
+
+        # now, the attribute 'test' of TestCell can be accessible in the module, as spatial data (i.e., raster layer).
+
+        >>> module.cell_properties
+        >>> set('test')
+
+        >>> array = module.get_raster('test')
+        >>> np.array([
+            [1, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1],
+        ])
         ```
     """
     func.is_decorated = True
