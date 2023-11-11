@@ -19,6 +19,7 @@ nav:
         - Terms and definitions: wiki/background.md
     - Tutorials:
         - Beginner:
+          - Beginner Tutorial: tutorial/beginner/hotelling_tutorial.ipynb
           - Run an example: tutorial/beginner/use_example.md
           - Setup a model: tutorial/beginner/write_example.md
           - Setup parameters: tutorial/beginner/setup_parameters.md
