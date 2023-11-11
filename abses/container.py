@@ -16,6 +16,7 @@ from typing import (
     Iterable,
     Optional,
     Self,
+    Tuple,
     Type,
     Union,
 )
@@ -31,48 +32,11 @@ logger = logging.getLogger("__name__")
 
 
 class AgentsContainer(dict):
-    """
-    Singleton AgentsContainer for each model.
+    """Singleton AgentsContainer for each model.
 
     This class is a dictionary-like container for managing agents in a simulation model. It is designed to be a singleton,
     meaning that there is only one instance of this class per model. It provides methods for creating, adding, removing,
     and selecting agents, as well as triggering events.
-
-    Attributes
-    ----------
-    _models : Dict[MainModel, AgentsContainer]
-        A dictionary that maps each model to its corresponding AgentsContainer
-        instance.
-    _lock : threading.RLock
-        A reentrant lock that is used to synchronize access to the _models dictionary.
-
-    Parameters
-    ----------
-    model : MainModel
-        The main model that this AgentsContainer belongs to.
-
-    Properties
-    ----------
-    breeds : Tuple[str]
-        A tuple of all the breeds (types) of agents that are registered in this container.
-    model : MainModel
-        The main model that this AgentsContainer belongs to.
-
-    Methods:
-    register_a_breed(actor_cls: Type[Actor]) -> None
-        Registers a new breed (type) of agent in this container.
-    create(breed_cls: Type[Actor], num: int = 1, singleton: bool = False, **kwargs) -> Union[Actor, ActorsList]
-        Creates a specified number of agents of a specified breed (type) and adds them to this container.
-    to_list(breeds: Optional[Union[str, Iterable[str]]] = None) -> ActorsList
-        Returns a list of all agents in this container, or a list of agents of specified breeds (types).
-    trigger(*args, **kwargs) -> None
-        Triggers an event for all agents in this container.
-    add(agents: Union[Actor, ActorsList, Iterable[Actor]] = None, register: bool = False) -> None
-        Adds one or more agents to this container.
-    remove(agent: Actor) -> None
-        Removes a specified agent from this container.
-    select(selection: Selection) -> ActorsList
-        Selects a subset of agents from this container based on a specified selection criteria.
     """
 
     _models: Dict[MainModel, AgentsContainer] = {}
@@ -108,13 +72,13 @@ class AgentsContainer(dict):
         return name in self.to_list()
 
     @property
-    def breeds(self):
+    def breeds(self) -> Tuple[str]:
         """Get all breeds in the model"""
         return tuple(self._breeds.keys())
 
     @property
-    def model(self):
-        """Get main model."""
+    def model(self) -> MainModel:
+        """The ABSESpy model where the container belongs to."""
         return self._model
 
     def _register(self, actor: Actor) -> None:
@@ -123,17 +87,14 @@ class AgentsContainer(dict):
             self[actor.breed] = set()
 
     def register_a_breed(self, actor_cls: type[Actor]) -> None:
-        """
-        Register a new breed of actors in the container.
+        """Register a new breed of actors in the container.
 
-        Args:
-            actor_cls (type[Actor]): The class of the actor to be registered.
+        Parameters:
+            actor_cls:
+                The class of the actor to be registered.
 
         Raises:
             TypeError: If the given class is not a subclass of `Actor`.
-
-        Returns:
-            None
         """
         if not issubclass(actor_cls, Actor):
             raise TypeError(f"'{actor_cls}' not subclass of 'Actor'.")
@@ -146,18 +107,34 @@ class AgentsContainer(dict):
         num: int = 1,
         singleton: bool = False,
         **kwargs,
-    ) -> Union[Actor, ActorsList]:
-        """
-        Create one or more actors of the given breed class.
+    ) -> Union[Actor, ActorsList[Actor]]:
+        """Create one or more actors of the given breed class.
 
-        Args:
-            breed_cls (Type[Actor]): The breed class of the actor(s) to create.
-            num (int, optional): The number of actors to create. Defaults to 1.
-            singleton (bool, optional): Whether to create a singleton actor. Defaults to False.
-            **kwargs: Additional keyword arguments to pass to the actor constructor.
+        Parameters:
+            breed_cls:
+                The breed class of the actor(s) to create.
+            num:
+                The number of actors to create. Defaults to 1.
+            singleton (bool, optional):
+                Whether to create a singleton actor. Defaults to False.
+            **kwargs:
+                Additional keyword arguments to pass to the actor constructor.
 
         Returns:
-            Union[Actor, ActorsList]: The created actor(s).
+            The created actor(s).
+
+        Example:
+            ```python
+            from abses import Actor, MainModel
+            model = MainModel()
+            actor = model.agents.create(singleton=True)
+            >>> type(actor)
+            >>> Actor
+
+            actors = model.agents.create(singleton=False)
+            >>> type(actors)
+            >>> ActorsList
+            ```
         """
         objs = [breed_cls(self._model, **kwargs) for _ in range(num)]
         agents = ActorsList(self._model, objs)
@@ -168,11 +145,10 @@ class AgentsContainer(dict):
 
     def to_list(
         self, breeds: Optional[Union[str, Iterable[str]]] = None
-    ) -> ActorsList:
-        """
-        Get all entities of specified breeds to a list.
+    ) -> ActorsList[Actor]:
+        """Get all entities of specified breeds to a list.
 
-        Args:
+        Parameters:
             breeds (Optional[Union[str, Iterable[str]]]): The breed(s) of entities to convert to a list. If None, all breeds are used.
 
         Returns:
@@ -185,16 +161,17 @@ class AgentsContainer(dict):
             agents.extend(self[breed])
         return agents
 
-    def trigger(self, *args, **kwargs) -> None:
-        """
-        Trigger a function for all agents in the container.
+    def trigger(self, *args, **kwargs) -> Any:
+        """Trigger a function for all agents in the container.
 
         This method calls the `trigger` method of the list of agents in the container,
         passing the same arguments and keyword arguments received by this method.
 
-        Args:
-            *args: Positional arguments to be passed to the `trigger` method of each agent.
-            **kwargs: Keyword arguments to be passed to the `trigger` method of each agent.
+        Parameters:
+            *args:
+                Positional arguments to be passed to the `trigger` method of each agent.
+            **kwargs:
+                Keyword arguments to be passed to the `trigger` method of each agent.
 
         Returns:
             None
@@ -206,18 +183,17 @@ class AgentsContainer(dict):
         agents: Union[Actor, ActorsList, Iterable[Actor]] = None,
         register: bool = False,
     ) -> None:
-        """
-        Add one or more actors to the container.
+        """Add one or more actors to the container.
 
-        Args:
-            agents (Union[Actor, ActorsList, Iterable[Actor]], optional): The actor(s) to add to the container. Defaults to None.
-            register (bool, optional): Whether to register the actor(s) if they belong to a new breed. Defaults to False.
+        Parameters:
+            agents:
+                The actor(s) to add to the container. Defaults to None.
+            register:
+                Whether to register the actor(s) if they belong to a new breed. Defaults to False.
 
         Raises:
-            TypeError: If a breed of the actor(s) is not registered and `register` is False.
-
-        Returns:
-            None
+            TypeError:
+                If a breed of the actor(s) is not registered and `register` is False.
         """
         dic = ActorsList(self._model, make_list(agents)).to_dict()
         for k, actors_lst in dic.items():
@@ -229,44 +205,21 @@ class AgentsContainer(dict):
             self[k] = self[k].union(actors_lst)
 
     def remove(self, agent: Actor) -> None:
-        """
-        Remove the given agent from the container.
+        """Remove the given agent from the container.
 
-        Args:
+        Parameters:
             agent (Actor): The agent to remove.
-
-        Returns:
-            None
         """
         self[agent.breed].remove(agent)
 
     def select(self, selection: Selection) -> ActorsList:
-        """
-        Selects the actors that match the given selection criteria.
+        """Selects the actors that match the given selection criteria.
 
-        Args:
-            selection (Selection): The selection criteria to apply.
+        Parameters:
+            selection:
+                The selection criteria to apply.
 
         Returns:
-            ActorsList: A list of actors that match the selection criteria.
+            A list of actors that match the selection criteria.
         """
         return self.to_list().select(selection)
-
-
-def apply_agents(func) -> callable:
-    """
-    Apply this method to all agents of model if input agents argument is None.
-
-    Args:
-        manipulate_agents_func (wrapped function): should be a method of module.
-    """
-
-    def apply(self, *args, agents=None, **kwargs):
-        if agents is None:
-            agents = self.model.agents
-            results = agents.apply(func, sender=self, *args, **kwargs)
-        else:
-            results = func(self, agents=agents, *args, **kwargs)
-        return results
-
-    return apply

@@ -1,4 +1,9 @@
+models provide for a virtual laboratory from which to study dynamics of real-world systems, where experimentation is otherwise difﬁcult [@verburg2016].
+
 source:: https://gistbok.ucgis.org/bok-topics/agent-based-modeling
+
+[@verburg2016]
+![CleanShot2023-11-09at16.03.46](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-11-09%20at%2016.03.46.png)
 
 ABMs can be classified as bottom-up models, meaning that simulated patterns arise from the bottom-level behaviors of individuals. This is opposed to top-down models, which describes many of the statistical and mathematical models in GIScience, such as multi-criteria analysis, location-allocation analysis, etc., in which resulting patterns stem from one or more formulas that algorithmically combine a set of inputs to produce a spatial pattern. While such top-down approaches to modeling can be used to investigate a range of spatial problems, some questions require methods that can represent how resulting patterns emerge from the interactions of individuals with each other and their surrounding environment over time. ABMs are suited for this type of process because they can emulate how specific decisions influence higher-level system properties. Furthermore, ABMs can be programmed to incorporate stochastic events and the uncertainty of how individuals make decisions and behave. This allows modelers to run a model many (e.g. hundreds) of times in order to analyze the probability of specific patterns emerging given variations in agent behaviors or environmental constraints.
 

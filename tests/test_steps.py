@@ -20,7 +20,7 @@ class MockModel(MainModel):
         """初始化模型"""
         CHECK_CODES.append("m0")
 
-    def _setup(self):
+    def setup(self):
         """在模型初始化时进行配置"""
         CHECK_CODES.append("m1")
 
@@ -28,7 +28,7 @@ class MockModel(MainModel):
         """模拟一个步骤"""
         CHECK_CODES.append("m2")
 
-    def _end(self):
+    def end(self):
         """模拟结束时进行配置"""
         CHECK_CODES.append("m3")
 
@@ -39,7 +39,7 @@ class MockNature(BaseNature):
     def initialize(self):
         CHECK_CODES.append("n0")
 
-    def _setup(self):
+    def setup(self):
         """在模型初始化时进行配置"""
         CHECK_CODES.append("n1")
 
@@ -47,7 +47,7 @@ class MockNature(BaseNature):
         """模拟一个步骤"""
         CHECK_CODES.append("n2")
 
-    def _end(self):
+    def end(self):
         """模拟结束时进行配置"""
         CHECK_CODES.append("n3")
 
@@ -58,7 +58,7 @@ class MockHuman(BaseHuman):
     def initialize(self):
         CHECK_CODES.append("h0")
 
-    def _setup(self):
+    def setup(self):
         """在模型初始化时进行配置"""
         CHECK_CODES.append("h1")
 
@@ -66,7 +66,7 @@ class MockHuman(BaseHuman):
         """模拟一个步骤"""
         CHECK_CODES.append("h2")
 
-    def _end(self):
+    def end(self):
         """模拟结束时进行配置"""
         CHECK_CODES.append("h3")
 
@@ -84,9 +84,10 @@ def setup_model():
 
 def test_workflow(model: MainModel):
     """测试工作流"""
+    # TODO fix this test
     assert CHECK_CODES == ["n0", "h0"]
     assert model.state == "init"
-    model.setup()
+    model._setup()
     assert CHECK_CODES == ["n0", "h0", "m1", "n1", "h1"]
     assert model.state == "ready"
     model.step()
@@ -94,7 +95,7 @@ def test_workflow(model: MainModel):
     model.step()
     assert CHECK_CODES == ["n0", "h0", "m1", "n1", "h1", "m2", "m2"]
     assert model.state == "ready"
-    model.end()
+    model._end()
     assert CHECK_CODES == [
         "n0",
         "h0",

@@ -66,7 +66,7 @@ class Hydrology(PatchModule):
         """计算作物蒸散发"""
         et0 = self.dynamic_var("et0")
         ks = self.params.Ks
-        kc = self.linked_attr(attr="Kc", how="only")
+        kc = self.linked_attr(attr_name="Kc", how="only")
         etc = (et0 * ks * kc).reshape(self.shape3d)
         self.apply_raster(etc, attr_name="etc")
 
