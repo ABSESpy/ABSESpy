@@ -25,4 +25,7 @@ jobs:
       - run: pip install mkdocs-jupyter
       - run: pip install mkdocs-callouts
       - run: pip install mkdocs-glightbox
+      - run: pip install mike
+      - run: pip install mkdocs-exclude
+      - run: pip install mkdocs-simple-hooks
       - run: mkdocs gh-deploy --force
