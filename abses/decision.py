@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import inspect
 from functools import wraps
 from numbers import Number
 from typing import (
@@ -29,30 +30,6 @@ if TYPE_CHECKING:
 Strategy: TypeAlias = Union[str, None, bool, Number]
 
 
-def response(decision: str, strategy: Strategy) -> Callable:
-    """Change the decorated function into a response methods."""
-
-    def decorator(func) -> Callable:
-        @wraps(func)
-        def wrapper(self: Actor, *args, **kwargs):
-            if not hasattr(self, "decisions"):
-                raise AttributeError(
-                    f"{self.breed} doesn't have an attribute 'decisions'"
-                )
-            if not isinstance(getattr(self, "decisions"), DecisionFactory):
-                raise TypeError("Type of a decision must be decision.")
-            decision_obj = self.decisions.get(decision)
-            if not decision_obj.has_strategy(strategy):
-                raise TypeError(
-                    f"Decision '{decision}' doesn't have strategy {strategy}."
-                )
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
 class Decision:
     """Decision class of actor."""
 
@@ -64,17 +41,19 @@ class Decision:
         cls.validate_strategies(cls.__strategies__)
         cls.set_strategies(cls.__strategies__)
 
-    def __init__(self, agent: Actor = None, name: str = None) -> None:
+    def __init__(self, agent: Actor = None) -> None:
         self._agent: Actor = agent
-        self._name = name
+        self._strategy: Any = self._setup()
 
+    def __repr__(self) -> str:
+        return f"<{self.name}: {self.now}>"
+
+    @classmethod
     @property
-    def name(self) -> str:
+    def name(cls) -> str:
         """Get the name of the decision."""
-        if self._name:
-            return self._name
-        default_name = camel_to_snake(self.__class__.__name__)
-        return getattr(self.__class__, "name_as", default_name)
+        default_name = camel_to_snake(cls.__name__)
+        return getattr(cls, "name_as", default_name)
 
     @classmethod
     def validate_strategies(cls, strategies: Strategy):
@@ -101,18 +80,45 @@ class Decision:
         return self._agent
 
     @classmethod
-    def making(cls, method: Callable):
+    def making(cls, method: Callable) -> Callable:
         """Making this decision."""
 
         @wraps(method)
         def decorated(self: Actor, *args, **kwargs):
             cls.validate_decision_maker(self)
-            self.decisions._register(method)
-            result = method(*args, **kwargs)
+            result = method(self, *args, **kwargs)
             cls.validate_strategy(result)
             return result
 
+        decorated.__making__ = cls
         return decorated
+
+    @classmethod
+    def response(cls, strategy: Strategy) -> Callable:
+        """Change the decorated function into a response methods."""
+
+        def decorator(func) -> Callable:
+            @wraps(func)
+            def wrapper(self: Actor, *args, **kwargs):
+                if not hasattr(self, "decisions"):
+                    raise AttributeError(
+                        f"{self.breed} doesn't have an attribute 'decisions'"
+                    )
+                if not isinstance(getattr(self, "decisions"), DecisionFactory):
+                    raise TypeError("Type of a decision must be decision.")
+                decision_obj = self.decisions.get(cls.name)
+                if not decision_obj.has_strategy(strategy):
+                    raise TypeError(
+                        f"Decision '{cls.name}' doesn't have strategy {strategy}."
+                    )
+                return func(self, *args, **kwargs)
+
+            wrapper.__response__ = cls
+            wrapper.__expected__ = strategy
+            return wrapper
+
+        # decorator.__response__ = cls
+        return decorator
 
     @classmethod
     def validate_decision_maker(cls, agent: Actor):
@@ -137,11 +143,35 @@ class Decision:
         """Is a specific strategy exist?"""
         return strategy in cls.strategies.keys()
 
+    @property
+    def now(self) -> Any:
+        """The strategy now."""
+        return self._strategy
+
+    def _setup(self) -> Any:
+        if init_strategy := self.setup():
+            self.validate_strategy(init_strategy)
+        return init_strategy
+
+    def setup(self) -> None:
+        """Overwrite to setup an initial strategy for this decision."""
+
+    def _find_decorated_methods(self, symbol="making"):
+        methods = inspect.getmembers(self.agent, predicate=inspect.ismethod)
+        for _, func in methods:
+            if hasattr(func, f"__{symbol}__"):
+                yield func
+
     def _make(self) -> Any:
         return self.make()
 
-    def make(self) -> Any:
+    def make(self) -> None:
         """Make decision."""
+        for making_decision in self._find_decorated_methods("making"):
+            result = making_decision()
+            for response in self._find_decorated_methods("response"):
+                if response.__expected__ == result:
+                    response()
 
 
 class DecisionFactory:
@@ -199,11 +229,7 @@ class DecisionFactory:
             )
         return self._decisions[name]
 
-    def making(self):
+    def making(self) -> None:
         """Making decisions."""
         for d in self._decisions.values():
             d._make()
-
-    def _register(self, method: Callable):
-        """Register a method as a decision making function."""
-        method = getattr(self.agent, method)

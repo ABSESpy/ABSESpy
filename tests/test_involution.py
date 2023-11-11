@@ -11,7 +11,7 @@ import pytest
 
 from abses import Actor
 from abses.actor import perception
-from abses.decision import Decision, response
+from abses.decision import Decision
 from abses.main import MainModel
 
 
@@ -37,10 +37,10 @@ class InvolutingActor(Actor):
     @perception(nodata=False)
     def avg_working_hrs(self) -> float:
         """The average wealth of acquaintances."""
-        acquaintance = self.linked("colleague")
-        return acquaintance.array("working_hrs").mean()
+        colleagues = self.linked("colleague")
+        return colleagues.array("working_hrs").mean()
 
-    @response(decision="over_working", strategy=True)
+    @OverWorking.response(strategy=True)
     def work_harder(self):
         """Work harder."""
         self.working_hrs += 1
@@ -103,6 +103,6 @@ def test_working_harder(agents: Iterable[InvolutingActor]):
     agent1.work_harder()
     assert agent1.working_hrs == 8.0
 
-    # agent1.decisions.making()
-    # assert agent1.working_hrs == 9.0
-    # assert agent1.d.overworking
+    agent1.decisions.making()
+    assert agent1.working_hrs == 9.0
+    assert agent1.d.over_working

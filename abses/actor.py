@@ -78,7 +78,9 @@ def perception_result(name, result, nodata: Any = 0.0) -> Any:
     return nodata if result is None else result
 
 
-def perception(nodata: Any) -> Callable:
+def perception(
+    decorated_func: Callable | None = None, *, nodata: Any | None = None
+) -> Callable:
     """Change the decorated function into a perception attribute."""
 
     def decorator(func) -> Callable:
@@ -89,7 +91,8 @@ def perception(nodata: Any) -> Callable:
 
         return wrapper
 
-    return decorator
+    # 检查是否有参数传递给装饰器，若没有则返回装饰器本身
+    return decorator(decorated_func) if decorated_func else decorator
 
 
 class Actor(mg.GeoAgent, _BaseObj, LinkNode):
@@ -98,19 +101,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
 
     Attributes
     ----------
-    _freq_levels : dict
-        A dictionary that maps frequency levels to integer codes. The frequency levels are used to determine when rules
-        should be checked. The available frequency levels are "now", "update", "move", and "any".
-    _rules : dict
-        A dictionary that maps rule names to dictionaries that contain information about the rule. Each rule dictionary
-        contains the following keys: "when", "then", "params", "frequency", and "disposable". The "when" key maps to a
-        selection criteria that determines when the rule should be applied. The "then" key maps to the name of a method
-        that should be called when the rule is triggered. The "params" key maps to a dictionary of parameters that
-        should be passed to the method. The "frequency" key maps to an integer code that determines when the rule should
-        be checked. The "disposable" key is a boolean that determines whether the rule should be deleted after it is
-        triggered.
-    _cell : PatchCell
-        The cell where the actor is located.
     container : HumanContainer
         The container that the actor belongs to.
     layer : mg.RasterLayer
@@ -128,24 +118,17 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
 
     Methods
     -------
-    __init__(self, model: MainModel, observer: bool = True, unique_id: Optional[int] = None, **kwargs) -> None
-        Initializes a new actor.
     put_on(self, cell: PatchCell | None = None) -> None
         Places the actor on a cell.
     put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
         Specifies a new cell for the actor to be located on.
-    __setattr__(self, name, value)
-        Sets an attribute of the actor.
-    _freq_level(self, level: str) -> int
-        Returns the integer code for a given frequency level.
-    _check_rules(self, check_when: str) -> List[str]
-        Checks the actor's rules.
     selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
         Selects the actor according to specified criteria.
     """
 
     # when checking the rules
     _freq_levels = {"now": 0, "update": 1, "move": 2, "any": 3}
+    __decisions__ = None
 
     def __init__(
         self,
@@ -166,6 +149,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
         self.container = model.human
+        self._decisions = self._setup_decisions()
 
     def put_on(self, cell: PatchCell | None = None) -> None:
         """
@@ -230,11 +214,15 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         cell = layer.cells[pos[0]][pos[1]]
         self.put_on(cell=cell)
 
-    @property
-    def decisions(self) -> DecisionFactory:
+    def _setup_decisions(self) -> DecisionFactory:
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
         return DecisionFactory(self, decisions)
+
+    @property
+    def decisions(self) -> DecisionFactory:
+        """Decisions that this agent makes."""
+        return self._decisions
 
     # alias of decisions
     d = decisions
