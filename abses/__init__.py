@@ -21,15 +21,18 @@ __all__ = [
     "BaseNature",
     "PatchModule",
     "Actor",
+    "Decision",
+    "DecisionFactory",
     "ActorsList",
     "AgentsContainer",
     "PatchCell",
     "perception",
 ]
-__version__ = "v0.2.1.alpha"
+__version__ = "v0.3.0"
 
 from .actor import Actor, perception
 from .container import ActorsList, AgentsContainer
+from .decision import Decision, DecisionFactory
 from .human import BaseHuman
 from .main import MainModel
 from .nature import BaseNature, PatchCell, PatchModule

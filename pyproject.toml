@@ -31,32 +31,31 @@ line_length = 79
 
 [tool.poetry]
 name = "abses"
-version = "0.2.1.alpha"
+version = "0.3.0"
 description = "ABSESpy makes it easier to build artificial Social-ecological systems with real GeoSpatial datasets and fully incorporate human behaviour."
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.12"
 prettytable = "^3.6.0"
 pint = "^0.20.1"
 netcdf4 = "^1.6.2"
 hydra-core = "^1.3.2"
-mesa-geo = "^0.5.0"
+mesa-geo = "^0.6.0"
 xarray = "^2023.8.0"
 fiona = "^1.9.4.post1"
 loguru = "^0.7.2"
 rioxarray = "^0.13.3"
 pendulum = "^2.1.2"
 rich = "^13.6.0"
+numpy = "^1.24.1"
+pandas = "^1.5.3"
+geopandas = "^0.12.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest-clarity = "^1.0.1"
-numpy = "^1.24.1"
-pandas = "^1.5.3"
-xarray = "^2023.1.0"
-geopandas = "^0.12.2"
 pre-commit = "^3.0.1"
 scriv = "^1.2.0"
 pytest = "^7.2.1"
@@ -78,6 +77,7 @@ mypy = "^1.5.1"
 bandit = "^1.7.5"
 black = "^23.9.1"
 pylint = "^3.0.1"
+tox = "^4.11.3"
 
 
 [tool.poetry.group.docs.dependencies]

@@ -1,4 +1,22 @@
 
+<a id='changelog-0.3.0'></a>
+# 0.3.0 — 2023-11-11
+
+## Documentation changes
+
+- [x] #docs📄 Refine the api documentation
+- [x] #docs📄 Add a simple paper to introduce the package
+- [x] #docs📄 Update readme to highlight some features.
+- [x] #docs📄 Add an example of Hotelling model.
+
+## New Features
+
+- [x] #feat✨ Introduce, test, documentation an example of decisions framework
+
+## Refactoring
+
+- [x] #refactor♻️ Some small refactoring when polishing api documents
+
 <a id='changelog-0.2.1.alpha'></a>
 # 0.2.1.alpha — 2023-11-07
 
