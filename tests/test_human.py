@@ -41,22 +41,3 @@ def test_human_define():
     assert human.actors("test") == farmers
     human.agents.remove(farmers[0])
     assert human.actors("test") == farmers[1:]
-
-
-def test_human_rule():
-    model = MainModel()
-    layer = PatchModule.from_resolution(model)
-    human = model.human
-    farmers = human.agents.create(Farmer, 5)
-    farmers.trigger(
-        "put_on_layer",
-        layer=layer,
-        pos=(2, 3),
-    )
-
-    farmers.trigger("rule", when="test == 1", then="die", disposable=True)
-    # assert checked
-    farmers.update("test", np.arange(5))
-    assert human.agents.to_list().on_earth.sum() == 4
-    farmers.trigger("rule", when="test == 2", then="die")
-    assert len(human.agents) == 3

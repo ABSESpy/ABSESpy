@@ -26,13 +26,13 @@ glightbox: false
 <table>
     <tr>
         <td style="text-align: center;">
-            <a href="https://absespy.github.io/ABSESpy/examples/gallery/">
+            <a href="https://absespy.github.io/ABSESpy/wiki/paper/">
                 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/D6J1Gj.png" alt="Step 1" width="300"/>
             </a>
             <p>Pure beginner of ABM or SES</p>
         </td>
         <td style="text-align: center;">
-            <a href="https://absespy.github.io/ABSESpy/wiki/about/">
+            <a href="https://absespy.github.io/ABSESpy/home/install/">
                 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/9324755_wiki_wikipedia_book_directory_ebook_icon.png" alt="Step 2" width="300"/>
             </a>
             <p>Know basic ideas but don't know how to start</p>
@@ -46,7 +46,7 @@ glightbox: false
             <p>Source code and API documentation</p>
         </td>
         <td style="text-align: center;">
-            <a href="https://absespy.github.io/ABSESpy/tutorial/beginner/use_example/">
+            <a href="https://absespy.github.io/ABSESpy/tutorial/lessons/organize_model_structure/">
                 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/942329_computer_internet_laptop_learn_teach_icon.png" alt="Step 4" width="300"/>
             </a>
             <p>Check out the tutorials</p>

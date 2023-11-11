@@ -16,7 +16,7 @@ website: https://cv.songshgeo.com
 
 ## Sponsors
 
-- This research has been supported by the National Natural Science Foundation of China (grant no. 42041007)
+- This package has been supported by the National Natural Science Foundation of China (grant no. 42041007) and the National Natural Science Foundation of China Joint Fund for Scientific Research on Yellow River (grant no. U2243601).
 
 ## Thanks to all contributors
 

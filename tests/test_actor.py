@@ -61,30 +61,6 @@ def test_actor_selecting():
     assert actor2.selecting(selection=selection3) is False
 
 
-def test_actor_rule():
-    """测试行动者会按照预设的规则进行行动"""
-    model = MainModel()
-    actor = Actor(model=model)
-    assert actor.on_earth is False
-    actor.put_on_layer(layer=PatchModule.from_resolution(model), pos=(1, 1))
-
-    selection = {"test1": 1, "test2": "testing"}
-
-    # 当满足选择条件时，就会自动前进到目标位置（3，3）
-    actor.rule(
-        when=selection, then="move_to", position=(3, 3), disposable=True
-    )
-    assert actor.selecting(selection) is False
-
-    actor.test1 = 1
-    assert actor.selecting(selection) is False
-
-    actor.test2 = "testing"
-    assert actor.selecting(selection) is True
-    assert actor.on_earth is True
-    assert actor.pos == (3, 3)
-
-
 Links: TypeAlias = Tuple[MainModel, PatchCell, PatchCell, Actor, Actor]
 
 

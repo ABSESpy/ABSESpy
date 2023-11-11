@@ -12,7 +12,7 @@ import threading
 from collections import deque
 from datetime import datetime
 from functools import total_ordering, wraps
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import pendulum
 
@@ -39,15 +39,33 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
     A decorator to run a method based on a time condition.
 
     Parameters:
-    - condition (dict): A dictionary containing conditions to check against the `time` attribute.
-                        The keys can be ['year', 'month', 'weekday', 'freqstr'].
-    - when_run (bool): If True, the decorated method will run when the condition is met.
-                       If False, the decorated method will not run when the condition is met.
+        condition:
+            A dictionary containing conditions to check against the `time` attribute.
+            The keys can be ['year', 'month', 'weekday', 'freqstr'].
+        when_run:
+            If True, the decorated method will run when the condition is met.
+            If False, the decorated method will not run when the condition is met.
 
-    Example usage:
-    @time_condition(condition={'year': 2023, 'month': 9})
-    def my_method(self):
-        print("This method runs only if the `time` attribute is in September 2023.")
+    Example:
+        ```
+        class TestActor(Actor):
+            @time_condition(condition={"month": 1, "day": 1}, when_run=True)
+            def happy_new_year(self):
+                print("Today is 1th, January, Happy new year!")
+
+
+        parameters = {"time": {"start": "1996-12-24", "days": 1}}
+
+
+        model = MainModel(parameters=parameters)
+        agent = model.agents.create(TestActor, 1, singleton=True)
+
+        for _ in range(10):
+            print(f"Time now is {model.time}")
+            model.time.go()
+            agent.happy_new_year()
+        ```
+        It should be called again in the next year beginning (i.e., `1998-01-01`) if we run this model longer... It means, the function will be called when the condition is fully satisfied.
     """
 
     def decorator(func):
@@ -78,52 +96,24 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
 class TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time.
 
-    This class is responsible for managing the time of a simulation model. It keeps track of the current time period,
-    updates it according to a given frequency, and provides properties to access different components of the current
-    time period (e.g., day, hour, etc.). The `_TimeDriver` class is a singleton, meaning that there can be only one
-    instance of it per simulation model. This is enforced by the `__new__` method, which returns an existing instance
-    if it already exists for the given model, or creates a new one otherwise.
+    This class is responsible for managing the time of a simulation model. It keeps track of the current time period, updates it according to a given frequency, and provides properties to access different components of the current time period (e.g., day, hour, etc.). The `TimeDriver` class is a singleton, meaning that there can be only one instance of it per simulation model.
 
-    Parameters
-    ----------
-    model : MainModel
-        The simulation model that this time driver belongs to.
+    When init a `TimeDriver`, it accepts below parameters:
 
-    Attributes
-    ----------
-    _instances : dict
-        A dictionary that maps simulation models to their corresponding time drivers.
-    _lock : threading.Lock
-        A lock object to ensure thread safety when creating new instances of the `_TimeDriver` class.
+    | Parameter Name | Expected Data Type | Default Value | Description |
+    |----------------|--------------------|---------------|-------------|
+    | start          | str, None                | None          | If None: use the current time, else: should be a string which can be parsed by `pendulum.parse()`. |
+    | end            | str, int, None         | None          | If it's a string that can be parsed into datetime the model should end until achieving this time; if int: the model should end in that tick; if None no auto-end. |
+    | irregular         | bool               | False         | If False: not dive into an irregular mode (tick-mode); if True, the model will solve as an irregular mode. |
+    | years          | int                | 0             | Time duration in years for the duration mode. |
+    | months         | int                | 0             | Time duration in months for the duration mode. |
+    | weeks          | int                | 0             | Time duration in weeks for the duration mode. |
+    | days           | int                | 0             | Time duration in days for the duration mode. |
+    | hours          | int                | 0             | Time duration in hours for the duration mode. |
+    | minutes        | int                | 0             | Time duration in minutes for the duration mode. |
+    | seconds        | int                | 0             | Time duration in seconds for the duration mode. |
 
-    Methods
-    -------
-    freq() -> str
-        Returns the time frequency of the time driver.
-    start_period() -> Period
-        Returns the starting time period for the model.
-    end_period() -> Period
-        Returns the final time period for the model.
-    period() -> Period
-        Returns the current time period for the model.
-    update(steps=1) -> None
-        Updates the current time period by a given number of steps.
-    day() -> int
-        Returns the current day for the model.
-    dayofweek() -> int
-        Returns the number for the day of the week for the model.
-    dayofyear() -> int
-        Returns the day of the year for the model.
-    daysinmonth() -> int
-        Returns the total number of days of the month that this period falls on for the model.
-    days_in_month() -> int
-        Returns the total number of days in the month that this period falls on for the model.
-    end_time() -> Timestamp
-        Returns the Timestamp for the end of the period.
-    hour() -> int
-        Returns the hour of the day component of the Period.
-    minute() -> int
-        Returns the minute of the hour component of the Period.
+    See tutorial to see more.
     """
 
     _instances = {}
@@ -150,7 +140,7 @@ class TimeDriver(_Component):
     def __repr__(self) -> str:
         if self.ticking_mode == "tick":
             return f"<TimeDriver: tick[{self.tick}]>"
-        elif self.ticking_mode == "duration":
+        if self.ticking_mode == "duration":
             return f"<TimeDriver: {self.strftime('%Y-%m-%d %H:%M:%S')}>"
         return f"<TimeDriver: irregular[{self.tick}] {self.strftime('%Y-%m-%d %H:%M:%S')}>"
 
@@ -187,7 +177,12 @@ class TimeDriver(_Component):
         return list(self._history)
 
     def go(self, ticks: int = 1, **kwargs) -> None:
-        """Increments the tick."""
+        """Increments the tick.
+
+        Parameters:
+            ticks:
+                How many ticks to increase.
+        """
         if ticks < 0:
             raise ValueError("Ticks cannot be negative.")
         if ticks == 0 and self.ticking_mode != "irregular":
@@ -223,20 +218,20 @@ class TimeDriver(_Component):
         """Setup the time driver."""
         # Parse the start time settings
         self.start_dt = self.params.get("start")
-        logger.debug(f"start_dt: {self.start_dt}")
+        # logger.debug(f"start_dt: {self.start_dt}")
 
         # Parse the end time settings
         self.end_dt = self.params.get("end")
-        logger.debug(f"end_dt: {self.end_dt}")
+        # logger.debug(f"end_dt: {self.end_dt}")
 
         # Parse the duration settings
         self.parse_duration(self.params)
-        logger.debug(f"duration: {self.duration}")
+        # logger.debug(f"duration: {self.duration}")
 
         # Parse the irregular settings
         self._irregular = self.params.get("irregular")
-        logger.debug("irregular: {}", self._irregular)
-        logger.debug("Ticking mode: {}", self.ticking_mode)
+        # logger.debug("irregular: {}", self._irregular)
+        # logger.debug("Ticking mode: {}", self.ticking_mode)
 
         self.dt = self.start_dt
         self._history.append(self.dt)
@@ -262,13 +257,7 @@ class TimeDriver(_Component):
 
     @property
     def start_dt(self) -> datetime | None:
-        """Returns the starting time for the model.
-
-        Returns
-        -------
-        start_period : pandas.Period
-            The starting time period for the model.
-        """
+        """Returns the starting time for the model."""
         return self._start_dt
 
     @start_dt.setter
@@ -286,19 +275,12 @@ class TimeDriver(_Component):
             )
 
     @property
-    def end_dt(self) -> datetime | None:
-        """Returns the final time for the model."""
+    def end_dt(self) -> datetime | int | None:
+        """The real-world time or the ticks when the model should be end."""
         return self._end_dt
 
     @end_dt.setter
     def end_dt(self, dt: datetime | int | None) -> None:
-        """Get the Timestamp for the end of the period.
-
-        Returns
-        -------
-        end_time: pandas.Timestamp
-            The Timestamp for the end of the period.
-        """
         if isinstance(dt, int) and dt <= 0:
             raise ValueError("End time cannot be negative.")
         if isinstance(dt, int):
@@ -314,13 +296,7 @@ class TimeDriver(_Component):
 
     @property
     def dt(self) -> datetime:
-        """Returns the current time period for the model.
-
-        Returns
-        -------
-        period : pendulum.datetime
-            The current real-world time for the model without timezone information.
-        """
+        """The current real-world time for the model without timezone information."""
         return self._dt
 
     @dt.setter
@@ -332,211 +308,104 @@ class TimeDriver(_Component):
 
     @property
     def day(self) -> int:
-        """Returns the current day for the model.
-
-        Returns
-        -------
-        day : int
-            The day for the model.
-        """
+        """Returns the current day for the model."""
         return self.dt.day
 
     @property
     def dayofweek(self) -> int:
-        """Returns the number for the day of the week for the model.
-
-        Returns
-        -------
-        dayofweek : int
-            The day of the week for the model.
-        """
+        """Returns the number for the day of the week for the model."""
         return self.dt.dayofweek
 
     @property
     def dayofyear(self) -> int:
-        """Returns the day of the year for the model.
-
-        Returns
-        -------
-        dayofyear : int
-            The day of the year for the model.
-        """
+        """Returns the day of the year for the model."""
         return self.dt.dayofyear
 
     @property
     def daysinmonth(self) -> int:
-        """Get the total number of days of the month that this period falls on for the model.
-
-        Returns
-        -------
-        daysinmonth : int
-            Days elapsed since the beginning of the month.
-        """
+        """Get the total number of days of the month that this period falls on for the model."""
         return self.dt.daysinmonth
 
     @property
     def days_in_month(self) -> int:
-        """Get the total number of days in the month that this period falls on for the model.
-
-        Returns
-        -------
-        days_in_month : int
-            Days in this months
-        """
+        """Get the total number of days in the month that this period falls on for the model."""
         return self.dt.days_in_month
 
     @property
     def hour(self) -> int:
-        """Get the hour of the day component of the Period.
-
-        Returns
-        -------
-        hour : int
-            The hour of the day component of the Period.
-        """
+        """Get the hour of the day component of the Period."""
         return self.dt.hour
 
     @property
     def minute(self) -> int:
-        """Get minute of the hour component of the Period.
-
-        Returns
-        -------
-        minute: int
-            The minute of the hour component of the Period.
-        """
+        """Get minute of the hour component of the Period."""
         return self.dt.minute
 
     @property
     def month(self) -> int:
-        """Return the month the current model's Period falls on.
-
-        Returns
-        -------
-        month: int
-            The month the current model's Period falls on.
-        """
+        """Return the month the current model's Period falls on."""
         return self.dt.month
 
     @property
     def quarter(self) -> int:
-        """Return the quarter the current model's Period falls on.
-
-        Returns
-        -------
-        quarter: int
-            The quarter the current model's Period falls on.
-        """
+        """Return the quarter the current model's Period falls on."""
         return self.dt.quarter
 
     @property
     def qyear(self) -> int:
-        """Fiscal year a model's Period lies in according to its starting-quarter.
-
-        Returns
-        -------
-        qyear: int
-            The fiscal year a model's Period lies in according to its starting-quarter.
-        """
+        """Fiscal year a model's Period lies in according to its starting-quarter."""
         return self.dt.qyear
 
     @property
     def second(self) -> int:
-        """Get the second component of a model's Period.
-
-        Returns
-        -------
-        second: int
-            The second component of a model's Period.
-        """
+        """Get the second component of a model's Period."""
         return self.dt.second
 
     @property
     def ordinal(self) -> int:
-        """Returns period ordinal, which is the number of periods elapsed since a starting period.
-
-        Returns
-        -------
-        ordinal : int
-        """
+        """Returns period ordinal, which is the number of periods elapsed since a starting period."""
         return self.dt.ordinal
 
     @property
     def is_leap_year(self) -> bool:
-        """Return True if the period's year is in a leap year.
-
-        Returns
-        -------
-        is_leap_year : bool
-        """
+        """Return True if the period's year is in a leap year."""
         return self.dt.is_leap_year
 
     @property
     def week(self) -> int:
-        """Get the week of the year on the given Period.
-
-        Returns
-        -------
-        week : int
-        """
+        """Get the week of the year on the given Period."""
         return self.dt.week
 
     @property
     def weekday(self) -> int:
-        """Day of the week the period lies in, with Monday=0 and Sunday=6.
-
-        Returns
-        -------
-        weekday : int
-        """
+        """Day of the week the period lies in, with Monday=0 and Sunday=6."""
         return self.dt.weekday
 
     @property
     def weekofyear(self) -> int:
-        """Get the week of the year on the given Period.
-
-        Returns
-        -------
-        weekofyear : int
-        """
+        """Get the week of the year on the given Period."""
         return self.dt.weekofyear
 
     @property
     def year(self) -> int:
-        """Return the year this Period falls on.
-
-        Returns
-        -------
-        year : int
-        """
+        """Return the year this Period falls on."""
         return self.dt.year
 
     @property
     def day_of_year(self) -> int:
-        """Return the day of the year.
-
-        Returns
-        -------
-        day_of_year : int
-        """
+        """Return the day of the year."""
         return self.dt.day_of_year
 
     @property
     def day_of_week(self) -> int:
-        """Day of the week the period lies in, with Monday=0 and Sunday=6.
-
-        Returns
-        -------
-        day_of_week : int
-        """
+        """Day of the week the period lies in, with Monday=0 and Sunday=6."""
         return self.dt.day_of_week
 
     def strftime(self, fmt: str) -> str:
-        """Returns a string representing the pandas.Period, controlled by an explicit format string."""
-        return self.dt.strftime(fmt)
+        """Returns a string representing the current time.
 
-    def to_timestamp(
-        self, freq: Union[str, str] = None, how: Optional[str] = None
-    ) -> datetime:
-        """Returns the Timestamp representation of the pandas.Period"""
-        return self.dt.to_timestamp(freq, how)
+        Parameters:
+            fmt:
+                An explicit format string of datetime.
+        """
+        return self.dt.strftime(fmt)
