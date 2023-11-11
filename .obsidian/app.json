@@ -1,3 +1,4 @@
 {
-  "propertiesInDocument": "source"
+  "propertiesInDocument": "source",
+  "alwaysUpdateLinks": true
 }

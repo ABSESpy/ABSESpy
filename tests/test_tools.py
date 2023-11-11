@@ -52,7 +52,7 @@ def test_random_choosers():
 
 @pytest.fixture(name="mock_object")
 def fixture_mock_object():
-    model = MainModel(parameters={"time": {"freq": "M"}})
+    model = MainModel(parameters={"time": {"start": "2000", "months": 1}})
 
     class MockObject(_BaseObj):
         def __init__(self, model):
@@ -77,7 +77,7 @@ def test_time_condition_happy_path(mock_object):
         result
         == "This method runs only if the `time` attribute is in September 2023."
     )
-    mock_object.model.time_go()
+    mock_object.model.time.go()
     assert not mock_object.my_method()
 
 

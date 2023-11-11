@@ -75,7 +75,7 @@ class MockHuman(BaseHuman):
 def setup_model():
     """创造可供测试的模型"""
     params = {
-        "time": {"freq": "Y", "start": 2000, "end": 2003},
+        "time": {"freq": "Y", "start": "2000", "end": "2003"},
     }
     return MockModel(
         parameters=params, nature_class=MockNature, human_class=MockHuman

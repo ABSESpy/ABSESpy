@@ -11,14 +11,13 @@ from typing import TYPE_CHECKING, Iterable, Optional, Set, Union
 
 from omegaconf import DictConfig
 
-from .log import _Log
 from .tools.func import make_list
 
 if TYPE_CHECKING:
     from abses.main import MainModel
 
 
-class _Component(_Log):
+class _Component:
     """
     Class _Component is used to represent a component of the model. Extends _Log class to be able to log any issues.
     Components are foundational pieces in constructing the model's entities.
@@ -28,10 +27,22 @@ class _Component(_Log):
     __args__ = []
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
-        _Log.__init__(self, name=name)
         self._args: Set[str] = set()
         self._model = model
+        self.name = name
         self.add_args(self.__args__)
+
+    @property
+    def name(self) -> str:
+        """Get the name of the component"""
+        return self._name
+
+    @name.setter
+    def name(self, value: None | str) -> None:
+        """Set the name of the component"""
+        if value is None:
+            value = self.__class__.__name__.lower()
+        self._name = value
 
     @property
     def params(self) -> dict:

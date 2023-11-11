@@ -7,23 +7,31 @@
 
 from __future__ import annotations
 
-import logging
+import sys
 import threading
 from collections import deque
+from datetime import datetime
 from functools import total_ordering, wraps
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-from pandas import Period, Timestamp
+import pendulum
 
 from abses.components import _Component
+from abses.logging import logger
 
 if TYPE_CHECKING:
     from .main import MainModel
 
-DEFAULT_START = "2000-01-01 00:00:00"
-DEFAULT_END = "2023-01-01 00:00:00"
-DEFAULT_FREQ = "Y"
-logger = logging.getLogger(__name__)
+
+VALID_DT_ATTRS = (
+    "years",
+    "months",
+    "weeks",
+    "days",
+    "hours",
+    "minutes",
+    "seconds",
+)
 
 
 def time_condition(condition: dict, when_run: bool = True) -> callable:
@@ -46,13 +54,15 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             if not hasattr(self, "time"):
-                raise AttributeError("The `time` attribute must be existing.")
+                raise AttributeError(
+                    "The object doesn't have a TimeDriver object as `time` attribute."
+                )
             time = self.time
-            if not isinstance(time, _TimeDriver):
+            if not isinstance(time, TimeDriver):
                 raise TypeError("The `TimeDriver` must be existing.")
 
             satisfied = all(
-                getattr(time, key, None) == value
+                getattr(time.dt, key, None) == value
                 for key, value in condition.items()
             )
 
@@ -65,7 +75,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
 
 
 @total_ordering
-class _TimeDriver(_Component):
+class TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time.
 
     This class is responsible for managing the time of a simulation model. It keeps track of the current time period,
@@ -122,7 +132,7 @@ class _TimeDriver(_Component):
     def __new__(cls, model: MainModel):
         with cls._lock:
             if not cls._instances.get(model):
-                driver = super(_TimeDriver, cls).__new__(cls)
+                driver = super(TimeDriver, cls).__new__(cls)
                 cls._instances[model] = driver
             else:
                 driver = cls._instances[model]
@@ -131,101 +141,194 @@ class _TimeDriver(_Component):
     def __init__(self, model: MainModel):
         super().__init__(model=model, name="time")
         self._model: MainModel = model
-        self._current_period: Period = self.start_period
-        self._history = deque([self.start_period])
+        self._tick: int = 0
+        self._start_dt: Optional[datetime] = None
+        self._duration: Optional[pendulum.duration] = None
+        self._history = deque()
+        self._parse_time_settings()
+
+    def __repr__(self) -> str:
+        if self.ticking_mode == "tick":
+            return f"<TimeDriver: tick[{self.tick}]>"
+        elif self.ticking_mode == "duration":
+            return f"<TimeDriver: {self.strftime('%Y-%m-%d %H:%M:%S')}>"
+        return f"<TimeDriver: irregular[{self.tick}] {self.strftime('%Y-%m-%d %H:%M:%S')}>"
 
     def __eq__(self, other: object) -> bool:
-        return self.period.__eq__(other)
+        return self.dt.__eq__(other)
 
     def __lt__(self, other: object) -> bool:
-        return self.period.__lt__(other)
+        return self.dt.__lt__(other)
 
     @property
-    def freq(self) -> str:
-        """Returns time frequency of the time driver.
+    def should_end(self) -> bool:
+        """Should the model end or not."""
+        if not self.end_dt:
+            return False
+        if isinstance(self.end_dt, datetime):
+            return self.dt >= self.end_dt
+        return self._tick >= self.end_dt
 
-        Returns
-        -------
-        freq : str
-            Time frequency of the time driver.
-        """
-        freq = self.params.get("freq")
-        if not freq:
-            freq = DEFAULT_FREQ
-            self.logger.warning(
-                "Frequency is not set, using the default %s.", freq
+    @property
+    def tick(self) -> int:
+        """Returns the current tick."""
+        return self._tick
+
+    @property
+    def ticking_mode(self) -> str:
+        """Returns the ticking mode of the time driver."""
+        if self.duration:
+            return "duration"
+        return "irregular" if self._irregular else "tick"
+
+    @property
+    def history(self) -> List[datetime]:
+        """Returns the history of the time driver."""
+        return list(self._history)
+
+    def go(self, ticks: int = 1, **kwargs) -> None:
+        """Increments the tick."""
+        if ticks < 0:
+            raise ValueError("Ticks cannot be negative.")
+        if ticks == 0 and self.ticking_mode != "irregular":
+            raise ValueError(
+                "Ticks cannot be zero unless the ticking mode is 'irregular'."
             )
-        return freq
+        if ticks > 1:
+            for _ in range(ticks):
+                self.go(ticks=1, **kwargs)
+            return
+        # tick = 1
+        self._tick += ticks
+        if self.ticking_mode == "duration":
+            self.dt += self.duration
+            self._history.append(self.dt)
+        elif self.ticking_mode == "irregular":
+            self.dt += pendulum.duration(**kwargs)
+            self._history.append(self.dt)
+        elif self.ticking_mode != "tick":
+            raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
+        # end going
+        if self.should_end:
+            self._model.running = False
+
+    def stdout(self) -> None:
+        """Print the current time."""
+        report = f"tick[{self.tick}] " + self.strftime("%Y-%m-%d %H:%M:%S")
+        # logger.info(report)
+        sys.stdout.write("\r" + report)
+        sys.stdout.flush()
+
+    def _parse_time_settings(self) -> None:
+        """Setup the time driver."""
+        # Parse the start time settings
+        self.start_dt = self.params.get("start")
+        logger.debug(f"start_dt: {self.start_dt}")
+
+        # Parse the end time settings
+        self.end_dt = self.params.get("end")
+        logger.debug(f"end_dt: {self.end_dt}")
+
+        # Parse the duration settings
+        self.parse_duration(self.params)
+        logger.debug(f"duration: {self.duration}")
+
+        # Parse the irregular settings
+        self._irregular = self.params.get("irregular")
+        logger.debug("irregular: {}", self._irregular)
+        logger.debug("Ticking mode: {}", self.ticking_mode)
+
+        self.dt = self.start_dt
+        self._history.append(self.dt)
 
     @property
-    def start_period(self) -> Period:
-        """Returns the starting time period for the model.
+    def duration(self) -> pendulum.duration | None:
+        """Returns the duration of the time driver."""
+        return self._duration
+
+    def parse_duration(self, duration: Dict[str, int]) -> None:
+        """Set the duration of the time driver."""
+        valid_attributes = VALID_DT_ATTRS
+        valid_dict = {}
+        for attribute in valid_attributes:
+            value = duration.get(attribute, 0)
+            if not isinstance(value, int):
+                raise TypeError(f"{attribute} must be an integer.")
+            valid_dict[attribute] = value
+        if all(value == 0 for value in valid_dict.values()):
+            self._duration = None
+        else:
+            self._duration = pendulum.duration(**valid_dict)
+
+    @property
+    def start_dt(self) -> datetime | None:
+        """Returns the starting time for the model.
 
         Returns
         -------
         start_period : pandas.Period
             The starting time period for the model.
         """
-        start = self.params.get("start")
-        if not start:
-            self.logger.warning(
-                "Start time is not set, using the default %s.", start
+        return self._start_dt
+
+    @start_dt.setter
+    def start_dt(self, dt: datetime | None) -> None:
+        """Set the starting time."""
+        if isinstance(dt, datetime):
+            self._start_dt = pendulum.instance(dt, tz=None)
+        elif dt is None:
+            self._start_dt = pendulum.instance(datetime.now(), tz=None)
+        elif isinstance(dt, str):
+            self._start_dt = pendulum.parse(dt, tz=None)
+        else:
+            raise TypeError(
+                "Start time must be a datetime object or a string."
             )
-            start = DEFAULT_START
-        return Period(start, freq=self.freq)
 
     @property
-    def end_period(self) -> Period:
-        """Returns the final time period for the model.
+    def end_dt(self) -> datetime | None:
+        """Returns the final time for the model."""
+        return self._end_dt
+
+    @end_dt.setter
+    def end_dt(self, dt: datetime | int | None) -> None:
+        """Get the Timestamp for the end of the period.
 
         Returns
         -------
-        end_period : pandas.Period
-            The final time period for the model.
+        end_time: pandas.Timestamp
+            The Timestamp for the end of the period.
         """
-        end = self.params.get("end")
-        if not end:
-            self.logger.warning(
-                "Ending time is not set, using the default %s.", end
-            )
-            end = DEFAULT_END
-        return Period(end, freq=self.freq)
+        if isinstance(dt, int) and dt <= 0:
+            raise ValueError("End time cannot be negative.")
+        if isinstance(dt, int):
+            self._end_dt = dt
+        elif isinstance(dt, datetime):
+            self._end_dt = pendulum.instance(dt, tz=None)
+        elif dt is None:
+            self._end_dt = None
+        elif isinstance(dt, str):
+            self._end_dt = pendulum.parse(dt, tz=None)
+        else:
+            raise TypeError("End time must be a datetime object or a string.")
 
     @property
-    def period(self) -> Period:
+    def dt(self) -> datetime:
         """Returns the current time period for the model.
 
         Returns
         -------
-        period : pandas.Period
-            The current time period for the model.
+        period : pendulum.datetime
+            The current real-world time for the model without timezone information.
         """
-        return self._current_period
+        return self._dt
 
-    def __repr__(self) -> str:
-        return repr(self._current_period)
-
-    def update(self, steps=1):
-        """Updates model time by one step. The default.
-
-        Parameters
-        ----------
-        steps : int, optional (default=1)
-            The number of steps to update the model time.
-
-
-        Returns
-        -------
-        None
-        """
-        for _ in range(steps):
-            new_period = self._current_period + 1
-            if new_period == self.end_period:
-                self._model.running = False
-            if new_period > self.end_period:
-                raise ValueError("Exceeding the end period")
-            self._history.append(new_period)
-            self._current_period = new_period
+    @dt.setter
+    def dt(self, dt: datetime) -> None:
+        """Set the current real-world time."""
+        if not isinstance(dt, datetime):
+            raise TypeError("dt must be a datetime object.")
+        self._dt = dt
 
     @property
     def day(self) -> int:
@@ -236,7 +339,7 @@ class _TimeDriver(_Component):
         day : int
             The day for the model.
         """
-        return self.period.day
+        return self.dt.day
 
     @property
     def dayofweek(self) -> int:
@@ -247,7 +350,7 @@ class _TimeDriver(_Component):
         dayofweek : int
             The day of the week for the model.
         """
-        return self.period.dayofweek
+        return self.dt.dayofweek
 
     @property
     def dayofyear(self) -> int:
@@ -258,7 +361,7 @@ class _TimeDriver(_Component):
         dayofyear : int
             The day of the year for the model.
         """
-        return self.period.dayofyear
+        return self.dt.dayofyear
 
     @property
     def daysinmonth(self) -> int:
@@ -269,7 +372,7 @@ class _TimeDriver(_Component):
         daysinmonth : int
             Days elapsed since the beginning of the month.
         """
-        return self.period.daysinmonth
+        return self.dt.daysinmonth
 
     @property
     def days_in_month(self) -> int:
@@ -280,18 +383,7 @@ class _TimeDriver(_Component):
         days_in_month : int
             Days in this months
         """
-        return self.period.days_in_month
-
-    @property
-    def end_time(self) -> Timestamp:
-        """Get the Timestamp for the end of the period.
-
-        Returns
-        -------
-        end_time: pandas.Timestamp
-            The Timestamp for the end of the period.
-        """
-        return self.period.end_time
+        return self.dt.days_in_month
 
     @property
     def hour(self) -> int:
@@ -302,7 +394,7 @@ class _TimeDriver(_Component):
         hour : int
             The hour of the day component of the Period.
         """
-        return self.period.hour
+        return self.dt.hour
 
     @property
     def minute(self) -> int:
@@ -313,7 +405,7 @@ class _TimeDriver(_Component):
         minute: int
             The minute of the hour component of the Period.
         """
-        return self.period.minute
+        return self.dt.minute
 
     @property
     def month(self) -> int:
@@ -324,7 +416,7 @@ class _TimeDriver(_Component):
         month: int
             The month the current model's Period falls on.
         """
-        return self.period.month
+        return self.dt.month
 
     @property
     def quarter(self) -> int:
@@ -335,7 +427,7 @@ class _TimeDriver(_Component):
         quarter: int
             The quarter the current model's Period falls on.
         """
-        return self.period.quarter
+        return self.dt.quarter
 
     @property
     def qyear(self) -> int:
@@ -346,7 +438,7 @@ class _TimeDriver(_Component):
         qyear: int
             The fiscal year a model's Period lies in according to its starting-quarter.
         """
-        return self.period.qyear
+        return self.dt.qyear
 
     @property
     def second(self) -> int:
@@ -357,7 +449,7 @@ class _TimeDriver(_Component):
         second: int
             The second component of a model's Period.
         """
-        return self.period.second
+        return self.dt.second
 
     @property
     def ordinal(self) -> int:
@@ -367,7 +459,7 @@ class _TimeDriver(_Component):
         -------
         ordinal : int
         """
-        return self.period.ordinal
+        return self.dt.ordinal
 
     @property
     def is_leap_year(self) -> bool:
@@ -377,16 +469,7 @@ class _TimeDriver(_Component):
         -------
         is_leap_year : bool
         """
-        return self.period.is_leap_year
-
-    @property
-    def start_time(self) -> Timestamp:
-        """Get the Timestamp for the start of the period.
-
-        Returns
-        -------
-        start_time : pandas.Timestamp"""
-        return self.period.start_time
+        return self.dt.is_leap_year
 
     @property
     def week(self) -> int:
@@ -396,7 +479,7 @@ class _TimeDriver(_Component):
         -------
         week : int
         """
-        return self.period.week
+        return self.dt.week
 
     @property
     def weekday(self) -> int:
@@ -406,7 +489,7 @@ class _TimeDriver(_Component):
         -------
         weekday : int
         """
-        return self.period.weekday
+        return self.dt.weekday
 
     @property
     def weekofyear(self) -> int:
@@ -416,7 +499,7 @@ class _TimeDriver(_Component):
         -------
         weekofyear : int
         """
-        return self.period.weekofyear
+        return self.dt.weekofyear
 
     @property
     def year(self) -> int:
@@ -426,7 +509,7 @@ class _TimeDriver(_Component):
         -------
         year : int
         """
-        return self.period.year
+        return self.dt.year
 
     @property
     def day_of_year(self) -> int:
@@ -436,7 +519,7 @@ class _TimeDriver(_Component):
         -------
         day_of_year : int
         """
-        return self.period.day_of_year
+        return self.dt.day_of_year
 
     @property
     def day_of_week(self) -> int:
@@ -446,14 +529,14 @@ class _TimeDriver(_Component):
         -------
         day_of_week : int
         """
-        return self.period.day_of_week
+        return self.dt.day_of_week
 
     def strftime(self, fmt: str) -> str:
         """Returns a string representing the pandas.Period, controlled by an explicit format string."""
-        return self.period.strftime(fmt)
+        return self.dt.strftime(fmt)
 
     def to_timestamp(
         self, freq: Union[str, str] = None, how: Optional[str] = None
-    ) -> Timestamp:
+    ) -> datetime:
         """Returns the Timestamp representation of the pandas.Period"""
-        return self.period.to_timestamp(freq, how)
+        return self.dt.to_timestamp(freq, how)

@@ -15,7 +15,7 @@ from abses.actor import Actor
 from abses.nature import BaseNature, PatchCell, PatchModule
 from abses.objects import _BaseObj
 from abses.sequences import ActorsList
-from abses.time import _TimeDriver, time_condition
+from abses.time import TimeDriver, time_condition
 from examples.water_quota.farmer import Farmer, ureg
 
 # 加载项目层面的配置
@@ -33,7 +33,7 @@ KM_DEG = 111  # km / degree
 
 
 def get_quota_from_data(
-    data: pd.DataFrame, obj: _BaseObj, time: _TimeDriver
+    data: pd.DataFrame, obj: _BaseObj, time: TimeDriver
 ) -> float:
     """从数据中获取当月用水配额，根据面积转化成毫米形式"""
     res_x, res_y = obj.model.nature.major_layer.resolution
@@ -58,7 +58,7 @@ def get_quota_from_data(
 def get_from_csv_data(
     data: pd.DataFrame,
     obj: _BaseObj,
-    time: _TimeDriver,
+    time: TimeDriver,
 ) -> pd.Series:
     """Dynamically read city's water use intensity from csv file"""
     index = data["Year"] == time.year
@@ -184,7 +184,7 @@ class Hydrology(PatchModule):
 
         def select_data_now(data, time):
             """选择当前时间的 NetCDF 数据，并转换成数组"""
-            return data.sel(time=time.start_time, method="nearest").to_numpy()
+            return data.sel(time=time.dt, method="nearest").to_numpy()
 
         for name, data in self.__netCDF_datasets__.items():
             self.add_dynamic_variable(

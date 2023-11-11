@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from mesa import Model
@@ -22,7 +21,7 @@ from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
 from .states import States
-from .time import _TimeDriver
+from .time import TimeDriver
 
 # from .mediator import MainMediator
 
@@ -55,7 +54,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._human = human_class(self)
         self._nature = nature_class(self)
         self._agents = AgentsContainer(model=self)
-        self._time = _TimeDriver(model=self)
+        self._time = TimeDriver(model=self)
         self._run_id: int | None = run_id
         self._trigger("initialize", order=("nature", "human"))
         self._trigger("set_state", code=1)  # initial state
@@ -114,7 +113,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         return self._nature
 
     @property
-    def time(self) -> _TimeDriver:
+    def time(self) -> TimeDriver:
         """时间模块"""
         return self._time
 
@@ -123,20 +122,13 @@ class MainModel(Generic[N], Model, _Notice, States):
         """模型的参数"""
         return self.settings.get("model", DictConfig({}))
 
-    def time_go(self, steps: int = 1) -> _TimeDriver:
-        """时间前进"""
-        for _ in range(steps):
-            self.time.update()
-            # print the current time when go.
-            sys.stdout.write("\r" + self.time.strftime("%Y-%m-%d %H:%M:%S"))
-            sys.stdout.flush()
-
     def run_model(self) -> None:
         """模型运行"""
         self.setup()
         while self.running:
             self.step()
-            self.time_go()
+            self.time.go()
+            self.time.stdout()
         self.end()
 
     def setup(self):

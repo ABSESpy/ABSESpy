@@ -69,7 +69,7 @@ class Farmer(Actor):
     @cached_property
     def crop_curve(self) -> pd.Series:
         """该农民种植的作物曲线"""
-        values = self._crop.curve(freq=self.time.freq, full=True).values
+        values = self._crop.curve(freq="M", full=True).values
         return pd.Series(data=values, index=np.arange(1, 13))
 
     @crop.setter

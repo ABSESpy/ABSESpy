@@ -1,7 +1,7 @@
 time:
   start: 1979-12-01
   end: 2013-01-01
-  freq: 'M'
+  months: 1
 
 root: /Users/songshgeo/Documents/VSCode/ABSESpy
 

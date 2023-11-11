@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 import mesa
 
-from abses.time import _TimeDriver
+from abses.time import TimeDriver
 
 from .bases import _Observer
 from .components import _Component
@@ -40,7 +40,7 @@ class _BaseObj(_Observer, _Component):
         self._dynamic_variables: Dict[str, _DynamicVariable] = {}
 
     @property
-    def time(self) -> _TimeDriver:
+    def time(self) -> TimeDriver:
         """Returns read-only model's time driver.
 
         Returns

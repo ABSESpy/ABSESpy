@@ -15,7 +15,7 @@
         "roadmap",
         "weekofyear"
     ],
-    "workbench.colorTheme": "Ayu Mirage",
+    "workbench.colorTheme": "Default Light Modern",
     "conventionalCommits.scopes": [
         "geo",
         "time",

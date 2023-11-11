@@ -35,7 +35,6 @@ def test_model_attrs(water_quota_model: MainModel):
     """测试模型创建后属性"""
     model = water_quota_model
     assert model.time.year == 1979
-    assert model.time.freq == "M"
 
 
 def test_nature_attrs(water_quota_model: MainModel):
@@ -107,7 +106,7 @@ def test_data_reader(real_model: MainModel, farmer: Farmer):
     city = model.nature.cities.select({"unique_id": 100})[0]
     farmer.city = city
     assert farmer.wui == 85.9411215987073
-    model.time_go()
+    model.time.go()
     assert farmer.wui == 85.51963447758953
     # Wheat,Rice,Maize
     # 1979: 158.53216605586783,518.8451855740727,85.9411215987073

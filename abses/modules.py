@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
+from loguru import logger
+
 from abses.tools.func import iter_func
 
 from .bases import _Notice
@@ -42,7 +44,7 @@ class Module(_BaseObj):
         if not isinstance(_open, bool):
             raise TypeError("Accept boolean parameters")
         if self._open is not _open:
-            self.logger.info("%s switch 'open' to %s.", self.name, _open)
+            logger.info("%s switch 'open' to %s.", self.name, _open)
             self._open = _open
         return self._open
 

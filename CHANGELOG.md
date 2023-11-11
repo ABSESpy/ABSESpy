@@ -1,3 +1,24 @@
+
+<a id='changelog-0.2.1.alpha'></a>
+# 0.2.1.alpha — 2023-11-07
+
+## Documentation changes
+
+- [x] #docs📄 introduce the new feature: real-world time control
+- [x] #docs📄 Architectural Elegance for Modular Socio-Ecological Systems Modeling
+
+## Refactoring
+
+- [x] #refactor♻️ using `loguru` for logs
+- [x] #refactor♻️ using `pendulum` for solving `TimeDriver`
+- [x] #refactor♻️ [使用logrue来控制日志](https://github.com/Delgan/loguru)
+
+## Fixed bugs
+
+- [x] #bug🐛 fixing twice logging bug
+- [x] #bug🐛 hot-fix infinitely model runing
+- [x] #bug🐛 Twice logging.
+
 # v-0.1.0 🎉
 
 ## New Features
