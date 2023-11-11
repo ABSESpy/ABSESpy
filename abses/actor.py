@@ -13,7 +13,6 @@ from typing import (
     Callable,
     Dict,
     Iterable,
-    List,
     Optional,
     Tuple,
     TypeAlias,
@@ -22,7 +21,6 @@ from typing import (
 
 import mesa_geo as mg
 from mesa.space import Coordinate
-from omegaconf import DictConfig
 from shapely import Point
 
 from abses.decision import DecisionFactory
@@ -36,8 +34,6 @@ from abses.tools.func import make_list
 
 
 if TYPE_CHECKING:
-    from abses.decision import Decision
-    from abses.links import LinkContainer
     from abses.main import MainModel
     from abses.nature import PatchCell
 
@@ -47,18 +43,15 @@ Trigger: TypeAlias = Union[Callable, str]
 
 
 def parsing_string_selection(selection: str) -> Dict[str, Any]:
-    """
-    Parses a string selection expression and returns a dictionary of key-value pairs.
+    """Parses a string selection expression and returns a dictionary of key-value pairs.
 
-    Parameters
-    ----------
-    selection: str
-       String specifying which breeds to select.
+    Parameters:
+        selection: str
+        String specifying which breeds to select.
 
-    Returns
-    -------
-    selection_dict: dict
-         Dictionary
+    Returns:
+        selection_dict: dict
+            Dictionary
     """
     selection_dict = {}
     if "==" not in selection:
@@ -153,69 +146,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         self.container = model.human
         self._decisions = self._setup_decisions()
 
-    def put_on(self, cell: PatchCell | None = None) -> None:
-        """
-        Place agent on a cell (same layer)
-
-        Parameters
-        ----------
-        cell : PatchCell
-            The cell where the agent is to be located.
-
-        Raises
-        ------
-        IndexError
-            If the agent is to be moved between different layers.
-        TypeError
-            If the agent is to be put on a non-PatchCell object.
-
-        Returns
-        -------
-        None
-        """
-        if cell is None:
-            # Remove agent
-            self._cell = None
-            return
-        if self.layer and self.layer is not cell.layer:
-            raise IndexError(
-                f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
-            )
-        if not isinstance(cell, mg.Cell):
-            raise TypeError(
-                f"Actor must be put on a PatchCell, instead of {type(cell)}"
-            )
-        if self.on_earth:
-            self._cell.remove(self)
-            self._cell = None
-        cell.add(self)
-        self._cell = cell
-        self.geometry = Point(cell.layer.transform * cell.indices)
-
-    def put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int]):
-        """
-        Specifies a new cell for the agent to be located on.
-
-        Parameters
-        ----------
-        layer : mg.RasterLayer
-            The layer where the agent is to be located.
-        pos : Tuple[int, int]
-            The position of the cell where the agent is to be located.
-
-        Raises
-        ------
-        TypeError
-
-        Returns
-        -------
-        None
-        """
-        if not isinstance(layer, mg.RasterLayer):
-            raise TypeError(f"{layer} is not mg.RasterLayer.")
-        cell = layer.cells[pos[0]][pos[1]]
-        self.put_on(cell=cell)
-
     def _setup_decisions(self) -> DecisionFactory:
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
@@ -248,11 +178,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     def pos(self, pos) -> None:
         if pos is not None:
             raise AttributeError(f"Set pos by {self.put_on_layer.__name__}")
-
-    def __setattr__(self, name, value):
-        super().__setattr__(name, value)
-        if name[0] != "_" and hasattr(self, "_rules"):
-            self._check_rules(check_when="any")
 
     @property
     def population(self) -> ActorsList:
@@ -323,32 +248,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         cell = layer.cells[pos[0]][pos[1]]
         self.put_on(cell=cell)
 
-    def _freq_level(self, level: str) -> int:
-        code = self._freq_levels.get(level)
-        if code is None:
-            keys = tuple(self._freq_levels.keys())
-            raise KeyError(f"freq level {level} is not available in {keys}")
-        return code
-
-    def _check_rules(self, check_when: str) -> List[str]:
-        triggered_rules = []
-        for name in list(self._rules.keys()):
-            rule = self._rules[name]
-            parameters = rule.get("params", {})
-            if rule.frequency < self._freq_level(check_when):
-                continue
-            if self.selecting(rule.when) is True:
-                triggered_rules.append(name)
-                # check if is a disposable rule
-                if rule.disposable is True:
-                    # self.logger.debug(
-                    #     f"Rule '{name}' applied on '{self}' in {self.time}."
-                    # )
-                    del self._rules[name]
-                getattr(self, rule.then)(**parameters)
-        # delete disposable rules
-        return triggered_rules
-
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
         """
         Either select the agent according to specified criteria.
@@ -372,55 +271,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             else:
                 results.append(False)
         return all(results)
-
-    def rule(
-        self,
-        when: Selection,
-        then: Trigger,
-        name: Optional[str] = None,
-        frequency: str = "any",
-        disposable: bool = False,
-        check_now: Optional[bool] = True,
-        **kwargs,
-    ):
-        """
-        Set up a rule that is activated at time period `when` and triggers a function `then`.\
-
-        Parameters
-        ----------
-        when: Union[str, Iterable[bool]]
-            Condition to be checked
-        then: Union[callable, str]
-            Trigger to be activated
-        name: Optional[str]
-            Name for the set of rules
-        frequency: str
-            Any of the following: 'now', 'update', 'move', 'any'
-        disposanle: bool
-            Is this set of rules disposable
-        check_now: Optional[bool]
-            Whether to check the rules now
-        **kwargs: Any
-            Addional keyword arguments to be passed to the trigger function
-
-        Returns
-        -------
-        Optional[List]
-            A list of triggered rules
-        """
-        if name is None:
-            name = f"rule ({len(self._rules) + 1})"
-        self._rules[name] = DictConfig(
-            {
-                "when": when,
-                "then": then,
-                "params": kwargs,
-                "disposable": disposable,
-                "frequency": self._freq_level(frequency),
-            }
-        )
-        if check_now is True:
-            self._check_rules("now")
 
     def die(self) -> None:
         """

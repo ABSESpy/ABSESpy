@@ -51,7 +51,25 @@ class Decision:
     @classmethod
     @property
     def name(cls) -> str:
-        """Get the name of the decision."""
+        """Get the name of the decision.
+        By default, this will be a snake name of class name.
+        Users can custom it by assigning a class attribute `name_as`.
+
+        Example:
+            ```python
+            class TestDecision(Decision):
+                pass
+            >>> decision = TestDecision()
+            >>> decision.name
+            >>> 'test_decision'
+
+            class TestDecision(Decision):
+                name_as: str = 'decision'
+            >>> decision = TestDecision()
+            >>> decision.name
+            >>> 'decision'
+            ```
+        """
         default_name = camel_to_snake(cls.__name__)
         return getattr(cls, "name_as", default_name)
 
@@ -64,7 +82,7 @@ class Decision:
             )
 
     @classmethod
-    def set_strategies(cls, strategies: Strategy):
+    def set_strategies(cls, strategies: Strategy) -> None:
         """Parsing strategies and save into properties."""
         cls._strategies = strategies
 
@@ -81,7 +99,7 @@ class Decision:
 
     @classmethod
     def making(cls, method: Callable) -> Callable:
-        """Making this decision."""
+        """A decorator makes this decision."""
 
         @wraps(method)
         def decorated(self: Actor, *args, **kwargs):
@@ -131,8 +149,17 @@ class Decision:
             )
 
     @classmethod
-    def validate_strategy(cls, strategy: Strategy):
-        """Validate a strategy choice."""
+    def validate_strategy(cls, strategy: Strategy) -> None:
+        """Validate a strategy choice.
+
+        Parameters:
+            strategy:
+                The strategy to validate.
+
+        Raises:
+            KeyError:
+                If the strategy is not a valid choice.
+        """
         if not cls.has_strategy(strategy=strategy):
             raise KeyError(
                 f"Decision '{cls.__name__}' doesn't have a valid strategy {strategy}."
@@ -140,7 +167,15 @@ class Decision:
 
     @classmethod
     def has_strategy(cls, strategy: Strategy) -> bool:
-        """Is a specific strategy exist?"""
+        """Is a specific strategy existing in this decision?
+
+        Parameters:
+            strategy:
+                The strategy to validate.
+
+        Returns:
+            If the strategy exists, return True, otherwise returns False.
+        """
         return strategy in cls.strategies.keys()
 
     @property
@@ -156,22 +191,22 @@ class Decision:
     def setup(self) -> None:
         """Overwrite to setup an initial strategy for this decision."""
 
-    def _find_decorated_methods(self, symbol="making"):
+    def _find_methods(self, symbol="making") -> Callable:
         methods = inspect.getmembers(self.agent, predicate=inspect.ismethod)
         for _, func in methods:
             if hasattr(func, f"__{symbol}__"):
                 yield func
 
     def _make(self) -> Any:
+        for making_decision in self._find_methods("making"):
+            result = making_decision()
+            for response in self._find_methods("response"):
+                if response.__expected__ == result:
+                    response()
         return self.make()
 
     def make(self) -> None:
-        """Make decision."""
-        for making_decision in self._find_decorated_methods("making"):
-            result = making_decision()
-            for response in self._find_decorated_methods("response"):
-                if response.__expected__ == result:
-                    response()
+        """Overwrite this method to do something else after make decision."""
 
 
 class DecisionFactory:
@@ -180,14 +215,13 @@ class DecisionFactory:
     def __init__(
         self, agent: Actor, decisions: Optional[Iterable[Decision]] = None
     ) -> None:
-        self.agent = agent
-        self._decisions = {}
+        self.agent: Actor = agent
+        self._decisions: Dict[str, Decision] = {}
         self.parse_decisions(decisions)
-        self._methods = {}
 
     @property
     def agent(self) -> Actor:
-        """Decision-maker."""
+        """Decision-maker, who has these decisions."""
         return self._agent
 
     @agent.setter
@@ -200,8 +234,17 @@ class DecisionFactory:
             )
         self._agent = agent
 
-    def parse_decisions(self, decisions: Iterable[Decision]):
-        """Parse decisions."""
+    def parse_decisions(self, decisions: Iterable[type(Decision)]):
+        """Parse decisions and save into the container.
+
+        Parameters:
+            decisions:
+                Iterable `Decision` class.
+
+        Raises:
+            TypeError:
+                If the input decision is not a subclass of `Decision`.
+        """
         for d in decisions:
             if not issubclass(d, Decision):
                 raise TypeError(
