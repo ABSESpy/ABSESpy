@@ -90,11 +90,11 @@ plugins:
               merge_init_into_class: true
               extensions:
                 - docs/plugins/griffe_doclinks.py
-    - exclude:
-        glob:
-          - theme/announce.html
-          - plugins/*
-          - __pycache__/*
+    # - exclude:
+    #     glob:
+    #       - theme/announce.html
+    #       - plugins/*
+    #       - __pycache__/*
     - bibtex:
         bib_file: "docs/refs.bib"
     - mkdocs-simple-hooks:
