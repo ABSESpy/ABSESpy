@@ -8,13 +8,15 @@ kanban-plugin: basic
 
 - [ ] #docs📄 Adding Simplified Chinese README
 - [ ] #test🧪  #build🏗  Test on other Python versions
-- [ ] #zap⚡️ #project🎉 Parallel operation (maybe `dask`)
+- [ ] #zap⚡️ #project🎉 [[Parallel operation (maybe `dask`)]]
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
 - [ ] #refactor♻️ [[Checking `mypy` strictly and static types.]]
-- [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
 - [ ] #refactor♻️ [[use `dataclass` or `pydantic` rather than dictionaries]]
+- [ ] #feat✨  [[better log control]]
+- [ ] #feat✨ Not allow to appear any same module name
+- [ ] #refactor♻️ Using modules to manipulate agent
 - [ ] #refactor♻️  `alter_nature` with specific spatial selection input
 - [ ] #refactor♻️  merge `batch_link_by_geometry` and `link_by_geometry` into one method.
 - [ ] #feat✨  report versions
@@ -23,21 +25,17 @@ kanban-plugin: basic
 
 ## Planned
 
-- [ ] #refactor♻️ Using modules to manipulate agent
-- [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
 - [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [ ] #docs📄  introduce the feature of MoHuB
-- [ ] #feat✨ Not allow to appear any same module name
 - [ ] #build🏗 Make dependencies more flexible.
-- [ ] #feat✨  [[better log control]]
-- [ ] #docs📄 Formatting api documentation
+- [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
 
 
 ## Testing
 
 - [ ] #feat✨  #examples🌰 Upload the first complete case of a large model
-- [ ] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
 - [ ] #feat✨  #human👨  The module automatically generates complex networks for all main bodies
+- [ ] Beginner tutorial: Hotelling's Law #feat✨  #Elias🧑
 
 
 ## Published
@@ -51,6 +49,8 @@ kanban-plugin: basic
 - [x] #build🏗 #project🎉 Removed dependence of `AgentPy`.
 - [x] #bug🐛 [[Fixing the twice logging bug]]
 - [x] #refactor♻️  [[Use Pendulum instead of `pandas.Period`]]
+- [x] #feat✨  #agent🤖️ Store the relationships with other `Acotor`
+- [x] #docs📄 Formatting api documentation
 - [x] #feat✨  Give users an option of real-dates or just a counter
 
 
