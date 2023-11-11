@@ -218,20 +218,20 @@ class TimeDriver(_Component):
         """Setup the time driver."""
         # Parse the start time settings
         self.start_dt = self.params.get("start")
-        logger.debug(f"start_dt: {self.start_dt}")
+        # logger.debug(f"start_dt: {self.start_dt}")
 
         # Parse the end time settings
         self.end_dt = self.params.get("end")
-        logger.debug(f"end_dt: {self.end_dt}")
+        # logger.debug(f"end_dt: {self.end_dt}")
 
         # Parse the duration settings
         self.parse_duration(self.params)
-        logger.debug(f"duration: {self.duration}")
+        # logger.debug(f"duration: {self.duration}")
 
         # Parse the irregular settings
         self._irregular = self.params.get("irregular")
-        logger.debug("irregular: {}", self._irregular)
-        logger.debug("Ticking mode: {}", self.ticking_mode)
+        # logger.debug("irregular: {}", self._irregular)
+        # logger.debug("Ticking mode: {}", self.ticking_mode)
 
         self.dt = self.start_dt
         self._history.append(self.dt)

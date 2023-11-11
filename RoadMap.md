@@ -20,15 +20,12 @@ kanban-plugin: basic
 - [ ] #refactor♻️  `alter_nature` with specific spatial selection input
 - [ ] #refactor♻️  merge `batch_link_by_geometry` and `link_by_geometry` into one method.
 - [ ] #feat✨  report versions
-- [ ] #test🧪  re-test workflow
 
 
 ## Planned
 
-- [ ] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
-- [ ] #docs📄  introduce the feature of MoHuB
-- [ ] #build🏗 Make dependencies more flexible.
 - [ ] #feat✨ a new class based on `ActorsList` for aggregating the actors' attributes to `perception`.
+- [ ] #test🧪  re-test workflow
 
 
 ## Testing
@@ -42,7 +39,10 @@ kanban-plugin: basic
 
 **完成**
 - [x] #refactor♻️ Remove `variable` class and replace it with `DynamicVariable`.
+- [x] #feat✨  #agent🤖️ Actors as agent templates from the **IAD framework** and **MoHuB** framework. TODO Link
 - [x] #refactor♻️ Remove `TimeDriverManager` and adding type hint to `TimeDriver`
+- [x] #build🏗 Make dependencies more flexible.
+- [x] #docs📄  introduce the feature of MoHuB
 - [x] #bug🐛 #examples🌰 fix the zero division in `water_quota` example @{📅 2023-09-30}
 - [x] #docs📄 [[Initial API documentation is completed]] #Elias🧑‍💻
 - [x] #feat✨  Auto-update dynamic variables

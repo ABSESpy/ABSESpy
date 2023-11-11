@@ -4,6 +4,7 @@
 > This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/absespy/ABSESpy/issues).
 
 ## About
+
 - [Is `ABSESpy` for me?](home/audience.md)
 - [Highlight features](features.md)
 - [Installment of `ABSESpy`](home/install.md)
@@ -12,6 +13,7 @@
 - [License](home/license.md)
 
 ## Wiki
+
 - [Context of the ABSESpy](wiki/about.md)
 - [Basic terms and definitions](wiki/background.md)
 

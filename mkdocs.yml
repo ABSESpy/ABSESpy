@@ -3,49 +3,54 @@ site_name: AB-SESpy
 nav:
     - Home:
         - AB-SESpy: index.md
-        - Navigation: navigation.md
+        # - Navigation: navigation.md
         - Features:
-          - Overview: features/features.md
+          # - Overview: features/features.md
           - Architectural elegance: features/architectural_elegance.md
           - Control real-world time: features/time_control.md
-        - Install: home/install.md
+          - Unveiling Human Decision Dynamics in SES Modeling: features/MoHuB.md
+        - Get start: home/install.md
         - Dependencies: home/dependencies.md
         - License: home/license.md
         - Acknowledge: home/acknowledge.md
         # - RoadMap: home/roadmap.md
         # - Changelog: home/changelog.md
     - Wiki:
+        - Paper: wiki/paper.md
         - Context of ABSESpy: wiki/about.md
         - Terms and definitions: wiki/background.md
     - Tutorials:
-        - Beginner:
-          - Beginner Tutorial: tutorial/beginner/hotelling_tutorial.ipynb
-          - Run an example: tutorial/beginner/use_example.md
-          - Setup a model: tutorial/beginner/write_example.md
-          - Setup parameters: tutorial/beginner/setup_parameters.md
-        - Advanced:
-          - Visualize your model: tutorial/advanced/visualize.md
-          - Add modules: tutorial/advanced/add_modules.md
-          - Add variables: tutorial/advanced/dynamic_variable.md
-          - Batch run: tutorial/advanced/batch_run.md
-        - Lessons:
-          - Organize your model structure: tutorial/lessons/organize_model_structure.ipynb
-          - Control real-world time: tutorial/lessons/time_control.ipynb
+        # - Beginner:
+        #   - Beginner Tutorial: tutorial/beginner/hotelling_tutorial.ipynb
+        #   - Run an example: tutorial/beginner/use_example.md
+        #   - Setup a model: tutorial/beginner/write_example.md
+        #   - Setup parameters: tutorial/beginner/setup_parameters.md
+        # - Advanced:
+        #   - Visualize your model: tutorial/advanced/visualize.md
+        #   - Add modules: tutorial/advanced/add_modules.md
+        #   - Add variables: tutorial/advanced/dynamic_variable.md
+        #   - Batch run: tutorial/advanced/batch_run.md
+        # - Lessons:
+          - Organize the model structure: tutorial/lessons/organize_model_structure.ipynb
+          - Real-world SES modeling enhancements: tutorial/lessons/time_control.ipynb
+          - Human-behavior modeling framework: tutorial/lessons/human_behavior_simulation.ipynb
     - API references:
         - Model: api/model.md
         - Natural Modules: api/nature.md
         - Human Modules: api/human.md
         - Cells: api/cells.md
         - Actor (Agent): api/agents.md
+        - Actors Container: api/container.md
         - Actors Operation: api/sequences.md
         - Time Control: api/time.md
+        - Decisions: api/decisions.md
         # - Dynamic Variables: api/variables.md
-    - Examples:
-        - Examples gallery: examples/gallery.md
-    - Packages:
-        - Add-in agent modules: packages/agent.md
-        - Add-in human modules: packages/human.md
-        - Add-in nature modules: packages/nature.md
+    # - Examples:
+    #     - Examples gallery: examples/gallery.md
+    # - Packages:
+    #     - Add-in agent modules: packages/agent.md
+    #     - Add-in human modules: packages/human.md
+    #     - Add-in nature modules: packages/nature.md
 theme:
     name: "material"
     logo: "https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/logo_abses.svg"
