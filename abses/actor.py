@@ -193,8 +193,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         return self._cell.agents
 
     def put_on(self, cell: PatchCell | None = None) -> None:
-        """
-        Place agent on a cell. If the agent is already located at a cell, it should be located to a cell with the same layer.
+        """Place agent on a cell. If the agent is already located at a cell, it should be located to a cell with the same layer.
 
         Parameters:
             cell:
@@ -228,8 +227,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     def put_on_layer(
         self, layer: mg.RasterLayer, pos: Tuple[int, int]
     ) -> None:
-        """
-        Specifies a new cell for the agent to be located on.
+        """Specifies a new cell for the agent to be located on.
 
         Parameters:
             layer:
@@ -247,8 +245,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         self.put_on(cell=cell)
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
-        """
-        Either select the agent according to specified criteria.
+        """Either select the agent according to specified criteria.
 
         Parameters:
             selection:
@@ -271,9 +268,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         return all(results)
 
     def die(self) -> None:
-        """
-        Kills the agent (self).
-        """
+        """Kills the agent (self)"""
         self.model.agents.remove(self)
         for link in self.links:
             self.container.get_graph(link).remove_node(self)
@@ -282,8 +277,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             del self
 
     def move_to(self, position: Optional[Coordinate]) -> bool:
-        """
-        Move agent to a new position.
+        """Move agent to a new position.
 
         Parameters:
             position:
@@ -298,8 +292,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         self.layer.move_agent(self, position)
 
     def loc(self, attribute: str) -> Any:
-        """
-        Get attribute data for the cell where the actor is located.
+        """Get attribute data for the cell where the actor is located.
 
         Parameters:
             attribute : str
@@ -318,8 +311,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         )
 
     def alter_nature(self, attr: str, value: Any) -> None:
-        """
-        Alter the nature of the parameters of the cell where the actor is located.
+        """Alter the nature of the parameters of the cell where the actor is located.
 
         Parameters:
             attr:
@@ -336,8 +328,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         setattr(self._cell, attr, value)
 
     def linked(self, link: str) -> ActorsList:
-        """
-        Get all other actors linked to this actor.
+        """Get all other actors linked to this actor.
 
         Parameters:
             link:
