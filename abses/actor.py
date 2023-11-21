@@ -46,12 +46,12 @@ def parsing_string_selection(selection: str) -> Dict[str, Any]:
     """Parses a string selection expression and returns a dictionary of key-value pairs.
 
     Parameters:
-        selection: str
-        String specifying which breeds to select.
+        selection:
+            String specifying which breeds to select.
 
     Returns:
-        selection_dict: dict
-            Dictionary
+        selection_dict:
+            Parsed output as Dictionary
     """
     selection_dict = {}
     if "==" not in selection:
@@ -94,31 +94,29 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     """
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
-    Attributes
-    ----------
-    container : HumanContainer
-        The container that the actor belongs to.
-    layer : mg.RasterLayer
-        The layer where the actor is located.
-    indices : Coordinate
-        The indices of the cell where the actor is located.
-    pos : Coordinate
-        The position of the cell where the actor is located.
-    population : list
-        A list of actors of the same breed as the actor.
-    on_earth : bool
-        Whether the actor is standing on a cell.
-    here : ActorsList
-        A list of actors that are on the same cell as the actor.
+    Attributes:
+        container:
+            The container that the actor belongs to.
+        layer:
+            The layer where the actor is located.
+        indices:
+            The indices of the cell where the actor is located.
+        pos:
+            The position of the cell where the actor is located.
+        population:
+            A list of actors of the same breed as the actor.
+        on_earth:
+            Whether the actor is standing on a cell.
+        here:
+            A list of actors that are on the same cell as the actor.
 
-    Methods
-    -------
-    put_on(self, cell: PatchCell | None = None) -> None
-        Places the actor on a cell.
-    put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
-        Specifies a new cell for the actor to be located on.
-    selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
-        Selects the actor according to specified criteria.
+    Methods:
+        put_on(self, cell: PatchCell | None = None) -> None
+            Places the actor on a cell.
+        put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
+            Specifies a new cell for the actor to be located on.
+        selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
+            Selects the actor according to specified criteria.
     """
 
     # when checking the rules
