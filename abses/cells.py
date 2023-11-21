@@ -116,7 +116,8 @@ class PatchCell(mg.Cell, LinkNode):
                 Specify the breed of agents to search. If None (by default), all breeds of agents are acceptable.
 
         Returns:
-            Return True if there is a qualified principal there, False otherwise.
+            bool:
+                True if there is a qualified principal there, False otherwise.
         """
         return bool(self._agents) if breed is None else breed in self._agents
 
@@ -126,7 +127,11 @@ class PatchCell(mg.Cell, LinkNode):
         Parameters:
             attr_name:
                 The name of attribute to get.
-
+                
+        Returns:
+            Any:
+                The value of the attribute.
+                
         Raises:
             AttributeError:
                 Attribute value of the associated patch cell.
@@ -225,6 +230,10 @@ class PatchCell(mg.Cell, LinkNode):
 
         Returns:
             Any type of retrieved data.
+            
+        Raises:
+            KeyError:
+                The searched link is not available in the model.
         """
         try:
             agents = self.linked(link=link)
