@@ -43,10 +43,9 @@ class _BaseObj(_Observer, _Component):
     def time(self) -> TimeDriver:
         """Returns read-only model's time driver.
 
-        Returns
-        -------
-        _TimeDriver
-            Model's time driver.
+        Returns:
+            _TimeDriver:
+                Model's time driver.
         """
         return self.model.time
 
@@ -54,10 +53,9 @@ class _BaseObj(_Observer, _Component):
     def model(self) -> MainModel:
         """Returns read-only model object.
 
-        Returns
-        -------
-        MainModel
-            ABSES model object.
+        Returns:
+            MainModel:
+                ABSES model object.
         """
         return self._model
 
@@ -65,10 +63,9 @@ class _BaseObj(_Observer, _Component):
     def dynamic_variables(self) -> Dict[str, Any]:
         """Returns read-only model's dynamic variables.
 
-        Returns
-        -------
-        Dict[str, Any]
-            Dictionary of model's dynamic variables.
+        Returns:
+            Dict[str, Any]:
+                Dictionary of model's dynamic variables.
         """
         if not self._dynamic_variables:
             return {}
@@ -79,10 +76,9 @@ class _BaseObj(_Observer, _Component):
     def model(self, model: MainModel):
         """Sets the model object.
 
-        Parameters
-        ----------
-        model : MainModel
-            ABSES model object.
+        Parameters:
+            model : MainModel
+                ABSES model object.
         """
         if not isinstance(model, mesa.Model):
             raise TypeError("Model must be an instance of mesa.Model")
@@ -93,14 +89,13 @@ class _BaseObj(_Observer, _Component):
     ) -> None:
         """Adds new dynamic variable.
 
-        Parameters
-        ----------
-        name : str
-            Name of the variable.
-        data : Any
-            Data source for callable function.
-        function : Callable
-            Function to calculate the dynamic variable.
+        Parameters:
+            name:
+                Name of the variable.
+            data:
+                Data source for callable function.
+            function:
+                Function to calculate the dynamic variable.
         """
         var = _DynamicVariable(
             obj=self, name=name, data=data, function=function
@@ -110,9 +105,8 @@ class _BaseObj(_Observer, _Component):
     def dynamic_var(self, attr_name: str) -> Any:
         """Returns output of a dynamic variable.
 
-        Parameters
-        ----------
-        attr_name : str
-            Dynamic variable's name.
+        Parameters:
+            attr_name:
+                Dynamic variable's name.
         """
         return self._dynamic_variables[attr_name].now()

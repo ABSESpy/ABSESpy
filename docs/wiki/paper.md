@@ -1,7 +1,5 @@
 ---
 title: "ABSESpy: A Python package for social-ecological system modeling"
-author: ['Shuang Song', 'Elías José Mantilla', 'Boyu Wang', 'Andrew Crooks', 'Shuai Wang^*']
-uni: Beijing Normal University
 tags:
 - "Python"
 - "Agent-based model"
@@ -15,6 +13,8 @@ authors:
 - name: Shuai Wang^[corresponding author]
   affiliation: 1
   corresponding: true
+- name: Chentai Jiao
+  affiliation: 1
 - name: Elías José Mantilla
   affiliation: 2
 affiliations:
@@ -25,6 +25,7 @@ affiliations:
 date: 06 November 2023
 bibliography: paper.bib
 ---
+
 ## Summary
 
 `ABSESpy` is a novel agent-based modeling (ABM) framework that enhances socio-ecological systems (SES) research fidelity. Addressing critical needs in SES study, such as complex decision-making, scaling, and data integration, it features a Branch-Leaf architecture for clear separation and integration of human and natural subsystems, promoting replicability and model coupling. `ABSESpy` also supports modeling human behavior through well-recognized workflows of perception, decision-making definitions, and responses. Moreover, it advances real-world modeling with multiple time operating modes, accommodating the diverse temporal scales of SES phenomena and integrating time-sensitive event simulations. These innovations position `ABSESpy` as a crucial tool in addressing current gaps in SES research, fostering more ABMs for real-world SES issues.
@@ -33,7 +34,7 @@ bibliography: paper.bib
 
 Social-ecological systems (SES) represent an integrated concept that recognizes the complex and interdependent dynamics between human societies and ecological systems [@folke2010]. Consisting of decision-making agents (representing people, communities, organizations, and environmental components) capable of following heterogeneous objectives [@levin2013], SES has specific needs for research support from agent-based modeling.
 
-However, ABMs' potential is yet to be fully realized in SES research. Current challenges, such as incorporating human decision-making, portraying socio-ecological networks, and modeling real-world systems, must be addressed [@schulze2017]. Additionally, issues related to data availability, model validation, replicability, and transparency must be systematically tackled to enhance the reliability and applicability of ABM in this field [@gotts2019].
+However, ABMs' potential is yet to be fully realized in SES researches. Current challenges, such as incorporating human decision-making, portraying socio-ecological networks, and modeling real-world systems, must be addressed [@schulze2017]. Additionally, issues related to data availability, model validation, replicability, and transparency must be systematically tackled to enhance the reliability and applicability of ABM in this field [@gotts2019].
 
 Developing and refining ABM approaches for social-ecological systems are crucial in light of these needs and challenges [@reyers2018]. At the heart of this should be a modeling framework that is portable, scale-flexible, and capable of expressing the interaction of the decision-making agent with the natural environment or ecosystem. `ABSESpy` represents a significant advancement in this regard, offering several features that address the current gaps in SES modeling.
 
@@ -80,7 +81,7 @@ By translating theoretical constructs into user-friendly, operational components
 
 **Figure 3:** *Calendar time module enhances real-world social-ecological system modeling approaches.*
 
-In addition to the standard tick-based time advancement, users can implement two temporal modes for matching the diverse scales of SES phenomena. (1) In a "Duration Mode," users can define the length of time that each simulation step represents, thus allowing for variable temporal resolutions. This capability enables the model to represent time intervals that can vary from minutes to years, depending on the specific requirements of the SES being modeled. (2) The "Irregular Mode" addresses the non-uniformity of specific SES processes; this mode allows for irregular time steps, whereby different simulation intervals can represent varying lengths of time. This flexibility is crucial when modeling events that do not follow a linear timeline, such as erratic ecological phenomena or sporadic human activities.
+In addition to the standard tick-based time advancement, users can implement two temporal modes for matching the diverse scales of SES phenomena. (1) In a "Duration Mode," users can define the length of time that each simulation step represents, thus allowing for variable temporal resolutions. This capability enables the model to represent time intervals vary from minutes to years, depending on the specific requirements of the SES being modeled. (2) The "Irregular Mode" addresses the non-uniformity of specific SES processes; this mode allows for irregular time steps, whereby different simulation intervals can represent varying lengths of time. This flexibility is crucial when modeling events that do not follow a linear timeline, such as erratic ecological phenomena or sporadic human activities.
 
 A calendar schedule enables `ABSESpy` to import and utilize dynamic, temporal datasets. `ABSESpy` automates the updating of variables with time-series data, negating the need for manual data refreshes and recalculations. It supports real-time data feeds, ensuring that the model reflects current conditions. The `ABSESpy` introduces a time-based event handler (`time_condition` decorator) based on the same idea. By leveraging this decorator, temporal conditions for executing events can be set, enabling simulations to react to time-specific triggers. This aspect is especially pertinent for phenomena with distinct temporal patterns, like migratory behaviors or seasonal cycles.
 
@@ -88,7 +89,7 @@ A calendar schedule enables `ABSESpy` to import and utilize dynamic, temporal da
 
 `ABSESpy` facilitates independent module creation, enabling an advanced human behavior framework and providing sophisticated time control and data integration tools. `ABSESpy` allows a more accurate and nuanced representation of SES dynamics, meeting the intricate requirements of real-world problem-solving and decision-making support. Its goal is to become a specialized package for the emerging SES field based on the `mesa` project, similar to the existing `abce` (a package aimed at providing an economic problem modeling framework, also a `mesa` package). Therefore, `ABSESpy` can take advantage of most of the benefits from the related projects (e.g., `mesa` and `mesa-geo`), such as visualization and geographic data processing.
 
-A possible competitor is `AgentPy`, but its goal remains to be a general ABM framework. Due to the need for more mature geographic data processing extensions like `mesa-geo`, building `ABSESpy` on top of the `mesa` project allows users to put less coding effort into setting up their model projects and dealing with real-world SES problems. Currently, many open-source SES models are published on the platform `CoMSES`; they primarily serve as heuristic models using `netlogo` software as their modeling foundation. The visible advantage of `ABSESpy` lies in its well-structured design, which is suitable for large-scale SES modeling projects. It calls upon vast amounts of actual data for real-world problem modeling rather than merely heuristic modeling. Its tree-like structure allows `ABSESpy` users to couple models together, maximizing Python's "glue language" advantages.
+A possible competitor is `AgentPy`, but its goal remains to be a general ABM framework. Due to the need for more mature geographic data processing extensions like `mesa-geo`, building `ABSESpy` on top of the `mesa` project allows users to deal with real-world SES problems while putting less coding effort into setting up their model projects. Currently, many open-source SES models are published on the platform `CoMSES`; they primarily serve as heuristic models using `netlogo` software as their modeling foundation. The visible advantage of `ABSESpy` lies in its well-structured design, which is suitable for large-scale SES modeling projects. It calls upon vast amounts of actual data for real-world problem modeling rather than merely heuristic modeling. Its tree-like structure allows `ABSESpy` users to couple models together, maximizing Python's advantages as a "glue language".
 
 ## Acknowledgment
 

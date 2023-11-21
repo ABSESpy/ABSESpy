@@ -49,9 +49,8 @@ class _Component:
         """Returns read-only model's parameters.
 
         Returns:
-        ___________
-        dict:
-            Dictionary of model's parameters.
+            dict:
+                Dictionary of model's parameters.
         """
         return self._model.settings.get(self.name, DictConfig({}))
 
@@ -59,24 +58,19 @@ class _Component:
     def args(self) -> DictConfig:
         """Returns read-only component's arguments.
 
-        Returns
-        -------
-        DictConfig
-            Component's arguments dictionary.
+        Returns:
+            DictConfig:
+                Component's arguments dictionary.
         """
         return DictConfig({arg: self.params[arg] for arg in self._args})
 
     def add_args(self, args: Union[str, Iterable[str]]) -> None:
         """Add model's parameters as component's arguments.
 
-        Parameters
-        ----------
-        args : Union[str, Iterable[str]]
-            Model's parameters to be added as component's arguments.
+        Parameters:
+            args :
+                Model's parameters to be added as component's arguments.
 
-        Returns
-        _______
-        None
         """
         args_set = set(make_list(args))
         for arg in args_set:
