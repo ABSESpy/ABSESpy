@@ -94,7 +94,8 @@ class AgentsContainer(dict):
                 The class of the actor to be registered.
 
         Raises:
-            TypeError: If the given class is not a subclass of `Actor`.
+            TypeError:
+                If the given class is not a subclass of `Actor`.
         """
         if not issubclass(actor_cls, Actor):
             raise TypeError(f"'{actor_cls}' not subclass of 'Actor'.")
@@ -149,10 +150,12 @@ class AgentsContainer(dict):
         """Get all entities of specified breeds to a list.
 
         Parameters:
-            breeds (Optional[Union[str, Iterable[str]]]): The breed(s) of entities to convert to a list. If None, all breeds are used.
+            breeds:
+                The breed(s) of entities to convert to a list (Optional[Union[str, Iterable[str]]]). If None, all breeds are used.
 
         Returns:
-            ActorsList: A list of entities of the specified breeds.
+            ActorsList:
+                A list of entities of the specified breeds.
         """
         if breeds is None:
             breeds = self.breeds
@@ -208,7 +211,8 @@ class AgentsContainer(dict):
         """Remove the given agent from the container.
 
         Parameters:
-            agent (Actor): The agent to remove.
+            agent:
+                The agent (actor) to remove.
         """
         self[agent.breed].remove(agent)
 

@@ -45,9 +45,10 @@ class _DynamicVariable:
     def obj(self):
         """Returns a base object instance
 
-        Returns
-        -------
-        obj: _BaseObj"""
+        Returns:
+            obj:
+                _BaseObj
+        """
         return self._obj
 
     @obj.setter
@@ -60,9 +61,9 @@ class _DynamicVariable:
     def data(self):
         """Returns unused data
 
-        Returns
-        -------
-        data: Any
+        Returns:
+            data:
+                Any
         """
         return self._data
 
@@ -70,9 +71,9 @@ class _DynamicVariable:
     def function(self):
         """Get the function that calculates the variable
 
-        Returns
-        -------
-        function: Callable
+        Returns:
+            function:
+                Callable
         """
         return self._function
 
@@ -80,17 +81,19 @@ class _DynamicVariable:
     def time(self):
         """Get the model time driver
 
-        Returns
-        -------
-        time: abses.time._TimeDriver"""
+        Returns:
+            time:
+                abses.time._TimeDriver
+        """
         return self.obj.time
 
     def get_required_attributes(self, function: Callable):
         """Get the function required attributes
 
-        Returns
-        -------
-        required_attributes: list[str]"""
+        Returns:
+            required_attributes:
+                list[str]
+        """
         # Get the source code of the function
         source_code = inspect.getsource(function)
         return [
@@ -102,9 +105,10 @@ class _DynamicVariable:
     def now(self) -> Any:
         """Return the dynamic variable function's output
 
-        Returns
-        -------
-        output: Any"""
+        Returns:
+            output:
+                Any
+        """
         required_attrs = self.get_required_attributes(self.function)
         args = {attr: getattr(self, attr) for attr in required_attrs}
         return self.function(**args)
