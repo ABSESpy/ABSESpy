@@ -1,7 +1,5 @@
 ---
 title: "ABSESpy: A Python package for social-ecological system modeling"
-author: ['Shuang Song', 'Elías José Mantilla', 'Boyu Wang', 'Andrew Crooks', 'Shuai Wang^*', 'Chentai Jiao']
-uni: Beijing Normal University
 tags:
 - "Python"
 - "Agent-based model"
@@ -17,22 +15,17 @@ authors:
   corresponding: true
 - name: Chentai Jiao
   affiliation: 1
-- name: Boyu Wang
-  affiliation: 2
-- name: Andrew Crooks
-  affiliation: 2
 - name: Elías José Mantilla
-  affiliation: 3
+  affiliation: 2
 affiliations:
  - name: Faculty of Geographical Science, Beijing Normal University. 100875, Beijing, China.
    index: 1
- - name:
+ - name: Computational Social Sciences Laboratory, Universidad San Francisco de Quito. Diego de Robles s/n y pampite.
    index: 2
- - name:
-   index: 3
 date: 06 November 2023
 bibliography: paper.bib
 ---
+
 ## Summary
 
 `ABSESpy` is a novel agent-based modeling (ABM) framework that enhances socio-ecological systems (SES) research fidelity. Addressing critical needs in SES study, such as complex decision-making, scaling, and data integration, it features a Branch-Leaf architecture for clear separation and integration of human and natural subsystems, promoting replicability and model coupling. `ABSESpy` also supports modeling human behavior through well-recognized workflows of perception, decision-making definitions, and responses. Moreover, it advances real-world modeling with multiple time operating modes, accommodating the diverse temporal scales of SES phenomena and integrating time-sensitive event simulations. These innovations position `ABSESpy` as a crucial tool in addressing current gaps in SES research, fostering more ABMs for real-world SES issues.
@@ -55,7 +48,7 @@ Developing and refining ABM approaches for social-ecological systems are crucial
 
 **Figure 1:** *Structure of main components of `ABSESpy` and its Branch-Leaf architecture of modules.*
 
-Integrated by the `MainModel`, the two primary base modules are named as `Base Human` and `Base Nature`, corresponding to components of a typical SES (#TODO citation). By this architecture, `ABSESpy` enables the addition of specialized sub-modules, thus promoting a tailored modeling approach. The extension `mesa-geo` is embedded as the base driver for the nature subsystem so that most of the different geographic datasets are compatible (`.tif`, `.nc`, `.json`, `.shp`, et al.).
+Integrated by the `MainModel`, the two primary base modules are named as `Base Human` and `Base Nature`, corresponding to components of a typical SES [@reyers2018]. By this architecture, `ABSESpy` enables the addition of specialized sub-modules, thus promoting a tailored modeling approach. The extension `mesa-geo` is embedded as the base driver for the nature subsystem so that most of the different geographic datasets are compatible (`.tif`, `.nc`, `.json`, `.shp`, et al.).
 
 In the SES context, `ABSESpy` conceptualizes agents as `Actors` managed within a unique `ActorsContainer` and can be referred from a temporary `ActorsList`. In human sub-modules, users can define a series of `Actor`'s references by or link each other (between agent and patch, or agent and agent) by inputting advanced query. It simplifies the agents' organization, ensuring each actor can be searched, operated, and able to access global information.
 
