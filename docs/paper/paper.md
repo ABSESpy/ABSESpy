@@ -42,9 +42,7 @@ Developing and refining ABM approaches for social-ecological systems are crucial
 
 `ABSESpy` introduces a Branch-Leaf architecture central to its functionality. It facilitates a clear separation of the human and natural subsystems within SES research, aligning with the requisite to enhance replicability and extensibility (**Figure 1**).
 
-<div align="center">
-	<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/structure.png" alt="Drawing" style="width: 400px;"/>
-</div>
+![Design structures](structure.png)
 
 **Figure 1:** *Structure of main components of `ABSESpy` and its Branch-Leaf architecture of modules.*
 
@@ -54,11 +52,9 @@ In the SES context, `ABSESpy` conceptualizes agents as `Actors` managed within a
 
 ## Human-behavior modeling framework
 
-`ABSESpy` recognizes the centrality of human behavior in SES and, as such, prioritizes the workflow approaching its simulation. To this end, the framework provides an integrative approach based on popular theories of conceptualizing human decision-making (**Figure 2**) [@schluter2017, @beckage2022].
+`ABSESpy` recognizes the centrality of human behavior in SES and, as such, prioritizes the workflow approaching its simulation. To this end, the framework provides an integrative approach based on popular theories of conceptualizing human decision-making (**Figure 2**) [@schluter2017], [@beckage2022].
 
-<div align="center">
-	<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/MoHuB.png" alt="Drawing" style="width: 400px;"/>
-</div>
+![Decision-making workflow](decision-making.png)
 
 **Figure 2:** *Decision-making workflow for simulating human behavior.*
 
@@ -75,9 +71,7 @@ By translating theoretical constructs into user-friendly, operational components
 
 `ABSESpy` integrates an innovative time control mechanism to bridge the gap between ABMs and real-world SESs. These are attributions from a `TimeDriver` module that manages the association of ABM with real-world time (**Figure 3**).
 
-<div align="center">
-	<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/schedule.png" alt="Drawing" style="width: 400px;"/>
-</div>
+![Real-world SES modeling enhancements](real-world.png)
 
 **Figure 3:** *Calendar time module enhances real-world social-ecological system modeling approaches.*
 
@@ -87,9 +81,9 @@ A calendar schedule enables `ABSESpy` to import and utilize dynamic, temporal da
 
 ## Positioning and comparison
 
-`ABSESpy` facilitates independent module creation, enabling an advanced human behavior framework and providing sophisticated time control and data integration tools. `ABSESpy` allows a more accurate and nuanced representation of SES dynamics, meeting the intricate requirements of real-world problem-solving and decision-making support. Its goal is to become a specialized package for the emerging SES field based on the `mesa` project, similar to the existing `abce` (a package aimed at providing an economic problem modeling framework, also a `mesa` package). Therefore, `ABSESpy` can take advantage of most of the benefits from the related projects (e.g., `mesa` and `mesa-geo`), such as visualization and geographic data processing.
+`ABSESpy` facilitates independent module creation, enabling an advanced human behavior framework and providing sophisticated time control and data integration tools. `ABSESpy` allows a more accurate and nuanced representation of SES dynamics, meeting the intricate requirements of real-world problem-solving and decision-making support. Its goal is to become a specialized package for the emerging SES field based on the `mesa` project, similar to the existing `abce` (a package aimed at providing an economic problem modeling framework, also a `mesa` package) [@taghawi-nejad2017]. Therefore, `ABSESpy` can take advantage of most of the benefits from the related projects (e.g., `mesa` [@python-mesa-2020] and `mesa-geo` [@wang2022h]), such as visualization and geographic data processing.
 
-A possible competitor is `AgentPy`, but its goal remains to be a general ABM framework. Due to the need for more mature geographic data processing extensions like `mesa-geo`, building `ABSESpy` on top of the `mesa` project allows users to deal with real-world SES problems while putting less coding effort into setting up their model projects. Currently, many open-source SES models are published on the platform `CoMSES`; they primarily serve as heuristic models using `netlogo` software as their modeling foundation. The visible advantage of `ABSESpy` lies in its well-structured design, which is suitable for large-scale SES modeling projects. It calls upon vast amounts of actual data for real-world problem modeling rather than merely heuristic modeling. Its tree-like structure allows `ABSESpy` users to couple models together, maximizing Python's advantages as a "glue language".
+A possible competitor is `AgentPy`, but its goal remains to be a general ABM framework. Due to the need for more mature geographic data processing extensions like `mesa-geo`, building `ABSESpy` on top of the `mesa` project allows users to deal with real-world SES problems while putting less coding effort into setting up their model projects. Currently, many open-source SES models are published on the platform `CoMSES`; they primarily serve as heuristic models using `netlogo` [@netlogo] software as their modeling foundation. The visible advantage of `ABSESpy` lies in its well-structured design, which is suitable for large-scale SES modeling projects. It calls upon vast amounts of actual data for real-world problem modeling rather than merely heuristic modeling. Its tree-like structure allows `ABSESpy` users to couple models together, maximizing Python's advantages as a "glue language".
 
 ## Acknowledgment
 
