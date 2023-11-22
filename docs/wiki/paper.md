@@ -1,5 +1,5 @@
 ---
-title: "ABSESpy: A Python package for social-ecological system modeling"
+title: "ABSESpy: An agent-based modeling framework for social-ecological systems"
 tags:
 - "Python"
 - "Agent-based model"
@@ -10,7 +10,7 @@ authors:
 - name: Shuang Song
   orcid: 0000-0002-8112-8780
   affiliation: 1
-- name: Shuai Wang^[corresponding author]
+- name: Shuai Wang
   affiliation: 1
   corresponding: true
 - name: Chentai Jiao
@@ -23,7 +23,7 @@ affiliations:
  - name: Computational Social Sciences Laboratory, Universidad San Francisco de Quito. Diego de Robles s/n y pampite.
    index: 2
 date: 06 November 2023
-bibliography: paper.bib
+bibliography: "../refs.bib"
 ---
 
 ## Summary
