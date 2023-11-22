@@ -1,4 +1,4 @@
-site_name: AB-SESpy
+site_name: ABSESpy
 
 nav:
     - Home:
@@ -16,7 +16,7 @@ nav:
         # - RoadMap: home/roadmap.md
         # - Changelog: home/changelog.md
     - Wiki:
-        - Paper: wiki/paper.md
+        - Paper: paper/paper.md
         - Context of ABSESpy: wiki/about.md
         - Terms and definitions: wiki/background.md
     - Tutorials:
