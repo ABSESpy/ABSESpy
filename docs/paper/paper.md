@@ -42,9 +42,7 @@ Developing and refining ABM approaches for social-ecological systems are crucial
 
 `ABSESpy` introduces a Branch-Leaf architecture central to its functionality. It facilitates a clear separation of the human and natural subsystems within SES research, aligning with the requisite to enhance replicability and extensibility (**Figure 1**).
 
-![Design structures](structure.png)
-
-**Figure 1:** *Structure of main components of `ABSESpy` and its Branch-Leaf architecture of modules.*
+![Structure of main components of `ABSESpy` and its Branch-Leaf architecture of modules.](structure.png)
 
 Integrated by the `MainModel`, the two primary base modules are named as `Base Human` and `Base Nature`, corresponding to components of a typical SES [@reyers2018]. By this architecture, `ABSESpy` enables the addition of specialized sub-modules, thus promoting a tailored modeling approach. The extension `mesa-geo` is embedded as the base driver for the nature subsystem so that most of the different geographic datasets are compatible (`.tif`, `.nc`, `.json`, `.shp`, et al.).
 
@@ -54,10 +52,7 @@ In the SES context, `ABSESpy` conceptualizes agents as `Actors` managed within a
 
 `ABSESpy` recognizes the centrality of human behavior in SES and, as such, prioritizes the workflow approaching its simulation. To this end, the framework provides an integrative approach based on popular theories of conceptualizing human decision-making (**Figure 2**) [@schluter2017], [@beckage2022].
 
-![Decision-making workflow](decision-making.png)
-
-**Figure 2:** *Decision-making workflow for simulating human behavior.*
-
+![Decision-making workflow for simulating human behavior.](decision-making.png)
 
 When practicing, `ABSESpy` provides an advanced behavior simulation framework, including the following main steps:
 
@@ -71,9 +66,7 @@ By translating theoretical constructs into user-friendly, operational components
 
 `ABSESpy` integrates an innovative time control mechanism to bridge the gap between ABMs and real-world SESs. These are attributions from a `TimeDriver` module that manages the association of ABM with real-world time (**Figure 3**).
 
-![Real-world SES modeling enhancements](real-world.png)
-
-**Figure 3:** *Calendar time module enhances real-world social-ecological system modeling approaches.*
+![Calendar time module enhances real-world social-ecological system modeling approaches.](real-world.png)
 
 In addition to the standard tick-based time advancement, users can implement two temporal modes for matching the diverse scales of SES phenomena. (1) In a "Duration Mode," users can define the length of time that each simulation step represents, thus allowing for variable temporal resolutions. This capability enables the model to represent time intervals vary from minutes to years, depending on the specific requirements of the SES being modeled. (2) The "Irregular Mode" addresses the non-uniformity of specific SES processes; this mode allows for irregular time steps, whereby different simulation intervals can represent varying lengths of time. This flexibility is crucial when modeling events that do not follow a linear timeline, such as erratic ecological phenomena or sporadic human activities.
 
