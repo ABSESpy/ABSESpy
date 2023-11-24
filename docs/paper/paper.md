@@ -20,7 +20,7 @@ authors:
 affiliations:
  - name: Faculty of Geographical Science, Beijing Normal University. 100875, Beijing, China.
    index: 1
- - name: Computational Social Sciences Laboratory, Universidad San Francisco de Quito. Diego de Robles s/n y pampite.
+ - name: USFQ Data Hub, Universidad San Francisco de Quito. Diego de Robles s/n y Pampite. Quito, Ecuador.
    index: 2
 date: 06 November 2023
 bibliography: "../refs.bib"
