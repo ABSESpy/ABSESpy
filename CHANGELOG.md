@@ -1,4 +1,11 @@
 
+<a id='changelog-0.3.1'></a>
+# 0.3.1 — 2023-11-28
+
+## Performance improvements
+
+- [x] #build🏗 Un-pin the dependencies and upgrade
+
 <a id='changelog-0.3.0'></a>
 # 0.3.0 — 2023-11-11
 
