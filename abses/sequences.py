@@ -95,7 +95,7 @@ class ActorsList(list):
     def __getitem__(self, index):
         results = super().__getitem__(index)
         return (
-            ActorsList(self.model, results)
+            ActorsList(self._model, results)
             if isinstance(index, slice)
             else results
         )
@@ -130,7 +130,7 @@ class ActorsList(list):
         for actor in iter(self):
             breed = actor.breed
             if breed not in dic:
-                dic[breed] = ActorsList(self.model, [actor])
+                dic[breed] = ActorsList(self._model, [actor])
             else:
                 dic[breed].append(actor)
         return dic
@@ -151,7 +151,7 @@ class ActorsList(list):
         else:
             raise TypeError(f"Invalid selection type {type(selection)}")
         selected = [a for a, s in zip(self, bool_) if s]
-        return ActorsList(self.model, selected)
+        return ActorsList(self._model, selected)
 
     def ids(self, ids: Iterable[int]) -> List[Actor]:
         """Subsets ActorsList by a `ids`.
@@ -203,11 +203,11 @@ class ActorsList(list):
         )
         chosen = norm_choice(self, p=prob, size=size, replace=replace)
         if as_list:
-            return ActorsList(self.model, objs=chosen)
+            return ActorsList(self._model, objs=chosen)
         if size == 1:
             return chosen[0]
         if size > 1:
-            return ActorsList(self.model, chosen)
+            return ActorsList(self._model, chosen)
         raise ValueError(f"Invalid size {size}.")
 
     def better(
