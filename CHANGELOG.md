@@ -1,4 +1,11 @@
 
+<a id='changelog-0.3.3'></a>
+# 0.3.3 — 2023-11-29
+
+## Fixed bugs
+
+- [x] #bug🐛 fixing `random.choice` triggered error : `'super' object has no attribute 'random'`
+
 <a id='changelog-0.3.2'></a>
 # 0.3.2 — 2023-11-29
 
