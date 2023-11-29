@@ -1,4 +1,11 @@
 
+<a id='changelog-0.3.2'></a>
+# 0.3.2 — 2023-11-29
+
+## New Features
+
+- [ ] #feat✨ Generate random links between actors with the possibility
+
 <a id='changelog-0.3.1'></a>
 # 0.3.1 — 2023-11-28
 
