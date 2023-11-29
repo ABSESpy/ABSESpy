@@ -26,6 +26,7 @@ import mesa_geo as mg
 import numpy as np
 
 from abses.errors import ABSESpyError
+from abses.random import ListRandom
 
 from .tools.func import make_list, norm_choice
 
@@ -72,6 +73,8 @@ class ActorsList(list):
             return getattr(super(), name)
         if name in self.__dir__():
             return getattr(super(), name)
+        if name == "random":
+            return getattr(super(), name)
         return ActorsList.array(self, name)
 
     def __eq__(self, other: Iterable) -> bool:
@@ -110,6 +113,12 @@ class ActorsList(list):
                 )
             return False
         return True
+
+    @property
+    def random(self) -> ListRandom:
+        """随机模块"""
+        seed = getattr(self._model, "_seed")
+        return ListRandom(actors=self, seed=seed)
 
     def to_dict(self) -> Dict[str, Self]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.
@@ -188,6 +197,10 @@ class ActorsList(list):
             ValueError:
                 If size is not a positive integer.
         """
+        # TODO refactor this to `self.random.choice`
+        logger.warning(
+            "Deprecated Warning: In the next version, use `ActorsList.random.choice` instead of `ActorsList.random_choose`."
+        )
         chosen = norm_choice(self, p=prob, size=size, replace=replace)
         if as_list:
             return ActorsList(self.model, objs=chosen)

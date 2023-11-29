@@ -16,7 +16,7 @@
       "dataSource": {
         "kind": "folder",
         "config": {
-          "path": "",
+          "path": "docs",
           "recursive": true
         }
       },
@@ -188,12 +188,17 @@
       "id": "5d38e9ed-e6d9-4c5c-be83-83911c3dafcc"
     }
   ],
+  "archives": [],
   "preferences": {
     "projectSizeLimit": 1000,
     "frontmatter": {
       "quoteStrings": "PLAIN"
     },
-    "commands": [],
+    "commands": [
+      {
+        "project": "5d38e9ed-e6d9-4c5c-be83-83911c3dafcc"
+      }
+    ],
     "linkBehavior": "open-editor"
   }
 }

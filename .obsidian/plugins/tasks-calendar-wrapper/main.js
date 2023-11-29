@@ -3852,7 +3852,7 @@ var require_backbone = __commonJS({
           var add = options.add;
           var merge = options.merge;
           var remove = options.remove;
-          var sort2 = false;
+          var sort = false;
           var sortable = this.comparator && at == null && options.sort !== false;
           var sortAttr = _3.isString(this.comparator) ? this.comparator : null;
           var model, i;
@@ -3866,8 +3866,8 @@ var require_backbone = __commonJS({
                   attrs = existing.parse(attrs, options);
                 existing.set(attrs, options);
                 toMerge.push(existing);
-                if (sortable && !sort2)
-                  sort2 = existing.hasChanged(sortAttr);
+                if (sortable && !sort)
+                  sort = existing.hasChanged(sortAttr);
               }
               if (!modelMap[existing.cid]) {
                 modelMap[existing.cid] = true;
@@ -3904,11 +3904,11 @@ var require_backbone = __commonJS({
             this.length = this.models.length;
           } else if (toAdd.length) {
             if (sortable)
-              sort2 = true;
+              sort = true;
             splice(this.models, toAdd, at == null ? this.length : at);
             this.length = this.models.length;
           }
-          if (sort2)
+          if (sort)
             this.sort({ silent: true });
           if (!options.silent) {
             for (i = 0; i < toAdd.length; i++) {
@@ -3917,7 +3917,7 @@ var require_backbone = __commonJS({
               model = toAdd[i];
               model.trigger("add", model, this, options);
             }
-            if (sort2 || orderChanged)
+            if (sort || orderChanged)
               this.trigger("sort", this, options);
             if (toAdd.length || toRemove.length || toMerge.length) {
               options.changes = {
@@ -34569,7 +34569,7 @@ var TagModal = class extends import_obsidian.Modal {
 
 // node_modules/emoji-regex/index.mjs
 var emoji_regex_default = () => {
-  return /[#*0-9]\uFE0F?\u20E3|[\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23ED-\u23EF\u23F1\u23F2\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB\u25FC\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692\u2694-\u2697\u2699\u269B\u269C\u26A0\u26A7\u26AA\u26B0\u26B1\u26BD\u26BE\u26C4\u26C8\u26CF\u26D1\u26D3\u26E9\u26F0-\u26F5\u26F7\u26F8\u26FA\u2702\u2708\u2709\u270F\u2712\u2714\u2716\u271D\u2721\u2733\u2734\u2744\u2747\u2757\u2763\u27A1\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B55\u3030\u303D\u3297\u3299]\uFE0F?|[\u261D\u270C\u270D](?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?|[\u270A\u270B](?:\uD83C[\uDFFB-\uDFFF])?|[\u23E9-\u23EC\u23F0\u23F3\u25FD\u2693\u26A1\u26AB\u26C5\u26CE\u26D4\u26EA\u26FD\u2705\u2728\u274C\u274E\u2753-\u2755\u2795-\u2797\u27B0\u27BF\u2B50]|\u26F9(?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|\u2764\uFE0F?(?:\u200D(?:\uD83D\uDD25|\uD83E\uDE79))?|\uD83C(?:[\uDC04\uDD70\uDD71\uDD7E\uDD7F\uDE02\uDE37\uDF21\uDF24-\uDF2C\uDF36\uDF7D\uDF96\uDF97\uDF99-\uDF9B\uDF9E\uDF9F\uDFCD\uDFCE\uDFD4-\uDFDF\uDFF5\uDFF7]\uFE0F?|[\uDF85\uDFC2\uDFC7](?:\uD83C[\uDFFB-\uDFFF])?|[\uDFC3\uDFC4\uDFCA](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDFCB\uDFCC](?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDCCF\uDD8E\uDD91-\uDD9A\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF7C\uDF7E-\uDF84\uDF86-\uDF93\uDFA0-\uDFC1\uDFC5\uDFC6\uDFC8\uDFC9\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF8-\uDFFF]|\uDDE6\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF]|\uDDE7\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF]|\uDDE8\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF5\uDDF7\uDDFA-\uDDFF]|\uDDE9\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF]|\uDDEA\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA]|\uDDEB\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7]|\uDDEC\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE]|\uDDED\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA]|\uDDEE\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9]|\uDDEF\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5]|\uDDF0\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF]|\uDDF1\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE]|\uDDF2\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF]|\uDDF3\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF]|\uDDF4\uD83C\uDDF2|\uDDF5\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE]|\uDDF6\uD83C\uDDE6|\uDDF7\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC]|\uDDF8\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF]|\uDDF9\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF]|\uDDFA\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF]|\uDDFB\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA]|\uDDFC\uD83C[\uDDEB\uDDF8]|\uDDFD\uD83C\uDDF0|\uDDFE\uD83C[\uDDEA\uDDF9]|\uDDFF\uD83C[\uDDE6\uDDF2\uDDFC]|\uDFF3\uFE0F?(?:\u200D(?:\u26A7\uFE0F?|\uD83C\uDF08))?|\uDFF4(?:\u200D\u2620\uFE0F?|\uDB40\uDC67\uDB40\uDC62\uDB40(?:\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDC73\uDB40\uDC63\uDB40\uDC74|\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F)?)|\uD83D(?:[\uDC08\uDC26](?:\u200D\u2B1B)?|[\uDC3F\uDCFD\uDD49\uDD4A\uDD6F\uDD70\uDD73\uDD76-\uDD79\uDD87\uDD8A-\uDD8D\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA\uDECB\uDECD-\uDECF\uDEE0-\uDEE5\uDEE9\uDEF0\uDEF3]\uFE0F?|[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDC8F\uDC91\uDCAA\uDD7A\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC](?:\uD83C[\uDFFB-\uDFFF])?|[\uDC6E\uDC70\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD74\uDD90](?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?|[\uDC00-\uDC07\uDC09-\uDC14\uDC16-\uDC25\uDC27-\uDC3A\uDC3C-\uDC3E\uDC40\uDC44\uDC45\uDC51-\uDC65\uDC6A\uDC79-\uDC7B\uDC7D-\uDC80\uDC84\uDC88-\uDC8E\uDC90\uDC92-\uDCA9\uDCAB-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDDA4\uDDFB-\uDE2D\uDE2F-\uDE34\uDE37-\uDE44\uDE48-\uDE4A\uDE80-\uDEA2\uDEA4-\uDEB3\uDEB7-\uDEBF\uDEC1-\uDEC5\uDED0-\uDED2\uDED5-\uDED7\uDEDC-\uDEDF\uDEEB\uDEEC\uDEF4-\uDEFC\uDFE0-\uDFEB\uDFF0]|\uDC15(?:\u200D\uD83E\uDDBA)?|\uDC3B(?:\u200D\u2744\uFE0F?)?|\uDC41\uFE0F?(?:\u200D\uD83D\uDDE8\uFE0F?)?|\uDC68(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDC68\uDC69]\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE])))?))?|\uDC69(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?[\uDC68\uDC69]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?|\uDC69\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?))|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFE])))?))?|\uDC6F(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDD75(?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDE2E(?:\u200D\uD83D\uDCA8)?|\uDE35(?:\u200D\uD83D\uDCAB)?|\uDE36(?:\u200D\uD83C\uDF2B\uFE0F?)?)|\uD83E(?:[\uDD0C\uDD0F\uDD18-\uDD1F\uDD30-\uDD34\uDD36\uDD77\uDDB5\uDDB6\uDDBB\uDDD2\uDDD3\uDDD5\uDEC3-\uDEC5\uDEF0\uDEF2-\uDEF8](?:\uD83C[\uDFFB-\uDFFF])?|[\uDD26\uDD35\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD4\uDDD6-\uDDDD](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDDDE\uDDDF](?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD0D\uDD0E\uDD10-\uDD17\uDD20-\uDD25\uDD27-\uDD2F\uDD3A\uDD3F-\uDD45\uDD47-\uDD76\uDD78-\uDDB4\uDDB7\uDDBA\uDDBC-\uDDCC\uDDD0\uDDE0-\uDDFF\uDE70-\uDE7C\uDE80-\uDE88\uDE90-\uDEBD\uDEBF-\uDEC2\uDECE-\uDEDB\uDEE0-\uDEE8]|\uDD3C(?:\u200D[\u2640\u2642]\uFE0F?|\uD83C[\uDFFB-\uDFFF])?|\uDDD1(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83E\uDDD1))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF-\uDDB3\uDDBC\uDDBD]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?))?|\uDEF1(?:\uD83C(?:\uDFFB(?:\u200D\uD83E\uDEF2\uD83C[\uDFFC-\uDFFF])?|\uDFFC(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFD-\uDFFF])?|\uDFFD(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])?|\uDFFE(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFD\uDFFF])?|\uDFFF(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFE])?))?)/g;
+  return /[#*0-9]\uFE0F?\u20E3|[\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23ED-\u23EF\u23F1\u23F2\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB\u25FC\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692\u2694-\u2697\u2699\u269B\u269C\u26A0\u26A7\u26AA\u26B0\u26B1\u26BD\u26BE\u26C4\u26C8\u26CF\u26D1\u26E9\u26F0-\u26F5\u26F7\u26F8\u26FA\u2702\u2708\u2709\u270F\u2712\u2714\u2716\u271D\u2721\u2733\u2734\u2744\u2747\u2757\u2763\u27A1\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B55\u3030\u303D\u3297\u3299]\uFE0F?|[\u261D\u270C\u270D](?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?|[\u270A\u270B](?:\uD83C[\uDFFB-\uDFFF])?|[\u23E9-\u23EC\u23F0\u23F3\u25FD\u2693\u26A1\u26AB\u26C5\u26CE\u26D4\u26EA\u26FD\u2705\u2728\u274C\u274E\u2753-\u2755\u2795-\u2797\u27B0\u27BF\u2B50]|\u26D3\uFE0F?(?:\u200D\uD83D\uDCA5)?|\u26F9(?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|\u2764\uFE0F?(?:\u200D(?:\uD83D\uDD25|\uD83E\uDE79))?|\uD83C(?:[\uDC04\uDD70\uDD71\uDD7E\uDD7F\uDE02\uDE37\uDF21\uDF24-\uDF2C\uDF36\uDF7D\uDF96\uDF97\uDF99-\uDF9B\uDF9E\uDF9F\uDFCD\uDFCE\uDFD4-\uDFDF\uDFF5\uDFF7]\uFE0F?|[\uDF85\uDFC2\uDFC7](?:\uD83C[\uDFFB-\uDFFF])?|[\uDFC4\uDFCA](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDFCB\uDFCC](?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDCCF\uDD8E\uDD91-\uDD9A\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF43\uDF45-\uDF4A\uDF4C-\uDF7C\uDF7E-\uDF84\uDF86-\uDF93\uDFA0-\uDFC1\uDFC5\uDFC6\uDFC8\uDFC9\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF8-\uDFFF]|\uDDE6\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF]|\uDDE7\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF]|\uDDE8\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF5\uDDF7\uDDFA-\uDDFF]|\uDDE9\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF]|\uDDEA\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA]|\uDDEB\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7]|\uDDEC\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE]|\uDDED\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA]|\uDDEE\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9]|\uDDEF\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5]|\uDDF0\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF]|\uDDF1\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE]|\uDDF2\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF]|\uDDF3\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF]|\uDDF4\uD83C\uDDF2|\uDDF5\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE]|\uDDF6\uD83C\uDDE6|\uDDF7\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC]|\uDDF8\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF]|\uDDF9\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF]|\uDDFA\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF]|\uDDFB\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA]|\uDDFC\uD83C[\uDDEB\uDDF8]|\uDDFD\uD83C\uDDF0|\uDDFE\uD83C[\uDDEA\uDDF9]|\uDDFF\uD83C[\uDDE6\uDDF2\uDDFC]|\uDF44(?:\u200D\uD83D\uDFEB)?|\uDF4B(?:\u200D\uD83D\uDFE9)?|\uDFC3(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDFF3\uFE0F?(?:\u200D(?:\u26A7\uFE0F?|\uD83C\uDF08))?|\uDFF4(?:\u200D\u2620\uFE0F?|\uDB40\uDC67\uDB40\uDC62\uDB40(?:\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDC73\uDB40\uDC63\uDB40\uDC74|\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F)?)|\uD83D(?:[\uDC3F\uDCFD\uDD49\uDD4A\uDD6F\uDD70\uDD73\uDD76-\uDD79\uDD87\uDD8A-\uDD8D\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA\uDECB\uDECD-\uDECF\uDEE0-\uDEE5\uDEE9\uDEF0\uDEF3]\uFE0F?|[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDC8F\uDC91\uDCAA\uDD7A\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC](?:\uD83C[\uDFFB-\uDFFF])?|[\uDC6E\uDC70\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4\uDEB5](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD74\uDD90](?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?|[\uDC00-\uDC07\uDC09-\uDC14\uDC16-\uDC25\uDC27-\uDC3A\uDC3C-\uDC3E\uDC40\uDC44\uDC45\uDC51-\uDC65\uDC6A\uDC79-\uDC7B\uDC7D-\uDC80\uDC84\uDC88-\uDC8E\uDC90\uDC92-\uDCA9\uDCAB-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDDA4\uDDFB-\uDE2D\uDE2F-\uDE34\uDE37-\uDE41\uDE43\uDE44\uDE48-\uDE4A\uDE80-\uDEA2\uDEA4-\uDEB3\uDEB7-\uDEBF\uDEC1-\uDEC5\uDED0-\uDED2\uDED5-\uDED7\uDEDC-\uDEDF\uDEEB\uDEEC\uDEF4-\uDEFC\uDFE0-\uDFEB\uDFF0]|\uDC08(?:\u200D\u2B1B)?|\uDC15(?:\u200D\uD83E\uDDBA)?|\uDC26(?:\u200D(?:\u2B1B|\uD83D\uDD25))?|\uDC3B(?:\u200D\u2744\uFE0F?)?|\uDC41\uFE0F?(?:\u200D\uD83D\uDDE8\uFE0F?)?|\uDC68(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDC68\uDC69]\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE])))?))?|\uDC69(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?[\uDC68\uDC69]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?|\uDC69\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?))|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFE])))?))?|\uDC6F(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDD75(?:\uFE0F|\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDE2E(?:\u200D\uD83D\uDCA8)?|\uDE35(?:\u200D\uD83D\uDCAB)?|\uDE36(?:\u200D\uD83C\uDF2B\uFE0F?)?|\uDE42(?:\u200D[\u2194\u2195]\uFE0F?)?|\uDEB6(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?)|\uD83E(?:[\uDD0C\uDD0F\uDD18-\uDD1F\uDD30-\uDD34\uDD36\uDD77\uDDB5\uDDB6\uDDBB\uDDD2\uDDD3\uDDD5\uDEC3-\uDEC5\uDEF0\uDEF2-\uDEF8](?:\uD83C[\uDFFB-\uDFFF])?|[\uDD26\uDD35\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD\uDDCF\uDDD4\uDDD6-\uDDDD](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDDDE\uDDDF](?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD0D\uDD0E\uDD10-\uDD17\uDD20-\uDD25\uDD27-\uDD2F\uDD3A\uDD3F-\uDD45\uDD47-\uDD76\uDD78-\uDDB4\uDDB7\uDDBA\uDDBC-\uDDCC\uDDD0\uDDE0-\uDDFF\uDE70-\uDE7C\uDE80-\uDE88\uDE90-\uDEBD\uDEBF-\uDEC2\uDECE-\uDEDB\uDEE0-\uDEE8]|\uDD3C(?:\u200D[\u2640\u2642]\uFE0F?|\uD83C[\uDFFB-\uDFFF])?|\uDDCE(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDDD1(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1|\uDDD1\u200D\uD83E\uDDD2(?:\u200D\uD83E\uDDD2)?|\uDDD2(?:\u200D\uD83E\uDDD2)?))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?))?|\uDEF1(?:\uD83C(?:\uDFFB(?:\u200D\uD83E\uDEF2\uD83C[\uDFFC-\uDFFF])?|\uDFFC(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFD-\uDFFF])?|\uDFFD(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])?|\uDFFE(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFD\uDFFF])?|\uDFFF(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFE])?))?)/g;
 };
 
 // dataview-util/dataview.ts
@@ -34796,151 +34796,182 @@ function filterByDateTimeRange(from, to, by) {
     return false;
   };
 }
-function tasksPluginTaskParser(item) {
-  let description = item.visual || "";
-  let matched;
-  let priority = "";
-  let startDate = void 0;
-  let scheduledDate = void 0;
-  let dueDate = void 0;
-  let doneDate = void 0;
-  let recurrenceRule = "";
-  let trailingTags = "";
-  const maxRuns = 20;
-  let runs = 0;
-  do {
-    matched = false;
-    const priorityMatch = description.match(TaskRegularExpressions.priorityRegex);
-    if (priorityMatch !== null) {
-      priority = TasksPrioritySymbolToLabel[priorityMatch[1]];
-      description = description.replace(TaskRegularExpressions.priorityRegex, "").trim();
-      matched = true;
-    }
-    const doneDateMatch = description.match(TaskRegularExpressions.doneDateRegex);
-    if (doneDateMatch !== null) {
-      doneDate = window.moment(doneDateMatch[1], TaskRegularExpressions.dateFormat);
-      description = description.replace(TaskRegularExpressions.doneDateRegex, "").trim();
-      matched = true;
-    }
-    const dueDateMatch = description.match(TaskRegularExpressions.dueDateRegex);
-    if (dueDateMatch !== null) {
-      dueDate = window.moment(dueDateMatch[1], TaskRegularExpressions.dateFormat);
-      description = description.replace(TaskRegularExpressions.dueDateRegex, "").trim();
-      matched = true;
-    }
-    const scheduledDateMatch = description.match(TaskRegularExpressions.scheduledDateRegex);
-    if (scheduledDateMatch !== null) {
-      scheduledDate = window.moment(scheduledDateMatch[1], TaskRegularExpressions.dateFormat);
-      description = description.replace(TaskRegularExpressions.scheduledDateRegex, "").trim();
-      matched = true;
-    }
-    const startDateMatch = description.match(TaskRegularExpressions.startDateRegex);
-    if (startDateMatch !== null) {
-      startDate = window.moment(startDateMatch[1], TaskRegularExpressions.dateFormat);
-      description = description.replace(TaskRegularExpressions.startDateRegex, "").trim();
-      matched = true;
-    }
-    const recurrenceMatch = description.match(TaskRegularExpressions.recurrenceRegex);
-    if (recurrenceMatch !== null) {
-      recurrenceRule = recurrenceMatch[1].trim();
-      description = description.replace(TaskRegularExpressions.recurrenceRegex, "").trim();
-      matched = true;
-    }
-    const tagsMatch = description.match(TaskRegularExpressions.hashTagsFromEnd);
-    if (tagsMatch != null) {
-      description = description.replace(TaskRegularExpressions.hashTagsFromEnd, "").trim();
-      matched = true;
-      const tagName = tagsMatch[0].trim();
-      trailingTags = trailingTags.length > 0 ? [tagName, trailingTags].join(" ") : tagName;
-    }
-    runs++;
-  } while (matched && runs <= maxRuns);
-  if (trailingTags.length > 0)
-    description += " " + trailingTags;
-  const isTasksTask = [startDate, scheduledDate, dueDate, doneDate].some((d) => !!d);
-  item.visual = description;
-  item.priority = priority;
-  item.recurrence = recurrenceRule;
-  item.isTasksTask = isTasksTask;
-  item.due = dueDate;
-  item.scheduled = scheduledDate;
-  item.completion = doneDate;
-  item.start = startDate;
-  item.checked = description.replace(" ", "").length !== 0;
-  return item;
+async function tasksPluginTaskParser(item) {
+  return new Promise((resolve, reject2) => {
+    item.then((itemValue) => {
+      let description = itemValue.visual || "";
+      let matched;
+      let priority = "";
+      let startDate = void 0;
+      let scheduledDate = void 0;
+      let dueDate = void 0;
+      let doneDate = void 0;
+      let recurrenceRule = "";
+      let trailingTags = "";
+      const maxRuns = 20;
+      let runs = 0;
+      do {
+        matched = false;
+        const priorityMatch = description.match(TaskRegularExpressions.priorityRegex);
+        if (priorityMatch !== null) {
+          priority = TasksPrioritySymbolToLabel[priorityMatch[1]];
+          description = description.replace(TaskRegularExpressions.priorityRegex, "").trim();
+          matched = true;
+        }
+        const doneDateMatch = description.match(TaskRegularExpressions.doneDateRegex);
+        if (doneDateMatch !== null) {
+          doneDate = window.moment(doneDateMatch[1], TaskRegularExpressions.dateFormat);
+          description = description.replace(TaskRegularExpressions.doneDateRegex, "").trim();
+          matched = true;
+        }
+        const dueDateMatch = description.match(TaskRegularExpressions.dueDateRegex);
+        if (dueDateMatch !== null) {
+          dueDate = window.moment(dueDateMatch[1], TaskRegularExpressions.dateFormat);
+          description = description.replace(TaskRegularExpressions.dueDateRegex, "").trim();
+          matched = true;
+        }
+        const scheduledDateMatch = description.match(TaskRegularExpressions.scheduledDateRegex);
+        if (scheduledDateMatch !== null) {
+          scheduledDate = window.moment(scheduledDateMatch[1], TaskRegularExpressions.dateFormat);
+          description = description.replace(TaskRegularExpressions.scheduledDateRegex, "").trim();
+          matched = true;
+        }
+        const startDateMatch = description.match(TaskRegularExpressions.startDateRegex);
+        if (startDateMatch !== null) {
+          startDate = window.moment(startDateMatch[1], TaskRegularExpressions.dateFormat);
+          description = description.replace(TaskRegularExpressions.startDateRegex, "").trim();
+          matched = true;
+        }
+        const recurrenceMatch = description.match(TaskRegularExpressions.recurrenceRegex);
+        if (recurrenceMatch !== null) {
+          recurrenceRule = recurrenceMatch[1].trim();
+          description = description.replace(TaskRegularExpressions.recurrenceRegex, "").trim();
+          matched = true;
+        }
+        const tagsMatch = description.match(TaskRegularExpressions.hashTagsFromEnd);
+        if (tagsMatch != null) {
+          description = description.replace(TaskRegularExpressions.hashTagsFromEnd, "").trim();
+          matched = true;
+          const tagName = tagsMatch[0].trim();
+          trailingTags = trailingTags.length > 0 ? [tagName, trailingTags].join(" ") : tagName;
+        }
+        runs++;
+      } while (matched && runs <= maxRuns);
+      if (trailingTags.length > 0)
+        description += " " + trailingTags;
+      const isTasksTask = [startDate, scheduledDate, dueDate, doneDate].some((d) => !!d);
+      itemValue.visual = description;
+      itemValue.priority = priority;
+      itemValue.recurrence = recurrenceRule;
+      itemValue.isTasksTask = isTasksTask;
+      itemValue.due = dueDate;
+      itemValue.scheduled = scheduledDate;
+      itemValue.completion = doneDate;
+      itemValue.start = startDate;
+      itemValue.checked = description.replace(" ", "").length !== 0;
+      resolve(itemValue);
+    }).catch(() => reject2());
+  });
 }
-function dataviewTaskParser(item) {
-  let itemText = item.visual || "";
-  const inlineFields = itemText.match(TaskRegularExpressions.keyValueRegex);
-  if (!inlineFields)
-    return item;
-  for (const inlineField of inlineFields) {
-    TaskRegularExpressions.keyValueRegex.lastIndex = 0;
-    const tkv = TaskRegularExpressions.keyValueRegex.exec(inlineField);
-    const [text, key, value] = [tkv[0], tkv[1], tkv[2]];
-    itemText = itemText.replace(text, "");
-    if (!TaskStatusCollection.includes(key))
-      continue;
-    const fieldDate = (0, import_obsidian2.moment)(value);
-    if (!fieldDate.isValid())
-      continue;
-    switch (key) {
-      case "due":
-        item.due = fieldDate;
-        break;
-      case "scheduled":
-        item.scheduled = fieldDate;
-        break;
-      case "complete":
-      case "completion":
-      case "done":
-        item.completion = fieldDate;
-        break;
-      case "created":
-        item.start = fieldDate;
-        break;
-      default:
-        item.dates.set(key, fieldDate);
-        break;
-    }
-  }
-  item.visual = itemText;
-  return item;
+async function dataviewTaskParser(item) {
+  return new Promise((resolve, reject2) => {
+    item.then((itemValue) => {
+      let itemText = itemValue.visual || "";
+      const inlineFields = itemText.match(TaskRegularExpressions.keyValueRegex);
+      if (!inlineFields) {
+        resolve(itemValue);
+        return;
+      }
+      for (const inlineField of inlineFields) {
+        TaskRegularExpressions.keyValueRegex.lastIndex = 0;
+        const tkv = TaskRegularExpressions.keyValueRegex.exec(inlineField);
+        const [text, key, value] = [tkv[0], tkv[1], tkv[2]];
+        itemText = itemText.replace(text, "");
+        if (!TaskStatusCollection.includes(key))
+          continue;
+        const fieldDate = (0, import_obsidian2.moment)(value);
+        if (!fieldDate.isValid()) {
+          console.warn("Parse date for item failed, item: ");
+          console.warn(inlineFields);
+          continue;
+        }
+        switch (key) {
+          case "due":
+            itemValue.due = fieldDate;
+            break;
+          case "scheduled":
+            itemValue.scheduled = fieldDate;
+            break;
+          case "complete":
+          case "completion":
+          case "done":
+            itemValue.completion = fieldDate;
+            break;
+          case "created":
+            itemValue.start = fieldDate;
+            break;
+          default:
+            itemValue.dates.set(key, fieldDate);
+            break;
+        }
+      }
+      itemValue.visual = itemText;
+      resolve(itemValue);
+    }).catch(() => reject2());
+  });
 }
 function dailyNoteTaskParser(dailyNoteFormat = innerDateFormat) {
-  return (item) => {
-    const taskFile = getFileTitle(item.path);
-    const dailyNoteDate = (0, import_obsidian2.moment)(taskFile, dailyNoteFormat, true);
-    item.dailyNote = dailyNoteDate.isValid();
-    if (!item.dailyNote)
-      return item;
-    if (!item.start)
-      item.start = dailyNoteDate;
-    if (!item.scheduled)
-      item.scheduled = dailyNoteDate;
-    if (!item.created)
-      item.created = dailyNoteDate;
-    return item;
+  return async (item) => {
+    return new Promise((resolve, reject2) => {
+      item.then((itemValue) => {
+        const taskFile = getFileTitle(itemValue.path);
+        const dailyNoteDate = (0, import_obsidian2.moment)(taskFile, dailyNoteFormat, true);
+        itemValue.dailyNote = dailyNoteDate.isValid();
+        if (!itemValue.dailyNote) {
+          resolve(itemValue);
+          return;
+        }
+        if (!itemValue.start)
+          itemValue.start = dailyNoteDate;
+        if (!itemValue.scheduled)
+          itemValue.scheduled = dailyNoteDate;
+        if (!itemValue.created)
+          itemValue.created = dailyNoteDate;
+        resolve(itemValue);
+      }).catch(() => reject2());
+    });
   };
 }
-function remainderParser(item) {
-  const match = item.text.match(TaskRegularExpressions.remainderRegex);
-  if (!match)
-    return item;
-  item.text = item.text.replace(match[0], "");
-  return item;
+async function remainderParser(item) {
+  return new Promise((resolve, reject2) => {
+    item.then((itemValue) => {
+      const match = itemValue.text.match(TaskRegularExpressions.remainderRegex);
+      if (!match) {
+        resolve(itemValue);
+        return;
+      }
+      itemValue.text = itemValue.text.replace(match[0], "");
+      resolve(itemValue);
+    }).catch(() => reject2());
+  });
 }
-function tagsParser(item) {
-  var _a, _b;
-  const match = (_a = item.visual) == null ? void 0 : _a.match(TaskRegularExpressions.hashTags);
-  if (!match)
-    return item;
-  for (const m of match) {
-    item.visual = (_b = item.visual) == null ? void 0 : _b.replace(m, "");
-    const tag = m.trim();
-    item.tags.push(tag);
-  }
-  return item;
+async function tagsParser(item) {
+  return new Promise((resolve, reject2) => {
+    item.then((itemValue) => {
+      var _a, _b;
+      const match = (_a = itemValue.visual) == null ? void 0 : _a.match(TaskRegularExpressions.hashTags);
+      if (!match) {
+        resolve(itemValue);
+        return;
+      }
+      for (const m of match) {
+        itemValue.visual = (_b = itemValue.visual) == null ? void 0 : _b.replace(m, "");
+        const tag = m.trim();
+        itemValue.tags.push(tag);
+      }
+      resolve(itemValue);
+    }).catch(() => reject2());
+  });
 }
 function dateBasedStatusParser(item) {
   if (!item.due && !item.scheduled && !item.start && !item.completion && item.dates.size === 0) {
@@ -34983,8 +35014,12 @@ function markerBasedStatusParser(item) {
   item.status = TaskStatusMarkerMap[item.status];
   return item;
 }
-function postProcessor(item) {
-  return markerBasedStatusParser(item);
+async function postProcessor(item) {
+  return new Promise((resolve, reject2) => {
+    item.then((itemValue) => {
+      resolve(markerBasedStatusParser(itemValue));
+    }).catch(() => reject2());
+  });
 }
 
 // Obsidian-Tasks-Timeline/src/components/context.tsx
@@ -35578,23 +35613,23 @@ var defaultDateProps = {
 };
 var DateView = class extends React3.Component {
   render() {
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(UserOptionContext.Consumer, { children: ({ forward: forward2, dateFormat }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskListContext.Consumer, { children: ({ taskList: taskList2, entryOnDate }) => {
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(UserOptionContext.Consumer, { children: ({ forward, dateFormat }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskListContext.Consumer, { children: ({ taskList, entryOnDate }) => {
       const entryOnDateMoment = (0, import_moment3.default)(entryOnDate);
       const isEntryDate = this.props.date.format("YYYYMMDD") === entryOnDateMoment.format("YYYYMMDD");
       const isToday = this.props.date.isSame((0, import_moment3.default)(), "date");
-      if (forward2 && !isToday) {
-        taskList2 = taskList2.filter((t) => t.status !== "overdue" /* overdue */);
+      if (forward && !isToday) {
+        taskList = taskList.filter((t) => t.status !== "overdue" /* overdue */);
       }
       return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
         isEntryDate && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TodayFocus, { visual: "Focus On Today" }),
         isEntryDate && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Counters, {}),
         isEntryDate && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(QuickEntry, {}),
-        taskList2.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        taskList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "div",
           {
             className: isToday ? "details today" : "details",
             "data-year": this.props.date.format("YYYY"),
-            "data-types": [...new Set(taskList2.map((t) => t.status))].join(" "),
+            "data-types": [...new Set(taskList.map((t) => t.status))].join(" "),
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(DateHeader, { thisDate: this.props.date.format(dateFormat) }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
@@ -35602,8 +35637,8 @@ var DateView = class extends React3.Component {
                 {
                   className: isToday ? "details today" : "details",
                   "data-year": this.props.date.format("YYYY"),
-                  "data-types": [...new Set(taskList2.map((t) => t.status))].join(" "),
-                  children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskListContext.Provider, { value: { taskList: taskList2, entryOnDate }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NormalDateContent, { date: this.props.date }) })
+                  "data-types": [...new Set(taskList.map((t) => t.status))].join(" "),
+                  children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskListContext.Provider, { value: { taskList, entryOnDate }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NormalDateContent, { date: this.props.date }) })
                 }
               )
             ]
@@ -35623,7 +35658,7 @@ var DateHeader = class extends React3.Component {
 };
 var NormalDateContent = class extends React3.Component {
   render() {
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskListContext.Consumer, { children: ({ taskList: taskList2 }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "content", children: taskList2.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskItemView, { taskItem: t }, i)) }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskListContext.Consumer, { children: ({ taskList }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "content", children: taskList.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(TaskItemView, { taskItem: t }, i)) }) });
   }
 };
 var QuickEntry = class extends React3.Component {
@@ -35641,7 +35676,7 @@ var QuickEntry = class extends React3.Component {
     this.okButton = React3.createRef();
     this.quickEntryPanel = React3.createRef();
     this.state = {
-      selectedFile: "",
+      selectedFile: "Inbox.md",
       action: "append",
       filters: []
     };
@@ -35733,7 +35768,7 @@ var QuickEntry = class extends React3.Component {
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("option", { value: "append", children: "New Task" }, 1),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("option", { value: "filter", children: "Filter" }, 2)
           ] }),
-          this.state.action === "append" ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          this.state.action === "append" ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(UserOptionContext.Consumer, { children: ({ taskFiles }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             "select",
             {
               name: "File name",
@@ -35741,15 +35776,17 @@ var QuickEntry = class extends React3.Component {
               ref: this.fileSecect,
               "aria-label": "Select a note to add a new task to",
               onChange: this.onQuickEntryFileSelectChange,
-              value: this.state.selectedFile,
-              children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(UserOptionContext.Consumer, { children: ({ taskFiles }) => [...taskFiles].map((f, i) => {
-                const secondParentFolder = !f.split("/")[f.split("/").length - 3] ? "" : "\u2026 / ";
-                const parentFolder = !f.split("/")[f.split("/").length - 2] ? "" : secondParentFolder + "\u{1F4C2} " + f.split("/")[f.split("/").length - 2] + " / ";
-                const filePath = parentFolder + "\u{1F4C4} " + getFileTitle(f);
-                return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("option", { style: { whiteSpace: "nowrap" }, value: f, title: f, children: filePath }, i);
-              }) })
+              defaultValue: taskFiles[0],
+              children: [...taskFiles].map(
+                (f, i) => {
+                  const secondParentFolder = !f.split("/")[f.split("/").length - 3] ? "" : "\u2026 / ";
+                  const parentFolder = !f.split("/")[f.split("/").length - 2] ? "" : secondParentFolder + "\u{1F4C2} " + f.split("/")[f.split("/").length - 2] + " / ";
+                  const filePath = parentFolder + "\u{1F4C4} " + getFileTitle(f);
+                  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("option", { style: { whiteSpace: "nowrap" }, value: f, title: f, children: filePath }, i);
+                }
+              )
             }
-          ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          ) }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             MultiSelect,
             {
               name: "Filter Type",
@@ -35813,16 +35850,16 @@ var QuickEntry = class extends React3.Component {
           ref: this.okButton,
           "aria-label": "Append new task to selected note",
           onClick: () => {
-            var _a, _b;
+            var _a, _b, _c;
             if (this.state.action === "append") {
-              const filePath = this.state.selectedFile;
-              const newTask = (_a = this.textInput.current) == null ? void 0 : _a.value;
+              const filePath = (_a = this.fileSecect.current) == null ? void 0 : _a.value;
+              const newTask = (_b = this.textInput.current) == null ? void 0 : _b.value;
               if (!newTask || !filePath)
                 return;
               if (newTask.length > 1) {
                 callback.handleCreateNewTask(filePath, newTask);
               } else {
-                (_b = this.textInput.current) == null ? void 0 : _b.focus();
+                (_c = this.textInput.current) == null ? void 0 : _c.focus();
               }
             } else {
               callback.handleFilterEnable(this.dateFilter[0], this.dateFilter[1], this.priorityFilter);
@@ -35901,8 +35938,8 @@ var CounterItem = class extends React3.Component {
 var import_jsx_runtime4 = __toESM(require_jsx_runtime());
 var YearView = class extends React4.Component {
   render() {
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TaskListContext.Consumer, { children: ({ taskList: taskList2, entryOnDate }) => {
-      const tasksOfThisYear = taskList2;
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TaskListContext.Consumer, { children: ({ taskList, entryOnDate }) => {
+      const tasksOfThisYear = taskList;
       const daysOfThisYear = /* @__PURE__ */ new Set();
       tasksOfThisYear.forEach((t) => {
         t.due && daysOfThisYear.add(t.due.format(innerDateFormat));
@@ -35971,8 +36008,8 @@ var TimelineView = class extends React5.Component {
   }
   render() {
     const involvedDates = /* @__PURE__ */ new Set();
-    const taskList2 = this.props.taskList;
-    taskList2.forEach((t) => {
+    const taskList = this.props.taskList;
+    taskList.forEach((t) => {
       t.due && involvedDates.add(t.due.format(innerDateFormat));
       t.scheduled && involvedDates.add(t.scheduled.format(innerDateFormat));
       t.created && involvedDates.add(t.created.format(innerDateFormat));
@@ -35990,11 +36027,11 @@ var TimelineView = class extends React5.Component {
     const years = Array.from({ length: latestYear - earliestYear + 1 }, (_3, i) => i + earliestYear);
     const firstDay = sortedDatas.first();
     const lastDay = sortedDatas.last();
-    const overdueCount = taskList2.filter((t) => t.status === "overdue" /* overdue */).length;
-    const unplannedCount = taskList2.filter((t) => t.status === "unplanned" /* unplanned */).length;
-    const completedCount = taskList2.filter((t) => t.status === "done" /* done */).length;
-    const cancelledCount = taskList2.filter((t) => t.status === "cancelled" /* cancelled */).length;
-    const todoCount = taskList2.length - unplannedCount - completedCount - cancelledCount - overdueCount;
+    const overdueCount = taskList.filter((t) => t.status === "overdue" /* overdue */).length;
+    const unplannedCount = taskList.filter((t) => t.status === "unplanned" /* unplanned */).length;
+    const completedCount = taskList.filter((t) => t.status === "done" /* done */).length;
+    const cancelledCount = taskList.filter((t) => t.status === "cancelled" /* cancelled */).length;
+    const todoCount = taskList.length - unplannedCount - completedCount - cancelledCount - overdueCount;
     const styles = new Array();
     if (!this.props.userOptions.useCounters)
       styles.push("noCounters");
@@ -36071,7 +36108,7 @@ var TimelineView = class extends React5.Component {
             }
           ]
         }, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: years.map((y, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TaskListContext.Provider, { value: {
-          taskList: taskList2.filter(filterYear((0, import_moment5.default)().year(y))),
+          taskList: taskList.filter(filterYear((0, import_moment5.default)().year(y))),
           entryOnDate: this.props.userOptions.entryPosition === "top" ? firstDay : this.props.userOptions.entryPosition === "bottom" ? lastDay : (0, import_moment5.default)().format(innerDateFormat)
         }, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(YearView, { year: y }, y) }, i)) }) }) })
       }
@@ -36122,23 +36159,23 @@ var ObsidianBridge = class extends React6.Component {
     });
   }
   handleFilterEnable(startDate, endDate, priorities) {
-    let taskList2 = this.props.taskListModel.get("taskList");
+    let taskList = this.props.taskListModel.get("taskList");
     if (startDate && startDate !== "" && endDate && endDate !== "") {
-      taskList2 = taskList2.filter(filterDateRange((0, import_moment6.default)(startDate), (0, import_moment6.default)(endDate)));
+      taskList = taskList.filter(filterDateRange((0, import_moment6.default)(startDate), (0, import_moment6.default)(endDate)));
     }
     if (priorities.length !== 0) {
-      taskList2 = taskList2.filter((t) => priorities.includes(t.priority));
+      taskList = taskList.filter((t) => priorities.includes(t.priority));
     }
     this.setState({
-      taskList: taskList2
+      taskList
     });
   }
   handleCreateNewTask(path, append) {
-    const taskStr = "- [ ] " + append + "\n";
+    const taskStr = "- [ ] " + append;
     const section = this.state.userOptions.sectionForNewTasks;
     this.app.vault.adapter.exists(path).then((exist) => {
       if (!exist && confirm("No such file: " + path + ". Would you like to create it?")) {
-        const content = section + "\n\n" + taskStr;
+        const content = section + "\n" + taskStr;
         this.app.vault.create(path, content).then(() => {
           this.onUpdateTasks();
         }).catch((reason) => {
@@ -36172,13 +36209,14 @@ var ObsidianBridge = class extends React6.Component {
         var _a, _b, _c, _d, _e, _f, _g;
         try {
           const file = this.app.workspace.getActiveFile();
-          this.app.workspace.getLeaf().openFile(file, { state: { mode: "source" } });
+          file && this.app.workspace.getLeaf().openFile(file, { state: { mode: "source" } });
           (_b = (_a = this.app.workspace.activeEditor) == null ? void 0 : _a.editor) == null ? void 0 : _b.setSelection(
             { line: position.start.line, ch: position.start.col },
-            { line: position.end.line, ch: position.end.col }
+            { line: position.start.line, ch: position.end.col }
           );
-          if (!((_d = (_c = this.app.workspace.activeEditor) == null ? void 0 : _c.editor) == null ? void 0 : _d.hasFocus()))
+          if (!((_d = (_c = this.app.workspace.activeEditor) == null ? void 0 : _c.editor) == null ? void 0 : _d.hasFocus())) {
             (_f = (_e = this.app.workspace.activeEditor) == null ? void 0 : _e.editor) == null ? void 0 : _f.focus();
+          }
           if (openTaskEdit) {
             const editor = (_g = this.app.workspace.activeEditor) == null ? void 0 : _g.editor;
             if (editor) {
@@ -36216,8 +36254,8 @@ var ObsidianBridge = class extends React6.Component {
     });
   }
   render() {
-    console.log("Now the root node are rendering with: ", this.state.taskList);
-    console.log("Now the root node are reddering with: ", this.state.userOptions);
+    console.debug("Now the root node are rendering with: ", this.state.taskList);
+    console.debug("Now the root node are reddering with: ", this.state.userOptions);
     return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
       QuickEntryHandlerContext.Provider,
       {
@@ -36305,20 +36343,17 @@ var ObsidianTaskAdapter = class {
       filteredFiles = filteredFiles.filter(this.fileIncludeTagsFilter(includeTags));
     if (excludeTags.length !== 0)
       filteredFiles = filteredFiles.filter(this.fileExcludeTagsFilter(excludeTags));
-    await filteredFiles.forEach(async (file) => {
-      var _a;
+    filteredFiles.forEach(async (file) => {
       const link = Link.file(file.path);
-      const fileContent = await this.app.vault.cachedRead(file);
-      const cache = this.app.metadataCache.getFileCache(file);
-      (_a = cache == null ? void 0 : cache.listItems) == null ? void 0 : _a.forEach(this.fromItemCache(
-        link,
-        file.path,
-        fileContent,
-        cache.sections,
-        cache.links,
-        cache.frontmatter,
-        cache.tags
-      ));
+      this.app.vault.cachedRead(file).then((content) => {
+        var _a;
+        const cache = this.app.metadataCache.getFileCache(file);
+        (_a = cache == null ? void 0 : cache.listItems) == null ? void 0 : _a.forEach(
+          this.fromItemCache(link, file.path, content, cache.sections, cache.links, cache.frontmatter, cache.tags)
+        );
+      }).catch((reason) => {
+        console.error("Read file from obsidian cache failed: " + reason);
+      });
     });
   }
   /**
@@ -36467,7 +36502,6 @@ var ObsidianTaskAdapter = class {
 // src/views.tsx
 var import_client = __toESM(require_client());
 var import_jsx_runtime7 = __toESM(require_jsx_runtime());
-var CALENDAR_VIEW = "tasks_calendar_view";
 var TIMELINE_VIEW = "tasks_timeline_view";
 var BaseTasksView = class extends import_obsidian5.ItemView {
   //protected dataAdapter: ObsidianTaskAdapter;
@@ -36481,6 +36515,7 @@ var _TasksTimelineView = class extends BaseTasksView {
     this.taskListModel = new import_backbone2.Model({
       taskList: []
     });
+    this.isReloading = false;
     this.userOptionModel = new import_backbone2.Model({ ...defaultUserOptions });
     this.parseTasks = this.parseTasks.bind(this);
     this.onReloadTasks = this.onReloadTasks.bind(this);
@@ -36505,20 +36540,24 @@ var _TasksTimelineView = class extends BaseTasksView {
     this.userOptionModel.set({ ...opt });
     this.onReloadTasks();
   }
-  onReloadTasks() {
+  async onReloadTasks() {
+    if (this.isReloading) {
+      return;
+    }
+    this.isReloading = true;
     const fileExcludeFilter = this.userOptionModel.get("excludePaths") || [];
     const fileIncludeFilter = this.userOptionModel.get("includePaths") || [];
     const fileIncludeTagsFilter = this.userOptionModel.get("fileIncludeTags") || [];
     const fileExcludeTagsFilter = this.userOptionModel.get("fileExcludeTags") || [];
     const adapter = new ObsidianTaskAdapter(this.app);
     adapter.generateTasksList(fileIncludeFilter, fileExcludeFilter, fileIncludeTagsFilter, fileExcludeTagsFilter).then(() => {
-      const taskList2 = adapter.getTaskList();
-      this.parseTasks(taskList2).then((tasks) => {
+      const taskList = adapter.getTaskList();
+      const taskListPromise = this.parseTasks(taskList);
+      taskListPromise.then((tasks) => {
+        tasks = this.filterTasks(tasks);
         const taskfiles = this.userOptionModel.get("taskFiles");
-        this.taskListModel.clear();
         this.taskListModel.set({ taskList: tasks });
         this.userOptionModel.set({ taskFiles: taskfiles || [] });
-        console.log("update tasks");
       }).catch((reason) => {
         new import_obsidian5.Notice("Error when parsing task items: " + reason, 5e3);
         throw reason;
@@ -36526,15 +36565,10 @@ var _TasksTimelineView = class extends BaseTasksView {
     }).catch((reason) => {
       new import_obsidian5.Notice("Error when generating tasks from files: " + reason, 5e3);
       throw reason;
-    });
+    }).finally(() => this.isReloading = false);
   }
-  async parseTasks(taskList) {
-    const stautsOrder = this.userOptionModel.get("taskStatusOrder");
-    const dailyNoteFormatParser = dailyNoteTaskParser(
-      this.userOptionModel.get("dailyNoteFormat")
-    );
-    const forward = this.userOptionModel.get("forward");
-    taskList = await taskList.map(tasksPluginTaskParser).map(dataviewTaskParser).map(dailyNoteFormatParser).map(tagsParser).map(remainderParser).map(postProcessor).filter((task) => {
+  filterTasks(taskList) {
+    return taskList.filter((task) => {
       var _a;
       if (((_a = this.userOptionModel.get("hideStatusTasks")) == null ? void 0 : _a.length) === 0)
         return true;
@@ -36566,49 +36600,69 @@ var _TasksTimelineView = class extends BaseTasksView {
       if (tagExcludes.every((tag) => !task.tags.includes(tag)))
         return true;
       return false;
-    }).map((t) => {
-      if (!forward)
-        return t;
-      if (t.status === "unplanned" /* unplanned */)
-        t.dates.set("unplanned" /* unplanned */, (0, import_obsidian5.moment)());
-      else if (t.status === "done" /* done */ && !t.completion && !t.due && !t.start && !t.scheduled && !t.created)
-        t.dates.set("done-unplanned", (0, import_obsidian5.moment)());
-      else if (t.status === "overdue" /* overdue */ && !filterDate((0, import_obsidian5.moment)())(t))
-        t.dates.set("overdue" /* overdue */, (0, import_obsidian5.moment)());
-      return t;
-    }).filter((t) => {
+    }).filter((task) => {
       if (!this.userOptionModel.get("filterEmpty"))
         return true;
-      return t.visual && t.visual.trim() !== "";
-    }).map((t) => {
-      if (!stautsOrder)
-        return t;
-      if (!stautsOrder.includes(t.status))
-        return t;
-      t.order = stautsOrder.indexOf(t.status) + 1;
-      return t;
+      return task.visual && task.visual.trim() !== "";
     });
-    if (this.userOptionModel.get("sort")) {
-      try {
-        const sort = eval(this.userOptionModel.get("sort"));
-        taskList.sort(sort);
-      } catch (e) {
-        new import_obsidian5.Notice("The sorting lambda is not applicable.", 5e3);
-      }
-    }
+  }
+  async parseTasks(taskList) {
+    const stautsOrder = this.userOptionModel.get("taskStatusOrder");
+    const dailyNoteFormatParser = dailyNoteTaskParser(
+      this.userOptionModel.get("dailyNoteFormat")
+    );
+    const forward = this.userOptionModel.get("forward");
+    let taskListPromise = taskList.map(async (item) => item).map(tasksPluginTaskParser).map(dataviewTaskParser).map(dailyNoteFormatParser).map(tagsParser).map(remainderParser).map(postProcessor).map(async (task) => {
+      return new Promise((resolve) => {
+        task.then((t) => {
+          if (!forward) {
+            resolve(t);
+            return;
+          }
+          if (t.status === "unplanned" /* unplanned */)
+            t.dates.set("unplanned" /* unplanned */, (0, import_obsidian5.moment)());
+          else if (t.status === "done" /* done */ && !t.completion && !t.due && !t.start && !t.scheduled && !t.created)
+            t.dates.set("done-unplanned", (0, import_obsidian5.moment)());
+          else if (t.status === "overdue" /* overdue */ && !filterDate((0, import_obsidian5.moment)())(t))
+            t.dates.set("overdue" /* overdue */, (0, import_obsidian5.moment)());
+          resolve(t);
+        });
+      });
+    }).map((task) => {
+      return new Promise((resolve) => {
+        task.then((t) => {
+          if (!stautsOrder) {
+            resolve(t);
+            return;
+          }
+          if (!stautsOrder.includes(t.status))
+            return t;
+          t.order = stautsOrder.indexOf(t.status) + 1;
+          resolve(t);
+        });
+      });
+    });
     if (this.userOptionModel.get("convert24HourTimePrefix")) {
-      taskList = taskList.map((t) => {
-        if (!t.visual || t.visual.length < 5)
-          return t;
-        const timePrefix = (0, import_obsidian5.moment)(t.visual.substring(0, 5), "HH:mm", true);
-        if (!timePrefix.isValid())
-          return t;
-        const updatedTimePrefix = timePrefix.format("h:mm a");
-        t.visual = updatedTimePrefix + t.visual.substring(5);
-        return t;
+      taskListPromise = taskListPromise.map((task) => {
+        return new Promise((resolve) => {
+          task.then((t) => {
+            if (!t.visual || t.visual.length < 5) {
+              resolve(t);
+              return;
+            }
+            const timePrefix = (0, import_obsidian5.moment)(t.visual.substring(0, 5), "HH:mm", true);
+            if (!timePrefix.isValid()) {
+              resolve(t);
+              return;
+            }
+            const updatedTimePrefix = timePrefix.format("h:mm a");
+            t.visual = updatedTimePrefix + t.visual.substring(5);
+            resolve(t);
+          });
+        });
       });
     }
-    return taskList;
+    return Promise.all(taskListPromise);
   }
   getViewType() {
     return TIMELINE_VIEW;
@@ -36628,6 +36682,7 @@ var TasksCalendarWrapper = class extends import_obsidian6.Plugin {
   constructor() {
     super(...arguments);
     this.userOptions = {};
+    this.userOptionsReloading = false;
   }
   async onload() {
     await this.loadOptions();
@@ -36655,11 +36710,17 @@ var TasksCalendarWrapper = class extends import_obsidian6.Plugin {
   updateOptions(updatedOpts) {
     Object.assign(this.userOptions, { ...updatedOpts });
     console.log(this.app.workspace.getLeavesOfType(TIMELINE_VIEW));
-    this.app.workspace.getLeavesOfType(TIMELINE_VIEW).forEach((leaf) => {
-      if (leaf.view instanceof TasksTimelineView) {
-        leaf.view.onUpdateOptions({ ...this.userOptions });
-      }
-    });
+    if (!this.userOptionsReloading) {
+      this.userOptionsReloading = true;
+      setTimeout(() => {
+        this.app.workspace.getLeavesOfType(TIMELINE_VIEW).forEach((leaf) => {
+          if (leaf.view instanceof TasksTimelineView) {
+            leaf.view.onUpdateOptions({ ...this.userOptions });
+          }
+        });
+        this.userOptionsReloading = false;
+      }, 5e3);
+    }
   }
   async loadOptions() {
     this.userOptions = Object.assign({}, defaultUserOptions, await this.loadData());
