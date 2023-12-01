@@ -158,12 +158,12 @@ def test_batch_link_by_geometry(raster_layer):
     """测试批量将一些斑块连接到某个主体"""
     agents = [MockActor(box(2, 2, 4, 4)), MockActor(box(6, 6, 8, 8))]
 
-    raster_layer.batch_link_by_geometry(agents, "link")
+    raster_layer.link_by_geometry(agents, "link")
     arr = raster_layer.linked_attr(attr_name="test", link="link")
     assert np.nansum(arr) == 8
 
     overlapped = [MockActor(box(2, 2, 7, 7)), MockActor(box(6, 6, 8, 8))]
-    raster_layer.batch_link_by_geometry(overlapped, "link")
+    raster_layer.link_by_geometry(overlapped, "link")
     with pytest.raises(ValueError):
         arr2 = raster_layer.linked_attr(attr_name="test", link="link")
     arr2 = raster_layer.linked_attr(

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from numbers import Number
-from typing import TYPE_CHECKING, Any, List, Optional, Self
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Self
 
 import geopandas
 import mesa_geo as mg
@@ -23,6 +23,7 @@ from mesa_geo.raster_layers import Cell
 from rasterio import mask
 from shapely import Geometry
 
+from abses.links import LinkNode
 from abses.modules import CompositeModule, Module
 
 from .actor import Actor
@@ -319,7 +320,9 @@ class PatchModule(Module, mg.RasterLayer):
             # Open the dataset again for reading and return
             return mem_file.open()
 
-    def geometric_cells(self, geometry: Geometry, **kwargs) -> List[PatchCell]:
+    def geometric_cells(
+        self, geometry: Geometry, refer_layer: str | None = None, **kwargs
+    ) -> List[PatchCell]:
         """Gets all the cells that intersect the given geometry.
 
         Parameters:
@@ -328,39 +331,74 @@ class PatchModule(Module, mg.RasterLayer):
             **kwargs:
                 Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
 
+        Raises:
+            ABSESpyError:
+                If no available attribute exists, or the assigned refer layer is not available in the attributes.
+
         Returns:
             A list of PatchCell.
         """
-        data = self.get_rasterio(list(self.attributes)[0])
+        if not self.attributes:
+            raise ABSESpyError(
+                "No available attribute, at least one as refer."
+            )
+        if refer_layer is None:
+            refer_layer = list(self.attributes)[0]
+        if refer_layer not in self.attributes:
+            raise ABSESpyError(
+                f"The refer layer {refer_layer} is not available in the attributes"
+            )
+        data = self.get_rasterio(attr_name=refer_layer)
         out_image, _ = mask.mask(data, [geometry], **kwargs)
         mask_ = out_image.reshape(self.shape2d)
         return list(self.array_cells[mask_.astype(bool)])
 
     def link_by_geometry(
-        self, geo_agent: Actor, link: Optional[str] = None, **kwargs
+        self,
+        actors: Actor | Iterable[Actor],
+        link: Optional[str] = None,
+        refer_layer: str | None = None,
+        **kwargs,
     ) -> None:
         """Relates all cells intersecting a given geometry.
 
         Parameters:
             geo_agent:
-                An Actor who has geometry info.
+                An Actor or an iterable object of actors (e.g., `ActorsList`) who has existing geometry.
+                This method allows each agent create a mask by the geometry, and then link the cells within the sphere to this agent.
             link:
                 The link info to save.
+            refer_layer:
+                The layer to be a refer of spatial sphere.
+                If the referred layer has nodata in some cells,
+                those cells won't be linked to his actor.
             **kwargs:
                 Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
-        """
-        if not hasattr(geo_agent, "geometry"):
-            raise TypeError(f"Agent {geo_agent} has no geometry.")
-        cells = self.geometric_cells(geo_agent.geometry, **kwargs)
-        for cell in cells:
-            cell.link_to(agent=geo_agent, link=link)
 
-    def batch_link_by_geometry(
-        self, geo_agents: List[Actor], link: Optional[str] = None, **kwargs
-    ) -> None:
-        """The batch will assign intersecting grids to the main body based on geometry."""
-        for geo_agent in geo_agents:
-            self.link_by_geometry(geo_agent, link, **kwargs)
+        Raises:
+            TypeError:
+                If the input agent type is not inherit from `Actor`.
+            AttributeError:
+                The current actor doesn't have a valid geometry info.
+            ABSESpyError:
+                If the referred layer is not available in attributes.
+        """
+        if hasattr(actors, "__iter__"):
+            for agent in actors:
+                self.link_by_geometry(agent, link, refer_layer, **kwargs)
+            return
+        # For a single actor
+        if not isinstance(actors, LinkNode):
+            raise TypeError(
+                f"Type '{type(actors)}' can not be linked, make sure your agent is a valid subclass of `Actor`."
+            )
+        if not actors.geometry:
+            raise AttributeError(f"Agent {actors} has no geometry.")
+        cells = self.geometric_cells(
+            actors.geometry, refer_layer=refer_layer, **kwargs
+        )
+        for cell in cells:
+            cell.link_to(agent=actors, link=link)
 
     def linked_attr(
         self,
