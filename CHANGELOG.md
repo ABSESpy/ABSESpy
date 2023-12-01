@@ -1,4 +1,11 @@
 
+<a id='changelog-0.3.4'></a>
+# 0.3.4 — 2023-12-01
+
+## Fixed bugs
+
+- [x] #bug🐛 (modules): :bug: fixed the geometry links behave not stably.
+
 <a id='changelog-0.3.3'></a>
 # 0.3.3 — 2023-11-29
 
