@@ -1,3 +1,5 @@
+import types
+from functools import partial
 from operator import attrgetter
 
 from mesa import datacollection
@@ -7,6 +9,16 @@ from abses.main import MainModel
 
 
 class DataCollector(_Component, datacollection.DataCollector):
+    """
+    DataCollector is a wrap of mesa.datacollection.DataCollector class.
+    This class inherits most functionality from its parent, mainly on data representation, but it
+    demands slight changes to account for the differences in the ABSESpy API.
+
+    Mesa's DataCollector class collects data at the model level and at the agent level. It also
+    allows the user to define custom tables with data arising from the model. The data collected
+    is stored in a dictionary of model variables and agent variables.
+    """
+
     def __init__(self, model: MainModel, **kwargs):
         _Component.__init__(self, model=model, name="datacollector")
         datacollection.DataCollector.__init__(self, **kwargs)
@@ -30,9 +42,21 @@ class DataCollector(_Component, datacollection.DataCollector):
         return agent_records
 
     def collect(self):
+        """Collect all the data for the given model object."""
+        if self.model_reporters:
+            for var, reporter in self.model_reporters.items():
+                # Check if Lambda operator
+                if isinstance(reporter, types.LambdaType):
+                    self.model_vars[var].append(reporter(self._model))
+                # Check if model attribute
+                elif isinstance(reporter, partial):
+                    self.model_vars[var].append(reporter(self._model))
+                # Check if function with arguments
+                elif isinstance(reporter, list):
+                    self.model_vars[var].append(reporter[0](*reporter[1]))
+                else:
+                    self.model_vars[var].append(reporter())
+
         if self.agent_reporters:
             agent_records = self._record_agents(self._model)
             self._agent_records[self._model.time.tick] = list(agent_records)
-
-        else:
-            pass
