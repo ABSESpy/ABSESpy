@@ -28,7 +28,7 @@ __all__ = [
     "PatchCell",
     "perception",
 ]
-__version__ = "v0.3.2"
+__version__ = "v0.3.4"
 
 from .actor import Actor, perception
 from .container import ActorsList, AgentsContainer
