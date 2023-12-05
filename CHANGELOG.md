@@ -1,4 +1,11 @@
 
+<a id='changelog-0.3.5rc'></a>
+# 0.3.5rc — 2023-12-05
+
+## Fixed bugs
+
+- [x] #bug🐛 fix `AttributeError: 'super' object has no attribute 'random'`
+
 <a id='changelog-0.3.5'></a>
 # 0.3.5 — 2023-12-05
 

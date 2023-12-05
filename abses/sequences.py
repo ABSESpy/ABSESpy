@@ -66,17 +66,6 @@ class ActorsList(list):
         results = [f"({len(v)}){k}" for k, v in self.to_dict().items()]
         return f"<ActorsList: {'; '.join(results)}>"
 
-    def __getattr__(self, name: str) -> np.ndarray:
-        """Return callable list of attributes"""
-        # Private variables are looked up normally
-        if name == "random":
-            return getattr(super(), name)
-        if name[0] == "_":
-            return getattr(super(), name)
-        if name in self.__dir__():
-            return getattr(super(), name)
-        return ActorsList.array(self, name)
-
     def __eq__(self, other: Iterable) -> bool:
         return (
             all(actor in other for actor in self)
