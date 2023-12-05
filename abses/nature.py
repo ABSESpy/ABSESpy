@@ -30,7 +30,6 @@ from .actor import Actor
 from .cells import PatchCell
 from .errors import ABSESpyError
 from .sequences import ActorsList
-from .tools.func import norm_choice
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -486,11 +485,9 @@ class PatchModule(Module, mg.RasterLayer):
         where = self._attr_or_array(where).flatten()
         prob = self._attr_or_array(prob).flatten()
         masked_prob = np.where(where, np.nan, prob)
-        return norm_choice(
-            self.array_cells.flatten(),
-            size=k,
-            p=masked_prob,
-            replace=replace,
+        all_cells = ActorsList(self.model, self.array_cells.flatten())
+        return all_cells.random.choice(
+            size=k, prob=masked_prob, replace=replace
         )
 
     def has_agent(

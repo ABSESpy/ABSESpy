@@ -18,6 +18,7 @@ from abses.errors import ABSESpyError
 from abses.links import LinkContainer, LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
+from abses.sequences import ActorsList
 
 
 class MockActor(LinkNode):
@@ -83,7 +84,7 @@ def test_patch_module_properties():
     assert patch_module.shape2d == shape
     assert patch_module.shape3d == (1, *shape)
     assert patch_module.array_cells.shape == shape
-    assert isinstance(patch_module.random_positions(5), np.ndarray)
+    assert isinstance(patch_module.random_positions(5), ActorsList)
     coords = patch_module.coords
     assert "x" in coords and "y" in coords
     assert len(coords["x"]) == 5 and len(coords["y"]) == 6

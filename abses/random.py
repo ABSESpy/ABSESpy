@@ -85,6 +85,8 @@ class ListRandom:
                 Not enough actors to choose in this `ActorsList`.
         """
         instances_num = len(self.actors)
+        if not isinstance(size, int):
+            raise ValueError(f"{size} isn't an integer size.")
         if not instances_num or (instances_num < size & ~replace):
             raise ABSESpyError(
                 f"Trying to choose {size} actors from an `ActorsList` {self.actors}."

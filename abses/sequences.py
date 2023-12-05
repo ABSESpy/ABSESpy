@@ -28,7 +28,7 @@ import numpy as np
 from abses.errors import ABSESpyError
 from abses.random import ListRandom
 
-from .tools.func import make_list, norm_choice
+from .tools.func import make_list
 
 if TYPE_CHECKING:
     from .actor import Actor
