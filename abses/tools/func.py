@@ -53,44 +53,6 @@ def make_list(element, keep_none=False):
     return element
 
 
-def norm_choice(
-    a: Iterable[any], size: int = None, p=None, replace=False
-) -> Any:
-    """
-    A more robust random chooser.
-
-    Args:
-        a (Iterable[any]): An iterable instance to choose.
-        size (int, optional): size of the choice. Defaults to None.
-        p (_type_, optional): probability. Defaults to None.
-        replace (bool, optional): _description_. Defaults to False.
-
-    Returns:
-        Any: _description_
-    """
-    p = np.array(make_list(p))
-    possible_entries = (p > 0).sum()
-    if possible_entries == 0:
-        p = None
-    else:
-        p = np.where(p > 0, p, 0.0)
-        p /= p.sum()
-    if p is None or replace is True:
-        return np.random.choice(a, size=size, p=p, replace=replace)
-    # 如果有概率的实体 少于要选择的实体，优先返回
-    if size is None:
-        return np.random.choice(a, p=p, replace=False)
-    elif possible_entries < size:
-        bounds = a[p > 0]
-        rand = np.random.choice(
-            a[p == 0], size=(size - possible_entries), replace=False
-        )
-        selected = np.concatenate([bounds, rand])
-    else:
-        selected = np.random.choice(a, p=p, size=size, replace=False)
-    return selected
-
-
 def unique_list(*args):
     unique = set()
     for lst in args:

@@ -5,13 +5,12 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import numpy as np
 import pytest
 
 from abses import MainModel
 from abses.objects import _BaseObj
 from abses.time import time_condition
-from abses.tools.func import iter_func, norm_choice
+from abses.tools.func import iter_func
 
 
 def test_iter_function():
@@ -36,18 +35,6 @@ def test_iter_function():
     main.testing("hello")
     assert main.foo == comp1.foo == comp2.foo == "hello"
     assert comp2.check == comp1.check == "hello added auto."
-
-
-def test_random_choosers():
-    p = [0.0, -1.0, -1.0, -1.0]
-    p2 = [300.0, -1.0, -1.0, -1]
-    # possible entries == 0, p = None
-    norm_choice(a=np.arange(4), size=2, p=p, replace=True)
-    norm_choice(a=np.arange(4), size=2, p=None, replace=False)
-    r3 = norm_choice(a=np.arange(4), size=2, p=p2, replace=True)
-    r4 = norm_choice(a=np.arange(4), size=2, p=p2, replace=False)
-    assert (np.array([0.0, 0.0]) == r3).all()
-    assert 0 in r4
 
 
 @pytest.fixture(name="mock_object")

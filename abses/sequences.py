@@ -28,7 +28,7 @@ import numpy as np
 from abses.errors import ABSESpyError
 from abses.random import ListRandom
 
-from .tools.func import make_list, norm_choice
+from .tools.func import make_list
 
 if TYPE_CHECKING:
     from .actor import Actor
@@ -117,8 +117,7 @@ class ActorsList(list):
     @property
     def random(self) -> ListRandom:
         """随机模块"""
-        seed = getattr(self._model, "_seed")
-        return ListRandom(actors=self, seed=seed)
+        return ListRandom(actors=self, model=self._model)
 
     def to_dict(self) -> Dict[str, Self]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.
@@ -165,50 +164,6 @@ class ActorsList(list):
         """
         ids = make_list(ids)
         return self.select([agent.id in ids for agent in self])
-
-    def random_choose(
-        self,
-        size: int = 1,
-        prob: Optional[Iterable[float]] = None,
-        replace: bool = True,
-        as_list: bool = False,
-    ) -> Union[Actor, Self]:
-        """Randomly choose one or more actors from the current self object.
-
-        Parameters:
-            size:
-                The number of actors to choose. Defaults to 1.
-            prob:
-                A list of probabilities for each actor to be chosen.
-                If None, all actors have equal probability. Defaults to None.
-            replace:
-                Whether to sample with replacement. Defaults to True.
-            as_list:
-                Whether to return the result as a list of actors. Defaults to False.
-
-        Returns:
-            An Actor or an ActorList of multiple actors.
-
-        Notes:
-            Given the parameter set size=1 and as_list=False, a single Actor object is returned.
-            Given the parameter set size>1 and as_list=False, a Self (ActorsList) object is returned.
-
-        Raises:
-            ValueError:
-                If size is not a positive integer.
-        """
-        # TODO refactor this to `self.random.choice`
-        logger.warning(
-            "Deprecated Warning: In the next version, use `ActorsList.random.choice` instead of `ActorsList.random_choose`."
-        )
-        chosen = norm_choice(self, p=prob, size=size, replace=replace)
-        if as_list:
-            return ActorsList(self._model, objs=chosen)
-        if size == 1:
-            return chosen[0]
-        if size > 1:
-            return ActorsList(self._model, chosen)
-        raise ValueError(f"Invalid size {size}.")
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None

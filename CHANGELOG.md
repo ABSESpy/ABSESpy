@@ -1,4 +1,17 @@
 
+<a id='changelog-0.3.5'></a>
+# 0.3.5 — 2023-12-05
+
+## New Features
+
+- [x] #feat✨ `random.choice` in random module
+- [x] #feat✨ `data-collector` module for collecting data
+
+## Documentation
+
+- [x] #docs📄 Update API documentation of `random`
+- [x] #docs📄 Add a citation of `wang2022h`
+
 <a id='changelog-0.3.4'></a>
 # 0.3.4 — 2023-12-01
 
