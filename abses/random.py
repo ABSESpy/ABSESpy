@@ -40,7 +40,29 @@ class ListRandom:
         ...
 
     def clean_p(self, prob: np.ndarray) -> np.ndarray:
-        """Clean the main"""
+        """Clean the probabilities.
+        Any negative values, NaN values, or zeros will be recognized as in-valid probabilities.
+        For all valid probabilities, normalize them into a prob-array (the sum is equal to 1.0).
+
+        Parameters:
+            prob:
+                An array-like numbers of probabilities.
+
+        Returns:
+            The probabilities after cleaned.
+
+        Example:
+        ```
+        >>> clean_p([0, 0])
+        >>> [0.5, 0.5]
+
+        >>> clean_p([-1, np.nan])
+        >>> [0.5, 0.5]
+
+        >>> clean_p([3, 2])
+        >>> [0.6, 0.4]
+        ```
+        """
         if isinstance(prob, str):
             prob = self.actors.array(attr=prob)
         prob = np.array(make_list(prob))
@@ -65,7 +87,9 @@ class ListRandom:
                 The number of actors to choose. Defaults to 1.
             prob:
                 A list of probabilities for each actor to be chosen.
-                If None, all actors have equal probability. Defaults to None.
+                If None, all actors have equal probability.
+                If is a string, will use the value of this attribute as the prob.
+                Defaults to None.
             replace:
                 Whether to sample with replacement. Defaults to True.
             as_list:
@@ -103,7 +127,29 @@ class ListRandom:
         )
 
     def link(self, link: str, p: float = 1.0) -> List[Tuple[Actor, Actor]]:
-        """Random build links between actors."""
+        """Random build links between actors.
+
+        Parameters:
+            link:
+                Name of the link.
+            p:
+                Probability to generate a link.
+
+        Returns:
+            A list of tuple, in each tuple, there are two actors who got linked.
+
+        Example:
+            ```
+            # generate three actors
+            actors = model.agents.create(Actor, 3)
+            # with `probability=1`, all possible actor-actor links would be generated.
+            >>> actors.random.link('test', p=1)
+            >>> a1, a2, a3 = actors
+            >>> assert a1.linked('test) == [a2, a3]
+            >>> assert a2.linked('test) == [a1, a3]
+            >>> assert a3.linked('test) == [a1, a2]
+            ```
+        """
         linked_combs = []
         for actor1, actor2 in list(combinations(self.actors, 2)):
             if np.random.random() < p:

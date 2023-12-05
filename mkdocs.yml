@@ -44,6 +44,7 @@ nav:
         - Actors Operation: api/sequences.md
         - Time Control: api/time.md
         - Decisions: api/decisions.md
+        - Random: api/random.md
         # - Dynamic Variables: api/variables.md
     # - Examples:
     #     - Examples gallery: examples/gallery.md
