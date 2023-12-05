@@ -5,13 +5,11 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import numpy as np
 import pytest
 
 from abses import Actor, MainModel
 from abses.datacollection import DataCollector
-
-rng = np.random.default_rng(seed=42)
+from abses.sequences import ActorsList
 
 
 class MockAgent(Actor):
@@ -19,6 +17,9 @@ class MockAgent(Actor):
         super().__init__(*args, **kwargs)
         self.val = 0
         self.val2 = 2
+
+    def make_worse(self):
+        self.val = -1
 
 
 class anotherMockAgent(MockAgent):
@@ -42,6 +43,7 @@ class MockModel(MainModel):
                 "const": "model_var",
                 "pop_ratio": lambda m: len(m.agents["MockAgent"])
                 / len(m.agents["anotherMockAgent"]),
+                "count_nonnegative": lambda m: len(m.actors.better("val", -1)),
             },
             agent_reporters={
                 "const": "val2",
@@ -51,6 +53,8 @@ class MockModel(MainModel):
     def step(self):
         if self.time.tick == 5:
             self.agents.remove(self.actors[5])
+
+            self.actors[-5:].trigger("make_worse")
 
         self.datacollector.collect()
 
@@ -69,6 +73,8 @@ class Test_DataCollector:
         assert datacollector.model_vars["pop_ratio"][1] == ratio
         ratio = 2.0  # Implied ratio at end
         assert datacollector.model_vars["pop_ratio"][-1] == ratio
+        assert datacollector.model_vars["count_nonnegative"][0] == 10
+        assert datacollector.model_vars["count_nonnegative"][-1] == 4
 
     def test_agent_records(self):
         pass
