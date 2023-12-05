@@ -54,6 +54,6 @@ def test_sequences_better():
         [False, True, True, True, True]
     )
 
-    assert better.random_choose() in better
+    assert better.random.choice() in better
     # for p in [[0, 0, 0], [-1, -1, -1], [-1, 0, 1], [0, 1, 1]]:
-    #     assert better.random_choose(p=p) in better
+    #     assert better.random.choice(p=p) in better
