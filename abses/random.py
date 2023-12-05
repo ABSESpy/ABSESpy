@@ -27,7 +27,7 @@ class ListRandom:
     def __init__(self, model: MainModel, actors: ActorsList) -> None:
         self.model = model
         self.actors = actors
-        self.seed = getattr(model, "_seed")
+        self.seed = getattr(model, "_seed", 0)
         self.generator = np.random.default_rng(seed=int(self.seed))
 
     def _to_actors_list(self, objs: Iterable) -> ActorsList:
