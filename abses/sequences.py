@@ -117,8 +117,7 @@ class ActorsList(list):
     @property
     def random(self) -> ListRandom:
         """随机模块"""
-        seed = getattr(self._model, "_seed")
-        return ListRandom(actors=self, seed=seed)
+        return ListRandom(actors=self, model=self._model)
 
     def to_dict(self) -> Dict[str, Self]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.

@@ -8,7 +8,7 @@ kanban-plugin: basic
 
 - [ ] #docs📄 Adding Simplified Chinese README
 - [ ] #test🧪  #build🏗  Test on other Python versions
-- [ ] #zap⚡️ #project🎉 [[Parallel operation (maybe `dask`)]]
+- [ ] #zap⚡️ #project🎉 [[Parallel operation (maybe `dask`) 1]]
 - [ ] #zap⚡️ Speed up by [cupy](https://cupy.dev/) or [pypy](https://zhuanlan.zhihu.com/p/435652722).
 - [ ] #feat✨  MaxLenSet for each cell
 - [ ] #docs📄  [[deploy documentation through Vercel with custom domain]]
