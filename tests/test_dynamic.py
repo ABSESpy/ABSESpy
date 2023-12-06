@@ -50,7 +50,7 @@ def update_et0_function(
 @pytest.fixture(name="model")
 def setup_model() -> MainModel:
     """创造可供测试的黄河灌溉用水例子"""
-    model = MainModel(parameters=cfg)
+    model = MainModel(seed=42, parameters=cfg)
     gdf = gpd.read_file(cfg.db.cities)
     agents = model.nature.create_agents_from_gdf(gdf=gdf, unique_id="City_ID")
     agents.trigger(
