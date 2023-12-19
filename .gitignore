@@ -159,6 +159,9 @@ changelog.d
 
 examples\exploratory\*.ipynb
 
+.notes/
+
 img/classes_ABSESpy.png
 packages_ABSESpy.png
 .DS_Store
+

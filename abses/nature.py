@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-import logging
+import sys
 from numbers import Number
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Self
 
@@ -18,6 +18,7 @@ import pyproj
 import rasterio as rio
 import rioxarray
 import xarray as xr
+from loguru import logger
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import Cell
 from rasterio import mask
@@ -34,8 +35,8 @@ from .sequences import ActorsList
 if TYPE_CHECKING:
     from abses.main import MainModel
 
-logger = logging.getLogger(__name__)
-logger.info("Using rioxarray version: %s", rioxarray.__version__)
+# logger = logging.getLogger(__name__)
+# logger.info("Using rioxarray version: %s", rioxarray.__version__)
 
 DEFAULT_WORLD = {
     "width": 10,
@@ -67,6 +68,7 @@ class PatchModule(Module, mg.RasterLayer):
     def __init__(self, model, name=None, **kwargs):
         Module.__init__(self, model, name=name)
         mg.RasterLayer.__init__(self, **kwargs)
+        logger.info("Initializing a new Model Layer...")
         for cell in self.array_cells.flatten():
             cell.layer = self
         self._file = None
@@ -581,6 +583,8 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         crs = self.params.get("crs", CRS)
         mg.GeoSpace.__init__(self, crs=crs)
         self._major_layer = None
+
+        logger.info("Initializing a new Base Nature module...")
 
     @property
     def major_layer(self) -> PatchModule | None:

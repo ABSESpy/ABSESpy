@@ -7,9 +7,10 @@
 
 from __future__ import annotations
 
-import logging
+import sys
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
+from loguru import logger
 from mesa import Model
 from omegaconf import DictConfig
 
@@ -25,7 +26,13 @@ from .time import TimeDriver
 
 # from .mediator import MainMediator
 
-logger = logging.getLogger(__name__)
+# Logging configuration
+logger.remove(0)
+logger.add(
+    sys.stderr,
+    format="[{time:YYYY-MM-DD HH:mm:ss}][{module}] | {message}",
+    level="INFO",
+)
 
 # Dynamically load type hints from users' input type
 N = TypeVar("N")
@@ -148,11 +155,13 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     def run_model(self) -> None:
         """Start running the model, until the end situation is triggered."""
+        logger.info(f"Setting up {self.name}...")
         self._setup()
         while self.running:
             self.step()
             self.time.go()
             self.time.stdout()
+        logger.info(f"Ending {self.name}")
         self._end()
 
     def setup(self):
