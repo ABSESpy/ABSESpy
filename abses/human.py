@@ -5,8 +5,10 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import sys
 from typing import Callable, Dict, Set, TypeAlias, Union
 
+from loguru import logger
 from omegaconf import DictConfig
 
 from abses.actor import Actor
@@ -36,6 +38,7 @@ class HumanModule(Module):
 
     def __init__(self, model, name=None):
         Module.__init__(self, model, name)
+        logger.info("Initializing a new Human Module...")
         self._agents = AgentsContainer(model)
         self._collections: Dict[str, Selection] = DictConfig({})
 
