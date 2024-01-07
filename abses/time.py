@@ -207,12 +207,12 @@ class TimeDriver(_Component):
         if self.should_end:
             self._model.running = False
 
-    def stdout(self) -> None:
-        """Print the current time."""
-        report = f"tick[{self.tick}] " + self.strftime("%Y-%m-%d %H:%M:%S")
-        # logger.info(report)
-        sys.stdout.write("\r" + report)
-        sys.stdout.flush()
+    # def stdout(self) -> None:
+    #     """Print the current time."""
+    #     report = f"tick[{self.tick}] " + self.strftime("%Y-%m-%d %H:%M:%S")
+    #     # logger.info(report)
+    #     sys.stdout.write("\r" + report)
+    #     sys.stdout.flush()
 
     def _parse_time_settings(self) -> None:
         """Setup the time driver."""
