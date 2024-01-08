@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import logging
 import threading
 from typing import (
     TYPE_CHECKING,
@@ -21,6 +20,8 @@ from typing import (
     Union,
 )
 
+from loguru import logger
+
 from abses.actor import Actor
 from abses.sequences import ActorsList, Selection
 from abses.tools.func import make_list
@@ -28,7 +29,7 @@ from abses.tools.func import make_list
 if TYPE_CHECKING:
     from .main import MainModel
 
-logger = logging.getLogger("__name__")
+# logger = logging.getLogger("__name__")
 
 
 class AgentsContainer(dict):
@@ -138,6 +139,7 @@ class AgentsContainer(dict):
             ```
         """
         objs = [breed_cls(self._model, **kwargs) for _ in range(num)]
+        logger.info(f"Created {num} actors of breed {breed_cls.__name__}")
         agents = ActorsList(self._model, objs)
         self.add(agents, register=True)
         if singleton:

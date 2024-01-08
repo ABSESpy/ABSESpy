@@ -69,6 +69,8 @@ class PatchModule(Module, mg.RasterLayer):
         Module.__init__(self, model, name=name)
         mg.RasterLayer.__init__(self, **kwargs)
         logger.info("Initializing a new Model Layer...")
+        logger.info(f"Using rioxarray version: {rioxarray.__version__}")
+
         for cell in self.array_cells.flatten():
             cell.layer = self
         self._file = None

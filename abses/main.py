@@ -30,7 +30,7 @@ from .time import TimeDriver
 logger.remove(0)
 logger.add(
     sys.stderr,
-    format="[{time:YYYY-MM-DD HH:mm:ss}][{module}] | {message}",
+    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<20}] | {message}",
     level="INFO",
 )
 
@@ -158,9 +158,10 @@ class MainModel(Generic[N], Model, _Notice, States):
         logger.info(f"Setting up {self.name}...")
         self._setup()
         while self.running:
+            logger.debug(f"Current tick: {self.time.tick}")
             self.step()
             self.time.go()
-            self.time.stdout()
+            # self.time.stdout()
         logger.info(f"Ending {self.name}")
         self._end()
 

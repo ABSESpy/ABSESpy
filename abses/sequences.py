@@ -33,7 +33,7 @@ from .tools.func import make_list
 if TYPE_CHECKING:
     from .actor import Actor
 
-logger = logging.getLogger("__name__")
+# logger = logging.getLogger("__name__") ###################################3
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 
