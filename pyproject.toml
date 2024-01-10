@@ -94,6 +94,7 @@ mkdocs-glightbox = "^0.3.4"
 mike = "^2.0.0"
 mkdocs-exclude = "^1.0.2"
 mkdocs-simple-hooks = "^0.1.5"
+pymdown-extensions = "^10.7"
 
 [build-system]
 requires = ["poetry-core"]

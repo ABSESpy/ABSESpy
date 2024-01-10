@@ -43,6 +43,7 @@ install-docs:
 	poetry add --group docs mkdocs-jupyter
 	poetry add --group docs mkdocs-callouts
 	poetry add --group docs mkdocs-glightbox
+	poetry add --group docs pymdown-extensions
 
 test:
 	poetry run pytest -vs --clean-alluredir --alluredir tmp/allure_results --cov=abses  --no-cov-on-fail
