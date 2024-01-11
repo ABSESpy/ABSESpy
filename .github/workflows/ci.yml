@@ -27,7 +27,6 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install git+https://${GH_TOKEN}@github.com/squidfunk/mkdocs-material-insiders.git
-      - run: mkdocs gh-deploy --force
       - run: pip install mkdocstrings\[python\]
       - run: pip install mkdocs-bibtex
       - run: pip install mkdocs-macros-plugin
