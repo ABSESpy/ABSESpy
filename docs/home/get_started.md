@@ -259,7 +259,7 @@ Not scared by these parameters, are you? Things are very simple:
 
 !!! tip
 
-    You don't have to worry about writing a long long nested dictionary for the parameters in practice. `ABSESpy` allows users to easily manage complex parameters using [configuration files](../tutorial/beginner/setup_parameters.md).
+    You don't have to worry about writing a long long nested dictionary for the parameters in practice. `ABSESpy` allows users to easily [manage complex parameters using configuration files].
 
 ## What to do for the next
 
@@ -289,3 +289,4 @@ But that's just basics, there's much more to `ABSESpy`. Whether defining natural
 <!-- Links -->
   [Guide Checklist]: guide_checklist.md
   [detailed tutorials]: ../tutorial/tutorial.md
+  [manage complex parameters using configuration files]: ../tutorial/beginner/manage_parameters.ipynb

@@ -22,10 +22,16 @@ You're looking to create and operate a basic model by `ABSESpy` framework. Wonde
 [:material-book: __B03__](beginner/time_control.ipynb) Keep your model in time with the real world.
 { .card }
 
-[:material-book: __B04__](beginner/movement.ipynb) Move your agents in the artificial world.
+[:material-book: __B04__](beginner/manage_parameters.ipynb) Separate configuration and model logic with a config file.
 { .card }
 
-[:material-book: __B05__](beginner/hotelling_tutorial.ipynb) Your first full model example, a classic heuristic model[^1].
+[:material-book: __B05__](beginner/actors.ipynb) Manage actors better with different containers.
+{ .card }
+
+[:material-book: __B06__](beginner/movement.ipynb) Move your agents in the artificial world.
+{ .card }
+
+[:material-book: __B07__](beginner/hotelling_tutorial.ipynb) Your first full model example, a classic heuristic model[^1].
 { .card }
 
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.

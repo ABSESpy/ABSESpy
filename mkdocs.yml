@@ -19,12 +19,16 @@ nav:
         - Paper: paper/paper.md
     - Tutorials:
         - Tutorial: tutorial/tutorial.md
+        - Start from ABM: tutorial/tutorial_guide_from_ABM.md
+        - Start from SES: tutorial/tutorial_guide_from_SES.md
         - Beginner Level:
           - B01: tutorial/beginner/get_started.ipynb
           - B02: tutorial/beginner/organize_model_structure.ipynb
           - B03: tutorial/beginner/time_control.ipynb
-          - B04: tutorial/beginner/movement.ipynb
-          - B05: tutorial/beginner/hotelling_tutorial.ipynb
+          - B04: tutorial/beginner/manage_parameters.ipynb
+          - B05: tutorial/beginner/actors.ipynb
+          - B06: tutorial/beginner/movement.ipynb
+          - B07: tutorial/beginner/hotelling_tutorial.ipynb
         - Advanced Level:
           - A01: tutorial/advanced/human_behavior_simulation.ipynb
         # - Competing Level:
