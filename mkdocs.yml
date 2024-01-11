@@ -3,17 +3,12 @@ site_name: ABSESpy
 nav:
     - Home:
         - AB-SESpy: index.md
-        # - Navigation: navigation.md
         - Installation: home/Installation.md
-        # - Features:
-        #   # - Overview: features/features.md
-        #   - Architectural elegance: features/architectural_elegance.md
-        #   - Control real-world time: features/time_control.md
-        #   - Unveiling Human Decision Dynamics in SES Modeling: features/MoHuB.md
         - Guide Checklist: home/guide_checklist.md
         - Getting started: home/get_started.md
         - Dependencies: home/dependencies.md
         - License: home/license.md
+        - Contributions: home/contribution.md
         - Acknowledge: home/acknowledge.md
         # - RoadMap: home/roadmap.md
     - Wiki:
@@ -45,6 +40,7 @@ nav:
         - Time Control: api/time.md
         - Decisions: api/decisions.md
         - Random: api/random.md
+        - Variables: api/variables.md
 
 theme:
     name: "material"

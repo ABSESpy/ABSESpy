@@ -4,8 +4,8 @@
 
 For using `ABSESpy`, you'd better to have basic experience with [Python]. Then, choose the best description of your knowledge background:
 
-[:computer: I'm familiar with ABM](https://groups.google.com/g/absespy){ .md-button }
-[:earth_asia: I'm familiar with SES](https://groups.google.com/g/absespy){ .md-button }
+[:computer: I'm familiar with ABM](#checkered_flag-im-familiar-with-abm){ .md-button }
+[:earth_asia: I'm familiar with SES](#checkered_flag-im-familiar-with-ses){ .md-button }
 
 :hatching_chick: If you're unfamiliar with ABM or SES, we recommend visiting our [wiki pages] to gain a basic understanding.
 
@@ -58,7 +58,7 @@ This is because `ABSESpy`'s framework structure perfectly [matches the SES struc
 
 <!-- links -->
   [get-started tutorial]: ../home/get_started.md
-  [emergence]: ../docs/wiki/concepts/emergence.md
+  [emergence]: ../wiki/concepts/emergence.md
 
   <!-- [wiki pages]: ../wiki/about.md -->
   <!-- [Spatial data]: ../ -->

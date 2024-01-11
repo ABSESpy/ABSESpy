@@ -36,9 +36,6 @@ You're looking to create and operate a basic model by `ABSESpy` framework. Wonde
 
 You have gained a thorough understanding of the agent-based model. Now, you are not just satisfied with heuristic models[^1], you aspire to undertake a larger project to solve real-world SES problems.
 
-- [Load the geographic dataset](notebooks//nature/geodata.ipynb) as the space in which the subject operates and the patch variables that the subject can access based on its location.
-- [Manipulate `Patch` object for better spatial analysis](notebooks//nature/patch.ipynb)
-
 <div class="grid" markdown>
 
 [:material-book: __A01__](advanced/human_behavior_simulation.ipynb) How to apply an advanced [human behavior simulation framework]?
@@ -69,4 +66,4 @@ You have already established your own model and confirmed that it does not have 
   [Quick Start]: ../home/get_started.md
   [the right software for you]: ../home/guide_checklist.md
   [NetLogo model repository]: https://ccl.northwestern.edu/netlogo/models/
-  [human behavior simulation framework]: ../wiki/background.md
+  [human behavior simulation framework]: ../wiki/concepts/CCR.md
