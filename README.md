@@ -26,18 +26,9 @@
 
 <!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-An Agent-Based computational framework makes modeling artificial **[Social-ecological systems](https://absespy.github.io/ABSESpy/docs/about/)** easier.
+`ABSESpy` is an agent-based modeling (ABM) framework that makes modeling social-ecological systems (SES) easier.
 
-## Why `ABSESpy`?
-
-Agent-based model (ABM) is essential for social-ecological systems (SES) research. `ABSESpy` is designed for modeling **couples humans and nature systems** by:
-
-- [Architectural Elegance for Modular Socio-Ecological Systems Modeling](https://absespy.github.io/ABSESpy/features/architectural_elegance.md).
-- [Unveiling Human Decision Dynamics in SES Modeling by an advanced human behavior simulating framework](https://absespy.github.io/ABSESpy/features/MoHuB.md).
-- [Mastering Time in SES Modeling with Real-world Precision and Dynamic Updates](https://absespy.github.io/ABSESpy/features/time_control.md).
-<!-- - Automatically portray interactions between social actors and natural cells with `Networkx` -->
-
-## Basic Usage & Documents
+## Installation & Documents
 
 Install with pip or your favorite PyPI package manager.
 
@@ -46,19 +37,6 @@ pip install abses
 ```
 
 Access the [Documentation here](https://absespy.github.io/ABSESpy/).
-
-<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/DQg0xJ.jpg" alt="Drawing" style="width: 600px;"/>
-
-## Get in touch
-
-- **For enthusiastic developers and contributors**, all contributions, bug reports, bug fixes, documentation improvements, enhancements, and ideas are welcome.
-- **SES researchers** are welcome to use this package in social-ecological system (SES) studies. It would be appreciated if you contribute a published model to our gallery.
-
-If you need any help when using `ABSESpy`, don't hesitate to get in touch with us through:
-
-- Ask usage questions ("How to do?") on [_GitHub_ Discussions](https://github.com/absespy/ABSESpy/discussions).
-- Report bugs, suggest features, or view the source code [on _GitHub_ Issues](https://github.com/absespy/ABSESpy/issues).
-- Use the [mailing list](https://groups.google.com/g/absespy) for less well-defined questions or ideas or to announce other projects of interest to `ABSESpy` users.
 
 ## License
 
