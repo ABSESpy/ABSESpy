@@ -32,6 +32,9 @@ nav:
         - Advanced Level:
           - A01: tutorial/advanced/human_behavior_simulation.ipynb
         # - Competing Level:
+    - Examples:
+        - Official Examples: examples/official.md
+        - Community Examples: examples/community.md
     - API references:
         - API: api/api.md
         - Model: api/model.md
