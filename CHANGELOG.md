@@ -1,4 +1,15 @@
 
+<a id='changelog-0.4.1'></a>
+# 0.4.1 — 2024-01-11
+
+## Documentation changes
+
+- [x] #docs📄 Update project README
+
+## Fixed bugs
+
+- [x] #bug🐛 Fix `mkdocs` CI bug
+
 <a id='changelog-0.4.0'></a>
 # 0.4.0 — 2024-01-11
 
