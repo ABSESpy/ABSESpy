@@ -31,7 +31,7 @@ line_length = 79
 
 [tool.poetry]
 name = "abses"
-version = "0.3.5rc"
+version = "0.4.0"
 description = "ABSESpy makes it easier to build artificial Social-ecological systems with real GeoSpatial datasets and fully incorporate human behaviour."
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
@@ -47,8 +47,6 @@ fiona = ">1.8"
 loguru = "~0.7"
 rioxarray = "~0.13"
 pendulum = "~2"
-numpy = ">=1.24"
-pandas = ">=1.4,<3"
 geopandas = "~0"
 
 [tool.poetry.group.dev.dependencies]
@@ -94,6 +92,7 @@ mkdocs-glightbox = "^0.3.4"
 mike = "^2.0.0"
 mkdocs-exclude = "^1.0.2"
 mkdocs-simple-hooks = "^0.1.5"
+pymdown-extensions = "^10.7"
 
 [build-system]
 requires = ["poetry-core"]

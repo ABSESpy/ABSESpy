@@ -7,9 +7,10 @@
 
 from __future__ import annotations
 
-import logging
+import sys
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
+from loguru import logger
 from mesa import Model
 from omegaconf import DictConfig
 
@@ -25,7 +26,13 @@ from .time import TimeDriver
 
 # from .mediator import MainMediator
 
-logger = logging.getLogger(__name__)
+# Logging configuration
+logger.remove(0)
+logger.add(
+    sys.stderr,
+    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<20}] | {message}",
+    level="INFO",
+)
 
 # Dynamically load type hints from users' input type
 N = TypeVar("N")
@@ -146,13 +153,17 @@ class MainModel(Generic[N], Model, _Notice, States):
         """The global parameters of this model."""
         return self.settings.get("model", DictConfig({}))
 
-    def run_model(self) -> None:
+    def run_model(self, steps: int | None = None) -> None:
         """Start running the model, until the end situation is triggered."""
+        logger.info(f"Setting up {self.name}...")
         self._setup()
         while self.running:
-            self.step()
+            logger.debug(f"Current tick: {self.time.tick}")
+            self._step()
             self.time.go()
-            self.time.stdout()
+            if self.time.tick == steps:
+                self.running = False
+            # self.time.stdout()
         self._end()
 
     def setup(self):
@@ -168,6 +179,10 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._trigger("setup", order=("model", "nature", "human"))
         self._trigger("set_state", code=2)
 
+    def _step(self):
+        self._trigger("step", order=("model", "nature", "human"))
+
     def _end(self):
         self._trigger("end", order=("nature", "human", "model"))
         self._trigger("set_state", code=3)
+        logger.info(f"Ending {self.name}")

@@ -95,6 +95,9 @@ ipython_config.py
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
+# VSCode stuff
+.vscode/
+
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
@@ -156,6 +159,13 @@ changelog.d
 
 examples\exploratory\*.ipynb
 
+.notes/
+
 img/classes_ABSESpy.png
 packages_ABSESpy.png
 .DS_Store
+
+setup_insiders.sh
+
+# 文档的草稿
+drafts

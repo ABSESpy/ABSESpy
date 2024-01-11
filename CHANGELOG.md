@@ -1,4 +1,18 @@
 
+<a id='changelog-0.4.0'></a>
+# 0.4.0 — 2024-01-11
+
+## New Features
+
+- [x] #feat✨ `run_model`  function can set steps now.
+- [x] #feat✨ Better logging by loguru
+
+## Documentation changes
+
+- [x] #docs📄 Re-structuring documentations
+- [x] #docs📄 Update get-started
+- [x] #docs📄 Actors' movement
+
 <a id='changelog-0.3.5rc'></a>
 # 0.3.5rc — 2023-12-05
 

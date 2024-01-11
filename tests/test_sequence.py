@@ -37,7 +37,7 @@ def test_sequences_attributes():
 
 
 def test_sequences_better():
-    model = MainModel()
+    model = MainModel(seed=42)
     a_farmer = Farmer(model)
     others = model.agents.create(Farmer, 5)
 

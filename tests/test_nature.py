@@ -77,7 +77,7 @@ def test_patch_cell_attachment():
 
 def test_patch_module_properties():
     """测试一个斑块模块"""
-    model = MainModel()
+    model = MainModel(seed=42)
     shape = (6, 5)
     patch_module = PatchModule.from_resolution(model, shape=shape)
 
