@@ -1,4 +1,15 @@
 
+<a id='changelog-0.4.2'></a>
+# 0.4.2 — 2024-01-11
+
+## Refactoring
+
+- [x] #refactor♻️ Refactoring data collector tests to `tests/conftest.py`
+
+## Fixed bugs
+
+- [x] #bug🐛 Data collector strings are collected now.
+
 <a id='changelog-0.4.1'></a>
 # 0.4.1 — 2024-01-11
 
