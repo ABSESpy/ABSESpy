@@ -23,17 +23,30 @@ class Test_DataCollector:
         model.run_model()
         return model
 
-    def test_model_vars(self, model: MockModel):
+    @pytest.mark.parametrize(
+        "ratio_1, ratio_2, expected_1, expected_2",
+        [
+            (2.3333333333333335, 2.0, 10, 4),
+            # (2.3333333333333335, 2.0, 10, 4), adding other cases here
+        ],
+        ids=[
+            "Elias' test case",
+            # adding other cases' name here
+        ],
+    )
+    def test_model_vars(
+        self, model: MockModel, ratio_1, ratio_2, expected_1, expected_2
+    ):
         """Test model variables."""
         datacollector = model.datacollector
         assert "const" in datacollector.model_vars
         assert "pop_ratio" in datacollector.model_vars
-        ratio = 2.3333333333333335  # Implied ratio at beginning
+        ratio = ratio_1  # Implied ratio at beginning
         assert datacollector.model_vars["pop_ratio"][1] == ratio
-        ratio = 2.0  # Implied ratio at end
+        ratio = ratio_2  # Implied ratio at end
         assert datacollector.model_vars["pop_ratio"][-1] == ratio
-        assert datacollector.model_vars["count_nonnegative"][0] == 10
-        assert datacollector.model_vars["count_nonnegative"][-1] == 4
+        assert datacollector.model_vars["count_nonnegative"][0] == expected_1
+        assert datacollector.model_vars["count_nonnegative"][-1] == expected_2
 
     def test_agent_records(self, model: MockModel):
         """test agent data collector"""
