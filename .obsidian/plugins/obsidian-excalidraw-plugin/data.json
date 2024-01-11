@@ -73,7 +73,7 @@
   "library2": {
     "type": "excalidrawlib",
     "version": 2,
-    "source": "https://excalidraw.com",
+    "source": "https://github.com/zsviczian/obsidian-excalidraw-plugin/releases/tag/2.0.4",
     "libraryItems": [
       {
         "status": "published",
@@ -100,6 +100,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -130,6 +131,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -179,6 +181,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -228,6 +231,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -277,6 +281,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -326,6 +331,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -375,6 +381,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -424,6 +431,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -469,6 +477,7 @@
             "groupIds": [
               "pOwn-7VsyEKTuv9iO7Sev"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -522,6 +531,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -552,6 +562,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -601,6 +612,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -650,6 +662,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -699,6 +712,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -748,6 +762,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -797,6 +812,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -846,6 +862,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -891,6 +908,7 @@
             "groupIds": [
               "ZSdQSRg2MYW-HFdySrPim"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -944,6 +962,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -974,6 +993,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1039,6 +1059,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1104,6 +1125,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1153,6 +1175,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1202,6 +1225,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1251,6 +1275,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1300,6 +1325,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1349,6 +1375,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1398,6 +1425,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1443,6 +1471,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1488,6 +1517,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1549,6 +1579,7 @@
             "groupIds": [
               "drajSaOf3-XAvVZhjUEB9"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1618,6 +1649,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1667,6 +1699,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1697,6 +1730,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1746,6 +1780,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1795,6 +1830,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1844,6 +1880,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1889,6 +1926,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1934,6 +1972,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -1983,6 +2022,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2032,6 +2072,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2109,6 +2150,7 @@
             "groupIds": [
               "IyIVbfrfhLrbDxUaxj3p8"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2178,6 +2220,7 @@
             "groupIds": [
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2228,6 +2271,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2259,6 +2303,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2309,6 +2354,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2359,6 +2405,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2409,6 +2456,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2455,6 +2503,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2501,6 +2550,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2551,6 +2601,7 @@
               "rop-8rytPVBGrdiTAKkK4",
               "e5lWyPxcLx7E-VZJxX_5B"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2608,6 +2659,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2638,6 +2690,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2687,6 +2740,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2736,6 +2790,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2785,6 +2840,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2834,6 +2890,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2883,6 +2940,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2932,6 +2990,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -2977,6 +3036,7 @@
             "groupIds": [
               "aNXI7boHJ12U5RgtuyW93"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3030,6 +3090,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3115,6 +3176,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3164,6 +3226,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3213,6 +3276,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3262,6 +3326,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3311,6 +3376,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3360,6 +3426,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3409,6 +3476,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3454,6 +3522,7 @@
             "groupIds": [
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3500,6 +3569,7 @@
               "aQjN2Q2um7SQdcMhno79J",
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3546,6 +3616,7 @@
               "aQjN2Q2um7SQdcMhno79J",
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3596,6 +3667,7 @@
               "aQjN2Q2um7SQdcMhno79J",
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
@@ -3646,6 +3718,7 @@
               "aQjN2Q2um7SQdcMhno79J",
               "nXr55lJsw9ACaUTU2uCDP"
             ],
+            "frameId": null,
             "roundness": {
               "type": 2
             },
