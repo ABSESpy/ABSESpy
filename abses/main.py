@@ -30,7 +30,7 @@ from .time import TimeDriver
 logger.remove(0)
 logger.add(
     sys.stderr,
-    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<20}] | {message}",
+    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<15}] | {message}",
     level="INFO",
 )
 

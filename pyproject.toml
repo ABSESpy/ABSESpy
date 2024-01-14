@@ -83,7 +83,7 @@ mkdocs-minify-plugin = "^0.7.1"
 mkdocs-redirects = "^1.2.1"
 mkdocs-awesome-pages-plugin = "^2.9.2"
 mkdocs-git-authors-plugin = "^0.7.2"
-mkdocstrings = {extras = ["python"], version = "^0.23.0"}
+mkdocstrings = {extras = ["python"], version = "^0.24.0"}
 mkdocs-bibtex = "^2.11.0"
 mkdocs-macros-plugin = "^1.0.4"
 mkdocs-jupyter = "^0.24.5"

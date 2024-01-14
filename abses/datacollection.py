@@ -2,6 +2,7 @@ import types
 from functools import partial
 from operator import attrgetter
 
+from loguru import logger
 from mesa import datacollection
 
 from abses.components import _Component
@@ -22,6 +23,9 @@ class DataCollector(_Component, datacollection.DataCollector):
     def __init__(self, model: MainModel, **kwargs):
         _Component.__init__(self, model=model, name="datacollector")
         datacollection.DataCollector.__init__(self, **kwargs)
+        logger.info("DataCollector component initialized.")
+        logger.debug(f"DataCollector initialized with {kwargs}.")
+
         self._model: MainModel = model
 
     def _record_agents(self, model):
