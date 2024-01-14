@@ -3,38 +3,40 @@ site_name: ABSESpy
 nav:
     - Home:
         - AB-SESpy: index.md
-        # - Navigation: navigation.md
-        - Features:
-          # - Overview: features/features.md
-          - Architectural elegance: features/architectural_elegance.md
-          - Control real-world time: features/time_control.md
-          - Unveiling Human Decision Dynamics in SES Modeling: features/MoHuB.md
-        - Get start: home/install.md
+        - Installation: home/Installation.md
+        - Guide Checklist: home/guide_checklist.md
+        - Getting started: home/get_started.md
         - Dependencies: home/dependencies.md
         - License: home/license.md
+        - Contributions: home/contribution.md
         - Acknowledge: home/acknowledge.md
         # - RoadMap: home/roadmap.md
-        # - Changelog: home/changelog.md
     - Wiki:
+        - Wiki: wiki/wiki.md
+        - Refers: wiki/about.md
+        - Materials: wiki/materials.md
+        - Concepts: wiki/concepts.md
         - Paper: paper/paper.md
-        - Context of ABSESpy: wiki/about.md
-        - Terms and definitions: wiki/background.md
     - Tutorials:
-        # - Beginner:
-        #   - Beginner Tutorial: tutorial/beginner/hotelling_tutorial.ipynb
-        #   - Run an example: tutorial/beginner/use_example.md
-        #   - Setup a model: tutorial/beginner/write_example.md
-        #   - Setup parameters: tutorial/beginner/setup_parameters.md
-        # - Advanced:
-        #   - Visualize your model: tutorial/advanced/visualize.md
-        #   - Add modules: tutorial/advanced/add_modules.md
-        #   - Add variables: tutorial/advanced/dynamic_variable.md
-        #   - Batch run: tutorial/advanced/batch_run.md
-        # - Lessons:
-          - Organize the model structure: tutorial/lessons/organize_model_structure.ipynb
-          - Real-world SES modeling enhancements: tutorial/lessons/time_control.ipynb
-          - Human-behavior modeling framework: tutorial/lessons/human_behavior_simulation.ipynb
+        - Tutorial: tutorial/tutorial.md
+        - Start from ABM: tutorial/tutorial_guide_from_ABM.md
+        - Start from SES: tutorial/tutorial_guide_from_SES.md
+        - Beginner Level:
+          - B01: tutorial/beginner/get_started.ipynb
+          - B02: tutorial/beginner/organize_model_structure.ipynb
+          - B03: tutorial/beginner/time_control.ipynb
+          - B04: tutorial/beginner/manage_parameters.ipynb
+          - B05: tutorial/beginner/actors.ipynb
+          - B06: tutorial/beginner/movement.ipynb
+          - B07: tutorial/beginner/hotelling_tutorial.ipynb
+        - Advanced Level:
+          - A01: tutorial/advanced/human_behavior_simulation.ipynb
+        # - Competing Level:
+    - Examples:
+        - Official Examples: examples/official.md
+        - Community Examples: examples/community.md
     - API references:
+        - API: api/api.md
         - Model: api/model.md
         - Natural Modules: api/nature.md
         - Human Modules: api/human.md
@@ -45,13 +47,8 @@ nav:
         - Time Control: api/time.md
         - Decisions: api/decisions.md
         - Random: api/random.md
-        # - Dynamic Variables: api/variables.md
-    # - Examples:
-    #     - Examples gallery: examples/gallery.md
-    # - Packages:
-    #     - Add-in agent modules: packages/agent.md
-    #     - Add-in human modules: packages/human.md
-    #     - Add-in nature modules: packages/nature.md
+        - Variables: api/variables.md
+
 theme:
     name: "material"
     logo: "https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/logo_abses.svg"
@@ -76,8 +73,11 @@ theme:
         - navigation.tracking
         - toc.follow
         - content.tooltips  # only sponsor
+        - content.code.copy
+        - content.tooltips
 plugins:
     - search
+    # - markdown-exec
     - mkdocstrings:
         handlers:
           python:
@@ -103,7 +103,7 @@ plugins:
           on_pre_build: 'docs.plugins.checks:on_pre_build'
     - macros
     - mkdocs-jupyter:
-      # include_source: True
+        include_source: True
       # execute: true
       # - allow_errors: false
     - callouts
@@ -113,6 +113,7 @@ plugins:
     - mike:
         alias_type: symlink
         canonical_version: latest
+    - typeset
 
 extra:
   alternate:
@@ -125,18 +126,22 @@ extra:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/
   version:
     - provider: mike
+  tags:
+    model: tag
+
 
 markdown_extensions:
-  # - abbr
   - attr_list
   - admonition
   - md_in_html
   - pymdownx.details
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: "!!python/name:pymdownx.superfences.fence_code_format"
+  - pymdownx.superfences
+
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
   - footnotes
@@ -149,29 +154,28 @@ markdown_extensions:
   - md_in_html
   - pymdownx.tasklist:
       custom_checkbox: true
+  - abbr
+
+  # https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/#search
+  # 表情符号拓展
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
   # 以下配置参考 https://github.com/pydantic/pydantic/blob/main/mkdocs.yml#L6C6-L6C6
   - tables
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.highlight:
-      pygments_lang_class: true
   - pymdownx.extra
-  # - pymdownx.emoji:
-  #     emoji_index: !!python/name:materialx.emoji.twemoji
-  #     emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.tabbed:
       alternate_style: true
-  # - pymdownx.snippets:
-  #     auto_append:
-  #       - abbreviations.md
-# extra:
-#   social:
-#     - type: 'github'
-#       link: 'https://github.com/squidfunk'
-#     - type: 'twitter'
-#       link: 'https://twitter.com/squidfunk'
-#     - type: 'linkedin'
-#       link: 'https://www.linkedin.com/in/squidfunk'
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ABSESpy/ABSESpy
+    # - icon: fontawesome/brands/web
+    #   link: https://cv.songshgeo.com/
 repo_url: https://github.com/absespy/ABSESpy
