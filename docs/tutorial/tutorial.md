@@ -34,6 +34,9 @@ You're looking to create and operate a basic model by `ABSESpy` framework. Wonde
 [:material-book: __B07__](beginner/hotelling_tutorial.ipynb) Your first full model example, a classic heuristic model[^1].
 { .card }
 
+[:material-book: __B08__](beginner/fire_tutorial.ipynb) A classic agent-based model.
+{ .card }
+
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
 
 </div>
