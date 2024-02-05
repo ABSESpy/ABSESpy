@@ -13,6 +13,13 @@ This showcases the use of `ABSESpy` for ABM. We divide the models into two types
 
     <!-- [:octicons-arrow-right-24: Checkout] -->
 
+-   :material-robot-happy:{ .lg .middle } __[Forest Fire]__
+
+    ---
+    An implementation of the `Fire` model.
+
+    <!-- [:octicons-arrow-right-24: Checkout] -->
+
 </div>
 
 
@@ -42,6 +49,7 @@ This showcases the use of `ABSESpy` for ABM. We divide the models into two types
 
 <!-- Heuristic models -->
   [Hotelling]: ../tutorial/beginner/hotelling_tutorial.ipynb
+  [Forest Fire]: ../tutorial/beginner/fire_tutorial.ipynb
 
 <!-- Real-world models -->
   [South China Livelihood]: official/south_china_livelihood.md
