@@ -36,9 +36,9 @@ description: "Agent-Based Social-ecological systems Modelling Framework in Pytho
 
     ---
 
-    We provide a detailed tutorial for users to develop their own ABM.
+    We provide detailed tutorials for users to begin developing their own ABMs.
 
-    [:material-book: Detailed tutorial](tutorial/tutorial.md)
+    [:material-book: Tutorials](tutorial/tutorial.md)
 
 -   :material-api:{ .lg .middle } __API documentation__
 

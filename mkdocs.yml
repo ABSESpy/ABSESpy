@@ -113,7 +113,7 @@ plugins:
     - mike:
         alias_type: symlink
         canonical_version: latest
-    - typeset
+    # - typeset
 
 extra:
   alternate:
