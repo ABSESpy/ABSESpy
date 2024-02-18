@@ -2,6 +2,7 @@ import types
 from functools import partial
 from operator import attrgetter
 
+from loguru import logger
 from mesa import datacollection
 
 from abses.components import _Component
@@ -22,11 +23,14 @@ class DataCollector(_Component, datacollection.DataCollector):
     def __init__(self, model: MainModel, **kwargs):
         _Component.__init__(self, model=model, name="datacollector")
         datacollection.DataCollector.__init__(self, **kwargs)
+        logger.info("DataCollector component initialized.")
+        logger.debug(f"DataCollector initialized with {kwargs}.")
+
         self._model: MainModel = model
 
     def _record_agents(self, model):
         rep_funcs = self.agent_reporters.values()
-        if all([hasattr(rep, "attribute_name") for rep in rep_funcs]):
+        if all(hasattr(rep, "attribute_name") for rep in rep_funcs):
             prefix = ["model.time.tick", "unique_id"]
             attributes = [func.attribute_name for func in rep_funcs]
             get_reports = attrgetter(*prefix + attributes)
@@ -46,14 +50,12 @@ class DataCollector(_Component, datacollection.DataCollector):
         if self.model_reporters:
             for var, reporter in self.model_reporters.items():
                 # Check if Lambda operator
-                if isinstance(reporter, types.LambdaType):
+                if isinstance(reporter, (types.LambdaType, partial)):
                     self.model_vars[var].append(reporter(self._model))
-                # Check if model attribute
-                elif isinstance(reporter, partial):
-                    self.model_vars[var].append(reporter(self._model))
-                # Check if function with arguments
                 elif isinstance(reporter, list):
                     self.model_vars[var].append(reporter[0](*reporter[1]))
+                elif isinstance(reporter, str):
+                    self.model_vars[var].append(reporter)
                 else:
                     self.model_vars[var].append(reporter())
 

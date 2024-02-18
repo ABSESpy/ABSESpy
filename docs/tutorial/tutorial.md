@@ -2,7 +2,7 @@
 
 <!-- 这里，我们提供了一系列基于Jupyter Notebook的教程，展示实际利用 ABSESpy 开发可能碰到的需求及其解决策略。 -->
 
-Here, we provide a series of tutorials based on [Jupyter Notebook], demonstrating the potential needs and solutions when developing with `ABSESpy` in practice. We expect you have read through [Quick Start] and are sure that `ABSESpy` is [the right software for you]. Three levels of tutorials are available below:
+Here, we provide a series of tutorials based on [Jupyter Notebook], demonstrating the potential needs and solutions when developing with `ABSESpy` in practice. We expect you to have read through [Quick Start] guide and that you have assessed whether `ABSESpy` is [the right software for you]. Three levels of tutorials are available below:
 
 > [!INFO]In Progress
 > This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/absespy/ABSESpy/issues).
@@ -34,6 +34,9 @@ You're looking to create and operate a basic model by `ABSESpy` framework. Wonde
 [:material-book: __B07__](beginner/hotelling_tutorial.ipynb) Your first full model example, a classic heuristic model[^1].
 { .card }
 
+[:material-book: __B08__](beginner/fire_tutorial.ipynb) A classic agent-based model.
+{ .card }
+
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
 
 </div>
@@ -45,6 +48,9 @@ You have gained a thorough understanding of the agent-based model. Now, you are 
 <div class="grid" markdown>
 
 [:material-book: __A01__](advanced/human_behavior_simulation.ipynb) How to apply an advanced [human behavior simulation framework]?
+{ .card }
+
+[:material-book: __A02__](advanced/geodata.ipynb) Including real-world geographic datasets.
 { .card }
 
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
