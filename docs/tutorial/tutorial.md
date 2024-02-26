@@ -53,6 +53,9 @@ You have gained a thorough understanding of the agent-based model. Now, you are 
 [:material-book: __A01__](advanced/human_behavior_simulation.ipynb) How to apply an advanced [human behavior simulation framework]?
 { .card }
 
+[:material-book: __A02__](advanced/geodata.ipynb) Including real-world geographic datasets.
+{ .card }
+
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
 
 </div>
