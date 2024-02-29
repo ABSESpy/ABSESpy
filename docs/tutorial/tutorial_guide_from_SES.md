@@ -6,12 +6,12 @@ Of course, SES has other features, we strongly recommend starting with specific 
 
 !!! warning
 
-    We are actively developing different cases, some of the following examples would be available soon.
+    We are actively developing different cases, some of the following examples will be available soon.
 
 | SES features      | Related case model                          |
 | ----------- | ------------------------------------ |
 | :material-merge: Emergence       | :bulb: [Fire]  |
-| :material-chart-line: Dynamic       | :bulb: Wolf-sheep-grass model |
+| :material-chart-line: Dynamic       | :bulb: [Predation] |
 | :fontawesome-solid-person-circle-question: Human decision making    | :bulb: [Hotelling] |
 | :material-police-badge-outline: Real-world policies    | :bulb: Water allocation |
 
@@ -23,4 +23,5 @@ This is because `ABSESpy`'s framework structure perfectly [matches the SES struc
   [emergence]: ../wiki/concepts/emergence.md
   [matches the SES structure]: ../tutorial/beginner/organize_model_structure.ipynb
   [Hotelling]: ../tutorial/beginner/hotelling_tutorial.ipynb
-  [Fire] : ../tutorial/beginner/fire_tutorial.ipynb
+  [Fire]: ../tutorial/beginner/fire_tutorial.ipynb
+  [Predation]: ../tutorial/beginner/predation_tutorial.ipynb
