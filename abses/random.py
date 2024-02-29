@@ -35,6 +35,17 @@ class ListRandom:
 
         return ActorsList(self.model, objs=objs)
 
+    def _when_empty(self, when_empty: str) -> str:
+        if when_empty not in ("raise exception", "return None"):
+            raise ValueError(
+                f"Unknown value for `when_empty` parameter: {when_empty}"
+            )
+        if when_empty == "raise exception":
+            raise ABSESpyError(
+                "Trying to choose an actor from an empty `ActorsList`."
+            )
+        return None
+
     @overload
     def clean_p(self, p: str) -> np.ndarray:
         ...
@@ -79,6 +90,7 @@ class ListRandom:
         prob: np.ndarray | None | str = None,
         replace: bool = False,
         as_list: bool = False,
+        when_empty: str = "raise exception",
     ) -> Actor | ActorsList:
         """Randomly choose one or more actors from the current self object.
 
@@ -109,6 +121,8 @@ class ListRandom:
                 Not enough actors to choose in this `ActorsList`.
         """
         instances_num = len(self.actors)
+        if instances_num == 0:
+            return self._when_empty(when_empty=when_empty)
         if not isinstance(size, int):
             raise ValueError(f"{size} isn't an integer size.")
         if not instances_num or (instances_num < size & ~replace):
