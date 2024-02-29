@@ -323,7 +323,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             AttributeError:
                 If the attribute is not found in the cell.
         """
-        if attr not in self._cell.attributes:
+        if not hasattr(self._cell, attr):
             raise AttributeError(f"Attribute {attr} not found.")
         setattr(self._cell, attr, value)
 
