@@ -127,11 +127,11 @@ class PatchCell(mg.Cell, LinkNode):
         Parameters:
             attr_name:
                 The name of attribute to get.
-                
+
         Returns:
             Any:
                 The value of the attribute.
-                
+
         Raises:
             AttributeError:
                 Attribute value of the associated patch cell.
@@ -159,6 +159,7 @@ class PatchCell(mg.Cell, LinkNode):
             raise TypeError(
                 f"The agent to be added should be an instance of 'Actor' or its subclass, not {type(agent)}."
             )
+            
         if agent.breed not in self._agents:
             self._agents[agent.breed] = {agent}
         else:
@@ -230,7 +231,7 @@ class PatchCell(mg.Cell, LinkNode):
 
         Returns:
             Any type of retrieved data.
-            
+
         Raises:
             KeyError:
                 The searched link is not available in the model.
