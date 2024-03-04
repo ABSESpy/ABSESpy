@@ -48,7 +48,7 @@ class MockModel(MainModel):
         self.agents.create(anotherMockAgent, 3)
 
         for agent in self.actors:
-            agent.put_on_layer(
+            agent.move.to(
                 layer=self.nature.major_layer,
                 pos=tuple(rng.integers(2, size=2)),
             )
@@ -81,7 +81,8 @@ class MockModel(MainModel):
 
             for _row in cells:
                 for cell in _row:
-                    cell.remove(agentout) if agentout in cell.agents else None
+                    if agentout in cell.agents:
+                        cell.remove(agentout)
 
         self.actors.trigger("write_row")
 

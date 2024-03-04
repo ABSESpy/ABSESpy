@@ -6,7 +6,7 @@
 # Website: https://cv.songshgeo.com/
 from __future__ import annotations
 
-from functools import wraps
+from functools import cached_property, wraps
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -14,18 +14,16 @@ from typing import (
     Dict,
     Iterable,
     Optional,
-    Tuple,
+    Self,
     TypeAlias,
     Union,
 )
 
 import mesa_geo as mg
-from mesa.space import Coordinate
-from shapely import Point
 
 from abses.decision import DecisionFactory
-from abses.errors import ABSESpyError
 from abses.links import LinkNode
+from abses.move import _Movements
 from abses.objects import _BaseObj
 from abses.sequences import ActorsList
 from abses.tools.func import make_list
@@ -34,6 +32,7 @@ from abses.tools.func import make_list
 
 
 if TYPE_CHECKING:
+    from abses.human import LinkContainer
     from abses.main import MainModel
     from abses.nature import PatchCell
 
@@ -109,14 +108,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             Whether the actor is standing on a cell.
         here:
             A list of actors that are on the same cell as the actor.
-
-    Methods:
-        put_on(self, cell: PatchCell | None = None) -> None
-            Places the actor on a cell.
-        put_on_layer(self, layer: mg.RasterLayer, pos: Tuple[int, int])
-            Specifies a new cell for the actor to be located on.
-        selecting(self, selection: Union[str, Dict[str, Any]]) -> bool
-            Selects the actor according to specified criteria.
     """
 
     # when checking the rules
@@ -139,10 +130,9 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
         LinkNode.__init__(self)
-        self._rules: Dict[str, Dict[str, Any]] = {}
         self._cell: PatchCell = None
-        self.container = model.human
-        self._decisions = self._setup_decisions()
+        self._container: LinkContainer = model.human
+        self._decisions: DecisionFactory = self._setup_decisions()
 
     def _setup_decisions(self) -> DecisionFactory:
         """Decisions that this actor makes."""
@@ -163,26 +153,6 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         return None if self._cell is None else self._cell.layer
 
     @property
-    def indices(self) -> Coordinate:
-        """Coordinates in the form of (row, col) are used for indexing a matrix, with the origin at the top left corner and increasing downwards."""
-        return self._cell.indices
-
-    @property
-    def pos(self) -> Coordinate:
-        """Coordinates in the form of (x, y) indexed from the bottom left corner."""
-        return self._cell.pos
-
-    @pos.setter
-    def pos(self, pos) -> None:
-        if pos is not None:
-            raise AttributeError(f"Set pos by {self.put_on_layer.__name__}")
-
-    @property
-    def population(self) -> ActorsList:
-        """List of agents of the same breed"""
-        return self.model.agents[self.breed]
-
-    @property
     def on_earth(self) -> bool:
         """Whether agent stands on a cell"""
         return bool(self._cell)
@@ -192,57 +162,40 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         """Other agents on the same cell as the agent."""
         return self._cell.agents
 
-    def put_on(self, cell: PatchCell | None = None) -> None:
-        """Place agent on a cell. If the agent is already located at a cell, it should be located to a cell with the same layer.
+    @property
+    def at(self) -> PatchCell | None:
+        """Get the cell where the agent is located."""
+        return self._cell if self._cell is not None else None
 
-        Parameters:
-            cell:
-                The cell where the agent is to be located. If None (default), remove the subject from the current layer.
+    @cached_property
+    def move(self) -> _Movements:
+        """Manipulating agent's location."""
+        return _Movements(self)
 
-        Raises:
-            IndexError:
-                If the agent is to be moved between different layers.
-            TypeError:
-                If the agent is to be put on a non-PatchCell object.
+    def get(
+        self,
+        attr: str,
+        aggfunc: Optional[Callable] = None,
+        target: Optional[Self | PatchCell] = None,
+    ) -> Any:
+        """Gets attribute value from target.
+        attr:
+            The name of the attribute to get.
+        aggfunc:
+            The function to aggregate the result.
+        target:
+            The target to get the attribute from. If None, the agent itself is the target.
+            1. If the target is an agent, get the attribute from the agent.
+            2. If the target is a cell, get the attribute from the cell.
         """
-        if cell is None:
-            # Remove agent
-            self._cell = None
-            return
-        if self.layer and self.layer is not cell.layer:
-            raise IndexError(
-                f"Trying to move actor between different layers: from {self.layer} to {cell.layer}"
-            )
-        if not isinstance(cell, mg.Cell):
-            raise TypeError(
-                f"Actor must be put on a PatchCell, instead of {type(cell)}"
-            )
-        if self.on_earth:
-            self._cell.remove(self)
-            self._cell = None
-        cell.add(self)
-        self._cell = cell
-        self.geometry = Point(cell.layer.transform * cell.indices)
+        if target is None:
+            target = self
+        target.get(attr, aggfunc=aggfunc)
+        raise AttributeError(f"{attr} not found in {target}")
 
-    def put_on_layer(
-        self, layer: mg.RasterLayer, pos: Tuple[int, int]
-    ) -> None:
-        """Specifies a new cell for the agent to be located on.
-
-        Parameters:
-            layer:
-                The layer where the agent is to be located.
-            pos:
-                The position of the cell where the agent is to be located.
-
-        Raises:
-            TypeError:
-                If the layer is not a valid RasterLayer type.
-        """
-        if not isinstance(layer, mg.RasterLayer):
-            raise TypeError(f"{layer} is not mg.RasterLayer.")
-        cell = layer.cells[pos[0]][pos[1]]
-        self.put_on(cell=cell)
+    def set(self, attr: str, value: Any) -> None:
+        """Sets the value of an attribute."""
+        setattr(self, attr, value)
 
     def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
         """Either select the agent according to specified criteria.
@@ -271,44 +224,10 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         """Kills the agent (self)"""
         self.model.agents.remove(self)
         for link in self.links:
-            self.container.get_graph(link).remove_node(self)
+            self._container.get_graph(link).remove_node(self)
         if self.on_earth:
             self._cell.remove(self)
             del self
-
-    def move_to(self, position: Optional[Coordinate]) -> bool:
-        """Move agent to a new position.
-
-        Parameters:
-            position:
-                The new position to move to.
-
-        Raises:
-            ValueError:
-                The main body is not on the same layer, please use the put_on method first.
-        """
-        if not self.layer:
-            raise ValueError("Layer is not set.")
-        self.layer.move_agent(self, position)
-
-    def loc(self, attribute: str) -> Any:
-        """Get attribute data for the cell where the actor is located.
-
-        Parameters:
-            attribute : str
-                The name of the attribute to get.
-
-        Raises:
-            AttributeError:
-                If the attribute is not found in the cell where this agent is located.
-            ABSESpyError:
-                The agent is not in the environment.
-        """
-        if self.on_earth:
-            return self._cell.get_attr(attribute)
-        raise ABSESpyError(
-            f"You should locate this agent ({self}) to somewhere before get associated attribute."
-        )
 
     def alter_nature(self, attr: str, value: Any) -> None:
         """Alter the nature of the parameters of the cell where the actor is located.

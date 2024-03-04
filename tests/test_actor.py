@@ -26,9 +26,8 @@ def test_actor_attributes():
     assert actor.on_earth is False
     assert actor.breed == "Actor"
     pos = (3, 3)
-    actor.put_on_layer(layer=layer, pos=pos)
+    actor.move.to(layer=layer, pos=pos)
     assert actor.on_earth is True
-    assert actor.pos == pos
     assert len(actor.here) == 1
     assert actor.here == ActorsList(model, [actor])
 

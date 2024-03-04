@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import sys
 from numbers import Number
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Self
 
@@ -546,23 +545,6 @@ class PatchModule(Module, mg.RasterLayer):
         cells = self.array_cells[mask_]
         for cell in cells:
             cell.link_to(agent, link)
-
-    def move_agent(self, agent: Actor, position: Coordinate) -> None:
-        """Move an Actor to another position of this layer.
-
-        Parameters:
-            agent:
-                The actor to operate.
-            position:
-                The position to put on.
-
-        Raises:
-            ABSESpyError:
-                If the agent is not located at this layer before moving.
-        """
-        if agent.layer is not self:
-            raise ABSESpyError(f"Agent {agent} is not on {self}.")
-        agent.put_on_layer(self, position)
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

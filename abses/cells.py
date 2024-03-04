@@ -159,7 +159,6 @@ class PatchCell(mg.Cell, LinkNode):
             raise TypeError(
                 f"The agent to be added should be an instance of 'Actor' or its subclass, not {type(agent)}."
             )
-            
         if agent.breed not in self._agents:
             self._agents[agent.breed] = {agent}
         else:
@@ -180,7 +179,7 @@ class PatchCell(mg.Cell, LinkNode):
             self._agents[agent.breed].remove(agent)
         except KeyError as err:
             raise ABSESpyError(f"{agent} is not located at {self}.") from err
-        agent.put_on()
+        agent.set("_cell", None)
         if not self._agents[agent.breed]:
             del self._agents[agent.breed]
 
@@ -251,7 +250,7 @@ class PatchCell(mg.Cell, LinkNode):
         include_center: bool = False,
         annular: bool = False,
     ) -> ActorsList:
-        """#TODO Get the grid around the patch."""
+        """Get the grid around the patch."""
         cells = self.layer.get_neighboring_cells(
             self.pos, moore=moore, radius=radius, include_center=include_center
         )
