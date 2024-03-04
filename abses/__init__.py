@@ -24,14 +24,14 @@ __all__ = [
     "Decision",
     "DecisionFactory",
     "ActorsList",
-    "AgentsContainer",
+    "_AgentsContainer",
     "PatchCell",
     "perception",
 ]
 __version__ = "v0.4.2"
 
 from .actor import Actor, perception
-from .container import ActorsList, AgentsContainer
+from .container import ActorsList, _AgentsContainer
 from .decision import Decision, DecisionFactory
 from .human import BaseHuman
 from .main import MainModel

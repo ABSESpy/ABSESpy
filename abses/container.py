@@ -32,24 +32,13 @@ if TYPE_CHECKING:
 # logger = logging.getLogger("__name__")
 
 
-class AgentsContainer(dict):
+class _AgentsContainer(dict):
     """Singleton AgentsContainer for each model.
 
     This class is a dictionary-like container for managing agents in a simulation model. It is designed to be a singleton,
     meaning that there is only one instance of this class per model. It provides methods for creating, adding, removing,
     and selecting agents, as well as triggering events.
     """
-
-    _models: Dict[MainModel, AgentsContainer] = {}
-    _lock = threading.RLock()
-
-    def __new__(cls: type[Self], model: MainModel) -> Self:
-        instance = cls._models.get(model)
-        if instance is None:
-            instance = super().__new__(cls)
-            with cls._lock:
-                cls._models[model] = instance
-        return instance
 
     def __init__(self, model: MainModel):
         super().__init__()

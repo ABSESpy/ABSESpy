@@ -5,8 +5,17 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import sys
-from typing import Callable, Dict, Set, TypeAlias, Union
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Optional,
+    Set,
+    TypeAlias,
+    Union,
+)
 
 from loguru import logger
 from omegaconf import DictConfig
@@ -14,13 +23,15 @@ from omegaconf import DictConfig
 from abses.actor import Actor
 
 from .cells import PatchCell
-from .container import AgentsContainer
+from .container import _AgentsContainer
 from .links import LinkContainer
 from .modules import CompositeModule, Module
 from .sequences import ActorsList, Selection
 
 Actors: TypeAlias = Union[ActorsList, Selection, Actor]
 Trigger: TypeAlias = Union[str, Callable]
+if TYPE_CHECKING:
+    from abses import MainModel
 
 
 class HumanModule(Module):
@@ -36,16 +47,15 @@ class HumanModule(Module):
             Actor collections defined.
     """
 
-    def __init__(self, model, name=None):
+    def __init__(self, model: MainModel, name: Optional[str] = None):
         Module.__init__(self, model, name)
         logger.info("Initializing a new Human Module...")
-        self._agents = AgentsContainer(model)
         self._collections: Dict[str, Selection] = DictConfig({})
 
     @property
-    def agents(self) -> AgentsContainer:
+    def agents(self) -> _AgentsContainer:
         """The agents container of this ABSESpy model."""
-        return self._agents
+        return self.model.agents
 
     @property
     def collections(self) -> Set[str]:

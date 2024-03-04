@@ -7,7 +7,6 @@
 
 
 from abses import MainModel
-from abses.container import AgentsContainer
 
 from .fixtures import Actor, Admin, Farmer
 
@@ -15,7 +14,7 @@ from .fixtures import Actor, Admin, Farmer
 def test_container_attributes():
     """测试容器的属性"""
     model = MainModel()
-    container = AgentsContainer(model=model)
+    container = model.agents
     assert model.agents is container
     assert len(container) == 0
     assert repr(container) == "<AgentsContainer: >"

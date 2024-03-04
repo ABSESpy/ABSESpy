@@ -17,7 +17,7 @@ from omegaconf import DictConfig
 from abses import __version__
 
 from .bases import _Notice
-from .container import AgentsContainer
+from .container import _AgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
@@ -81,7 +81,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._version: str = __version__
         self._human = human_class(self)
         self._nature = nature_class(self)
-        self._agents = AgentsContainer(model=self)
+        self._agents = _AgentsContainer(model=self)
         self._time = TimeDriver(model=self)
         self._run_id: int | None = run_id
         self._trigger("initialize", order=("nature", "human"))
@@ -124,7 +124,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         return self._settings
 
     @property
-    def agents(self) -> AgentsContainer:
+    def agents(self) -> _AgentsContainer:
         """The container of all agents. One model only has one specific container where all alive agents are stored."""
         return self._agents
 
