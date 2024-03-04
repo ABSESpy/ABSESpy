@@ -24,11 +24,11 @@ def test_container_attributes():
     assert isinstance(a_farmer, Actor)
     assert len(container) == 6
     assert repr(container) == "<AgentsContainer: (1)Farmer; (5)Admin>"
-    assert container.breeds == ("Farmer", "Admin")
     assert container.Admin == admins_5
 
     # 增删
     another_farmer = Farmer(model)
+    assert "Farmer" in container.keys()
     container.add(another_farmer)
     container.remove(admins_5[0])
     admins_5[1:3].trigger("die")

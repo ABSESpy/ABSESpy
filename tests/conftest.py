@@ -82,7 +82,7 @@ class MockModel(MainModel):
             for _row in cells:
                 for cell in _row:
                     if agentout in cell.agents:
-                        cell.remove(agentout)
+                        agentout.move.off()
 
         self.actors.trigger("write_row")
 

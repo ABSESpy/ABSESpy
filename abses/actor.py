@@ -226,7 +226,8 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         for link in self.links:
             self._container.get_graph(link).remove_node(self)
         if self.on_earth:
-            self._cell.remove(self)
+            self.move.off()
+            self._cell.agents.remove(self)
             del self
 
     def alter_nature(self, attr: str, value: Any) -> None:

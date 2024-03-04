@@ -70,7 +70,8 @@ class PatchModule(Module, mg.RasterLayer):
         logger.info("Initializing a new Model Layer...")
         logger.info(f"Using rioxarray version: {rioxarray.__version__}")
 
-        for cell in self.array_cells.flatten():
+        for cell in self:
+            # for cell in self.array_cells.flatten():
             cell.layer = self
         self._file = None
 
@@ -619,7 +620,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
             model=self.model, agent_class=agent_cls, crs=self.crs
         )
         agents = creator.from_GeoDataFrame(gdf=gdf, unique_id=unique_id)
-        self.model.agents.register_a_breed(agent_cls)
+        self.model.agents.register(agent_cls)
         self.model.agents.add(agents)
         return ActorsList(model=self.model, objs=agents)
 

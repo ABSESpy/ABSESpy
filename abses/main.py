@@ -15,6 +15,7 @@ from mesa import Model
 from omegaconf import DictConfig
 
 from abses import __version__
+from abses.actor import Actor
 
 from .bases import _Notice
 from .container import _AgentsContainer
@@ -77,6 +78,8 @@ class MainModel(Generic[N], Model, _Notice, States):
         _Notice.__init__(self)
         States.__init__(self)
 
+        self._breeds: dict = {}
+        self._containers: list = []
         self._settings = DictConfig(parameters)
         self._version: str = __version__
         self._human = human_class(self)
@@ -152,6 +155,20 @@ class MainModel(Generic[N], Model, _Notice, States):
     def params(self) -> DictConfig:
         """The global parameters of this model."""
         return self.settings.get("model", DictConfig({}))
+
+    @property
+    def breeds(self) -> Tuple[str]:
+        """The breeds of agents in the model."""
+        return tuple(self._breeds.keys())
+
+    @breeds.setter
+    def breeds(self, breed: Type[Actor]) -> None:
+        """Register a new breed of agents in the model."""
+        if not issubclass(breed, Actor):
+            raise TypeError(f"{breed} is not a subclass of Actor.")
+        self._breeds[breed.breed] = breed
+        for container in self._containers:
+            container[breed.breed] = set()
 
     def run_model(self, steps: int | None = None) -> None:
         """Start running the model, until the end situation is triggered."""

@@ -7,12 +7,13 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
 import mesa_geo as mg
 
 from abses import Actor, ActorsList
-from abses.errors import ABSESpyError
+from abses.container import _AgentsContainer
 from abses.links import LinkNode
 from abses.sequences import agg_agents_attr
 
@@ -66,7 +67,7 @@ class PatchCell(mg.Cell, LinkNode):
     def __init__(self, pos=None, indices=None):
         mg.Cell.__init__(self, pos, indices)
         LinkNode.__init__(self)
-        self._agents = {}
+        self._agents = None
         self._layer = None
 
     def __repr__(self) -> str:
@@ -93,6 +94,7 @@ class PatchCell(mg.Cell, LinkNode):
             raise TypeError(f"{type(layer)} is not valid layer.")
         self.container = layer.model.human
         self._layer = layer
+        self._agents = _AgentsContainer(layer.model, _for_cell=True)
 
     @classmethod
     @property
@@ -101,12 +103,9 @@ class PatchCell(mg.Cell, LinkNode):
         return cls.__name__
 
     @property
-    def agents(self) -> ActorsList[Actor]:
+    def agents(self) -> _AgentsContainer:
         """The agents located at here."""
-        agents = []
-        for _, agents_set in self._agents.items():
-            agents.extend(agents_set)
-        return ActorsList(self.model, agents)
+        return self._agents
 
     def has_agent(self, breed: Optional[str] = None) -> bool:
         """Whether the actor is standing at the current `PatchCell`.
@@ -141,47 +140,6 @@ class PatchCell(mg.Cell, LinkNode):
         if not hasattr(self, attr_name):
             raise AttributeError(f"{attr_name} not exists in {self.layer}.")
         return getattr(self, attr_name)
-
-    def add(self, agent: Actor) -> None:
-        """Adds an `Actor` to here.
-
-        Parameters:
-            agent:
-                The `Actor` to be added.
-
-        Raises:
-            ABSESpyError:
-                If the actor is already on earth (at another cell or another layer).
-        """
-        if agent.on_earth:
-            raise ABSESpyError(f"{agent} is already on earth.")
-        if not issubclass(agent.__class__, Actor):
-            raise TypeError(
-                f"The agent to be added should be an instance of 'Actor' or its subclass, not {type(agent)}."
-            )
-        if agent.breed not in self._agents:
-            self._agents[agent.breed] = {agent}
-        else:
-            self._agents[agent.breed].add(agent)
-
-    def remove(self, agent: Actor) -> None:
-        """Removes an Actor here.
-
-        Parameters:
-            agent:
-                The `Actor` to be removed.
-
-        Raises:
-            ABSESpyError:
-                If the actor is not on this cell.
-        """
-        try:
-            self._agents[agent.breed].remove(agent)
-        except KeyError as err:
-            raise ABSESpyError(f"{agent} is not located at {self}.") from err
-        agent.set("_cell", None)
-        if not self._agents[agent.breed]:
-            del self._agents[agent.breed]
 
     def linked(self, link: str) -> ActorsList[Actor]:
         """Gets the body of the link to this patch.

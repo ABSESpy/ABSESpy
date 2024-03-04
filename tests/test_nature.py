@@ -274,7 +274,7 @@ def my_agents() -> Tuple[Dog]:
     return agent_1, agent_2
 
 
-def test_add_agent(cells, agents):
+def test_add_agent(cells: Tuple[PatchCell, PatchCell], agents):
     """测试添加主体"""
     agent1, agent2 = agents
     assert agent1.breed == agent2.breed == "Dog"
@@ -282,10 +282,10 @@ def test_add_agent(cells, agents):
     # Test adding the first agent of a breed
     agent1.move.to(cell1)
     with pytest.raises(ABSESpyError):
-        cell2.add(agent1)
+        cell2.agents.add(agent1, register=True)
     assert agent1 in cell1.agents
 
-    cell1.add(agent2)
+    cell1.agents.add(agent2, register=True)
     assert len(cell1.agents) == 2
 
 

@@ -7,22 +7,12 @@
 
 from __future__ import annotations
 
-import threading
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    Optional,
-    Self,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Type, Union
 
 from loguru import logger
 
 from abses.actor import Actor
+from abses.errors import ABSESpyError
 from abses.sequences import ActorsList, Selection
 from abses.tools.func import make_list
 
@@ -40,21 +30,27 @@ class _AgentsContainer(dict):
     and selecting agents, as well as triggering events.
     """
 
-    def __init__(self, model: MainModel):
-        super().__init__()
-        self._model = model
-        self._breeds = {}
+    def __init__(
+        self,
+        model: MainModel,
+        max_len: None | int = None,
+        _for_cell: bool = False,
+    ):
+        super().__init__({b: set() for b in model.breeds})
+        self._model: MainModel = model
+        model._containers.append(self)
+        self._only_off_earth: bool = _for_cell
+        self._max_length = max_len
 
     def __len__(self):
         return len(self.to_list())
 
     def __repr__(self):
-        # "<ActorsList: >"
         rep = self.to_list().__repr__()[13:-1]
         return f"<AgentsContainer: {rep}>"
 
     def __getattr__(self, name: str) -> Any:
-        if name[0] == "_" or name not in self._breeds:
+        if name[0] == "_" or name not in self.model.breeds:
             return getattr(self, name)
         return self.to_list(name)
 
@@ -62,35 +58,39 @@ class _AgentsContainer(dict):
         return name in self.to_list()
 
     @property
-    def breeds(self) -> Tuple[str]:
-        """Get all breeds in the model"""
-        return tuple(self._breeds.keys())
-
-    @property
     def model(self) -> MainModel:
         """The ABSESpy model where the container belongs to."""
         return self._model
 
-    def _register(self, actor: Actor) -> None:
-        if actor.breed not in self._breeds:
-            self._breeds[actor.breed] = type(actor)
-            self[actor.breed] = set()
+    @property
+    def is_full(self) -> bool:
+        """Whether the container is full."""
+        return (
+            False
+            if self._max_length is None
+            else len(self) >= self._max_length
+        )
 
-    def register_a_breed(self, actor_cls: type[Actor]) -> None:
-        """Register a new breed of actors in the container.
+    def _check_adding_for_cell(self, agent: Actor) -> None:
+        """Check if the container is invalid for adding the agent."""
+        if self._only_off_earth and agent.on_earth:
+            raise ABSESpyError(
+                f"{agent} is on earth and cannot be added to the container."
+            )
 
-        Parameters:
-            actor_cls:
-                The class of the actor to be registered.
+    def _check_adding_for_length(self) -> None:
+        """Check if the container is invalid for adding the agent."""
+        if self.is_full:
+            raise ABSESpyError(
+                "The container is full and cannot add more agents."
+            )
 
-        Raises:
-            TypeError:
-                If the given class is not a subclass of `Actor`.
-        """
-        if not issubclass(actor_cls, Actor):
-            raise TypeError(f"'{actor_cls}' not subclass of 'Actor'.")
-        self._breeds[actor_cls.breed] = actor_cls
-        self[actor_cls.breed] = set()
+    def register(self, actor_cls: Type[Actor]) -> None:
+        """Registers a new breed of actors."""
+        breed = actor_cls.breed
+        if breed in self._model.breeds:
+            raise ValueError(f"{breed} is already registered.")
+        self._model.breeds = actor_cls
 
     def create(
         self,
@@ -148,11 +148,11 @@ class _AgentsContainer(dict):
             ActorsList:
                 A list of entities of the specified breeds.
         """
-        if breeds is None:
-            breeds = self.breeds
+        breeds = self.model.breeds if breeds is None else make_list(breeds)
         agents = ActorsList(self._model)
-        for breed in make_list(breeds):
-            agents.extend(self[breed])
+        for k, values in self.items():
+            if k in breeds:
+                agents.extend(values)
         return agents
 
     def trigger(self, *args, **kwargs) -> Any:
@@ -172,6 +172,28 @@ class _AgentsContainer(dict):
         """
         return self.to_list().trigger(*args, **kwargs)
 
+    def _add_one(self, agent: Actor, register: bool = False) -> bool:
+        """Add one agent to the container.
+
+        Parameters:
+            agent:
+                The agent to add.
+
+        Returns:
+            If the operation is successful.
+        """
+        self._check_adding_for_cell(agent)
+        self._check_adding_for_length()
+        if agent.breed not in self.keys():
+            if register:
+                self.register(agent.__class__)
+            else:
+                raise TypeError(
+                    f"'{agent.breed}' not registered. Is it created by `.create()` method?"
+                )
+        self[agent.breed].add(agent)
+        return True
+
     def add(
         self,
         agents: Union[Actor, ActorsList, Iterable[Actor]] = None,
@@ -189,14 +211,8 @@ class _AgentsContainer(dict):
             TypeError:
                 If a breed of the actor(s) is not registered and `register` is False.
         """
-        dic = ActorsList(self._model, make_list(agents)).to_dict()
-        for k, actors_lst in dic.items():
-            if k not in self.breeds:
-                if register:
-                    self._register(actors_lst[0])
-                else:
-                    raise TypeError(f"'{k}' not registered.")
-            self[k] = self[k].union(actors_lst)
+        for item in make_list(agents):
+            self._add_one(item, register)
 
     def remove(self, agent: Actor) -> None:
         """Remove the given agent from the container.
@@ -205,6 +221,10 @@ class _AgentsContainer(dict):
             agent:
                 The agent (actor) to remove.
         """
+        if self._only_off_earth and agent.on_earth:
+            raise ABSESpyError(
+                "You should only remove the agent from the cell by 'actor.move.off()' method."
+            )
         self[agent.breed].remove(agent)
 
     def select(self, selection: Selection) -> ActorsList:
