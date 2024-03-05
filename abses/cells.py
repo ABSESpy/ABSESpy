@@ -93,7 +93,7 @@ class PatchCell(mg.Cell, LinkNode):
             raise TypeError(f"{type(layer)} is not valid layer.")
         self.container = layer.model.human
         self._layer = layer
-        self._agents = _CellAgentsContainer(layer.model)
+        self._agents = _CellAgentsContainer(layer.model, cell=self)
 
     @classmethod
     @property

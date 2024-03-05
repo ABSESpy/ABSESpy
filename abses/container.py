@@ -17,7 +17,8 @@ from abses.sequences import ActorsList, Selection
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
-    from .main import MainModel
+    from abses.cells import PatchCell
+    from abses.main import MainModel
 
 # logger = logging.getLogger("__name__")
 
@@ -52,9 +53,11 @@ class _AgentsContainer(dict):
         return f"<{str(self)}: {'; '.join(strings)}>"
 
     def __getattr__(self, name: str) -> Any | Actor:
-        if name[0] == "_" or name not in self.model.breeds:
-            return getattr(self, name)
-        return self.get(name)
+        return (
+            self.get(name)
+            if name in self.model.breeds
+            else getattr(self, name)
+        )
 
     def __contains__(self, name) -> bool:
         return name in self.get()
@@ -249,19 +252,39 @@ class _AgentsContainer(dict):
 class _CellAgentsContainer(_AgentsContainer):
     """Container for agents located at cells."""
 
+    def __init__(
+        self, model: MainModel, cell: PatchCell, max_len: int | None = None
+    ):
+        super().__init__(model, max_len)
+        self._cell = cell
+
     def __str__(self) -> str:
         return "CellAgents"
 
     def _add_one(
         self, agent: Actor, register: TYPE_CHECKING = False
     ) -> TYPE_CHECKING:
-        if agent.on_earth:
+        if agent.on_earth and agent not in self:
             raise ABSESpyError(
-                f"{agent} is on earth and cannot be added. You may use 'actor.move.to()' to change its location."
+                f"{agent} is on another cell thus cannot be added. You may use 'actor.move.to()' to change its location. Or you may use 'actor.move.off()' before adding it."
             )
-        return super()._add_one(agent, register)
+        super()._add_one(agent, register)
+        agent.at = self._cell
 
     def remove(self, agent: Actor) -> None:
         """Remove the given agent from the container."""
-        agent.move.off()
-        return super().remove(agent)
+        super().remove(agent)
+        del agent.at
+
+    def create(
+        self,
+        breed_cls: Actor,
+        num: int = 1,
+        singleton: TYPE_CHECKING = False,
+        **kwargs,
+    ) -> Actor | ActorsList:
+        new_actors = super().create(breed_cls, num, singleton, **kwargs)
+        self.model.agents.add(new_actors)
+        for a in make_list(new_actors):
+            a.move.to(self._cell)
+        return new_actors

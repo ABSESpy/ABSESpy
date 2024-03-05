@@ -42,6 +42,7 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
         )
     if agent.on_earth:
         agent.move.off()
+    cell.agents.add(agent, register=True)
     agent.at = cell
     # self.geometry = Point(cell.layer.transform * cell.indices)
 
@@ -127,6 +128,8 @@ class _Movements:
         """
         This method is used to remove.
         """
+        if self.actor.on_earth:
+            self.actor.at.agents.remove(self.actor)
         del self.actor.at
 
     def by(self, direction: str = "random", distance: int = 1) -> bool:

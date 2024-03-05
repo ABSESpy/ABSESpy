@@ -171,20 +171,21 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     @at.setter
     def at(self, cell: PatchCell) -> None:
         """Set the cell where the actor is located."""
-        if self.on_earth:
-            raise ABSESpyError(
-                "Cannot set location when the actor is already on earth. Please use 'Actor.move.to' for moving it."
-            )
         if not isinstance(cell, mg.Cell):
             raise TypeError(f"{cell} is not a cell.")
-        cell.agents.add(self, register=True)
+        if self not in cell.agents:
+            raise ABSESpyError(
+                "Cannot set location directly because the actor is not added to the cell."
+            )
         self._cell = cell
 
     @at.deleter
     def at(self) -> None:
-        """Remove the cell where the agent is located."""
-        if self.on_earth:
-            self.at.agents[self.breed].remove(self)
+        """Remove the agent from the located cell."""
+        if self.on_earth and self in self.at.agents:
+            raise ABSESpyError(
+                "Cannot remove location directly because the actor is still on earth."
+            )
         self._cell = None
 
     @cached_property

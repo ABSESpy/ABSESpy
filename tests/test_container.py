@@ -12,22 +12,49 @@ import pytest
 from abses import Actor, MainModel
 from abses.container import _AgentsContainer
 from abses.errors import ABSESpyError
+from abses.nature import PatchCell, PatchModule
+
+
+@pytest.fixture(name="model", scope="function")
+def mock_model() -> MainModel:
+    """创建一个模型"""
+    return MainModel()
+
+
+@pytest.fixture(name="module", scope="function")
+def mock_module(model) -> PatchModule:
+    """创建一个（2*2）的斑块模块"""
+    return model.nature.create_module(how="from_resolution", shape=(2, 2))
+
+
+@pytest.fixture(name="cell_0_0", scope="function")
+def mock_cell_0_0(module) -> PatchCell:
+    """获取模块的第 (0, 0) 个斑块"""
+    return module.cells[0][0]
+
+
+@pytest.fixture(name="cell_0_1", scope="function")
+def mock_cell_0_1(module) -> PatchCell:
+    """获取模块的第 (0, 1) 个斑块"""
+    return module.cells[0][1]
+
+
+@pytest.fixture(name="cell_1_0", scope="function")
+def mock_cell_1_0(module) -> PatchCell:
+    """获取模块的第 (1, 0) 个斑块"""
+    return module.cells[1][0]
+
+
+@pytest.fixture(name="cell_1_1", scope="function")
+def mock_cell_1_1(module) -> PatchCell:
+    """获取模块的第 (1, 1) 个斑块"""
+    return module.cells[1][1]
 
 
 class TestMainContainer:
     """
     测试用于整个模型的主体容器。
     """
-
-    @pytest.fixture(name="model", scope="function")
-    def mock_model(self):
-        """创建一个模型"""
-        return MainModel()
-
-    @pytest.fixture(name="module", scope="function")
-    def mock_module(self, model):
-        """创建一个（2*2）的斑块模块"""
-        return model.nature.create_module(how="from_resolution", shape=(2, 2))
 
     def test_register(self, model, module):
         """测试注册，注册的主体类型应该在模型的所有 Container 中都自动被注册。"""
@@ -163,3 +190,31 @@ class TestMainContainer:
         container.remove(admins_5[0])
         admins_5[1:3].trigger("die")
         assert repr(container) == "<ModelAgents: (2)Farmer; (2)Admin>"
+
+
+class TestCellContainer:
+    """测试单元格容器"""
+
+    def test_add_one(self, cell_0_0: PatchCell, cell_0_1: PatchCell):
+        """测试添加一个主体"""
+        # arrange / action
+        container = cell_0_1.agents
+        actor = container.create(Actor, singleton=True)
+
+        # assert
+        # 从这里创建的主体应该在直接在该斑块上
+        assert actor.on_earth
+        assert actor in container
+        assert len(container) == 1
+        assert container.Actor == {actor}
+        # 同一个不能被反复添加
+        with pytest.raises(ABSESpyError) as e:
+            cell_0_0.agents.add(actor)
+            e.match(f"{actor} is on another cell thus cannot be added.")
+        # 但是可以先移除位置信息，再添加
+        cell_0_1.agents.remove(actor)  # 移除方式
+        cell_0_0.agents.add(actor)
+        assert actor.at is cell_0_0
+        actor.move.off()  # 另一种移除方式
+        cell_0_1.agents.add(actor)
+        assert actor.at is cell_0_1
