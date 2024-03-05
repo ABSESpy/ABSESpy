@@ -42,8 +42,7 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
         )
     if agent.on_earth:
         agent.move.off()
-    cell.agents.add(agent, register=True)
-    agent.set("_cell", cell)
+    agent.at = cell
     # self.geometry = Point(cell.layer.transform * cell.indices)
 
 
@@ -97,10 +96,13 @@ class _Movements:
         """
         if self.layer is None and layer is None:
             raise ABSESpyError("No operating layer is specified.")
-        if self.layer is None:
+        if self.layer is layer or self.layer is None:
             return layer
         if layer is None:
             return self.layer
+        raise ABSESpyError(
+            "The input layer is not consistent with the actor's layer."
+        )
 
     def to(
         self, pos: PatchCell | Coordinate, layer: Optional[PatchModule] = None
@@ -125,9 +127,7 @@ class _Movements:
         """
         This method is used to remove.
         """
-        actor = self.actor
-        actor.at.agents[actor.breed].remove(actor)
-        actor.set("_cell", None)
+        del self.actor.at
 
     def by(self, direction: str = "random", distance: int = 1) -> bool:
         """

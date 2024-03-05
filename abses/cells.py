@@ -7,13 +7,12 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
 import mesa_geo as mg
 
 from abses import Actor, ActorsList
-from abses.container import _AgentsContainer
+from abses.container import _CellAgentsContainer
 from abses.links import LinkNode
 from abses.sequences import agg_agents_attr
 
@@ -94,7 +93,7 @@ class PatchCell(mg.Cell, LinkNode):
             raise TypeError(f"{type(layer)} is not valid layer.")
         self.container = layer.model.human
         self._layer = layer
-        self._agents = _AgentsContainer(layer.model, _for_cell=True)
+        self._agents = _CellAgentsContainer(layer.model)
 
     @classmethod
     @property
@@ -103,7 +102,7 @@ class PatchCell(mg.Cell, LinkNode):
         return cls.__name__
 
     @property
-    def agents(self) -> _AgentsContainer:
+    def agents(self) -> _CellAgentsContainer:
         """The agents located at here."""
         return self._agents
 

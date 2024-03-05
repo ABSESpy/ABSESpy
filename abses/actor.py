@@ -22,6 +22,7 @@ from typing import (
 import mesa_geo as mg
 
 from abses.decision import DecisionFactory
+from abses.errors import ABSESpyError
 from abses.links import LinkNode
 from abses.move import _Movements
 from abses.objects import _BaseObj
@@ -166,6 +167,25 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     def at(self) -> PatchCell | None:
         """Get the cell where the agent is located."""
         return self._cell if self._cell is not None else None
+
+    @at.setter
+    def at(self, cell: PatchCell) -> None:
+        """Set the cell where the actor is located."""
+        if self.on_earth:
+            raise ABSESpyError(
+                "Cannot set location when the actor is already on earth. Please use 'Actor.move.to' for moving it."
+            )
+        if not isinstance(cell, mg.Cell):
+            raise TypeError(f"{cell} is not a cell.")
+        cell.agents.add(self, register=True)
+        self._cell = cell
+
+    @at.deleter
+    def at(self) -> None:
+        """Remove the cell where the agent is located."""
+        if self.on_earth:
+            self.at.agents[self.breed].remove(self)
+        self._cell = None
 
     @cached_property
     def move(self) -> _Movements:

@@ -70,7 +70,7 @@ def test_dynamic_city_lands(model: MainModel):
         return data_now.loc[f"C{agent.unique_id}", list(cfg.crops_id)]
 
     # 随机选择一个主体
-    agent = model.agents.to_list().random.choice()
+    agent = model.agents.get().random.choice()
     data_1979 = get_test_data(agent, 1979)
     assert (agent.dynamic_var("lands") == data_1979).all()
 

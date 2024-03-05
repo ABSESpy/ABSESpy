@@ -34,32 +34,30 @@ class _AgentsContainer(dict):
         self,
         model: MainModel,
         max_len: None | int = None,
-        _for_cell: bool = False,
     ):
         super().__init__({b: set() for b in model.breeds})
         self._model: MainModel = model
         model._containers.append(self)
-        self._only_off_earth: bool = _for_cell
         self._max_length: int = max_len
 
     def __len__(self) -> int:
-        return len(self.to_list())
+        return len(self.get())
 
     def __str__(self) -> str:
-        return "<ModelAgents>"
+        return "ModelAgents"
 
     def __repr__(self) -> str:
         # rep = self.to_list().__repr__()[13:-1]
         strings = [f"({len(v)}){k}" for k, v in self.items()]
-        return f"<ModelAgents: {'; '.join(strings)}>"
+        return f"<{str(self)}: {'; '.join(strings)}>"
 
     def __getattr__(self, name: str) -> Any | Actor:
         if name[0] == "_" or name not in self.model.breeds:
             return getattr(self, name)
-        return self.to_list(name)
+        return self.get(name)
 
     def __contains__(self, name) -> bool:
-        return name in self.to_list()
+        return name in self.get()
 
     @property
     def model(self) -> MainModel:
@@ -72,26 +70,26 @@ class _AgentsContainer(dict):
         return (
             False
             if self._max_length is None
-            else len(self.to_list()) >= self._max_length
+            else len(self.get()) >= self._max_length
         )
 
     @property
     def is_empty(self) -> bool:
         """Whether the container is empty."""
-        return len(self.to_list()) == 0
+        return len(self.get()) == 0
 
-    def _check_adding_for_cell(self, agent: Actor) -> None:
-        """Check if the container is invalid for adding the agent."""
-        if self._only_off_earth and agent.on_earth:
-            raise ABSESpyError(
-                f"{agent} is on earth and cannot be added to the container."
-            )
+    def check_registration(self, actor_cls: Type[Actor]) -> bool:
+        """Whether the breed of the actor is registered."""
+        return actor_cls.breed in self.keys()
 
-    def _check_adding_for_length(self) -> None:
+    def _check_adding_for_length(self, when_adding: int = 1) -> None:
         """Check if the container is invalid for adding the agent."""
-        if self.is_full:
+        if self._max_length is None:
+            return
+        now = len(self.get())
+        if now + when_adding > self._max_length:
             raise ABSESpyError(
-                "The container is full and cannot add more agents."
+                f"{self} is full (maximum {self._max_length}: Now has {now}), trying to add {when_adding} more."
             )
 
     def register(self, actor_cls: Type[Actor] | Iterable[Type[Actor]]) -> None:
@@ -137,7 +135,8 @@ class _AgentsContainer(dict):
             >>> ActorsList
             ```
         """
-        self.register(breed_cls)
+        if not self.check_registration(breed_cls):
+            self.register(breed_cls)
         objs = [breed_cls(self._model, **kwargs) for _ in range(num)]
         logger.info(f"Created {num} actors of breed {breed_cls.__name__}")
         agents = ActorsList(self._model, objs)
@@ -146,7 +145,7 @@ class _AgentsContainer(dict):
             return agents[0] if num == 1 else agents
         return agents
 
-    def to_list(
+    def get(
         self, breeds: Optional[Union[str, Iterable[str]]] = None
     ) -> ActorsList[Actor]:
         """Get all entities of specified breeds to a list.
@@ -181,7 +180,7 @@ class _AgentsContainer(dict):
         Returns:
             None
         """
-        return self.to_list().trigger(*args, **kwargs)
+        return self.get().trigger(*args, **kwargs)
 
     def _add_one(self, agent: Actor, register: bool = False) -> bool:
         """Add one agent to the container.
@@ -193,8 +192,6 @@ class _AgentsContainer(dict):
         Returns:
             If the operation is successful.
         """
-        self._check_adding_for_cell(agent)
-        self._check_adding_for_length()
         if agent.breed not in self.keys():
             if register:
                 self.register(agent.__class__)
@@ -222,7 +219,9 @@ class _AgentsContainer(dict):
             TypeError:
                 If a breed of the actor(s) is not registered and `register` is False.
         """
-        for item in make_list(agents):
+        to_add = make_list(agents)
+        self._check_adding_for_length(len(to_add))
+        for item in to_add:
             self._add_one(item, register)
 
     def remove(self, agent: Actor) -> None:
@@ -232,10 +231,6 @@ class _AgentsContainer(dict):
             agent:
                 The agent (actor) to remove.
         """
-        if self._only_off_earth and agent.on_earth:
-            raise ABSESpyError(
-                "You should only remove the agent from the cell by 'actor.move.off()' method."
-            )
         self[agent.breed].remove(agent)
 
     def select(self, selection: Selection) -> ActorsList:
@@ -248,4 +243,25 @@ class _AgentsContainer(dict):
         Returns:
             A list of actors that match the selection criteria.
         """
-        return self.to_list().select(selection)
+        return self.get().select(selection)
+
+
+class _CellAgentsContainer(_AgentsContainer):
+    """Container for agents located at cells."""
+
+    def __str__(self) -> str:
+        return "CellAgents"
+
+    def _add_one(
+        self, agent: Actor, register: TYPE_CHECKING = False
+    ) -> TYPE_CHECKING:
+        if agent.on_earth:
+            raise ABSESpyError(
+                f"{agent} is on earth and cannot be added. You may use 'actor.move.to()' to change its location."
+            )
+        return super()._add_one(agent, register)
+
+    def remove(self, agent: Actor) -> None:
+        """Remove the given agent from the container."""
+        agent.move.off()
+        return super().remove(agent)

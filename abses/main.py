@@ -84,7 +84,9 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._version: str = __version__
         self._human = human_class(self)
         self._nature = nature_class(self)
-        self._agents = _AgentsContainer(model=self)
+        self._agents = _AgentsContainer(
+            model=self, max_len=kwargs.get("max_agents")
+        )
         self._time = TimeDriver(model=self)
         self._run_id: int | None = run_id
         self._trigger("initialize", order=("nature", "human"))
@@ -134,7 +136,7 @@ class MainModel(Generic[N], Model, _Notice, States):
     @property
     def actors(self) -> ActorsList:
         """All agents as a list. A model can create multiple lists referring different actors."""
-        return self.agents.to_list()
+        return self.agents.get()
 
     @property
     def human(self) -> H:

@@ -11,6 +11,7 @@ import pytest
 
 from abses import Actor, MainModel
 from abses.container import _AgentsContainer
+from abses.errors import ABSESpyError
 
 
 class TestMainContainer:
@@ -109,7 +110,7 @@ class TestMainContainer:
 
         # action / assert
         assert model.agents is container
-        assert str(container) == "<ModelAgents>"
+        assert str(container) == "ModelAgents"
         assert (
             repr(container)
             == f"<ModelAgents: {'; '.join([f'(0){b}' for b in init_breeds])}>"
@@ -124,6 +125,23 @@ class TestMainContainer:
         assert list(container.keys()) == init_breeds
         # 每个品种都是一个空的集合
         assert tuple(container.values()) == tuple(set() for _ in init_breeds)
+
+    def test_max_length(self):
+        """测试容器的最大长度"""
+        # arrange
+        model = MainModel(max_agents=4)
+        container = model.agents
+
+        # action
+        container.create(Actor, 4)
+
+        # assert
+        assert container.is_full is True
+        assert container.is_empty is False
+        assert len(container) == 4
+        assert repr(container) == "<ModelAgents: (4)Actor>"
+        with pytest.raises(ABSESpyError):
+            container.create(Actor, 1)
 
     def test_main_container(self, model, farmer_cls, admin_cls):
         """测试容器的属性"""

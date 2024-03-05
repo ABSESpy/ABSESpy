@@ -65,7 +65,7 @@ class HumanModule(Module):
     def actors(self, name: str | None = None) -> ActorsList[Actor]:
         """Different selections of agents"""
         if name is None:
-            return self.agents.to_list()
+            return self.agents.get()
         if name not in self._collections:
             raise KeyError(f"{name} is not defined.")
         selection = self._collections[name]
