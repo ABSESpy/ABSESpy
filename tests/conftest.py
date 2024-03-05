@@ -6,6 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 import numpy as np
+import pytest
 
 from abses import Actor, MainModel
 from abses.datacollection import DataCollector
@@ -98,3 +99,25 @@ class MockModel(MainModel):
         self.actors.trigger("write_row")
 
         self.datacollector.collect()
+
+
+@pytest.fixture(name="breeds")
+def testing_breeds() -> dict:
+    """一系列用于测试的主体类型。"""
+    return {
+        "Farmer": Farmer,
+        "Admin": Admin,
+        "City": City,
+    }
+
+
+@pytest.fixture
+def farmer_cls(breeds):
+    """用于测试的农民类型"""
+    return breeds.get("Farmer")
+
+
+@pytest.fixture
+def admin_cls(breeds):
+    """用于测试的管理者类型"""
+    return breeds.get("Admin")

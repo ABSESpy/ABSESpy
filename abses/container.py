@@ -40,21 +40,25 @@ class _AgentsContainer(dict):
         self._model: MainModel = model
         model._containers.append(self)
         self._only_off_earth: bool = _for_cell
-        self._max_length = max_len
+        self._max_length: int = max_len
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.to_list())
 
-    def __repr__(self):
-        rep = self.to_list().__repr__()[13:-1]
-        return f"<AgentsContainer: {rep}>"
+    def __str__(self) -> str:
+        return "<ModelAgents>"
 
-    def __getattr__(self, name: str) -> Any:
+    def __repr__(self) -> str:
+        # rep = self.to_list().__repr__()[13:-1]
+        strings = [f"({len(v)}){k}" for k, v in self.items()]
+        return f"<ModelAgents: {'; '.join(strings)}>"
+
+    def __getattr__(self, name: str) -> Any | Actor:
         if name[0] == "_" or name not in self.model.breeds:
             return getattr(self, name)
         return self.to_list(name)
 
-    def __contains__(self, name):
+    def __contains__(self, name) -> bool:
         return name in self.to_list()
 
     @property
@@ -68,8 +72,13 @@ class _AgentsContainer(dict):
         return (
             False
             if self._max_length is None
-            else len(self) >= self._max_length
+            else len(self.to_list()) >= self._max_length
         )
+
+    @property
+    def is_empty(self) -> bool:
+        """Whether the container is empty."""
+        return len(self.to_list()) == 0
 
     def _check_adding_for_cell(self, agent: Actor) -> None:
         """Check if the container is invalid for adding the agent."""
@@ -85,12 +94,13 @@ class _AgentsContainer(dict):
                 "The container is full and cannot add more agents."
             )
 
-    def register(self, actor_cls: Type[Actor]) -> None:
+    def register(self, actor_cls: Type[Actor] | Iterable[Type[Actor]]) -> None:
         """Registers a new breed of actors."""
-        breed = actor_cls.breed
-        if breed in self._model.breeds:
-            raise ValueError(f"{breed} is already registered.")
-        self._model.breeds = actor_cls
+        for a_cls in make_list(actor_cls):
+            breed = a_cls.breed
+            if breed in self._model.breeds:
+                raise ValueError(f"{breed} is already registered.")
+            self._model.breeds = a_cls
 
     def create(
         self,
@@ -127,10 +137,11 @@ class _AgentsContainer(dict):
             >>> ActorsList
             ```
         """
+        self.register(breed_cls)
         objs = [breed_cls(self._model, **kwargs) for _ in range(num)]
         logger.info(f"Created {num} actors of breed {breed_cls.__name__}")
         agents = ActorsList(self._model, objs)
-        self.add(agents, register=True)
+        self.add(agents)
         if singleton:
             return agents[0] if num == 1 else agents
         return agents
