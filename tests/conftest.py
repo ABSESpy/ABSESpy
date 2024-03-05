@@ -5,11 +5,11 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import numpy as np
 import pytest
 
 from abses import Actor, MainModel
 from abses.datacollection import DataCollector
+from abses.nature import PatchCell, PatchModule
 
 
 class Farmer(Actor):
@@ -121,3 +121,45 @@ def farmer_cls(breeds):
 def admin_cls(breeds):
     """用于测试的管理者类型"""
     return breeds.get("Admin")
+
+
+@pytest.fixture(name="model", scope="function")
+def mock_model() -> MainModel:
+    """创建一个模型"""
+    return MainModel()
+
+
+@pytest.fixture(name="module", scope="function")
+def mock_module(model) -> PatchModule:
+    """创建一个（2*2）的斑块模块"""
+    return model.nature.create_module(how="from_resolution", shape=(2, 2))
+
+
+@pytest.fixture(name="cell_0_0", scope="function")
+def mock_cell_0_0(module) -> PatchCell:
+    """获取模块的第 (0, 0) 个斑块"""
+    return module.cells[0][0]
+
+
+@pytest.fixture(name="cell_0_1", scope="function")
+def mock_cell_0_1(module) -> PatchCell:
+    """获取模块的第 (0, 1) 个斑块"""
+    return module.cells[0][1]
+
+
+@pytest.fixture(name="cell_1_0", scope="function")
+def mock_cell_1_0(module) -> PatchCell:
+    """获取模块的第 (1, 0) 个斑块"""
+    return module.cells[1][0]
+
+
+@pytest.fixture(name="cell_1_1", scope="function")
+def mock_cell_1_1(module) -> PatchCell:
+    """获取模块的第 (1, 1) 个斑块"""
+    return module.cells[1][1]
+
+
+@pytest.fixture(name="cells", scope="function")
+def mock_cells(module: PatchModule) -> list:
+    """获取模块的所有斑块"""
+    return module.array_cells

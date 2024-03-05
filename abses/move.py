@@ -11,7 +11,7 @@ This script is used to manipulate actors' movements.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import mesa_geo as mg
 from mesa.space import Coordinate
@@ -24,11 +24,17 @@ if TYPE_CHECKING:
     from abses.nature import PatchModule
 
 
-def _get_position(pos: Coordinate | PatchCell) -> Coordinate:
+def _get_layer_and_position(
+    pos: Coordinate | PatchCell, layer: Optional[PatchModule] = None
+) -> Tuple[Coordinate, PatchModule]:
     if isinstance(pos, mg.Cell):
-        return pos.pos
+        if layer is not None and layer is not pos.layer:
+            raise ABSESpyError(
+                "The input layer is not consistent with the cell's layer."
+            )
+        return pos.layer, pos.pos
     if isinstance(pos, tuple) and len(pos) == 2:
-        return pos
+        return layer, pos
     raise TypeError(f"Invalid position type {pos}.")
 
 
@@ -67,9 +73,13 @@ def move_agent_to(
     Returns:
         If the operation is successful.
     """
-    pos = _get_position(pos)
+    expected_layer, pos = _get_layer_and_position(pos)
     if not isinstance(layer, mg.RasterLayer):
         raise TypeError(f"{layer} is not mg.RasterLayer.")
+    if expected_layer and expected_layer is not layer:
+        raise ABSESpyError(
+            f"{pos} expects operation on the layer {expected_layer}, got input {layer}."
+        )
     if layer.out_of_bounds(pos):
         raise ValueError(f"Position {pos} is out of bounds.")
     cell = layer.cells[pos[0]][pos[1]]
@@ -87,7 +97,7 @@ class _Movements:
         # self.direction = actor.direction
 
     @property
-    def layer(self) -> mg.RasterLayer:
+    def layer(self) -> PatchModule:
         """The current layer of the operating actor."""
         return self.actor.layer
 
@@ -111,18 +121,11 @@ class _Movements:
         """
         This method is used to move the actor to a specific location.
         """
-        # 如果位置是一个单元格的坐标，那么检查这是在哪个图层进行操作
-        if not isinstance(pos, mg.Cell):
-            layer = self._operating_layer(layer)
-        # 否则，检查这个单元格是不是在这个图层上
-        elif layer is None or layer is pos.layer:
-            layer = pos.layer
-        # 如果图层不一致就报错
-        else:
-            raise ABSESpyError(
-                f"Input layer {layer} is not the cell's layer {pos.layer}."
-            )
-        move_agent_to(self.actor, layer=layer, pos=pos)
+        # 检查这个位置的类型，返回图层和位置
+        layer, pos = _get_layer_and_position(pos, layer=layer)
+        # 检查操作图层
+        operating_layer = self._operating_layer(layer=layer)
+        move_agent_to(self.actor, layer=operating_layer, pos=pos)
 
     def off(self) -> None:
         """
@@ -132,7 +135,37 @@ class _Movements:
             self.actor.at.agents.remove(self.actor)
         del self.actor.at
 
-    def by(self, direction: str = "random", distance: int = 1) -> bool:
+    def by(self, direction: str, distance: int = 1) -> bool:
         """
         This method is used to move the actor by a specific distance.
         """
+        if not self.actor.on_earth:
+            raise ABSESpyError(
+                "The actor is not located on a cell, thus cannot move."
+            )
+        old_row, old_col = self.actor.at.indices
+        if direction == "left":
+            new_indices = (old_row, old_col - distance)
+        elif direction == "right":
+            new_indices = (old_row, old_col + distance)
+        elif direction == "up":
+            new_indices = (old_row - distance, old_col)
+        elif direction == "down":
+            new_indices = (old_row + distance, old_col)
+        elif direction in {"up left", "left up"}:
+            new_indices = (old_row - distance, old_col - distance)
+        elif direction in {"up right", "right up"}:
+            new_indices = (old_row - distance, old_col + distance)
+        elif direction in {"down left", "left down"}:
+            new_indices = (old_row + distance, old_col - distance)
+        elif direction in {"down right", "right down"}:
+            new_indices = (old_row + distance, old_col + distance)
+        cell = self.layer.array_cells[new_indices[0]][new_indices[1]]
+        self.actor.move.to(cell)
+
+    def random(self, prob: Optional[str] = None, **kwargs):
+        """
+        This method is used to move the actor to a random location.
+        """
+        cells = self.actor.at.get_neighboring_cells(**kwargs)
+        self.actor.move.to(cells.random.choice(prob=prob))
