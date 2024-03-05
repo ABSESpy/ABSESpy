@@ -125,9 +125,9 @@ class ListRandom:
             return self._when_empty(when_empty=when_empty)
         if not isinstance(size, int):
             raise ValueError(f"{size} isn't an integer size.")
-        if not instances_num or (instances_num < size & ~replace):
+        if instances_num < size and not replace:
             raise ABSESpyError(
-                f"Trying to choose {size} actors from an `ActorsList` {self.actors}."
+                f"Trying to choose {size} actors from {self.actors}."
             )
         if prob is not None:
             prob = self.clean_p(prob=prob)

@@ -10,8 +10,21 @@ import numpy as np
 from abses import Actor, MainModel
 from abses.datacollection import DataCollector
 
-# Random Number Generator
-rng = np.random.default_rng(42)
+
+class Farmer(Actor):
+    """测试用，另一个类别的主体"""
+
+    def __init__(self, model, observer: bool = True) -> None:
+        super().__init__(model, observer)
+        self.metric = 0.1
+
+
+class Admin(Actor):
+    """测试用，另一个类别的主体"""
+
+
+class City(Actor):
+    """测试用，每个城市的主体"""
 
 
 class MockAgent(Actor):
@@ -42,16 +55,14 @@ class MockModel(MainModel):
         self.model_var = 100
         self.n = 10
 
-        self.nature.create_module(how="from_resolution", shape=(2, 2))
+        module = self.nature.create_module(how="from_resolution", shape=(2, 2))
 
         self.agents.create(MockAgent, self.n - 3)
         self.agents.create(anotherMockAgent, 3)
 
-        for agent in self.actors:
-            agent.move.to(
-                layer=self.nature.major_layer,
-                pos=tuple(rng.integers(2, size=2)),
-            )
+        positions = module.random_positions(len(self.actors), replace=True)
+        for agent, pos in zip(self.actors, positions):
+            agent.move.to(pos)
 
         self.datacollector = DataCollector(
             model=self,

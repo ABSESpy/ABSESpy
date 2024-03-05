@@ -19,7 +19,7 @@ class Test_DataCollector:
         To use it, you need to include 'model' as an argument of a test case.
         Without `name='model'`, the fixture will be function's name: `mock_model` instead.
         """
-        model = MockModel(parameters={"time": {"end": 10}})
+        model = MockModel(parameters={"time": {"end": 10}}, seed=42)
         model.run_model()
         return model
 
