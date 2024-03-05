@@ -159,7 +159,9 @@ class TestMainContainer:
 class TestCellContainer:
     """测试单元格容器"""
 
-    def test_add_one(self, cell_0_0: PatchCell, cell_0_1: PatchCell):
+    def test_add_one(
+        self, model: MainModel, cell_0_0: PatchCell, cell_0_1: PatchCell
+    ):
         """测试添加一个主体"""
         # arrange / action
         container = cell_0_1.agents
@@ -169,6 +171,7 @@ class TestCellContainer:
         # 从这里创建的主体应该在直接在该斑块上
         assert actor.on_earth
         assert actor in container
+        assert actor in model.agents
         assert len(container) == 1
         assert container.Actor == {actor}
         # 同一个不能被反复添加
@@ -182,3 +185,15 @@ class TestCellContainer:
         actor.move.off()  # 另一种移除方式
         cell_0_1.agents.add(actor)
         assert actor.at is cell_0_1
+
+    def test_remove_all(self, model: MainModel, cell_0_0: PatchCell):
+        """Test remove cell from everywhere."""
+        # arrange
+        container = cell_0_0.agents
+        actor = container.create(Actor, singleton=True)
+        actor.die()
+
+        # assert
+        assert actor not in container
+        assert actor.at is None
+        assert actor not in model.agents
