@@ -5,85 +5,104 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Dict, Iterator, List, Optional, Tuple, Type
+from typing import List
 
-import networkx as nx
 import pytest
 
-from abses.links import LinkContainer, LinkNode
+from abses import Actor
+from abses.graph import convert_to_networkx
+from abses.links import LinkNode
+from abses.main import MainModel
+from abses.sequences import ActorsList
 
 
 # Mocking the LinkNode for testing purposes
 class MockNode(LinkNode):
-    pass
+    """Mock Node for testing purposes."""
 
 
 class AnotherMockNode(LinkNode):
-    pass
+    """Another Mock Node for testing purposes."""
 
 
-def test_link_container_initialization():
-    container = LinkContainer()
-    assert isinstance(container._bipartite, Dict)
-    assert isinstance(container._graphs, Dict)
+@pytest.fixture(name="tres_nodes")
+def nodes(model: MainModel) -> List[LinkNode]:
+    """Fixture for creating nodes."""
+    return model.agents.create(Actor, num=3)
 
 
-def test_links_property():
-    container = LinkContainer()
-    assert container.links == ()
+class TestLinkNode:
+    """Test the LinkNode class."""
 
-    # Mock adding a graph
-    container._graphs["mock_link"] = nx.Graph()
-    assert container.links == ("mock_link",)
+    def test_link_add(self, tres_nodes: List[LinkNode]):
+        """Test adding a link, happy path."""
+        # arrange
+        node_1, node_2, _ = tres_nodes
+
+        # action
+        node_1.link_to(node_2, "test")
+
+        # assert
+        assert isinstance(node_1.linked("test"), ActorsList)
+        assert node_2 in node_1.linked("test")
+        assert node_1.is_linking_to(node_2, "test")
+        assert node_2.is_linked_by(node_1, "test")
+
+    def test_link_delete(self, tres_nodes: List[LinkNode]):
+        """Test deleting a link, happy path."""
+        # arrange
+        node_1, node_2, _ = tres_nodes
+        node_1.link_to(node_2, "test")
+
+        # action
+        node_1.unlink_to(node_2, "test")
+
+        # assert
+        assert node_1.is_linked_by(node_2, "test")
+        assert node_2.is_linking_to(node_1, "test")
+        assert not node_1.is_linking_to(node_2, "test")
+        assert not node_2.is_linked_by(node_1, "test")
+
+    def test_no_linked_after_die(self, tres_nodes: List[LinkNode]):
+        """Test that the link is deleted after the node dies."""
+        # arrange
+        node_1, node_2, _ = tres_nodes
+        node_1.link_to(node_2, "test")
+
+        # action
+        node_1.die()
+
+        # assert
+        assert not node_2.is_linked_by(node_1, "test")
+        assert not node_1.is_linking_to(node_2, "test")
+
+    def test_unlink(self, tres_nodes: List[LinkNode]):
+        """Test unlinking."""
+        # arrange
+        node_1, node_2, _ = tres_nodes
+        node_1.link_to(node_2, "test")
+
+        # action
+        node_1.unlink_with(node_2, "test")
+
+        # assert
+        assert not node_1.is_linking_to(node_2, "test")
+        assert not node_2.is_linked_by(node_1, "test")
 
 
-def test_is_bipartite():
-    container = LinkContainer()
-    node1 = MockNode()
-    node2 = MockNode()
-    assert not container._is_bipartite(node1, node2)
-    node3 = AnotherMockNode()
-    assert container._is_bipartite(node1, node3)
+class TestNetworkx:
+    """Test linking nodes into networkx."""
 
+    def test_converting_to_networkx(self, tres_nodes: List[LinkNode]):
+        """Test converting to networkx."""
+        # arrange
+        node_1, node_2, node_3 = tres_nodes
+        node_1.link_to(node_2, "test")
+        node_2.link_to(node_3, "test")
 
-def test_is_new_links_graph():
-    container = LinkContainer()
-    assert container._is_new_links_graph("mock_link")
+        # act
+        graph = convert_to_networkx(tres_nodes, "test")
 
-    # Mock adding a graph
-    container._graphs["mock_link"] = nx.Graph()
-    assert not container._is_new_links_graph("mock_link")
-
-
-def test_is_node():
-    container = LinkContainer()
-    node = MockNode()
-    assert container._is_node(node)
-
-    with pytest.raises(TypeError):
-        assert container._is_node("not_a_node")
-
-
-def test_add_new_graph():
-    container = LinkContainer()
-    container._add_new_graph("mock_link", nx.Graph, True)
-    assert "mock_link" in container._graphs
-
-    with pytest.raises(TypeError):
-        container._add_new_graph("bad_link", str, True)
-
-
-def test_is_directed_graph():
-    container = LinkContainer()
-
-    # Testing with graph class types
-    assert container._is_directed_graph(nx.DiGraph)
-    assert not container._is_directed_graph(nx.Graph)
-
-    # Mock adding graphs and testing with link names
-    container._add_new_graph("directed_link", nx.DiGraph, True)
-    container._add_new_graph("undirected_link", nx.Graph, False)
-
-    assert "directed_link" in container._graphs
-    assert container._is_directed_graph("directed_link")
-    assert not container._is_directed_graph("undirected_link")
+        # assert
+        assert set(graph.nodes) == set(tres_nodes)
+        assert graph.number_of_edges() == 2

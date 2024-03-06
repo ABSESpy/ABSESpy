@@ -167,6 +167,6 @@ class ListRandom:
         linked_combs = []
         for actor1, actor2 in list(combinations(self.actors, 2)):
             if np.random.random() < p:
-                actor1.link_to(actor2, link=link, mutual=True)
+                actor1.link_to(actor2, link_name=link, mutual=True)
                 linked_combs.append((actor1, actor2))
         return linked_combs

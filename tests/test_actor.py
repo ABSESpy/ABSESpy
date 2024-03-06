@@ -7,7 +7,6 @@
 
 from typing import Tuple, TypeAlias
 
-import networkx as nx
 import pytest
 
 from abses import MainModel
@@ -79,18 +78,12 @@ def test_links() -> Links:
 
 def test_linked(links: Links):
     """测试主体的连接"""
-    model, cell_1, cell_2, agent_1, agent_2 = links
+    _, cell_1, cell_2, agent_1, agent_2 = links
     agent_1.link_to(cell_1, "land")
     agent_2.link_to(cell_2, "land")
-    agent_1.link_to(agent_2, link="friend")
+    agent_1.link_to(agent_2, link_name="friend")
 
     assert cell_1 in agent_1.linked("land")
     assert cell_2 in agent_2.linked("land")
     assert agent_1 in agent_2.linked("friend")
     assert agent_2 in agent_1.linked("friend")
-
-    friends = model.human.get_graph("friend")
-    lands = model.human.get_graph("land")
-    assert model.human.links
-    assert len(nx.degree(friends)) == 2
-    assert len(nx.degree(lands)) == 4

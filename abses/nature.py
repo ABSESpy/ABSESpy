@@ -401,12 +401,12 @@ class PatchModule(Module, mg.RasterLayer):
             actors.geometry, refer_layer=refer_layer, **kwargs
         )
         for cell in cells:
-            cell.link_to(agent=actors, link=link)
+            cell.link_to(node=actors, link_name=link)
 
     def linked_attr(
         self,
         attr_name: str,
-        link: Optional[str] = None,
+        link_name: Optional[str] = None,
         nodata: Any = np.nan,
         how: Optional[str] = "only",
     ) -> np.ndarray:
@@ -431,7 +431,7 @@ class PatchModule(Module, mg.RasterLayer):
         def get_attr(cell: PatchCell, __name):
             return cell.linked_attr(
                 attr=__name,
-                link=link,
+                link_name=link_name,
                 nodata=nodata,
                 how=how,
             )
@@ -495,7 +495,7 @@ class PatchModule(Module, mg.RasterLayer):
         )
 
     def has_agent(
-        self, link: Optional[str] = None, xarray: bool = False
+        self, link_name: Optional[str] = None, xarray: bool = False
     ) -> np.ndarray:
         """If any actor is linked or existed in each cell.
 
@@ -508,22 +508,25 @@ class PatchModule(Module, mg.RasterLayer):
         Returns:
             A raster data shows weather any actor links or exists.
         """
-        if link is None:
+        if link_name is None:
             data = np.vectorize(lambda x: x.has_agent)(self.array_cells)
         else:
-            data = np.vectorize(lambda x: bool(x.linked(link)))(
+            data = np.vectorize(lambda x: bool(x.linked(link_name)))(
                 self.array_cells
             )
         if xarray:
             return xr.DataArray(
                 data=data,
                 coords=self.coords,
-                name=link or "has_agent",
+                name=link_name or "has_agent",
             ).rio.write_crs(self.crs)
         return data
 
     def land_allotment(
-        self, agent: Actor, link: str, where: None | str | np.ndarray = None
+        self,
+        agent: Actor,
+        link_name: str,
+        where: None | str | np.ndarray = None,
     ) -> None:
         """
         Allotment of land of this layer to actors.
@@ -545,7 +548,7 @@ class PatchModule(Module, mg.RasterLayer):
         mask_ = self._attr_or_array(where)
         cells = self.array_cells[mask_]
         for cell in cells:
-            cell.link_to(agent, link)
+            cell.link_to(agent, link_name)
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

@@ -140,7 +140,7 @@ class PatchCell(mg.Cell, LinkNode):
             raise AttributeError(f"{attr_name} not exists in {self.layer}.")
         return getattr(self, attr_name)
 
-    def linked(self, link: str) -> ActorsList[Actor]:
+    def linked(self, link_name: str) -> ActorsList[Actor]:
         """Gets the body of the link to this patch.
 
         Parameters:
@@ -156,20 +156,22 @@ class PatchCell(mg.Cell, LinkNode):
             KeyError:
                 The searched link is not available in the model.
         """
-        if link is None:
+        if link_name is None:
             return self.agents
-        elif not isinstance(link, str):
-            raise TypeError(f"{type(link)} is not valid link name.")
-        elif link not in self.links:
-            raise KeyError(f"{link} not exists in {self}.")
+        elif not isinstance(link_name, str):
+            raise TypeError(f"{type(link_name)} is not valid link name.")
+        elif link_name not in self.links:
+            raise KeyError(f"{link_name} not exists in {self}.")
         else:
-            agents = ActorsList(self.model, super().linked(link=link))
+            agents = ActorsList(
+                self.model, super().linked(link_name=link_name)
+            )
         return agents
 
     def linked_attr(
         self,
         attr: str,
-        link: Optional[str] = None,
+        link_name: Optional[str] = None,
         nodata: Any = None,
         how: str = "only",
     ) -> Any:
@@ -193,7 +195,7 @@ class PatchCell(mg.Cell, LinkNode):
                 The searched link is not available in the model.
         """
         try:
-            agents = self.linked(link=link)
+            agents = self.linked(link_name=link_name)
         except KeyError:
             agents = ActorsList(self.model, [])
         if nodata is None or agents:

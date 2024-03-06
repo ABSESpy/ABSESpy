@@ -7,131 +7,15 @@
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-)
-
-import networkx as nx
-
-if TYPE_CHECKING:
-    from abses.human import BaseHuman
-
-
-class LinkContainer:
-    """连接容器"""
-
-    def __init__(self) -> None:
-        self._bipartite: Dict[str, bool] = {}
-        self._graphs: Dict[str, nx.Graph] = {}
-
-    @property
-    def links(self) -> Tuple[str]:
-        """所有关联类型"""
-        return tuple(self._graphs.keys())
-
-    def _is_bipartite(self, node_1, node_2) -> bool:
-        """是否是二分图"""
-        return type(node_1) is not type(node_2)
-
-    def _is_new_links_graph(self, link: str) -> bool:
-        """是否是新的图"""
-        return link not in self.links
-
-    def _is_node(self, node: LinkNode, check: bool = True) -> bool:
-        """是否是节点"""
-        flag = isinstance(node, LinkNode)
-        if check and not flag:
-            raise TypeError(f"{node} is not a LinkNode.")
-        return flag
-
-    def _add_new_graph(
-        self, link: str, graph_cls: Type, is_bipartite: bool
-    ) -> None:
-        """添加新图"""
-        if not issubclass(graph_cls, nx.Graph):
-            raise TypeError(
-                f"Initializing a new link type '{link}', you must assign a valid graph type, instead of {graph_cls}."
-            )
-        self._bipartite[link] = is_bipartite
-        self._graphs[link] = graph_cls()
-
-    def _is_directed_graph(self, graph: Type | str) -> bool:
-        if isinstance(graph, str):
-            if self._is_new_links_graph(graph):
-                raise KeyError(f"Link {graph} does not exist.")
-            graph = type(self._graphs[graph])
-            return self._is_directed_graph(graph)
-        return graph in (nx.MultiDiGraph, nx.DiGraph)
-
-    def add_link(
-        self,
-        node_1,
-        node_2,
-        link: str,
-        graph_cls: Type = None,
-        mutual: Optional[bool] = None,
-    ) -> bool:
-        """添加关联"""
-        self._is_node(node_1, check=True)
-        self._is_node(node_2, check=True)
-        if self._is_new_links_graph(link):
-            is_bipartite = self._is_bipartite(node_1, node_2)
-            self._add_new_graph(link, graph_cls, is_bipartite)
-        if self._is_directed_graph(graph_cls) and mutual is None:
-            raise TypeError(
-                f"{graph_cls} is Directed Graph, mutual must be set."
-            )
-        self.linking(node_1, node_2, link, mutual=mutual)
-
-    def linking(
-        self,
-        node_1: LinkNode,
-        node_2: LinkNode,
-        link: str,
-        mutual: bool = True,
-    ) -> None:
-        """建立关联"""
-        graph = self.get_graph(link)
-        if self._bipartite[link]:
-            graph.add_node(node_1, bipartite=node_1.breed)
-            graph.add_node(node_2, bipartite=node_2.breed)
-        node_1.links.add(link)
-        node_2.links.add(link)
-        graph.add_edge(node_1, node_2)
-        if mutual:
-            graph.add_edge(node_2, node_1)
-
-    def get_graph(self, link: str) -> nx.Graph:
-        """获取图"""
-        if self._is_new_links_graph(link=link):
-            raise KeyError(f"Link {link} does not exist.")
-        return self._graphs[link]
-
-    def linked(
-        self,
-        link: str,
-        node: LinkNode,
-    ) -> Iterator[LinkNode]:
-        """获取相关联的所有其它主体"""
-        graph = self.get_graph(link)
-        if isinstance(graph, nx.DiGraph):
-            return graph.successors(node)
-        return nx.all_neighbors(graph=graph, node=node)
+from typing import Dict, Iterable, Iterator, List, Optional, Self, Set
 
 
 class LinkNode:
     """节点类"""
 
     def __init__(self) -> None:
-        self._container: LinkContainer = None
-        self._links: Set[str] = set()
+        self._linking_me: Dict[str, Set[Self]] = {}
+        self._linking_to: Dict[str, Set[Self]] = {}
 
     @classmethod
     @property
@@ -140,37 +24,105 @@ class LinkNode:
         return cls.__name__
 
     @property
-    def links(self) -> List[str]:
-        """该主体所有连接类型"""
-        return self._links
+    def links(self) -> Set[str]:
+        """链接"""
+        return tuple(self._linking_to.keys())
 
-    @property
-    def container(self) -> LinkContainer:
-        """连接容器"""
-        return self._container
+    def is_linked_by(self, node: LinkNode, link_name: Optional[str]) -> bool:
+        """是否被连接"""
+        return node in self._linking_me.get(link_name, set())
 
-    @container.setter
-    def container(self, container: LinkContainer) -> None:
-        if not isinstance(container, LinkContainer):
-            raise TypeError(f"{container} is not a LinkContainer.")
-        self._container = container
+    def is_linking_to(self, node: LinkNode, link_name: Optional[str]) -> bool:
+        """是否连接"""
+        return node in self._linking_to.get(link_name, set())
 
     def link_to(
         self,
-        agent: LinkNode,
-        link: Optional[str],
-        graph_cls: Type = nx.Graph,
-        **kwargs,
+        node: LinkNode,
+        link_name: Optional[str],
+        mutual: bool = False,
     ) -> None:
         """将行动者与其它行动者或地块建立连接"""
-        self.container.add_link(
-            node_1=self, node_2=agent, link=link, graph_cls=graph_cls, **kwargs
-        )
+        if link_name not in self._linking_to:
+            self._linking_to[link_name] = set()
+        self._linking_to[link_name].add(node)
+        # 如果对方那没有记录被自己连接，那么让它记录
+        if not node.is_linked_by(self, link_name):
+            node.link_by(self, link_name)
+        # 如果是相互连接，那么让对方也连接自己
+        if mutual:
+            node.link_to(self, link_name, mutual=False)
 
-    def linked(self, link: str) -> Iterator[LinkNode]:
-        """获取相关联的所有其它主体，如果不在连接容器中，则返回空列表"""
-        return (
-            iter([])
-            if link not in self.links
-            else self.container.linked(link, self)
-        )
+    def link_by(
+        self, node: LinkNode, link_name: str, mutual: bool = True
+    ) -> bool:
+        """是否被连接"""
+        if link_name not in self._linking_me:
+            self._linking_me[link_name] = set()
+        self._linking_me[link_name].add(node)
+        if not node.is_linking_to(self, link_name):
+            node.link_to(self, link_name)
+        if mutual:
+            node.link_by(self, link_name, mutual=False)
+
+    def _clean_link_name(
+        self, link_name: Optional[str | Iterable[str]]
+    ) -> List[str]:
+        """清理链接名称"""
+        if link_name is None:
+            link_name = self.links
+        if isinstance(link_name, str):
+            link_name = [link_name]
+        if not isinstance(link_name, Iterable):
+            raise TypeError(f"{link_name} is not an iterable.")
+        return link_name
+
+    def remove_me_from_others(
+        self, link_name: Optional[str | Iterable[str]] = None
+    ):
+        """将行动者从其它人的链接中移除。"""
+        link_name = self._clean_link_name(link_name)
+        for name in self.links:
+            if name not in link_name:
+                continue
+            self.clear_links_to(name)
+            self.clear_links_by(name)
+
+    def clear_links_to(self, link_name: str) -> None:
+        """清除连接"""
+        to_clean = self._linking_to.pop(link_name)
+        for node in to_clean:
+            node.unlink_by(self, link_name, mutual=False)
+
+    def clear_links_by(self, link_name: str) -> None:
+        """清除连接"""
+        to_clean = self._linking_me.pop(link_name)
+        for node in to_clean:
+            node.unlink_to(self, link_name, mutual=False)
+
+    def unlink_with(self, node, link_name: str) -> None:
+        """删除链接"""
+        self.unlink_by(node=node, link_name=link_name)
+        self.unlink_to(node=node, link_name=link_name)
+
+    def unlink_to(
+        self, node: LinkNode, link_name: Optional[str], mutual: bool = False
+    ):
+        """删除连接"""
+        self._linking_to[link_name].remove(node)
+        if node.is_linked_by(self, link_name):
+            node.unlink_by(self, link_name)
+        if mutual and node.is_linking_to(self, link_name):
+            node.unlink_to(self, link_name, mutual=False)
+
+    def unlink_by(self, node: LinkNode, link_name: str, mutual: bool = False):
+        """删除连接"""
+        self._linking_me[link_name].remove(node)
+        if node.is_linking_to(self, link_name):
+            node.unlink_to(self, link_name)
+        if mutual and node.is_linked_by(self, link_name):
+            node.unlink_by(self, link_name, mutual=False)
+
+    def linked(self, link_name: str) -> Iterator[LinkNode]:
+        """获取相关联的所有其它主体"""
+        return iter(self._linking_to[link_name])

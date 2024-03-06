@@ -24,7 +24,6 @@ from abses.actor import Actor
 
 from .cells import PatchCell
 from .container import _AgentsContainer
-from .links import LinkContainer
 from .modules import CompositeModule, Module
 from .sequences import ActorsList, Selection
 
@@ -121,7 +120,7 @@ class HumanModule(Module):
         return selected
 
 
-class BaseHuman(CompositeModule, HumanModule, LinkContainer):
+class BaseHuman(CompositeModule, HumanModule):
     """The Base Human Module.
 
     Note:
@@ -129,6 +128,5 @@ class BaseHuman(CompositeModule, HumanModule, LinkContainer):
     """
 
     def __init__(self, model, name="human"):
-        LinkContainer.__init__(self)
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)

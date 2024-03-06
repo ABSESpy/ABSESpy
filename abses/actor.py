@@ -244,11 +244,10 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
     def die(self) -> None:
         """Kills the agent (self)"""
         self.model.agents.remove(self)
-        for link in self.links:
-            self._container.get_graph(link).remove_node(self)
+        self.remove_me_from_others()
         if self.on_earth:
             self.move.off()
-            del self
+        del self
 
     def alter_nature(self, attr: str, value: Any) -> None:
         """Alter the nature of the parameters of the cell where the actor is located.
@@ -267,7 +266,7 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             raise AttributeError(f"Attribute {attr} not found.")
         setattr(self._cell, attr, value)
 
-    def linked(self, link: str) -> ActorsList:
+    def linked(self, link_name: str) -> ActorsList:
         """Get all other actors linked to this actor.
 
         Parameters:
@@ -277,4 +276,4 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         Returns:
             A list of all actors linked to this actor.
         """
-        return ActorsList(self.model, super().linked(link))
+        return ActorsList(self.model, super().linked(link_name))

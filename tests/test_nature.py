@@ -15,7 +15,7 @@ from shapely.geometry import Point, box
 from abses.actor import Actor
 from abses.cells import raster_attribute
 from abses.errors import ABSESpyError
-from abses.links import LinkContainer, LinkNode
+from abses.links import LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
 from abses.sequences import ActorsList
@@ -28,7 +28,6 @@ class MockActor(LinkNode):
         super().__init__()
         self.geometry = geometry
         self.test = 1
-        self.container = LinkContainer()
 
 
 class MockPatchCell(PatchCell):
@@ -66,7 +65,6 @@ def test_setup_attributes():
 def test_patch_cell_attachment():
     """测试斑块可以连接到一个主体"""
     cell = LinkNode()
-    cell.container = LinkContainer()
     actor = MockActor()
     cell.link_to(actor, "actor_1")
 
@@ -91,9 +89,9 @@ def test_patch_module_properties():
 
     actor = MockActor()
     patch_module.land_allotment(
-        agent=actor, link="land", where=np.ones(shape, dtype=bool)
+        agent=actor, link_name="land", where=np.ones(shape, dtype=bool)
     )
-    assert np.all(patch_module.has_agent(link="land") == 1)
+    assert np.all(patch_module.has_agent(link_name="land") == 1)
 
 
 @pytest.fixture(name="raster_layer")
@@ -151,7 +149,7 @@ def test_link_by_geometry(linked_raster_layer):
     """测试每一个斑块可以连接到一个主体"""
     agent, raster_layer = linked_raster_layer
     cells = agent.linked("link")
-    arr = raster_layer.linked_attr(attr_name="test", link="link")
+    arr = raster_layer.linked_attr(attr_name="test", link_name="link")
     assert np.nansum(arr) == len(cells)
 
 
@@ -160,15 +158,15 @@ def test_batch_link_by_geometry(raster_layer):
     agents = [MockActor(box(2, 2, 4, 4)), MockActor(box(6, 6, 8, 8))]
 
     raster_layer.link_by_geometry(agents, "link")
-    arr = raster_layer.linked_attr(attr_name="test", link="link")
+    arr = raster_layer.linked_attr(attr_name="test", link_name="link")
     assert np.nansum(arr) == 8
 
     overlapped = [MockActor(box(2, 2, 7, 7)), MockActor(box(6, 6, 8, 8))]
     raster_layer.link_by_geometry(overlapped, "link")
     with pytest.raises(ValueError):
-        arr2 = raster_layer.linked_attr(attr_name="test", link="link")
+        arr2 = raster_layer.linked_attr(attr_name="test", link_name="link")
     arr2 = raster_layer.linked_attr(
-        attr_name="test", link="link", how="random"
+        attr_name="test", link_name="link", how="random"
     )
     assert np.nansum(arr2) == 25 + 4 - 1  # one agent is overlapped
 
@@ -176,7 +174,7 @@ def test_batch_link_by_geometry(raster_layer):
 def test_read_attrs_from_linked_agent(linked_raster_layer):
     """测试从相连接的主体中读取属性"""
     _, raster_layer = linked_raster_layer
-    array = raster_layer.linked_attr("test", link="link")
+    array = raster_layer.linked_attr("test", link_name="link")
     assert isinstance(array, np.ndarray)
     assert array.shape == raster_layer.shape2d
     assert np.nansum(array) == 36
@@ -185,12 +183,12 @@ def test_read_attrs_from_linked_agent(linked_raster_layer):
     linked_cell = raster_layer.array_cells[4][4]
     not_linked_cell = raster_layer.array_cells[1][1]
 
-    assert linked_cell.linked_attr("test", link="link") == 1
+    assert linked_cell.linked_attr("test", link_name="link") == 1
     with pytest.raises(ValueError):
-        not_linked_cell.linked_attr("test", link="link")
+        not_linked_cell.linked_attr("test", link_name="link")
 
     with pytest.raises(AttributeError):
-        linked_cell.linked_attr("not_a_attr", link="link")
+        linked_cell.linked_attr("not_a_attr", link_name="link")
 
 
 def test_major_layer(raster_layer):
