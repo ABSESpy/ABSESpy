@@ -22,7 +22,7 @@ __all__ = [
     "PatchModule",
     "Actor",
     "Decision",
-    "DecisionFactory",
+    "_DecisionFactory",
     "ActorsList",
     "_AgentsContainer",
     "PatchCell",
@@ -32,7 +32,7 @@ __version__ = "v0.4.2"
 
 from .actor import Actor, perception
 from .container import ActorsList, _AgentsContainer
-from .decision import Decision, DecisionFactory
+from .decision import Decision, _DecisionFactory
 from .human import BaseHuman
 from .main import MainModel
 from .nature import BaseNature, PatchCell, PatchModule

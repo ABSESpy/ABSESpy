@@ -11,22 +11,22 @@ import pytest
 
 from abses import Actor
 from abses.graph import convert_to_networkx
-from abses.links import LinkNode
+from abses.links import _LinkNode
 from abses.main import MainModel
 from abses.sequences import ActorsList
 
 
 # Mocking the LinkNode for testing purposes
-class MockNode(LinkNode):
+class MockNode(_LinkNode):
     """Mock Node for testing purposes."""
 
 
-class AnotherMockNode(LinkNode):
+class AnotherMockNode(_LinkNode):
     """Another Mock Node for testing purposes."""
 
 
 @pytest.fixture(name="tres_nodes")
-def nodes(model: MainModel) -> List[LinkNode]:
+def nodes(model: MainModel) -> List[_LinkNode]:
     """Fixture for creating nodes."""
     return model.agents.create(Actor, num=3)
 
@@ -34,7 +34,7 @@ def nodes(model: MainModel) -> List[LinkNode]:
 class TestLinkNode:
     """Test the LinkNode class."""
 
-    def test_link_add(self, tres_nodes: List[LinkNode]):
+    def test_link_add(self, tres_nodes: List[_LinkNode]):
         """Test adding a link, happy path."""
         # arrange
         node_1, node_2, _ = tres_nodes
@@ -48,7 +48,7 @@ class TestLinkNode:
         assert node_1.is_linking_to(node_2, "test")
         assert node_2.is_linked_by(node_1, "test")
 
-    def test_link_delete(self, tres_nodes: List[LinkNode]):
+    def test_link_delete(self, tres_nodes: List[_LinkNode]):
         """Test deleting a link, happy path."""
         # arrange
         node_1, node_2, _ = tres_nodes
@@ -63,7 +63,7 @@ class TestLinkNode:
         assert not node_1.is_linking_to(node_2, "test")
         assert not node_2.is_linked_by(node_1, "test")
 
-    def test_no_linked_after_die(self, tres_nodes: List[LinkNode]):
+    def test_no_linked_after_die(self, tres_nodes: List[_LinkNode]):
         """Test that the link is deleted after the node dies."""
         # arrange
         node_1, node_2, _ = tres_nodes
@@ -76,7 +76,7 @@ class TestLinkNode:
         assert not node_2.is_linked_by(node_1, "test")
         assert not node_1.is_linking_to(node_2, "test")
 
-    def test_unlink(self, tres_nodes: List[LinkNode]):
+    def test_unlink(self, tres_nodes: List[_LinkNode]):
         """Test unlinking."""
         # arrange
         node_1, node_2, _ = tres_nodes
@@ -93,7 +93,7 @@ class TestLinkNode:
 class TestNetworkx:
     """Test linking nodes into networkx."""
 
-    def test_converting_to_networkx(self, tres_nodes: List[LinkNode]):
+    def test_converting_to_networkx(self, tres_nodes: List[_LinkNode]):
         """Test converting to networkx."""
         # arrange
         node_1, node_2, node_3 = tres_nodes

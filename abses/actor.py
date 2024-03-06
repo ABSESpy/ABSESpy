@@ -21,9 +21,9 @@ from typing import (
 
 import mesa_geo as mg
 
-from abses.decision import DecisionFactory
+from abses.decision import _DecisionFactory
 from abses.errors import ABSESpyError
-from abses.links import LinkNode
+from abses.links import _LinkNode
 from abses.move import _Movements
 from abses.objects import _BaseObj
 from abses.sequences import ActorsList
@@ -40,27 +40,7 @@ if TYPE_CHECKING:
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
-
-
-def parsing_string_selection(selection: str) -> Dict[str, Any]:
-    """Parses a string selection expression and returns a dictionary of key-value pairs.
-
-    Parameters:
-        selection:
-            String specifying which breeds to select.
-
-    Returns:
-        selection_dict:
-            Parsed output as Dictionary
-    """
-    selection_dict = {}
-    if "==" not in selection:
-        return {"breed": selection}
-    expressions = selection.split(",")
-    for exp in expressions:
-        left, right = tuple(exp.split("=="))
-        selection_dict[left.strip(" ")] = right.strip(" ")
-    return selection_dict
+Targets: TypeAlias = Union["ActorsList", "Self", "PatchCell"]
 
 
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
@@ -90,7 +70,7 @@ def perception(
     return decorator(decorated_func) if decorated_func else decorator
 
 
-class Actor(mg.GeoAgent, _BaseObj, LinkNode):
+class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
     """
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
@@ -130,18 +110,18 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         mg.GeoAgent.__init__(
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
-        LinkNode.__init__(self)
+        _LinkNode.__init__(self)
         self._cell: PatchCell = None
         self._container: LinkContainer = model.human
-        self._decisions: DecisionFactory = self._setup_decisions()
+        self._decisions: _DecisionFactory = self._setup_decisions()
 
-    def _setup_decisions(self) -> DecisionFactory:
+    def _setup_decisions(self) -> _DecisionFactory:
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
-        return DecisionFactory(self, decisions)
+        return _DecisionFactory(self, decisions)
 
     @property
-    def decisions(self) -> DecisionFactory:
+    def decisions(self) -> _DecisionFactory:
         """Decisions that this agent makes."""
         return self._decisions
 
@@ -193,11 +173,22 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
         """Manipulating agent's location."""
         return _Movements(self)
 
+    def _get_correct_target(self, target: Targets, attr: str) -> Targets:
+        """Which targets should be used when getting or setting."""
+        if target is not None:
+            return target
+        if hasattr(self, attr):
+            return self
+        if self.on_earth:
+            return self._cell
+        raise AttributeError(f"{attr} not found in {self}.")
+
     def get(
         self,
         attr: str,
         aggfunc: Optional[Callable] = None,
         target: Optional[Self | PatchCell] = None,
+        **kwargs,
     ) -> Any:
         """Gets attribute value from target.
         attr:
@@ -209,62 +200,24 @@ class Actor(mg.GeoAgent, _BaseObj, LinkNode):
             1. If the target is an agent, get the attribute from the agent.
             2. If the target is a cell, get the attribute from the cell.
         """
-        if target is None:
-            target = self
-        target.get(attr, aggfunc=aggfunc)
-        raise AttributeError(f"{attr} not found in {target}")
+        target = self._get_correct_target(target, attr=attr)
+        if target is self:
+            value = getattr(self, attr)
+            return aggfunc(value) if aggfunc is not None else value
+        return target.get(attr, aggfunc=aggfunc, target=target, **kwargs)
 
-    def set(self, attr: str, value: Any) -> None:
+    def set(self, attr: str, value: Any, target: Targets) -> None:
         """Sets the value of an attribute."""
-        setattr(self, attr, value)
-
-    def selecting(self, selection: Union[str, Dict[str, Any]]) -> bool:
-        """Either select the agent according to specified criteria.
-
-        Parameters:
-            selection:
-                Either a string or a dictionary of key-value pairs that represent agent attributes to be checked against.
-
-        Returns:
-            Whether the agent is selected or not
-        """
-        if isinstance(selection, str):
-            selection = parsing_string_selection(selection)
-        results = []
-        for k, v in selection.items():
-            attr = getattr(self, k, None)
-            if attr is None:
-                results.append(False)
-            elif attr == v or str(attr) == v:
-                results.append(True)
-            else:
-                results.append(False)
-        return all(results)
+        target = self._get_correct_target(target=target, attr=attr)
+        setattr(target, attr, value)
 
     def die(self) -> None:
         """Kills the agent (self)"""
-        self.model.agents.remove(self)
-        self.remove_me_from_others()
-        if self.on_earth:
+        self.remove_me_from_others()  # 从其它人的链接中移除
+        if self.on_earth:  # 如果在地上，那么从地块上移除
             self.move.off()
+        self.model.agents.remove(self)  # 从总模型里移除
         del self
-
-    def alter_nature(self, attr: str, value: Any) -> None:
-        """Alter the nature of the parameters of the cell where the actor is located.
-
-        Parameters:
-            attr:
-                The name of the parameter to change.
-            value:
-                The new value to assign to the parameter.
-
-        Raises:
-            AttributeError:
-                If the attribute is not found in the cell.
-        """
-        if not hasattr(self._cell, attr):
-            raise AttributeError(f"Attribute {attr} not found.")
-        setattr(self._cell, attr, value)
 
     def linked(self, link_name: str) -> ActorsList:
         """Get all other actors linked to this actor.

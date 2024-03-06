@@ -23,7 +23,7 @@ from mesa_geo.raster_layers import Cell
 from rasterio import mask
 from shapely import Geometry
 
-from abses.links import LinkNode
+from abses.links import _LinkNode
 from abses.modules import CompositeModule, Module
 
 from .actor import Actor
@@ -391,7 +391,7 @@ class PatchModule(Module, mg.RasterLayer):
                 self.link_by_geometry(agent, link, refer_layer, **kwargs)
             return
         # For a single actor
-        if not isinstance(actors, LinkNode):
+        if not isinstance(actors, _LinkNode):
             raise TypeError(
                 f"Type '{type(actors)}' can not be linked, make sure your agent is a valid subclass of `Actor`."
             )

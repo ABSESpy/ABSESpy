@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Dict, Iterable, Iterator, List, Optional, Self, Set
 
 
-class LinkNode:
+class _LinkNode:
     """节点类"""
 
     def __init__(self) -> None:
@@ -28,17 +28,17 @@ class LinkNode:
         """链接"""
         return tuple(self._linking_to.keys())
 
-    def is_linked_by(self, node: LinkNode, link_name: Optional[str]) -> bool:
+    def is_linked_by(self, node: _LinkNode, link_name: Optional[str]) -> bool:
         """是否被连接"""
         return node in self._linking_me.get(link_name, set())
 
-    def is_linking_to(self, node: LinkNode, link_name: Optional[str]) -> bool:
+    def is_linking_to(self, node: _LinkNode, link_name: Optional[str]) -> bool:
         """是否连接"""
         return node in self._linking_to.get(link_name, set())
 
     def link_to(
         self,
-        node: LinkNode,
+        node: _LinkNode,
         link_name: Optional[str],
         mutual: bool = False,
     ) -> None:
@@ -54,7 +54,7 @@ class LinkNode:
             node.link_to(self, link_name, mutual=False)
 
     def link_by(
-        self, node: LinkNode, link_name: str, mutual: bool = True
+        self, node: _LinkNode, link_name: str, mutual: bool = True
     ) -> bool:
         """是否被连接"""
         if link_name not in self._linking_me:
@@ -106,7 +106,7 @@ class LinkNode:
         self.unlink_to(node=node, link_name=link_name)
 
     def unlink_to(
-        self, node: LinkNode, link_name: Optional[str], mutual: bool = False
+        self, node: _LinkNode, link_name: Optional[str], mutual: bool = False
     ):
         """删除连接"""
         self._linking_to[link_name].remove(node)
@@ -115,7 +115,7 @@ class LinkNode:
         if mutual and node.is_linking_to(self, link_name):
             node.unlink_to(self, link_name, mutual=False)
 
-    def unlink_by(self, node: LinkNode, link_name: str, mutual: bool = False):
+    def unlink_by(self, node: _LinkNode, link_name: str, mutual: bool = False):
         """删除连接"""
         self._linking_me[link_name].remove(node)
         if node.is_linking_to(self, link_name):
@@ -123,6 +123,6 @@ class LinkNode:
         if mutual and node.is_linked_by(self, link_name):
             node.unlink_by(self, link_name, mutual=False)
 
-    def linked(self, link_name: str) -> Iterator[LinkNode]:
+    def linked(self, link_name: str) -> Iterator[_LinkNode]:
         """获取相关联的所有其它主体"""
         return iter(self._linking_to[link_name])

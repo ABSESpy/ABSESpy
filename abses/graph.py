@@ -7,7 +7,7 @@
 
 from typing import Optional, Set
 
-from abses.links import LinkNode
+from abses.links import _LinkNode
 
 try:
     import networkx as nx
@@ -18,7 +18,7 @@ except ImportError as exc:
 
 
 def convert_to_networkx(
-    nodes: Set[LinkNode], link_name: Optional[str]
+    nodes: Set[_LinkNode], link_name: Optional[str]
 ) -> nx.Graph:
     """Convert a set of LinkNodes to a networkx graph."""
     graph = nx.Graph()

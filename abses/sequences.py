@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from numbers import Number
 from typing import (
@@ -27,6 +26,7 @@ import numpy as np
 
 from abses.errors import ABSESpyError
 from abses.random import ListRandom
+from abses.selection import selecting
 
 from .tools.func import make_list
 
@@ -133,7 +133,7 @@ class ActorsList(list):
                 Positions that return True will be selected.
         """
         if isinstance(selection, (str, dict)):
-            bool_ = [actor.selecting(selection) for actor in self]
+            bool_ = [selecting(actor, selection) for actor in self]
         elif isinstance(selection, (list, tuple, np.ndarray)):
             bool_ = make_list(selection)
         else:

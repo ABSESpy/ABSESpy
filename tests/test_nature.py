@@ -15,13 +15,13 @@ from shapely.geometry import Point, box
 from abses.actor import Actor
 from abses.cells import raster_attribute
 from abses.errors import ABSESpyError
-from abses.links import LinkNode
+from abses.links import _LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
 from abses.sequences import ActorsList
 
 
-class MockActor(LinkNode):
+class MockActor(_LinkNode):
     """测试行动者"""
 
     def __init__(self, geometry=None):
@@ -64,7 +64,7 @@ def test_setup_attributes():
 
 def test_patch_cell_attachment():
     """测试斑块可以连接到一个主体"""
-    cell = LinkNode()
+    cell = _LinkNode()
     actor = MockActor()
     cell.link_to(actor, "actor_1")
 

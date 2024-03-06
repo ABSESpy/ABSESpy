@@ -122,7 +122,9 @@ class Decision:
                     raise AttributeError(
                         f"{self.breed} doesn't have an attribute 'decisions'"
                     )
-                if not isinstance(getattr(self, "decisions"), DecisionFactory):
+                if not isinstance(
+                    getattr(self, "decisions"), _DecisionFactory
+                ):
                     raise TypeError("Type of a decision must be decision.")
                 decision_obj = self.decisions.get(cls.name)
                 if not decision_obj.has_strategy(strategy):
@@ -209,7 +211,7 @@ class Decision:
         """Overwrite this method to do something else after make decision."""
 
 
-class DecisionFactory:
+class _DecisionFactory:
     """Creating and containing decisions of an agent."""
 
     def __init__(

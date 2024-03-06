@@ -13,7 +13,7 @@ import mesa_geo as mg
 
 from abses import Actor, ActorsList
 from abses.container import _CellAgentsContainer
-from abses.links import LinkNode
+from abses.links import _LinkNode
 from abses.sequences import agg_agents_attr
 
 if TYPE_CHECKING:
@@ -53,7 +53,7 @@ def raster_attribute(func):
     return property(func)
 
 
-class PatchCell(mg.Cell, LinkNode):
+class PatchCell(mg.Cell, _LinkNode):
     """A patch cell of a `RasterLayer`.
 
     Attributes:
@@ -65,7 +65,7 @@ class PatchCell(mg.Cell, LinkNode):
 
     def __init__(self, pos=None, indices=None):
         mg.Cell.__init__(self, pos, indices)
-        LinkNode.__init__(self)
+        _LinkNode.__init__(self)
         self._agents = None
         self._layer = None
 
@@ -119,7 +119,7 @@ class PatchCell(mg.Cell, LinkNode):
         """
         return bool(self._agents) if breed is None else breed in self._agents
 
-    def get_attr(self, attr_name: str) -> Any:
+    def get(self, attr_name: str) -> Any:
         """Gets the value of an attribute or registered property. Automatically update the value if it is the dynamic variable of the layer.
 
         Parameters:
