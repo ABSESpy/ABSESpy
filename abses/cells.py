@@ -7,16 +7,18 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
 import mesa_geo as mg
 
 from abses import Actor, ActorsList
 from abses.container import _CellAgentsContainer
-from abses.links import _LinkNode
+from abses.links import _LinkNode, _LinkProxy
 from abses.sequences import agg_agents_attr
 
 if TYPE_CHECKING:
+    from abses.main import MainModel
     from abses.nature import PatchModule
 
 
@@ -95,16 +97,15 @@ class PatchCell(mg.Cell, _LinkNode):
         self._layer = layer
         self._agents = _CellAgentsContainer(layer.model, cell=self)
 
-    @classmethod
-    @property
-    def breed(cls) -> str:
-        """Breed of this `PatchCell`"""
-        return cls.__name__
-
     @property
     def agents(self) -> _CellAgentsContainer:
         """The agents located at here."""
         return self._agents
+
+    @cached_property
+    def link(self) -> _LinkProxy:
+        """The link to the patch."""
+        return _LinkProxy(node=self, model=self.layer.model)
 
     def has_agent(self, breed: Optional[str] = None) -> bool:
         """Whether the actor is standing at the current `PatchCell`.
@@ -140,34 +141,6 @@ class PatchCell(mg.Cell, _LinkNode):
             raise AttributeError(f"{attr_name} not exists in {self.layer}.")
         return getattr(self, attr_name)
 
-    def linked(self, link_name: str) -> ActorsList[Actor]:
-        """Gets the body of the link to this patch.
-
-        Parameters:
-            link:
-                The link type to search.
-
-        Returns:
-            An `ActorList` of `Actor` who has association with the patch.
-
-        Raises:
-            TypeError:
-                The input link should be a string of link name.
-            KeyError:
-                The searched link is not available in the model.
-        """
-        if link_name is None:
-            return self.agents
-        elif not isinstance(link_name, str):
-            raise TypeError(f"{type(link_name)} is not valid link name.")
-        elif link_name not in self.links:
-            raise KeyError(f"{link_name} not exists in {self}.")
-        else:
-            agents = ActorsList(
-                self.model, super().linked(link_name=link_name)
-            )
-        return agents
-
     def linked_attr(
         self,
         attr: str,
@@ -195,7 +168,7 @@ class PatchCell(mg.Cell, _LinkNode):
                 The searched link is not available in the model.
         """
         try:
-            agents = self.linked(link_name=link_name)
+            agents = self.link.get(link_name=link_name)
         except KeyError:
             agents = ActorsList(self.model, [])
         if nodata is None or agents:

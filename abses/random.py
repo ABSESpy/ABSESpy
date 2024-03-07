@@ -159,14 +159,14 @@ class ListRandom:
             # with `probability=1`, all possible actor-actor links would be generated.
             >>> actors.random.link('test', p=1)
             >>> a1, a2, a3 = actors
-            >>> assert a1.linked('test) == [a2, a3]
-            >>> assert a2.linked('test) == [a1, a3]
-            >>> assert a3.linked('test) == [a1, a2]
+            >>> assert a1.link.get('test) == [a2, a3]
+            >>> assert a2.link.get('test) == [a1, a3]
+            >>> assert a3.link.get('test) == [a1, a2]
             ```
         """
         linked_combs = []
         for actor1, actor2 in list(combinations(self.actors, 2)):
             if np.random.random() < p:
-                actor1.link_to(actor2, link_name=link, mutual=True)
+                actor1.link.to(actor2, link_name=link, mutual=True)
                 linked_combs.append((actor1, actor2))
         return linked_combs

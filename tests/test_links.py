@@ -10,10 +10,8 @@ from typing import List
 import pytest
 
 from abses import Actor
-from abses.graph import convert_to_networkx
-from abses.links import _LinkNode
+from abses.links import _LinkContainer, _LinkNode
 from abses.main import MainModel
-from abses.sequences import ActorsList
 
 
 # Mocking the LinkNode for testing purposes
@@ -26,82 +24,121 @@ class AnotherMockNode(_LinkNode):
 
 
 @pytest.fixture(name="tres_nodes")
-def nodes(model: MainModel) -> List[_LinkNode]:
+def nodes(model: MainModel) -> List[Actor]:
     """Fixture for creating nodes."""
     return model.agents.create(Actor, num=3)
 
 
-class TestLinkNode:
+@pytest.fixture(name="container")
+def mock_container(model: MainModel) -> _LinkContainer:
+    """test link container"""
+    return model.human
+
+
+class TestLinkContainer:
     """Test the LinkNode class."""
 
-    def test_link_add(self, tres_nodes: List[_LinkNode]):
+    def test_link_add(
+        self, tres_nodes: List[Actor], container: _LinkContainer
+    ):
         """Test adding a link, happy path."""
         # arrange
         node_1, node_2, _ = tres_nodes
 
         # action
-        node_1.link_to(node_2, "test")
+        container.add_a_link("test", node_1, node_2)
 
         # assert
-        assert isinstance(node_1.linked("test"), ActorsList)
-        assert node_2 in node_1.linked("test")
-        assert node_1.is_linking_to(node_2, "test")
-        assert node_2.is_linked_by(node_1, "test")
+        assert "test" in container.links
+        assert any(container.has_link("test", node_1, node_2))
+        assert not all(container.has_link("test", node_1, node_2))
 
-    def test_link_delete(self, tres_nodes: List[_LinkNode]):
+    @pytest.mark.parametrize(
+        "mutual, expected",
+        [
+            (True, (False, False)),
+            (False, (False, True)),
+        ],
+    )
+    def test_link_delete(
+        self,
+        tres_nodes: List[Actor],
+        container: _LinkContainer,
+        mutual,
+        expected,
+    ):
         """Test deleting a link, happy path."""
         # arrange
         node_1, node_2, _ = tres_nodes
-        node_1.link_to(node_2, "test")
+        container.add_a_link("test", node_1, node_2, mutual=True)
 
         # action
-        node_1.unlink_to(node_2, "test")
+        container.remove_a_link("test", node_1, node_2, mutual=mutual)
 
         # assert
-        assert node_1.is_linked_by(node_2, "test")
-        assert node_2.is_linking_to(node_1, "test")
-        assert not node_1.is_linking_to(node_2, "test")
-        assert not node_2.is_linked_by(node_1, "test")
+        assert "test" in container.links
+        assert container.has_link("test", node_1, node_2) == expected
 
-    def test_no_linked_after_die(self, tres_nodes: List[_LinkNode]):
+    @pytest.mark.parametrize(
+        "direction, expected",
+        [
+            ("in", (True, False)),
+            ("out", (False, True)),
+            (None, (False, False)),
+        ],
+        ids=[
+            "Direction = in",
+            "Direction = out",
+            "Direction = None",
+        ],
+    )
+    def test_clean_links(
+        self,
+        tres_nodes: List[Actor],
+        container: _LinkContainer,
+        direction,
+        expected,
+    ):
+        """Test cleaning the links."""
+        # arrange
+        node_1, node_2, _ = tres_nodes
+        container.add_a_link("test", node_1, node_2, mutual=True)
+
+        # action
+        container.clean_links_of(node_1, "test", direction=direction)
+
+        # assert
+        assert container.has_link("test", node_1, node_2) == expected
+
+    def test_no_linked_after_die(
+        self, tres_nodes: List[Actor], container: _LinkContainer
+    ):
         """Test that the link is deleted after the node dies."""
         # arrange
         node_1, node_2, _ = tres_nodes
-        node_1.link_to(node_2, "test")
+        container.add_a_link("test", node_1, node_2, mutual=True)
 
         # action
         node_1.die()
 
         # assert
-        assert not node_2.is_linked_by(node_1, "test")
-        assert not node_1.is_linking_to(node_2, "test")
-
-    def test_unlink(self, tres_nodes: List[_LinkNode]):
-        """Test unlinking."""
-        # arrange
-        node_1, node_2, _ = tres_nodes
-        node_1.link_to(node_2, "test")
-
-        # action
-        node_1.unlink_with(node_2, "test")
-
-        # assert
-        assert not node_1.is_linking_to(node_2, "test")
-        assert not node_2.is_linked_by(node_1, "test")
+        assert container.has_link("test", node_1, node_2) == (False, False)
 
 
 class TestNetworkx:
     """Test linking nodes into networkx."""
 
-    def test_converting_to_networkx(self, tres_nodes: List[_LinkNode]):
+    def test_converting_to_networkx(
+        self, tres_nodes: List[Actor], container: _LinkContainer
+    ):
         """Test converting to networkx."""
         # arrange
         node_1, node_2, node_3 = tres_nodes
-        node_1.link_to(node_2, "test")
-        node_2.link_to(node_3, "test")
+        container.add_a_link("test", node_1, node_2, mutual=True)
+        container.add_a_link("test", node_2, node_3, mutual=True)
 
         # act
-        graph = convert_to_networkx(tres_nodes, "test")
+        graph = container.get_graph("test")
 
         # assert
         assert set(graph.nodes) == set(tres_nodes)

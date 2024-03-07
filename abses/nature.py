@@ -401,7 +401,7 @@ class PatchModule(Module, mg.RasterLayer):
             actors.geometry, refer_layer=refer_layer, **kwargs
         )
         for cell in cells:
-            cell.link_to(node=actors, link_name=link)
+            cell.link.to(node=actors, link_name=link, mutual=True)
 
     def linked_attr(
         self,
@@ -511,7 +511,7 @@ class PatchModule(Module, mg.RasterLayer):
         if link_name is None:
             data = np.vectorize(lambda x: x.has_agent)(self.array_cells)
         else:
-            data = np.vectorize(lambda x: bool(x.linked(link_name)))(
+            data = np.vectorize(lambda x: bool(x.link.get(link_name)))(
                 self.array_cells
             )
         if xarray:
@@ -548,7 +548,7 @@ class PatchModule(Module, mg.RasterLayer):
         mask_ = self._attr_or_array(where)
         cells = self.array_cells[mask_]
         for cell in cells:
-            cell.link_to(agent, link_name)
+            cell.link.to(agent, link_name)
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

@@ -43,8 +43,8 @@ class TestRandomActorsList:
 
         # assert
         assert len(linked_combs) == 3
-        assert actors[1] in actors[0].linked("test")
-        assert actors[2] in actors[0].linked("test")
+        assert actors[1] in actors[0].link.get("test")
+        assert actors[2] in actors[0].link.get("test")
 
     @pytest.mark.parametrize(
         "actors_num, p, expected_p",

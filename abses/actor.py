@@ -23,7 +23,7 @@ import mesa_geo as mg
 
 from abses.decision import _DecisionFactory
 from abses.errors import ABSESpyError
-from abses.links import _LinkNode
+from abses.links import _LinkNode, _LinkProxy
 from abses.move import _Movements
 from abses.objects import _BaseObj
 from abses.sequences import ActorsList
@@ -173,6 +173,11 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         """Manipulating agent's location."""
         return _Movements(self)
 
+    @cached_property
+    def link(self) -> _LinkProxy:
+        """连接"""
+        return _LinkProxy(self, self.model)
+
     def _get_correct_target(self, target: Targets, attr: str) -> Targets:
         """Which targets should be used when getting or setting."""
         if target is not None:
@@ -213,20 +218,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
 
     def die(self) -> None:
         """Kills the agent (self)"""
-        self.remove_me_from_others()  # 从其它人的链接中移除
+        self.link.clean()  # 从链接中移除
         if self.on_earth:  # 如果在地上，那么从地块上移除
             self.move.off()
         self.model.agents.remove(self)  # 从总模型里移除
         del self
-
-    def linked(self, link_name: str) -> ActorsList:
-        """Get all other actors linked to this actor.
-
-        Parameters:
-            link:
-                The link to search for.
-
-        Returns:
-            A list of all actors linked to this actor.
-        """
-        return ActorsList(self.model, super().linked(link_name))

@@ -7,63 +7,113 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Iterator, List, Optional, Self, Set
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    TypeAlias,
+)
+
+from abses.sequences import ActorsList
+
+# from abses.objects import _LinkNode
+
+if TYPE_CHECKING:
+    from abses import MainModel
+    from abses.actor import Actor
+    from abses.cells import PatchCell
+
+Node: TypeAlias = "Actor | PatchCell"
 
 
-class _LinkNode:
-    """节点类"""
+class _LinkContainer:
+    """Container for links."""
 
     def __init__(self) -> None:
-        self._linking_me: Dict[str, Set[Self]] = {}
-        self._linking_to: Dict[str, Set[Self]] = {}
-
-    @classmethod
-    @property
-    def breed(cls) -> str:
-        """种类"""
-        return cls.__name__
+        self._back_links: Dict[str, Dict[int, Set]] = {}
+        self._links: Dict[str, Dict[int, Set]] = {}
+        self._cached_networks: Dict[str, object] = {}
 
     @property
-    def links(self) -> Set[str]:
-        """链接"""
-        return tuple(self._linking_to.keys())
+    def links(self) -> tuple[str]:
+        """Get the links of a certain type."""
+        return tuple(self._links.keys())
 
-    def is_linked_by(self, node: _LinkNode, link_name: Optional[str]) -> bool:
-        """是否被连接"""
-        return node in self._linking_me.get(link_name, set())
+    @links.setter
+    def links(self, link_name: str) -> None:
+        """Set the links."""
+        self._links[link_name] = {}
+        self._back_links[link_name] = {}
 
-    def is_linking_to(self, node: _LinkNode, link_name: Optional[str]) -> bool:
-        """是否连接"""
-        return node in self._linking_to.get(link_name, set())
+    def get_graph(self, link_name):
+        """Get the graph."""
+        try:
+            import networkx as nx
+        except ImportError as exc:
+            raise ImportError(
+                "You need to install networkx to use this function."
+            ) from exc
+        graph = nx.from_dict_of_lists(self._links[link_name])
+        self._cached_networks[link_name] = graph
+        return graph
 
-    def link_to(
+    def _register_link(
+        self, link_name: str, source: _LinkNode, target: _LinkNode
+    ) -> None:
+        """Register a link."""
+        if link_name not in self._links:
+            self.links = link_name
+        if source not in self._links[link_name]:
+            self._links[link_name][source] = set()
+        if target not in self._back_links[link_name]:
+            self._back_links[link_name][target] = set()
+
+    def has_link(
+        self, link_name: str, node1: _LinkNode, node2: _LinkNode
+    ) -> tuple[bool]:
+        """If link exists."""
+        data = self._links[link_name]
+        node1_to_node2 = (
+            False if node1 not in data else node2 in data.get(node1, [])
+        )
+        node2_to_node1 = (
+            False if node2 not in data else node1 in data.get(node2, [])
+        )
+        return node1_to_node2, node2_to_node1
+
+    def add_a_link(
         self,
-        node: _LinkNode,
-        link_name: Optional[str],
+        link_name: str,
+        source: Node,
+        target: Node,
         mutual: bool = False,
     ) -> None:
-        """将行动者与其它行动者或地块建立连接"""
-        if link_name not in self._linking_to:
-            self._linking_to[link_name] = set()
-        self._linking_to[link_name].add(node)
-        # 如果对方那没有记录被自己连接，那么让它记录
-        if not node.is_linked_by(self, link_name):
-            node.link_by(self, link_name)
-        # 如果是相互连接，那么让对方也连接自己
+        """Add a link."""
+        self._register_link(link_name, source, target)
+        self._links[link_name][source].add(target)
+        self._back_links[link_name][target].add(source)
         if mutual:
-            node.link_to(self, link_name, mutual=False)
+            self.add_a_link(
+                link_name, target=source, source=target, mutual=False
+            )
 
-    def link_by(
-        self, node: _LinkNode, link_name: str, mutual: bool = True
-    ) -> bool:
-        """是否被连接"""
-        if link_name not in self._linking_me:
-            self._linking_me[link_name] = set()
-        self._linking_me[link_name].add(node)
-        if not node.is_linking_to(self, link_name):
-            node.link_to(self, link_name)
+    def remove_a_link(
+        self,
+        link_name: str,
+        source: Node,
+        target: Node,
+        mutual: bool = False,
+    ) -> None:
+        """Remove a link."""
+        self._links[link_name].get(source, set()).remove(target)
+        self._back_links[link_name].get(target, set()).remove(source)
         if mutual:
-            node.link_by(self, link_name, mutual=False)
+            self.remove_a_link(
+                link_name, target=source, source=target, mutual=False
+            )
 
     def _clean_link_name(
         self, link_name: Optional[str | Iterable[str]]
@@ -77,52 +127,98 @@ class _LinkNode:
             raise TypeError(f"{link_name} is not an iterable.")
         return link_name
 
-    def remove_me_from_others(
-        self, link_name: Optional[str | Iterable[str]] = None
+    def clean_links_of(
+        self,
+        node: _LinkNode,
+        link_name: Optional[str] = None,
+        direction: Optional[str] = None,
+    ) -> None:
+        """Clean the links of a node."""
+        if direction == "in":
+            data = self._back_links
+            another_data = self._links
+        elif direction == "out":
+            data = self._links
+            another_data = self._back_links
+        elif direction is None:
+            self.clean_links_of(node, link_name, direction="in")
+            self.clean_links_of(node, link_name, direction="out")
+            return
+        else:
+            raise ValueError(
+                f"Invalid direction {direction}, please choose from 'in' or 'out'."
+            )
+        for name in self._clean_link_name(link_name):
+            to_clean = data[name].pop(node, set())
+            for another_node in to_clean:
+                another_data[name][another_node].remove(node)
+
+    def linked(self, node, link_name, direction):
+        """Get the linked nodes."""
+        if direction == "in":
+            data = self._back_links
+        elif direction == "out":
+            data = self._links
+        else:
+            raise ValueError(f"Invalid direction {direction}")
+        return data[link_name].get(node, set())
+
+
+class _LinkProxy:
+    """Proxy for linking."""
+
+    def __init__(self, node: Node, model: MainModel) -> None:
+        self.node: _LinkNode = node
+        self.model: MainModel = model
+        self.human: _LinkContainer = model.human
+
+    def get(
+        self, link_name: Optional[str] = None, direction: str = "out"
+    ) -> Set[Node]:
+        """Get the linked nodes."""
+        if link_name is None:
+            return self.human.links
+        agents = self.human.linked(self.node, link_name, direction=direction)
+        return ActorsList(self.model, agents)
+
+    def has(self, link_name: str, node: Optional[Node] = None) -> bool:
+        """Check if the node has the link."""
+        if node is None:
+            return link_name in self.human.links
+        return self.human.has_link(link_name, self.node, node)
+
+    def to(self, node: Node, link_name: str, mutual: bool = False):
+        """Link to the node."""
+        self.human.add_a_link(
+            link_name=link_name, source=self.node, target=node, mutual=mutual
+        )
+
+    def by(self, node: Node, link_name: str, mutual: bool = False):
+        """Link by the node."""
+        self.human.add_a_link(
+            link_name=link_name, source=node, target=self.node, mutual=mutual
+        )
+
+    def unlink(self, node: Node, link_name: str, mutual: bool = False):
+        """Remove the link."""
+        self.human.remove_a_link(
+            link_name=link_name, source=self.node, target=node, mutual=mutual
+        )
+
+    def clean(
+        self, link_name: Optional[str] = None, direction: Optional[str] = None
     ):
-        """将行动者从其它人的链接中移除。"""
-        link_name = self._clean_link_name(link_name)
-        for name in self.links:
-            if name not in link_name:
-                continue
-            self.clear_links_to(name)
-            self.clear_links_by(name)
+        """Clean the links."""
+        self.human.clean_links_of(
+            self.node, link_name=link_name, direction=direction
+        )
 
-    def clear_links_to(self, link_name: str) -> None:
-        """清除连接"""
-        to_clean = self._linking_to.pop(link_name)
-        for node in to_clean:
-            node.unlink_by(self, link_name, mutual=False)
 
-    def clear_links_by(self, link_name: str) -> None:
-        """清除连接"""
-        to_clean = self._linking_me.pop(link_name)
-        for node in to_clean:
-            node.unlink_to(self, link_name, mutual=False)
+class _LinkNode:
+    """节点类"""
 
-    def unlink_with(self, node, link_name: str) -> None:
-        """删除链接"""
-        self.unlink_by(node=node, link_name=link_name)
-        self.unlink_to(node=node, link_name=link_name)
-
-    def unlink_to(
-        self, node: _LinkNode, link_name: Optional[str], mutual: bool = False
-    ):
-        """删除连接"""
-        self._linking_to[link_name].remove(node)
-        if node.is_linked_by(self, link_name):
-            node.unlink_by(self, link_name)
-        if mutual and node.is_linking_to(self, link_name):
-            node.unlink_to(self, link_name, mutual=False)
-
-    def unlink_by(self, node: _LinkNode, link_name: str, mutual: bool = False):
-        """删除连接"""
-        self._linking_me[link_name].remove(node)
-        if node.is_linking_to(self, link_name):
-            node.unlink_to(self, link_name)
-        if mutual and node.is_linked_by(self, link_name):
-            node.unlink_by(self, link_name, mutual=False)
-
-    def linked(self, link_name: str) -> Iterator[_LinkNode]:
-        """获取相关联的所有其它主体"""
-        return iter(self._linking_to[link_name])
+    @classmethod
+    @property
+    def breed(cls) -> str:
+        """种类"""
+        return cls.__name__

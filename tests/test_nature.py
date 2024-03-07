@@ -62,15 +62,15 @@ def test_setup_attributes():
     assert patch_module.get_raster("x").sum() == 30
 
 
-def test_patch_cell_attachment():
+def test_patch_cell_attachment(cell_0_0):
     """测试斑块可以连接到一个主体"""
-    cell = _LinkNode()
-    actor = MockActor()
-    cell.link_to(actor, "actor_1")
+    cell = cell_0_0
+    actor = cell.agents.create(Actor, singleton=True)
+    cell.link.to(actor, "actor_1")
 
-    assert "actor_1" in cell.links
-    assert len(cell.links) == 1
-    assert actor in cell.linked("actor_1")
+    assert "actor_1" in cell.link.get()
+    assert cell.link.get() == ("actor_1",)
+    assert actor in cell.link.get("actor_1")
 
 
 def test_patch_module_properties():
@@ -148,7 +148,7 @@ def simple_linked_raster_layer(raster_layer):
 def test_link_by_geometry(linked_raster_layer):
     """测试每一个斑块可以连接到一个主体"""
     agent, raster_layer = linked_raster_layer
-    cells = agent.linked("link")
+    cells = agent.link.get("link")
     arr = raster_layer.linked_attr(attr_name="test", link_name="link")
     assert np.nansum(arr) == len(cells)
 

@@ -37,7 +37,7 @@ class InvolutingActor(Actor):
     @perception(nodata=False)
     def avg_working_hrs(self) -> float:
         """The average wealth of acquaintances."""
-        colleagues = self.linked("colleague")
+        colleagues = self.link.get("colleague")
         return colleagues.array("working_hrs").mean()
 
     @OverWorking.response(strategy=True)
@@ -86,16 +86,16 @@ def setup_agents():
     agent2.working_hrs = 8
     agent3.working_hrs = 9
 
-    agent1.link_to(agent2, "colleague")
-    agent1.link_to(agent3, "colleague")
+    agent1.link.to(agent2, "colleague")
+    agent1.link.to(agent3, "colleague")
     return agent1, agent2, agent3
 
 
 def test_working_harder(agents: Iterable[InvolutingActor]):
     """Test agents will work harder and harder..."""
     agent1, agent2, agent3 = agents
-    assert agent2 in agent1.linked("colleague")
-    assert agent3 in agent1.linked("colleague")
+    assert agent2 in agent1.link.get("colleague")
+    assert agent3 in agent1.link.get("colleague")
 
     assert agent1.avg_working_hrs() == (8 + 9) / 2
     assert agent1.feel_peer_pressure

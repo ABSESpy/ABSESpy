@@ -21,6 +21,7 @@ from loguru import logger
 from omegaconf import DictConfig
 
 from abses.actor import Actor
+from abses.links import _LinkContainer
 
 from .cells import PatchCell
 from .container import _AgentsContainer
@@ -120,13 +121,10 @@ class HumanModule(Module):
         return selected
 
 
-class BaseHuman(CompositeModule, HumanModule):
-    """The Base Human Module.
-
-    Note:
-        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
-    """
+class BaseHuman(CompositeModule, HumanModule, _LinkContainer):
+    """The Base Human Module."""
 
     def __init__(self, model, name="human"):
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
+        _LinkContainer.__init__(self)
