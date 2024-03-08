@@ -48,6 +48,7 @@ loguru = "~0.7"
 rioxarray = "~0.13"
 pendulum = "~2"
 geopandas = "~0"
+typing-extensions = "^4.10.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-clarity = "^1.0.1"

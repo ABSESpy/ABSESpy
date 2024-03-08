@@ -18,6 +18,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Type,
     TypeAlias,
     Union,
 )
@@ -236,7 +237,7 @@ class _DecisionFactory:
             )
         self._agent = agent
 
-    def parse_decisions(self, decisions: Iterable[type(Decision)]):
+    def parse_decisions(self, decisions: Iterable[Type[Decision]]):
         """Parse decisions and save into the container.
 
         Parameters:
