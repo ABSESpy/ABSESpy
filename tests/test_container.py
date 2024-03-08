@@ -5,6 +5,13 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+测试行动者容器。
+
+1. 测试模型的主体容器。
+2. 测试单元格的主体容器。
+"""
+
 from typing import Dict, List
 
 import pytest
@@ -13,6 +20,7 @@ from abses import Actor, MainModel
 from abses.container import _AgentsContainer
 from abses.errors import ABSESpyError
 from abses.nature import PatchCell
+from abses.sequences import ActorsList
 
 
 class TestMainContainer:
@@ -20,7 +28,23 @@ class TestMainContainer:
     测试用于整个模型的主体容器。
     """
 
-    def test_register(self, model, module):
+    def test_empty_container(self, model: MainModel):
+        """测试空容器。"""
+        # arrange
+        container = model.agents
+        assert repr(container) == "<ModelAgents: >"
+
+        # act
+        container.register(Actor)
+
+        # assert
+        assert str(container) == "ModelAgents"
+        assert container.is_empty is True
+        assert len(container) == 0
+        assert container.model is model
+        assert container.is_full is False
+
+    def test_register_main(self, model, module):
         """测试注册，注册的主体类型应该在模型的所有 Container 中都自动被注册。"""
         # arrange
         container = model.agents
@@ -32,7 +56,7 @@ class TestMainContainer:
         assert all("Actor" in cell.agents.keys() for cell in module)
         assert repr(container) == "<ModelAgents: (0)Actor>"
 
-    def test_create(self, model):
+    def test_create(self, model: MainModel):
         """测试创建主体"""
         # arrange
         container: _AgentsContainer = model.agents
@@ -41,7 +65,8 @@ class TestMainContainer:
         actor = container.create(Actor, singleton=True)
 
         # assert
-        assert actor in container.Actor
+        assert actor in container.get("Actor")
+        assert container.check_registration(Actor)
         assert repr(container) == "<ModelAgents: (1)Actor>"
 
     @pytest.mark.parametrize(
@@ -117,6 +142,19 @@ class TestMainContainer:
         # 每个品种都是一个空的集合
         assert tuple(container.values()) == tuple(set() for _ in init_breeds)
 
+    def test_get(self, model, admin_cls, farmer_cls):
+        """测试获取主体"""
+        # arrange
+        container = model.agents
+        admin = container.create(admin_cls, singleton=True)
+        farmer = container.create(farmer_cls, singleton=True)
+
+        # action / assert
+        assert container.get("Admin") == {admin}
+        assert container.get("Farmer") == {farmer}
+        assert container.get() == {admin, farmer}
+        assert isinstance(container.get(), ActorsList)
+
     def test_max_length(self):
         """测试容器的最大长度"""
         # arrange
@@ -145,7 +183,7 @@ class TestMainContainer:
         assert isinstance(a_farmer, Actor)
         assert len(container) == 6
         assert repr(container) == "<ModelAgents: (1)Farmer; (5)Admin>"
-        assert container.Admin == admins_5
+        assert container.get("Admin") == admins_5
 
         # 增删
         another_farmer = farmer_cls(model)
@@ -155,45 +193,75 @@ class TestMainContainer:
         admins_5[1:3].trigger("die")
         assert repr(container) == "<ModelAgents: (2)Farmer; (2)Admin>"
 
+    @pytest.mark.parametrize(
+        "init_breeds, num, breed, expected",
+        [
+            (["Admin", "Farmer"], (0, 1), None, 1),
+            (["Admin", "Farmer"], (1, 1), None, 2),
+            (["Admin", "Farmer"], (1, 0), "Admin", 1),
+            (["Admin", "Farmer"], (1, 0), "Farmer", 0),
+        ],
+    )
+    def test_has_agent(self, model, breeds, init_breeds, num, breed, expected):
+        """测试是否有主体"""
+        # arrange
+        container: _AgentsContainer = model.agents
+        for b, n in zip(init_breeds, num):
+            container.create(breeds.get(b), n)
+
+        # act / assert
+        assert container.has(breed) == expected
+
 
 class TestCellContainer:
     """测试单元格容器"""
+
+    def test_register_cell(self, model, cell_0_0):
+        """测试注册，注册的主体类型应该在模型的所有 Container 中都自动被注册。"""
+        # arrange
+        cell_container = cell_0_0.agents
+
+        # action
+        cell_container.register([Actor])
+
+        # assert
+        assert cell_container.check_registration(Actor)
+        assert model.agents.check_registration(Actor)
+        assert "Actor" in cell_container.keys()
+        assert "Actor" in model.agents.keys()
 
     def test_add_one(
         self, model: MainModel, cell_0_0: PatchCell, cell_0_1: PatchCell
     ):
         """测试添加一个主体"""
         # arrange / action
-        container = cell_0_1.agents
-        actor = container.create(Actor, singleton=True)
+        cell_container = cell_0_1.agents
+        actor = cell_container.create(Actor, singleton=True)
 
         # assert
         # 从这里创建的主体应该在直接在该斑块上
         assert actor.on_earth
-        assert actor in container
+        assert actor in cell_container
         assert actor in model.agents
-        assert len(container) == 1
-        assert container.Actor == {actor}
+        assert len(cell_container) == 1
+        assert cell_container.get("Actor") == {actor}
         # 同一个不能被反复添加
         with pytest.raises(ABSESpyError) as e:
             cell_0_0.agents.add(actor)
             e.match(f"{actor} is on another cell thus cannot be added.")
         # 但是可以先移除位置信息，再添加
-        cell_0_1.agents.remove(actor)  # 移除方式
+        cell_0_1.agents.remove(actor)
         cell_0_0.agents.add(actor)
         assert actor.at is cell_0_0
-        actor.move.off()  # 另一种移除方式
-        cell_0_1.agents.add(actor)
-        assert actor.at is cell_0_1
 
     def test_remove_all(self, model: MainModel, cell_0_0: PatchCell):
         """Test remove cell from everywhere."""
         # arrange
-        container = cell_0_0.agents
-        actor = container.create(Actor, singleton=True)
-        actor.die()
+        cell_container = cell_0_0.agents
+        actor = cell_container.create(Actor, singleton=True)
+        cell_container.remove(actor)
 
         # assert
-        assert actor not in container
+        assert actor not in cell_container
         assert actor.at is None
-        assert actor not in model.agents
+        assert actor in model.agents

@@ -5,13 +5,27 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+行动者容器，集中保存行动者。
+
+是私有类，按照，应该存在于
+"""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    Optional,
+    Type,
+    TypeAlias,
+    Union,
+)
 
 from loguru import logger
 
-from abses.actor import Actor
+from abses.actor import Actor, Breeds
 from abses.errors import ABSESpyError
 from abses.sequences import ActorsList, Selection
 from abses.tools.func import make_list
@@ -20,16 +34,12 @@ if TYPE_CHECKING:
     from abses.cells import PatchCell
     from abses.main import MainModel
 
-# logger = logging.getLogger("__name__")
+ActorTypes: TypeAlias = Type[Actor] | Iterable[Type[Actor]]
+Actors: TypeAlias = Union[Actor, ActorsList, Iterable[Actor]]
 
 
 class _AgentsContainer(dict):
-    """Singleton AgentsContainer for each model.
-
-    This class is a dictionary-like container for managing agents in a simulation model. It is designed to be a singleton,
-    meaning that there is only one instance of this class per model. It provides methods for creating, adding, removing,
-    and selecting agents, as well as triggering events.
-    """
+    """AgentsContainer for the main model."""
 
     def __init__(
         self,
@@ -51,13 +61,6 @@ class _AgentsContainer(dict):
         # rep = self.to_list().__repr__()[13:-1]
         strings = [f"({len(v)}){k}" for k, v in self.items()]
         return f"<{str(self)}: {'; '.join(strings)}>"
-
-    def __getattr__(self, name: str) -> Any | Actor:
-        return (
-            self.get(name)
-            if name in self.model.breeds
-            else getattr(self, name)
-        )
 
     def __contains__(self, name) -> bool:
         return name in self.get()
@@ -91,11 +94,11 @@ class _AgentsContainer(dict):
             return
         now = len(self.get())
         if now + when_adding > self._max_length:
-            raise ABSESpyError(
-                f"{self} is full (maximum {self._max_length}: Now has {now}), trying to add {when_adding} more."
-            )
+            e1 = f"{self} is full (maximum {self._max_length}: "
+            e2 = f"Now has {now}), trying to add {when_adding} more."
+            raise ABSESpyError(e1 + e2)
 
-    def register(self, actor_cls: Type[Actor] | Iterable[Type[Actor]]) -> None:
+    def register(self, actor_cls: ActorTypes) -> None:
         """Registers a new breed of actors."""
         for a_cls in make_list(actor_cls):
             breed = a_cls.breed
@@ -148,14 +151,13 @@ class _AgentsContainer(dict):
             return agents[0] if num == 1 else agents
         return agents
 
-    def get(
-        self, breeds: Optional[Union[str, Iterable[str]]] = None
-    ) -> ActorsList[Actor]:
+    def get(self, breeds: Breeds = None) -> ActorsList[Actor]:
         """Get all entities of specified breeds to a list.
 
         Parameters:
             breeds:
-                The breed(s) of entities to convert to a list (Optional[Union[str, Iterable[str]]]). If None, all breeds are used.
+                The breed(s) of entities to convert to a list.
+                If None, all breeds are used.
 
         Returns:
             ActorsList:
@@ -181,20 +183,12 @@ class _AgentsContainer(dict):
                 Keyword arguments to be passed to the `trigger` method of each agent.
 
         Returns:
-            None
+            In row, what the triggered function returned.
         """
         return self.get().trigger(*args, **kwargs)
 
-    def _add_one(self, agent: Actor, register: bool = False) -> bool:
-        """Add one agent to the container.
-
-        Parameters:
-            agent:
-                The agent to add.
-
-        Returns:
-            If the operation is successful.
-        """
+    def _add_one(self, agent: Actor, register: bool = False) -> None:
+        """Add one agent to the container."""
         if agent.breed not in self.keys():
             if register:
                 self.register(agent.__class__)
@@ -203,20 +197,24 @@ class _AgentsContainer(dict):
                     f"'{agent.breed}' not registered. Is it created by `.create()` method?"
                 )
         self[agent.breed].add(agent)
-        return True
 
     def add(
         self,
-        agents: Union[Actor, ActorsList, Iterable[Actor]] = None,
+        agents: Actors,
         register: bool = False,
     ) -> None:
         """Add one or more actors to the container.
 
         Parameters:
             agents:
-                The actor(s) to add to the container. Defaults to None.
+                The actor(s) to add to the container.
+                It can be a single actor, a list of actors, or an iterable of actors.
             register:
-                Whether to register the actor(s) if they belong to a new breed. Defaults to False.
+                Whether to register the actor(s) if they belong to a new breed.
+                If any adding breed is never registered, a TypeError will be raised.
+                Once a breed is registered, it will be added to all the containers globally.
+                It means, it's not necessary to register the same breed again.
+                Defaults to False.
 
         Raises:
             TypeError:
@@ -248,6 +246,23 @@ class _AgentsContainer(dict):
         """
         return self.get().select(selection)
 
+    def has(self, breed: Optional[str]) -> int:
+        """Whether the container has the breed of agents.
+
+        Parameters:
+            breed:
+                The breed of agents to search.
+
+        Returns:
+            bool:
+                True if the container has the breed of agents, False otherwise.
+        """
+        if breed is None:
+            return len(self)
+        if breed in self.keys():
+            return len(self[breed])
+        raise KeyError(f"{breed} not in {self}.")
+
 
 class _CellAgentsContainer(_AgentsContainer):
     """Container for agents located at cells."""
@@ -265,9 +280,10 @@ class _CellAgentsContainer(_AgentsContainer):
         self, agent: Actor, register: TYPE_CHECKING = False
     ) -> TYPE_CHECKING:
         if agent.on_earth and agent not in self:
-            raise ABSESpyError(
-                f"{agent} is on another cell thus cannot be added. You may use 'actor.move.to()' to change its location. Or you may use 'actor.move.off()' before adding it."
-            )
+            e1 = f"{agent} is on another cell thus cannot be added."
+            e2 = "You may use 'actor.move.to()' to change its location."
+            e3 = "Or you may use 'actor.move.off()' before adding it."
+            raise ABSESpyError(e1 + e2 + e3)
         super()._add_one(agent, register)
         agent.at = self._cell
 

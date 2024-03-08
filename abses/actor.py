@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
 Targets: TypeAlias = Union["ActorsList", "Self", "PatchCell"]
+Breeds: TypeAlias = Optional[Union[str, Iterable[str]]]
 
 
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
