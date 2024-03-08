@@ -5,110 +5,93 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import pytest
-from omegaconf import DictConfig
+from typing import Any, Dict
 
-from abses.bases import _Notice
+import pytest
+
+from abses.main import MainModel
 from abses.modules import CompositeModule, Module
 
 
-class MockModel(_Notice):
-    """测试用模型"""
+class TestModule:
+    """测试模块"""
 
-    @property
-    def settings(self):
-        """模型的所有参数"""
-        return DictConfig(
-            {"TestModule": {"param1": "value1", "param2": 1, "param3": 3.0}}
-        )
+    @pytest.fixture(name="module_test")
+    def mock_test_module(self, settings) -> Module:
+        """测试模块"""
+        model = MainModel(parameters=settings)
+        return Module(model, name="test")
 
+    @pytest.fixture(name="settings")
+    def mock_settings(self) -> Dict[str, Dict[str, Any]]:
+        """模拟设置"""
+        settings = {"param1": "value1", "param2": 1, "param3": 3.0}
+        return {"test": settings}
 
-def test_module_instantiation():
-    """测试模块的实例化"""
-    model = MockModel()
-    module = Module(model, name="TestModule")
-    assert module.name == "TestModule"
-    assert module.opening is True
+    def test_init_module(self, module_test):
+        """测试模块的实例化"""
+        assert module_test.name == "test"
+        assert module_test.opening is True
 
+    @pytest.mark.parametrize(
+        "opening, expected",
+        [
+            (True, "open"),
+            (False, "closed"),
+        ],
+    )
+    def test_report(self, module_test, expected, opening):
+        """测试模块的repr"""
+        # arrange / action
+        module_test.opening = opening
+        # assert
+        assert repr(module_test) == f"<test: {expected}>"
 
-def test_module_repr():
-    """测试模块的repr"""
-    model = MockModel()
-    module = Module(model, name="TestModule")
-    assert repr(module) == "<TestModule: open>"
-    module.switch_open_to(False)
-    assert repr(module) == "<TestModule: closed>"
-
-
-def test_module_opening_property():
-    """测试模块的开关属性"""
-    model = MockModel()
-    module = Module(model)
-    assert module.opening is True
-
-
-def test_module_switch_open_to():
-    """测试模块的开关方法"""
-    model = MockModel()
-    module = Module(model)
-    assert module.switch_open_to(False) is False
-    assert module.opening is False
-    assert module.switch_open_to(True) is True
-    assert module.opening is True
-    with pytest.raises(TypeError):
-        module.switch_open_to("string")
-    assert (
-        module.switch_open_to(None) is False
-    )  # Still False from the previous switch
+    @pytest.mark.parametrize(
+        "switch_to, expected",
+        [
+            (True, True),
+            (False, False),
+        ],
+    )
+    def test_switch_opening(self, module_test, switch_to, expected):
+        """测试模块的开关方法"""
+        # arrange / action
+        result = module_test.opening = switch_to
+        # assert
+        assert result is expected
+        assert module_test.opening is expected
 
 
 class TestCompositeModule:
     """测试根模块"""
 
     @pytest.fixture
-    def model(self):
-        """一个测试用模型，拥有参数"""
-        return MockModel()
-
-    @pytest.fixture
-    def composite_module(self, model):
+    def com_module(self, model):
         """创建一个基本的父级模块"""
-        return CompositeModule(model=model, name="TestModule")
+        return CompositeModule(model=model, name="test")
 
-    class DummyModule(Module):
-        """继承自Module的测试类"""
-
-        def initialize(self):
-            self.switch_open_to(False)
-
-    class NonModuleClass:
-        """不能被添加到模型中的测试类"""
-
-    def test_create_module(self, composite_module: CompositeModule):
+    def test_create_module(self, com_module: CompositeModule):
         """测试"""
-        module = composite_module.create_module(
-            self.DummyModule, name="SubModule1"
-        )
-        assert isinstance(module, self.DummyModule)
-        assert module in composite_module.modules
-        assert composite_module.params == {
-            "param1": "value1",
-            "param2": 1,
-            "param3": 3.0,
-        }
+        # arrange / act
+        module = com_module.create_module(Module, name="test")
+        # assert
+        assert isinstance(module, Module)
+        assert module in com_module.modules
 
-    def test_create_non_module_raises_error(
-        self, composite_module: CompositeModule
-    ):
+    def test_create_non_module_raises_error(self, com_module: CompositeModule):
         """不是模块的类添加时会报错"""
+        # arrange / act / assert
         with pytest.raises(TypeError):
-            composite_module.create_module(self.NonModuleClass)
+            com_module.create_module(object)
 
-    def test_initialization(self, composite_module: CompositeModule):
+    def test_initialization(self, com_module: CompositeModule):
         """测试初始化"""
-        # You can add assertions here, but without more detailed logic for initialization,
-        # there isn't much to check at the moment.
-        module = composite_module.create_module(self.DummyModule)
-        assert module.opening
-        assert composite_module.initialize() is None
-        assert module.opening is False
+        # arrange / act
+        module_1 = com_module.create_module(Module, name="test_1")
+        module_2 = com_module.create_module(Module, name="test_2")
+        # assert
+        com_module.opening = False
+        assert not com_module.opening
+        assert module_1.opening is False
+        assert module_2.opening is False

@@ -4,6 +4,11 @@
 # @Contact   : SongshGeo@gmail.com
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
+
+"""
+模型的基本模块。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
@@ -36,19 +41,14 @@ class Module(_BaseObj):
         """模块处于打开或关闭状态"""
         return self._open
 
-    @iter_func("modules")
-    def switch_open_to(self, _open: Optional[bool] = None) -> bool:
-        """开启或关闭模块，同时开启或关闭所有子模块"""
-        if _open is None:
-            return False
-        if not isinstance(_open, bool):
-            raise TypeError("Accept boolean parameters")
-        if self._open is not _open:
-            logger.info("%s switch 'open' to %s.", self.name, _open)
-            self._open = _open
-        return self._open
+    @opening.setter
+    def opening(self, value: bool) -> None:
+        if not isinstance(value, bool):
+            raise TypeError(f"Only accept boolean, got {type(value)}.")
+        if self._open is not value:
+            logger.info("%s switch 'open' to %s.", self.name, value)
+        self._open = value
 
-    # @abstractmethod
     def initialize(self):
         """
         Initialization after handle parameters.
@@ -84,6 +84,12 @@ class CompositeModule(Module, States, _Notice):
     def modules(self) -> List[Module]:
         """当前模块的次级模块"""
         return self._modules
+
+    @Module.opening.setter
+    def opening(self, value: bool) -> None:
+        for module in self.modules:
+            module.opening = value
+        Module.opening.fset(self, value)
 
     def create_module(
         self, module_class: Module, how: Optional[str] = None, **kwargs
