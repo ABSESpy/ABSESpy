@@ -526,7 +526,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         If None (by default), uses the major layer of this model.
         Usually, the major layer is the first layer sub-module you created.
         """
-        if self._total_bounds:
+        if self._total_bounds is not None:
             return self._total_bounds
         if hasattr(self, "major_layer") and self.major_layer:
             return self.major_layer.total_bounds
