@@ -5,6 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import numpy as np
 import pytest
 
 from abses import Actor, MainModel
@@ -61,7 +62,7 @@ class MockModel(MainModel):
         self.agents.create(MockAgent, self.n - 3)
         self.agents.create(anotherMockAgent, 3)
 
-        positions = module.random_positions(len(self.actors), replace=True)
+        positions = module.random.choice(len(self.actors), replace=True)
         for agent, pos in zip(self.actors, positions):
             agent.move.to(pos)
 
@@ -132,7 +133,13 @@ def mock_model() -> MainModel:
 @pytest.fixture(name="module", scope="function")
 def mock_module(model) -> PatchModule:
     """创建一个（2*2）的斑块模块"""
-    return model.nature.create_module(how="from_resolution", shape=(2, 2))
+    module: PatchModule = model.nature.create_module(
+        how="from_resolution", shape=(2, 2)
+    )
+    module.apply_raster(
+        np.arange(4).reshape(module.shape3d), attr_name="init_value"
+    )
+    return module
 
 
 @pytest.fixture(name="cell_0_0", scope="function")

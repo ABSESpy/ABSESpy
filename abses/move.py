@@ -167,5 +167,5 @@ class _Movements:
         """
         This method is used to move the actor to a random location.
         """
-        cells = self.actor.at.get_neighboring_cells(**kwargs)
+        cells = self.actor.at.neighboring(**kwargs)
         self.actor.move.to(cells.random.choice(prob=prob))

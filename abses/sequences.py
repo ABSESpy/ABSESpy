@@ -5,9 +5,13 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""列表。
+"""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
+from functools import partial
 from numbers import Number
 from typing import (
     TYPE_CHECKING,
@@ -32,8 +36,6 @@ from .tools.func import make_list
 
 if TYPE_CHECKING:
     from .actor import Actor
-
-# logger = logging.getLogger("__name__") ###################################3
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 
@@ -253,3 +255,8 @@ class ActorsList(list):
             getattr(actor, func_name)(*args, **kwargs) for actor in iter(self)
         ]
         return np.array(results)
+
+    def apply(self, ufunc: callable, *args, **kwargs) -> Any:
+        """Apply ufunc to all actors in the sequence."""
+        func = partial(ufunc, *args, **kwargs)
+        return np.array(list(map(func, self)))

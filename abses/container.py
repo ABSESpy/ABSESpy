@@ -246,7 +246,7 @@ class _AgentsContainer(dict):
         """
         return self.get().select(selection)
 
-    def has(self, breed: Optional[str]) -> int:
+    def has(self, breed: Optional[str] = None) -> int:
         """Whether the container has the breed of agents.
 
         Parameters:

@@ -7,8 +7,9 @@
 
 from __future__ import annotations
 
+import functools
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Self
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Self
 
 import geopandas
 import mesa_geo as mg
@@ -25,6 +26,7 @@ from shapely import Geometry
 
 from abses.links import _LinkNode
 from abses.modules import CompositeModule, Module
+from abses.random import ListRandom
 
 from .actor import Actor
 from .cells import PatchCell
@@ -71,9 +73,8 @@ class PatchModule(Module, mg.RasterLayer):
         logger.info(f"Using rioxarray version: {rioxarray.__version__}")
 
         for cell in self:
-            # for cell in self.array_cells.flatten():
             cell.layer = self
-        self._file = None
+        self._updated_ticks = []
 
     @property
     def cell_properties(self) -> set[str]:
@@ -84,11 +85,6 @@ class PatchModule(Module, mg.RasterLayer):
     def attributes(self) -> set[str]:
         """All accessible attributes from this layer."""
         return self._attributes | self.cell_properties
-
-    @property
-    def file(self) -> str | None:
-        """If the module is created by reading a raster dataset, save the file path."""
-        return self._file
 
     @property
     def shape2d(self) -> Coordinate:
@@ -245,7 +241,6 @@ class PatchModule(Module, mg.RasterLayer):
             cell_cls=cell_cls,
         )
         obj._transform = dataset.transform
-        obj._file = raster_file
         obj.apply_raster(values, attr_name=attr_name)
         return obj
 
@@ -263,7 +258,7 @@ class PatchModule(Module, mg.RasterLayer):
             return self.get_raster(data)
         raise TypeError("Invalid data type or shape.")
 
-    def get_raster(self, attr_name: str | None = None) -> np.ndarray:
+    def get_raster(self, attr_name: Optional[str] = None) -> np.ndarray:
         """Obtaining the Raster layer by attribute.
 
         Parameters:
@@ -287,12 +282,15 @@ class PatchModule(Module, mg.RasterLayer):
         Returns:
             2D numpy.ndarray data of the variable.
         """
+        if self.time.tick in self._updated_ticks:
+            return super().dynamic_var(attr_name)
         array = super().dynamic_var(attr_name)
         # 判断算出来的是一个符合形状的矩阵
         self._attr_or_array(array)
         # 将矩阵转换为三维，并更新空间数据
         array_3d = array.reshape(self.shape3d)
         self.apply_raster(array_3d, attr_name=attr_name)
+        self._updated_ticks.append(self.time.tick)
         return array
 
     def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
@@ -305,9 +303,12 @@ class PatchModule(Module, mg.RasterLayer):
         Returns:
             The rasterio tmp memory file of raster.
         """
-        data = self.get_raster(attr_name=attr_name)
+        if attr_name is None:
+            data = np.ones(self.shape2d)
+        else:
+            data = self.get_raster(attr_name=attr_name)
         # 如果获取到的是2维，重整为3维
-        if len(data.shape):
+        if len(data.shape) != 3:
             data = data.reshape(self.shape3d)
         with rio.MemoryFile() as mem_file:
             with mem_file.open(
@@ -322,39 +323,6 @@ class PatchModule(Module, mg.RasterLayer):
                 dataset.write(data)
             # Open the dataset again for reading and return
             return mem_file.open()
-
-    def geometric_cells(
-        self, geometry: Geometry, refer_layer: str | None = None, **kwargs
-    ) -> List[PatchCell]:
-        """Gets all the cells that intersect the given geometry.
-
-        Parameters:
-            geometry:
-                Shapely Geometry to search intersected cells.
-            **kwargs:
-                Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
-
-        Raises:
-            ABSESpyError:
-                If no available attribute exists, or the assigned refer layer is not available in the attributes.
-
-        Returns:
-            A list of PatchCell.
-        """
-        if not self.attributes:
-            raise ABSESpyError(
-                "No available attribute, at least one as refer."
-            )
-        if refer_layer is None:
-            refer_layer = list(self.attributes)[0]
-        if refer_layer not in self.attributes:
-            raise ABSESpyError(
-                f"The refer layer {refer_layer} is not available in the attributes"
-            )
-        data = self.get_rasterio(attr_name=refer_layer)
-        out_image, _ = mask.mask(data, [geometry], **kwargs)
-        mask_ = out_image.reshape(self.shape2d)
-        return list(self.array_cells[mask_.astype(bool)])
 
     def link_by_geometry(
         self,
@@ -397,9 +365,7 @@ class PatchModule(Module, mg.RasterLayer):
             )
         if not actors.geometry:
             raise AttributeError(f"Agent {actors} has no geometry.")
-        cells = self.geometric_cells(
-            actors.geometry, refer_layer=refer_layer, **kwargs
-        )
+        cells = self.select_cells(actors.geometry, **kwargs)
         for cell in cells:
             cell.link.to(node=actors, link_name=link, mutual=True)
 
@@ -438,7 +404,7 @@ class PatchModule(Module, mg.RasterLayer):
 
         return np.vectorize(get_attr)(self.array_cells, attr_name)
 
-    def get_xarray(self, attr_name: str | None = None) -> xr.DataArray:
+    def get_xarray(self, attr_name: Optional[str] = None) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates.
 
         Parameters:
@@ -463,92 +429,58 @@ class PatchModule(Module, mg.RasterLayer):
             coords=coords,
         ).rio.write_crs(self.crs)
 
-    def random_positions(
-        self,
-        k: int = 1,
-        where: str | np.ndarray = None,
-        prob: str | np.ndarray = None,
-        replace: bool = False,
-    ) -> List[Coordinate]:
-        """
-        Choose 'k' `PatchCell` in the layer randomly.
+    @property
+    def random(self) -> ListRandom:
+        """Randomly"""
+        return self.select_cells().random
 
-        Parameters:
-            k:
-                number of patches to choose.
-            mask:
-                bool mask, only True patches can be choose. If None, all patches are accessible. Defaults to None.
-            prob:
-                probability of each available position.
-            replace:
-                If a patch can be chosen more than once. Defaults to False.
-
-        Returns:
-            Iterable coordinates of chosen patches.
-        """
-        where = self._attr_or_array(where).flatten()
-        prob = self._attr_or_array(prob).flatten()
-        masked_prob = np.where(where, np.nan, prob)
-        all_cells = ActorsList(self.model, self.array_cells.flatten())
-        return all_cells.random.choice(
-            size=k, prob=masked_prob, replace=replace
-        )
-
-    def has_agent(
-        self, link_name: Optional[str] = None, xarray: bool = False
+    def _select_by_geometry(
+        self, geometry: Geometry, refer_layer: Optional[str] = None, **kwargs
     ) -> np.ndarray:
-        """If any actor is linked or existed in each cell.
+        """Gets all the cells that intersect the given geometry.
 
         Parameters:
-            link:
-                Link to search. If None (by default), search if any actor is located at in each cell.
-            xarray:
-                If True, return `Xarray.DataArray` object, `np.ndarray` otherwise (by default).
-
-        Returns:
-            A raster data shows weather any actor links or exists.
-        """
-        if link_name is None:
-            data = np.vectorize(lambda x: x.has_agent)(self.array_cells)
-        else:
-            data = np.vectorize(lambda x: bool(x.link.get(link_name)))(
-                self.array_cells
-            )
-        if xarray:
-            return xr.DataArray(
-                data=data,
-                coords=self.coords,
-                name=link_name or "has_agent",
-            ).rio.write_crs(self.crs)
-        return data
-
-    def land_allotment(
-        self,
-        agent: Actor,
-        link_name: str,
-        where: None | str | np.ndarray = None,
-    ) -> None:
-        """
-        Allotment of land of this layer to actors.
-
-        Parameters:
-            agent:
-                the actor to Affirmation of land link.
-            link:
-                link name of the association.
-            where:
-                if None, all cells will be selected.
-                if str, choose the corresponding attribute raster array as the mask.
-                if ndarray, the input array should has the same 2d-shape with this layer.
+            geometry:
+                Shapely Geometry to search intersected cells.
+            **kwargs:
+                Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
 
         Raises:
             ABSESpyError:
-                If the shape of input array is not aligned with the shape of this layer.
+                If no available attribute exists, or the assigned refer layer is not available in the attributes.
+
+        Returns:
+            A list of PatchCell.
         """
-        mask_ = self._attr_or_array(where)
-        cells = self.array_cells[mask_]
-        for cell in cells:
-            cell.link.to(agent, link_name)
+        if refer_layer is not None and refer_layer not in self.attributes:
+            raise ABSESpyError(
+                f"The refer layer {refer_layer} is not available in the attributes"
+            )
+        data = self.get_rasterio(attr_name=refer_layer)
+        out_image, _ = mask.mask(data, [geometry], **kwargs)
+        return out_image.reshape(self.shape2d)
+
+    def select_cells(
+        self, where: Optional[str | np.ndarray | Geometry] = None
+    ) -> ActorsList[PatchCell]:
+        """Select cells from."""
+        if isinstance(where, Geometry):
+            mask_ = self._select_by_geometry(geometry=where)
+        elif (
+            isinstance(where, (np.ndarray, str, xr.DataArray)) or where is None
+        ):
+            mask_ = self._attr_or_array(where).reshape(self.shape2d)
+        else:
+            raise TypeError(
+                f"{type(where)} is not supported for selecting cells."
+            )
+        return ActorsList(self.model, self.array_cells[mask_.astype(bool)])
+
+    def apply(self, ufunc, *args, **kwargs):
+        """Apply a function to array cells."""
+        func = functools.partial(ufunc, *args, **kwargs)
+        result = np.vectorize(func)(self.array_cells, *args, **kwargs)
+        return result
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

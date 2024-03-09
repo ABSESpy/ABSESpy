@@ -19,7 +19,6 @@ import mesa_geo as mg
 from abses import ActorsList
 from abses.container import _CellAgentsContainer
 from abses.links import _LinkNode, _LinkProxy
-from abses.sequences import agg_agents_attr
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -76,7 +75,7 @@ class PatchCell(mg.Cell, _LinkNode):
         self._layer = None
 
     def __repr__(self) -> str:
-        return f"<PatchCell at {self.pos}>"
+        return f"<Cell at {self.layer}[{self.pos}]>"
 
     @classmethod
     def __attribute_properties__(cls) -> set[str]:
@@ -111,20 +110,6 @@ class PatchCell(mg.Cell, _LinkNode):
         """The link to the patch."""
         return _LinkProxy(node=self, model=self.layer.model)
 
-    def has_agent(self, breed: Optional[str] = None) -> bool:
-        """Whether the actor is standing at the current `PatchCell`.
-
-        Parameters:
-            breed:
-                Specify the breed of agents to search.
-                If None (by default), all breeds of agents are acceptable.
-
-        Returns:
-            bool:
-                True if there is a qualified principal there, False otherwise.
-        """
-        return bool(self._agents) if breed is None else breed in self._agents
-
     def get(self, attr: str) -> Any:
         """Gets the value of an attribute or registered property.
         Automatically update the value if it is the dynamic variable of the layer.
@@ -147,41 +132,7 @@ class PatchCell(mg.Cell, _LinkNode):
             raise AttributeError(f"{attr} not exists in {self.layer}.")
         return getattr(self, attr)
 
-    def linked_attr(
-        self,
-        attr: str,
-        link_name: Optional[str] = None,
-        nodata: Any = None,
-        how: str = "only",
-    ) -> Any:
-        """Gets the properties of the agent linked to the patch.
-
-        Parameters:
-            attr:
-                The attribute name to retrieve.
-            link:
-                The link name to search associations.
-            nodata:
-                For the agents who don't have such an attribute, return a nodata as a placeholder.
-            how:
-                Search mode. #TODO
-
-        Returns:
-            Any type of retrieved data.
-
-        Raises:
-            KeyError:
-                The searched link is not available in the model.
-        """
-        try:
-            agents = self.link.get(link_name=link_name)
-        except KeyError:
-            agents = ActorsList(self.model, [])
-        if nodata is None or agents:
-            return agg_agents_attr(agents=agents, attr=attr, how=how)
-        return nodata
-
-    def get_neighboring_cells(
+    def neighboring(
         self,
         moore: bool = False,
         radius: int = 1,
