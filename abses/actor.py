@@ -4,6 +4,11 @@
 # @Contact   : SongshGeo@gmail.com
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
+
+"""
+在 abses 中，主体也叫做 Actor（行动者）。
+"""
+
 from __future__ import annotations
 
 from functools import cached_property, wraps
@@ -26,22 +31,28 @@ from abses.errors import ABSESpyError
 from abses.links import _LinkNode, _LinkProxy
 from abses.move import _Movements
 from abses.objects import _BaseObj
-from abses.sequences import ActorsList
 from abses.tools.func import make_list
-
-# A class that is used to store the position of the agent.
-
 
 if TYPE_CHECKING:
     from abses.human import LinkContainer
     from abses.main import MainModel
     from abses.nature import PatchCell
+    from abses.sequences import ActorsList
 
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
-Targets: TypeAlias = Union["ActorsList", "Self", "PatchCell"]
+Targets: TypeAlias = Union["ActorsList", "Self", "PatchCell", "str"]
 Breeds: TypeAlias = Optional[Union[str, Iterable[str]]]
+
+TARGET_KEYWORDS = {
+    "at": "at",
+    "world": "at",
+    "nature": "at",
+    "me": "self",
+    "actor": "self",
+    "agent": "self",
+}
 
 
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
@@ -116,6 +127,9 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         self._container: LinkContainer = model.human
         self._decisions: _DecisionFactory = self._setup_decisions()
 
+    def __repr__(self) -> str:
+        return f"<{self.breed} [{self.unique_id}]>"
+
     def _setup_decisions(self) -> _DecisionFactory:
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
@@ -138,11 +152,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
     def on_earth(self) -> bool:
         """Whether agent stands on a cell"""
         return bool(self._cell)
-
-    @property
-    def here(self) -> ActorsList:
-        """Other agents on the same cell as the agent."""
-        return self._cell.agents
 
     @property
     def at(self) -> PatchCell | None:
@@ -182,17 +191,20 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
     def _get_correct_target(self, target: Targets, attr: str) -> Targets:
         """Which targets should be used when getting or setting."""
         if target is not None:
+            if isinstance(target, str):
+                target = TARGET_KEYWORDS.get(target, target)
+                target = {"self": self, "at": self.at}[target]
             return target
         if hasattr(self, attr):
             return self
-        if self.on_earth:
+        if self.on_earth and hasattr(self.at, attr):
             return self._cell
-        raise AttributeError(f"{attr} not found in {self}.")
+        warn = "Set a new attribute outside '__init__' is not allowed."
+        raise AttributeError(f"Attribute '{attr}' not found in {self}. {warn}")
 
     def get(
         self,
         attr: str,
-        aggfunc: Optional[Callable] = None,
         target: Optional[Self | PatchCell] = None,
         **kwargs,
     ) -> Any:
@@ -208,12 +220,15 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         """
         target = self._get_correct_target(target, attr=attr)
         if target is self:
-            value = getattr(self, attr)
-            return aggfunc(value) if aggfunc is not None else value
-        return target.get(attr, aggfunc=aggfunc, target=target, **kwargs)
+            return getattr(self, attr)
+        return target.get(attr, **kwargs)
 
     def set(self, attr: str, value: Any, target: Targets) -> None:
         """Sets the value of an attribute."""
+        if not isinstance(attr, str):
+            raise TypeError("The attribute must be a string.")
+        if attr.startswith("_"):
+            raise ABSESpyError(f"Attribute '{attr}' is protected.")
         target = self._get_correct_target(target=target, attr=attr)
         setattr(target, attr, value)
 
