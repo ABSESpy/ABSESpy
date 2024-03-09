@@ -98,6 +98,6 @@ class TestPatchCell:
         actor = cell.agents.create(Actor, singleton=True)
         cell.link.to(actor, "actor_1")
 
-        assert "actor_1" in cell.link.get()
-        assert cell.link.get() == ("actor_1",)
+        assert "actor_1" in cell.link
+        assert cell.link == ("actor_1",)
         assert actor in cell.link.get("actor_1")

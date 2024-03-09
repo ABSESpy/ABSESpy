@@ -5,6 +5,9 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""主体、斑块之间可以产生连接。
+"""
+
 from __future__ import annotations
 
 from typing import (
@@ -14,12 +17,12 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     TypeAlias,
 )
 
+from abses.errors import ABSESpyError
 from abses.sequences import ActorsList
-
-# from abses.objects import _LinkNode
 
 if TYPE_CHECKING:
     from abses import MainModel
@@ -47,6 +50,26 @@ class _LinkContainer:
         """Set the links."""
         self._links[link_name] = {}
         self._back_links[link_name] = {}
+
+    def owns_links(
+        self, node: _LinkNode, direction: Optional[str] = "out"
+    ) -> Tuple[str]:
+        """The links a specific node owns."""
+        if direction == "out":
+            data = self._links
+        elif direction == "in":
+            data = self._back_links
+        elif direction is None:
+            links_in = self.owns_links(node, direction="in")
+            links_out = self.owns_links(node, direction="out")
+            return tuple(set(links_in) | set(links_out))
+        else:
+            raise ValueError(f"Invalid direction '{direction}'.")
+        links = set()
+        for link, agents in data.items():
+            if node in agents:
+                links.add(link)
+        return tuple(links)
 
     def get_graph(self, link_name):
         """Get the graph."""
@@ -108,6 +131,8 @@ class _LinkContainer:
         mutual: bool = False,
     ) -> None:
         """Remove a link."""
+        if not self.has_link(link_name, source, target)[0]:
+            raise ABSESpyError(f"Link from {source} to {target} not found.")
         self._links[link_name].get(source, set()).remove(target)
         self._back_links[link_name].get(target, set()).remove(source)
         if mutual:
@@ -153,15 +178,19 @@ class _LinkContainer:
             for another_node in to_clean:
                 another_data[name][another_node].remove(node)
 
-    def linked(self, node, link_name, direction):
+    def linked(self, node: _LinkNode, link_name: str, direction: str):
         """Get the linked nodes."""
+        link_names = self._clean_link_name(link_name=link_name)
         if direction == "in":
             data = self._back_links
         elif direction == "out":
             data = self._links
         else:
             raise ValueError(f"Invalid direction {direction}")
-        return data[link_name].get(node, set())
+        agents = set()
+        for name in link_names:
+            agents = agents.union(data[name].get(node, set()))
+        return agents
 
 
 class _LinkProxy:
@@ -172,19 +201,32 @@ class _LinkProxy:
         self.model: MainModel = model
         self.human: _LinkContainer = model.human
 
+    def __contains__(self, link_name) -> bool:
+        return link_name in self.human.links
+
+    def __eq__(self, __value: tuple[str]) -> bool:
+        return set(__value) == set(self.owning())
+
+    def __repr__(self) -> str:
+        return str(self.owning())
+
+    def owning(self, direction: Optional[str] = None) -> Tuple[str]:
+        """Links that this object has."""
+        return self.human.owns_links(self.node, direction=direction)
+
     def get(
         self, link_name: Optional[str] = None, direction: str = "out"
     ) -> Set[Node]:
         """Get the linked nodes."""
-        if link_name is None:
-            return self.human.links
         agents = self.human.linked(self.node, link_name, direction=direction)
         return ActorsList(self.model, agents)
 
-    def has(self, link_name: str, node: Optional[Node] = None) -> bool:
+    def has(self, link_name: str, node: Optional[Node] = None) -> tuple[bool]:
         """Check if the node has the link."""
         if node is None:
-            return link_name in self.human.links
+            has_in = link_name in self.owning("in")
+            has_out = link_name in self.owning("out")
+            return has_out, has_in
         return self.human.has_link(link_name, self.node, node)
 
     def to(self, node: Node, link_name: str, mutual: bool = False):
