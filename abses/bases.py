@@ -4,6 +4,13 @@
 # @Contact   : SongshGeo@gmail.com
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
+
+"""
+基础类实现了观察者模式。
+
+让所有模型的更改能够实时分配给所有观察者。
+"""
+
 from __future__ import annotations
 
 import logging

@@ -194,7 +194,7 @@ class Decision:
     def setup(self) -> None:
         """Overwrite to setup an initial strategy for this decision."""
 
-    def _find_methods(self, symbol="making") -> Callable:
+    def _find_methods(self, symbol="making") -> Any:
         methods = inspect.getmembers(self.agent, predicate=inspect.ismethod)
         for _, func in methods:
             if hasattr(func, f"__{symbol}__"):

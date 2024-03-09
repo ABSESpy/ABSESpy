@@ -5,6 +5,10 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+每一个世界里的斑块
+"""
+
 from __future__ import annotations
 
 from functools import cached_property
@@ -12,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import mesa_geo as mg
 
-from abses import Actor, ActorsList
+from abses import ActorsList
 from abses.container import _CellAgentsContainer
 from abses.links import _LinkNode, _LinkProxy
 from abses.sequences import agg_agents_attr
@@ -112,7 +116,8 @@ class PatchCell(mg.Cell, _LinkNode):
 
         Parameters:
             breed:
-                Specify the breed of agents to search. If None (by default), all breeds of agents are acceptable.
+                Specify the breed of agents to search.
+                If None (by default), all breeds of agents are acceptable.
 
         Returns:
             bool:
@@ -121,7 +126,8 @@ class PatchCell(mg.Cell, _LinkNode):
         return bool(self._agents) if breed is None else breed in self._agents
 
     def get(self, attr: str) -> Any:
-        """Gets the value of an attribute or registered property. Automatically update the value if it is the dynamic variable of the layer.
+        """Gets the value of an attribute or registered property.
+        Automatically update the value if it is the dynamic variable of the layer.
 
         Parameters:
             attr_name:
