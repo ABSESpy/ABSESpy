@@ -101,7 +101,7 @@ class _Movements:
         """The current layer of the operating actor."""
         return self.actor.layer
 
-    def _operating_layer(self, layer: PatchModule) -> bool:
+    def _operating_layer(self, layer: PatchModule) -> PatchModule:
         """
         This method is used to check if the input layer is consistent with the actor's layer.
         """
@@ -116,15 +116,21 @@ class _Movements:
         )
 
     def to(
-        self, pos: PatchCell | Coordinate, layer: Optional[PatchModule] = None
+        self,
+        pos: PatchCell | Coordinate | str,
+        layer: Optional[PatchModule] = None,
     ) -> None:
         """
         This method is used to move the actor to a specific location.
         """
-        # 检查这个位置的类型，返回图层和位置
-        layer, pos = _get_layer_and_position(pos, layer=layer)
-        # 检查操作图层
-        operating_layer = self._operating_layer(layer=layer)
+        if isinstance(pos, str) and pos == "random":
+            # 随机分配一个该图层的位置
+            operating_layer = self._operating_layer(layer=layer)
+            pos = operating_layer.select_cells().random.choice()
+        else:
+            # 检查这个位置的类型，返回图层和位置
+            layer, pos = _get_layer_and_position(pos, layer=layer)
+            operating_layer = self._operating_layer(layer=layer)
         move_agent_to(self.actor, layer=operating_layer, pos=pos)
 
     def off(self) -> None:

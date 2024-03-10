@@ -260,6 +260,15 @@ class _AgentsContainer(dict):
             return len(self[breed])
         raise KeyError(f"{breed} not in {self}.")
 
+    def apply(self, func: callable, *args, **kwargs) -> None:
+        """Apply a function to all agents in the container.
+
+        Parameters:
+            func:
+                The function to apply to all agents in the container.
+        """
+        return self.get().apply(func, *args, **kwargs)
+
 
 class _CellAgentsContainer(_AgentsContainer):
     """Container for agents located at cells."""
