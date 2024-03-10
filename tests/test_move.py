@@ -74,7 +74,7 @@ class TestMovements:
         assert cell_0_0.agents.is_empty
 
     @pytest.mark.parametrize(
-        "location, direction, distance, expected_location",
+        "location, direction, distance, expected_loc",
         [
             ((0, 0), "up", 1, (1, 0)),
             ((0, 0), "down", 1, (1, 0)),
@@ -90,16 +90,16 @@ class TestMovements:
         location: Tuple[int, int],
         direction: str,
         distance: int,
-        expected_location: tuple[int, int],
+        expected_loc: tuple[int, int],
     ):
         """Test the movement of agents."""
         # arrange
-        cell: PatchCell = cells[*location]
+        cell: PatchCell = cells[location[0], location[1]]
         actor = cell.agents.create(Actor, singleton=True)
         # action
         actor.move.by(direction=direction, distance=distance)
         # assert
-        new_cell: PatchCell = cells[*expected_location]
+        new_cell: PatchCell = cells[expected_loc[0], expected_loc[1]]
         assert (actor in cell.agents) is (new_cell is cell)
         assert actor in new_cell.agents
         assert actor.at is new_cell

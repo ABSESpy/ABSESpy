@@ -7,15 +7,12 @@
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Optional,
-    Set,
-    TypeAlias,
-    Union,
-)
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, Union
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from loguru import logger
 from omegaconf import DictConfig

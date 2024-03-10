@@ -19,9 +19,13 @@ from typing import (
     List,
     Optional,
     Type,
-    TypeAlias,
     Union,
 )
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from abses.tools.func import camel_to_snake
 

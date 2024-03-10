@@ -19,10 +19,13 @@ from typing import (
     Dict,
     Iterable,
     Optional,
-    Self,
-    TypeAlias,
     Union,
 )
+
+try:
+    from typing import Self, TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias, Self
 
 import mesa_geo as mg
 

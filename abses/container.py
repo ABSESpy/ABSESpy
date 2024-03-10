@@ -13,15 +13,12 @@
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterable,
-    Optional,
-    Type,
-    TypeAlias,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Type, Union
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from loguru import logger
 
@@ -34,7 +31,7 @@ if TYPE_CHECKING:
     from abses.cells import PatchCell
     from abses.main import MainModel
 
-ActorTypes: TypeAlias = Type[Actor] | Iterable[Type[Actor]]
+ActorTypes: TypeAlias = Union[Type[Actor], Iterable[Type[Actor]]]
 Actors: TypeAlias = Union[Actor, ActorsList, Iterable[Actor]]
 
 

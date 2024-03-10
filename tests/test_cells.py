@@ -35,9 +35,9 @@ class TestCellNeighboring:
     def get_cells(array, centre, radius, moor, annular, include_center):
         """获取合理的数组"""
         zeros = np.zeros(shape=array.shape)
-        zeros[*centre] = 1
+        zeros[centre[0], centre[1]] = 1
         mask = get_buffer(zeros, radius=radius, moor=moor, annular=annular)
-        mask[*centre] = include_center
+        mask[centre[0], centre[1]] = include_center
         return mask
 
     @pytest.mark.parametrize(
@@ -81,7 +81,7 @@ class TestCellNeighboring:
         )
         expected_cells = ActorsList(model, array_cells[expected_mask])
         # Act
-        result = array_cells[*centre].neighboring(
+        result = array_cells[centre[0], centre[1]].neighboring(
             moore, radius, include_center, annular
         )
 

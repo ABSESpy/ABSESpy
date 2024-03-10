@@ -9,7 +9,12 @@ from __future__ import annotations
 
 import functools
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Self
+from typing import TYPE_CHECKING, Any, Iterable, Optional
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 import geopandas
 import mesa_geo as mg
@@ -479,8 +484,7 @@ class PatchModule(Module, mg.RasterLayer):
     def apply(self, ufunc, *args, **kwargs):
         """Apply a function to array cells."""
         func = functools.partial(ufunc, *args, **kwargs)
-        result = np.vectorize(func)(self.array_cells, *args, **kwargs)
-        return result
+        return np.vectorize(func)(self.array_cells, *args, **kwargs)
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

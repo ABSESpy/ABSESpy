@@ -13,17 +13,12 @@ from __future__ import annotations
 from collections.abc import Iterable
 from functools import partial
 from numbers import Number
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Self,
-    TypeAlias,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
+
+try:
+    from typing import Self, TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias, Self
 
 import mesa_geo as mg
 import numpy as np

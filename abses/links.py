@@ -10,16 +10,12 @@
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeAlias,
-)
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Tuple
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from abses.errors import ABSESpyError
 from abses.sequences import ActorsList
