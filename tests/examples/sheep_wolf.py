@@ -37,9 +37,6 @@ class Animal(Actor):
         Actor.__init__(self, *args, **kwargs)
         self.energy = 5
 
-    def step(self):
-        pass
-
     def update(self):
         """Update the animal's state."""
         # consume energy
@@ -105,7 +102,6 @@ class WolfSheepModel(MainModel):
         self.agents.apply(lambda x: x.move.to(pos="random", layer=grassland))
 
     def step(self):
-        self.agents.trigger("step")
         self.nature.grassland.trigger("grow")
         self.check_end()
 

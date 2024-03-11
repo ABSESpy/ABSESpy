@@ -192,7 +192,6 @@ class TimeDriver(_Component):
                 self.go(ticks=1, **kwargs)
             return
         # tick = 1
-        self._model.schedule.step()
         self._tick += ticks
         if self.ticking_mode == "duration":
             self.dt += self.duration

@@ -201,6 +201,7 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     def _step(self):
         self._trigger("step", order=("model", "nature", "human"))
+        self.schedule.step()
         self.datacollector.collect(self)
 
     def _end(self):
