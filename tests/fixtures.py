@@ -10,7 +10,6 @@ import pytest
 from hydra import compose, initialize
 
 from abses import BaseNature, MainModel
-from abses.actor import Actor
 
 with initialize(version_base=None, config_path="../config"):
     cfg = compose(config_name="water_quota")

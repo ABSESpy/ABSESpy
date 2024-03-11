@@ -5,69 +5,69 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""测试数据收集器。
+"""
+
 import pytest
 
-from .conftest import MockModel
+from abses import MainModel, actor
 
 
-class Test_DataCollector:
+class TestDataCollector:
     """Testing data collector"""
 
-    @pytest.fixture(name="model")
-    def mock_model(self) -> MockModel:
+    @pytest.fixture(name="model_cfg")
+    def mock_model(self, test_config) -> MainModel:
         """This is a mock model for data collecting tests.
         To use it, you need to include 'model' as an argument of a test case.
         Without `name='model'`, the fixture will be function's name: `mock_model` instead.
         """
-        model = MockModel(parameters={"time": {"end": 10}}, seed=42)
-        model.run_model()
-        return model
+        return MainModel(parameters=test_config, seed=42)
+
+    def test_parse_reporters(self, model_cfg: MainModel):
+        """Test model variables."""
+        # arrange / act
+        datacollector = model_cfg.datacollector
+        # assert
+        assert "var1" in datacollector.model_vars
+        assert "var2" in datacollector.model_vars
+        assert "var1" in datacollector.agent_reporters
+        assert "var2" in datacollector.agent_reporters
 
     @pytest.mark.parametrize(
-        "ratio_1, ratio_2, expected_1, expected_2",
+        "test, expected_var1",
         [
-            (2.3333333333333335, 2.0, 10, 4),
-            # (2.3333333333333335, 2.0, 10, 4), adding other cases here
-        ],
-        ids=[
-            "Elias' test case",
-            # adding other cases' name here
+            ("x", "xx"),
+            (1, 2),
+            (0.5, 1),
         ],
     )
-    def test_model_vars(
-        self, model: MockModel, ratio_1, ratio_2, expected_1, expected_2
-    ):
-        """Test model variables."""
-        datacollector = model.datacollector
-        assert "const" in datacollector.model_vars
-        assert "pop_ratio" in datacollector.model_vars
-        ratio = ratio_1  # Implied ratio at beginning
-        assert datacollector.model_vars["pop_ratio"][1] == ratio
-        ratio = ratio_2  # Implied ratio at end
-        assert datacollector.model_vars["pop_ratio"][-1] == ratio
-        assert datacollector.model_vars["count_nonnegative"][0] == expected_1
-        assert datacollector.model_vars["count_nonnegative"][-1] == expected_2
+    def test_model_reporter(self, model_cfg: MainModel, test, expected_var1):
+        """Test model reporter."""
+        # arrange
+        model_cfg.test = test
+        datacollector = model_cfg.datacollector
+        # act
+        model_cfg.run_model()
+        model_vars = datacollector.get_model_vars_dataframe()
+        # assert
+        assert "var1" in model_vars.columns
+        assert "var2" in model_vars.columns
+        assert model_vars.shape == (model_cfg.time.tick, 2)
+        assert model_vars["var1"].mode().item() == expected_var1
+        assert model_vars["var2"].mode().item() == test
 
-    def test_agent_records(self, model: MockModel):
+    def test_agent_records(self, model_cfg: MainModel, farmer_cls: actor):
         """test agent data collector"""
-        datacollector = model.datacollector
+        # arrange
+        datacollector = model_cfg.datacollector
+        farmer = model_cfg.agents.create(farmer_cls, singleton=True)
+        model_cfg.test = 1  # not important
+        # act
+        model_cfg.run_model()
         agent_vars = datacollector.get_agent_vars_dataframe()
 
-        assert "const" in agent_vars.columns
         assert "var1" in agent_vars.columns
-        assert "on_earth" in agent_vars.columns
-
-        for (step, _), value in agent_vars["var1"].items():
-            assert (step + 2) == value
-
-        assert any(
-            value is False for (_, _), value in agent_vars["on_earth"].items()
-        )
-
-    def test_table_rows(self, model: MockModel):
-        """Test table's rows"""
-        datacollector = model.datacollector
-        table = datacollector.get_table_dataframe("Final Values")
-        assert len(table) == 95
-        assert "value" in table.columns
-        assert "square" in table.columns
+        assert "var2" in agent_vars.columns
+        result = agent_vars.loc[(farmer.unique_id, 1), "var2"]
+        assert result == "I am a Farmer"

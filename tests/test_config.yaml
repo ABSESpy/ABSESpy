@@ -1,0 +1,10 @@
+
+time:
+    end: 3
+reports:
+    model:
+        var1: ":lambda m: m.test * 2"
+        var2: "test"
+    agents:
+        var1: test
+        var2: ":lambda a: 'I am a ' + a.breed"

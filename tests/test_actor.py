@@ -34,6 +34,7 @@ class TestActor:
         assert actor.on_earth is False
         assert actor.breed == "Actor"
         assert actor.at is None
+        assert actor.unique_id == 1
 
     def test_movements(
         self, model: MainModel, module: PatchModule, cell_0_0: PatchCell

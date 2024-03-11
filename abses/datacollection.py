@@ -1,15 +1,25 @@
+#!/usr/bin/env python 3.11.0
+# -*-coding:utf-8 -*-
+# @Author  : Shuang (Twist) Song
+# @Contact   : SongshGeo@gmail.com
+# GitHub   : https://github.com/SongshGeo
+# Website: https://cv.songshgeo.com/
+
+"""
+数据收集器可以收集某个模型一次或多次运行的数据。
+"""
+
 import types
 from functools import partial
 from operator import attrgetter
 
 from loguru import logger
-from mesa import datacollection
+from mesa.datacollection import DataCollector
 
-from abses.components import _Component
 from abses.main import MainModel
 
 
-class DataCollector(_Component, datacollection.DataCollector):
+class ABSESpyDataCollector(DataCollector):
     """
     DataCollector is a wrap of mesa.datacollection.DataCollector class.
     This class inherits most functionality from its parent, mainly on data representation, but it
@@ -20,13 +30,10 @@ class DataCollector(_Component, datacollection.DataCollector):
     is stored in a dictionary of model variables and agent variables.
     """
 
-    def __init__(self, model: MainModel, **kwargs):
-        _Component.__init__(self, model=model, name="datacollector")
-        datacollection.DataCollector.__init__(self, **kwargs)
+    def __init__(self, **kwargs):
+        DataCollector.__init__(self, **kwargs)
         logger.info("DataCollector component initialized.")
         logger.debug(f"DataCollector initialized with {kwargs}.")
-
-        self._model: MainModel = model
 
     def _record_agents(self, model):
         rep_funcs = self.agent_reporters.values()
@@ -45,13 +52,13 @@ class DataCollector(_Component, datacollection.DataCollector):
         agent_records = map(get_reports, model.actors)
         return agent_records
 
-    def collect(self):
+    def collect(self, model):
         """Collect all the data for the given model object."""
         if self.model_reporters:
             for var, reporter in self.model_reporters.items():
                 # Check if Lambda operator
                 if isinstance(reporter, (types.LambdaType, partial)):
-                    self.model_vars[var].append(reporter(self._model))
+                    self.model_vars[var].append(reporter(model))
                 elif isinstance(reporter, list):
                     self.model_vars[var].append(reporter[0](*reporter[1]))
                 elif isinstance(reporter, str):
@@ -60,5 +67,5 @@ class DataCollector(_Component, datacollection.DataCollector):
                     self.model_vars[var].append(reporter())
 
         if self.agent_reporters:
-            agent_records = self._record_agents(self._model)
-            self._agent_records[self._model.time.tick] = list(agent_records)
+            agent_records = self._record_agents(model)
+            self._agent_records[model.time.tick] = list(agent_records)

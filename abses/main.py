@@ -7,12 +7,15 @@
 
 from __future__ import annotations
 
+import ast
 import sys
+from ast import literal_eval
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from loguru import logger
-from mesa import Model
-from omegaconf import DictConfig
+from mesa import DataCollector, Model
+from mesa.time import BaseScheduler
+from omegaconf import DictConfig, OmegaConf
 
 from abses import __version__
 from abses.actor import Actor
@@ -24,8 +27,6 @@ from .nature import BaseNature
 from .sequences import ActorsList
 from .states import States
 from .time import TimeDriver
-
-# from .mediator import MainMediator
 
 # Logging configuration
 logger.remove(0)
@@ -89,6 +90,8 @@ class MainModel(Generic[N], Model, _Notice, States):
         )
         self._time = TimeDriver(model=self)
         self._run_id: int | None = run_id
+        self.schedule = BaseScheduler(model=self)
+        self.initialize_data_collector()
         self._trigger("initialize", order=("nature", "human"))
         self._trigger("set_state", code=1)  # initial state
 
@@ -200,8 +203,43 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     def _step(self):
         self._trigger("step", order=("model", "nature", "human"))
+        self.datacollector.collect(self)
 
     def _end(self):
         self._trigger("end", order=("nature", "human", "model"))
         self._trigger("set_state", code=3)
         logger.info(f"Ending {self.name}")
+
+    def initialize_data_collector(
+        self,
+        model_reporters=None,
+        agent_reporters=None,
+        tables=None,
+    ) -> None:
+        """initialize_data_collector"""
+        to_reports: DictConfig = self.settings.get(
+            "reports", OmegaConf.create({})
+        )
+        to_reports = OmegaConf.to_container(to_reports, resolve=True)
+        reporting_model: DictConfig = to_reports.get("model", {})
+        reporting_agents: DictConfig = to_reports.get("agents", {})
+        if model_reporters is not None:
+            reporting_model.update(model_reporters)
+        if agent_reporters is not None:
+            reporting_agents.update(agent_reporters)
+        convert_to_python_expression(reporting_model)
+        convert_to_python_expression(reporting_agents)
+        self.datacollector = DataCollector(
+            model_reporters=reporting_model,
+            agent_reporters=reporting_agents,
+            tables=tables,
+        )
+
+
+def convert_to_python_expression(
+    expression_dict: dict[str, str]
+) -> dict[str, any]:
+    """Convert a Python expression string to a Python expression."""
+    for key, value in expression_dict.items():
+        if value.startswith(":"):
+            expression_dict[key] = eval(value[1:])  # pylint: disable=eval-used

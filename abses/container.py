@@ -144,6 +144,8 @@ class _AgentsContainer(dict):
         logger.info(f"Created {num} actors of breed {breed_cls.__name__}")
         agents = ActorsList(self._model, objs)
         self.add(agents)
+        for agent in agents:
+            self.model.schedule.add(agent)
         if singleton:
             return agents[0] if num == 1 else agents
         return agents
@@ -230,6 +232,7 @@ class _AgentsContainer(dict):
                 The agent (actor) to remove.
         """
         self[agent.breed].remove(agent)
+        self.model.schedule.remove(agent)
 
     def select(self, selection: Selection) -> ActorsList:
         """Selects the actors that match the given selection criteria.
@@ -295,7 +298,7 @@ class _CellAgentsContainer(_AgentsContainer):
 
     def remove(self, agent: Actor) -> None:
         """Remove the given agent from the container."""
-        super().remove(agent)
+        self[agent.breed].remove(agent)
         del agent.at
 
     def create(
