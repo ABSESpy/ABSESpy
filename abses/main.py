@@ -7,9 +7,7 @@
 
 from __future__ import annotations
 
-import ast
 import sys
-from ast import literal_eval
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from loguru import logger

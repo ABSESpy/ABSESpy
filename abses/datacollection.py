@@ -16,8 +16,6 @@ from operator import attrgetter
 from loguru import logger
 from mesa.datacollection import DataCollector
 
-from abses.main import MainModel
-
 
 class ABSESpyDataCollector(DataCollector):
     """

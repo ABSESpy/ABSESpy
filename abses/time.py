@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import sys
 import threading
 from collections import deque
 from datetime import datetime
@@ -17,7 +16,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 import pendulum
 
 from abses.components import _Component
-from abses.logging import logger
 
 if TYPE_CHECKING:
     from .main import MainModel

@@ -222,9 +222,11 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
             2. If the target is a cell, get the attribute from the cell.
         """
         target = self._get_correct_target(target, attr=attr)
-        if target is self:
-            return getattr(self, attr)
-        return target.get(attr, **kwargs)
+        return (
+            getattr(self, attr)
+            if target is self
+            else target.get(attr, **kwargs)
+        )
 
     def set(self, attr: str, value: Any, target: Targets) -> None:
         """Sets the value of an attribute."""

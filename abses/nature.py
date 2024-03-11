@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import functools
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 try:
     from typing import Self
@@ -373,41 +373,6 @@ class PatchModule(Module, mg.RasterLayer):
         cells = self.select_cells(actors.geometry, **kwargs)
         for cell in cells:
             cell.link.to(node=actors, link_name=link, mutual=True)
-
-    def linked_attr(
-        self,
-        attr_name: str,
-        link_name: Optional[str] = None,
-        nodata: Any = np.nan,
-        how: Optional[str] = "only",
-    ) -> np.ndarray:
-        """Gets the attribute linked to this layer.
-
-        Parameters:
-            attr_name:
-                The attribute name to search.
-            link:
-                The link name to get. If None (by default), get the actors located at each cell.
-            nodata:
-                On the cells without linked agent or located agent, return this nodata.
-            how:
-                Search mode. Choose the behave when a cell is linked to or have more than one agent.
-                    If 'only', raises ABSESpyError when more than one agent is found.
-                    If 'random', random choose an agent from all searched agents.
-
-        Returns:
-            An array of searched attribute.
-        """
-
-        def get_attr(cell: PatchCell, __name):
-            return cell.linked_attr(
-                attr=__name,
-                link_name=link_name,
-                nodata=nodata,
-                how=how,
-            )
-
-        return np.vectorize(get_attr)(self.array_cells, attr_name)
 
     def get_xarray(self, attr_name: Optional[str] = None) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates.

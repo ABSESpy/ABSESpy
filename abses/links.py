@@ -61,10 +61,7 @@ class _LinkContainer:
             return tuple(set(links_in) | set(links_out))
         else:
             raise ValueError(f"Invalid direction '{direction}'.")
-        links = set()
-        for link, agents in data.items():
-            if node in agents:
-                links.add(link)
+        links = {link for link, agents in data.items() if node in agents}
         return tuple(links)
 
     def get_graph(self, link_name):
