@@ -95,7 +95,7 @@ class TestPatchCell:
     def test_patch_cell_attachment(self, cell_0_0):
         """测试斑块可以连接到一个主体"""
         cell = cell_0_0
-        actor = cell.agents.create(Actor, singleton=True)
+        actor = cell.agents.new(Actor, singleton=True)
         cell.link.to(actor, "actor_1")
 
         assert "actor_1" in cell.link

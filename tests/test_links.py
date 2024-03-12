@@ -30,7 +30,7 @@ class AnotherMockNode(_LinkNode):
 @pytest.fixture(name="tres_nodes")
 def nodes(model: MainModel) -> List[Actor]:
     """Fixture for creating nodes."""
-    return model.agents.create(Actor, num=3)
+    return model.agents.new(Actor, num=3)
 
 
 @pytest.fixture(name="container")

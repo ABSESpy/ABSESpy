@@ -5,7 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""列表。
+"""ActorsList is a sequence of actors.
+It's used to manipulate the actors quickly in batch.
 """
 
 from __future__ import annotations
@@ -251,7 +252,19 @@ class ActorsList(list):
         ]
         return np.array(results)
 
-    def apply(self, ufunc: callable, *args, **kwargs) -> Any:
-        """Apply ufunc to all actors in the sequence."""
+    def apply(self, ufunc: callable, *args, **kwargs) -> np.ndarray:
+        """Apply ufunc to all actors in the sequence.
+
+        Parameters:
+            ufunc:
+                The function to apply to each actor.
+            *args:
+                Positional arguments to pass to the function.
+            **kwargs:
+                Keyword arguments to pass to the function.
+
+        Returns:
+            An array of the results of applying the function to each actor.
+        """
         func = partial(ufunc, *args, **kwargs)
         return np.array(list(map(func, self)))

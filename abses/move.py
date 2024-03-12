@@ -11,7 +11,7 @@ This script is used to manipulate actors' movements.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Literal, Optional, Tuple, TypeAlias
 
 import mesa_geo as mg
 from mesa.space import Coordinate
@@ -22,6 +22,17 @@ if TYPE_CHECKING:
     from abses.actor import Actor
     from abses.cells import PatchCell
     from abses.nature import PatchModule
+
+MovingDirection: TypeAlias = Literal[
+    "left",
+    "right",
+    "up",
+    "down",
+    "up left",
+    "up right",
+    "down left",
+    "down right",
+]
 
 
 def _get_layer_and_position(
@@ -117,16 +128,31 @@ class _Movements:
 
     def to(
         self,
-        pos: PatchCell | Coordinate | str,
+        pos: PatchCell | Coordinate | Literal["random"],
         layer: Optional[PatchModule] = None,
     ) -> None:
         """
-        This method is used to move the actor to a specific location.
+        Move the actor to a specific location.
+
+        Parameters:
+            pos:
+                The position to move to.
+                If position is a Coordinate -a tuple of (row, col),
+                it will be moved to the same layer.
+                If pos
+            layer:
+                The layer where the actor is located.
+
+        Raises:
+            ABSESpyError:
+                If the input layer is not consistent with the actor's layer.
+                If the position is out of bounds.
+                Or, if the pos is coordinate without layer.
         """
         if isinstance(pos, str) and pos == "random":
             # 随机分配一个该图层的位置
             operating_layer = self._operating_layer(layer=layer)
-            pos = operating_layer.select_cells().random.choice()
+            pos = operating_layer.select().random.choice()
         else:
             # 检查这个位置的类型，返回图层和位置
             layer, pos = _get_layer_and_position(pos, layer=layer)
@@ -134,16 +160,27 @@ class _Movements:
         move_agent_to(self.actor, layer=operating_layer, pos=pos)
 
     def off(self) -> None:
-        """
-        This method is used to remove.
-        """
+        """Remove the actor from the world."""
         if self.actor.on_earth:
             self.actor.at.agents.remove(self.actor)
         del self.actor.at
 
-    def by(self, direction: str, distance: int = 1) -> bool:
-        """
-        This method is used to move the actor by a specific distance.
+    def by(self, direction: MovingDirection, distance: int = 1) -> None:
+        """Move the actor by a specific distance.
+
+        Parameters:
+            direction:
+                The direction to move.
+                It should be a direction string such as:
+                "left", "right", "up", "down", "up left", "up right", "down left", "down right".
+            distance:
+                The distance to move toward the direction.
+
+        Raises:
+            ABSESpyError:
+                If the actor is not located on a cell, thus cannot move.
+            ValueError:
+                If the direction is invalid.
         """
         if not self.actor.on_earth:
             raise ABSESpyError(
@@ -166,12 +203,20 @@ class _Movements:
             new_indices = (old_row + distance, old_col - distance)
         elif direction in {"down right", "right down"}:
             new_indices = (old_row + distance, old_col + distance)
+        else:
+            raise ValueError(f"Invalid direction {direction}.")
         cell = self.layer.array_cells[new_indices[0]][new_indices[1]]
         self.actor.move.to(cell)
 
-    def random(self, prob: Optional[str] = None, **kwargs):
-        """
-        This method is used to move the actor to a random location.
+    def random(self, prob: Optional[str] = None, **kwargs) -> None:
+        """Move the actor to a random location nearby.
+
+        Parameters:
+            prob:
+                The probability to select a cell.
+            kwargs:
+                Passing keyword args to `PatchCell.neighboring`,
+                used to select neighboring cells.
         """
         cells = self.actor.at.neighboring(**kwargs)
         self.actor.move.to(cells.random.choice(prob=prob))

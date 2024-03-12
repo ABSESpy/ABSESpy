@@ -28,8 +28,8 @@ class TestSequences:
     def test_sequences_attributes(self, model):
         """测试容器的属性"""
         # arrange
-        actors5 = model.agents.create(Actor, 5)
-        farmers3 = model.agents.create(Farmer, 3)
+        actors5 = model.agents.new(Actor, 5)
+        farmers3 = model.agents.new(Farmer, 3)
         actors5.test = 1
         farmers3.test = -1
         mixed_actors = ActorsList(model=model, objs=[*actors5, *farmers3])
@@ -47,8 +47,8 @@ class TestSequences:
     def test_sequences_better(self, model: MainModel):
         """Test that sequences"""
         # arrange
-        a_farmer = model.agents.create(Farmer, singleton=True)
-        others = model.agents.create(Farmer, 5)
+        a_farmer = model.agents.new(Farmer, singleton=True)
+        others = model.agents.new(Farmer, 5)
         for i, farmer in enumerate(
             others
         ):  # np.array([0.0, 0.1, 0.2, 0.3, 0.4])
@@ -75,8 +75,8 @@ class TestSequences:
     def test_apply(self, model: MainModel, ufunc, args, kwargs, expected):
         """Test that applying a function."""
         # assert
-        farmers = model.agents.create(Farmer, 3)
-        actor = model.agents.create(Actor, singleton=True)
+        farmers = model.agents.new(Farmer, 3)
+        actor = model.agents.new(Actor, singleton=True)
         # act
         results = farmers.apply(ufunc, *args, **kwargs)
         expected = farmers.array("metric") + 1

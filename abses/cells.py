@@ -12,12 +12,13 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import mesa_geo as mg
 
 from abses import ActorsList
 from abses.container import _CellAgentsContainer
+from abses.errors import ABSESpyError
 from abses.links import _LinkNode, _LinkProxy
 
 if TYPE_CHECKING:
@@ -71,15 +72,18 @@ class PatchCell(mg.Cell, _LinkNode):
     def __init__(self, pos=None, indices=None):
         mg.Cell.__init__(self, pos, indices)
         _LinkNode.__init__(self)
-        self._agents = None
-        self._layer = None
+        self._agents: Optional[_CellAgentsContainer] = None
+        self._layer: Optional[mg.RasterLayer] = None
 
     def __repr__(self) -> str:
         return f"<Cell at {self.layer}[{self.pos}]>"
 
     @classmethod
     def __attribute_properties__(cls) -> set[str]:
-        """Properties that should be found in the `RasterLayer`."""
+        """Properties that should be found in the `RasterLayer`.
+
+        Users should decorate a property attribute when subclassing `PatchCell` to make it accessible in the `RasterLayer`.
+        """
         return {
             name
             for name, method in cls.__dict__.items()
@@ -96,8 +100,11 @@ class PatchCell(mg.Cell, _LinkNode):
     def layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, mg.RasterLayer):
             raise TypeError(f"{type(layer)} is not valid layer.")
-        self.container = layer.model.human
+        if self.layer is not None:
+            raise ABSESpyError("PatchCell can only belong to one layer.")
+        # set layer property
         self._layer = layer
+        # set agents container
         self._agents = _CellAgentsContainer(layer.model, cell=self)
 
     @property

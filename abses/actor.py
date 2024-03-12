@@ -6,21 +6,15 @@
 # Website: https://cv.songshgeo.com/
 
 """
+In `ABSESpy`, agents are also known as 'Actors'.
+
 在 abses 中，主体也叫做 Actor（行动者）。
 """
 
 from __future__ import annotations
 
 from functools import cached_property, wraps
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    Optional,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Union
 
 try:
     from typing import Self, TypeAlias
@@ -59,9 +53,17 @@ TARGET_KEYWORDS = {
 
 
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
-    """clean the result of a perception."""
+    """clean the result of a perception.
+
+    Parameters:
+        name:
+            The name of the perception.
+        result:
+            The result of the perception.
+        nodata:
+            The value to return if the result is None.
+    """
     if hasattr(result, "__iter__"):
-        # raise ABSESpyError('No')
         raise ValueError(
             f"Perception result of '{name}' got type {type(result)} as return."
         )
@@ -69,9 +71,19 @@ def perception_result(name, result, nodata: Any = 0.0) -> Any:
 
 
 def perception(
-    decorated_func: Callable | None = None, *, nodata: Any | None = None
+    decorated_func: Optional[Callable] = None, *, nodata: Optional[Any] = None
 ) -> Callable:
-    """Change the decorated function into a perception attribute."""
+    """Change the decorated function into a perception attribute.
+
+    Parameters:
+        decorated_func:
+            The decorated function.
+        nodata:
+            The value to return if the result is None.
+
+    Returns:
+        The decorated perception attribute or a decorator.
+    """
 
     def decorator(func) -> Callable:
         @wraps(func)
@@ -90,24 +102,33 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
     Attributes:
-        container:
-            The container that the actor belongs to.
+        breed:
+            The breed of this actor (by default, class name).
         layer:
             The layer where the actor is located.
         indices:
             The indices of the cell where the actor is located.
         pos:
             The position of the cell where the actor is located.
-        population:
-            A list of actors of the same breed as the actor.
         on_earth:
             Whether the actor is standing on a cell.
-        here:
-            A list of actors that are on the same cell as the actor.
+        at:
+            The cell where the actor is located.
+        link:
+            The link manipulating proxy.
+        move:
+            The movement manipulating proxy.
+
+    Methods:
+        get:
+            Gets the value of an attribute from the actor or its cell.
+        set:
+            Sets the value of an attribute on the actor or its cell.
+        die:
+            Kills the actor.
     """
 
     # when checking the rules
-    _freq_levels: Dict[str, int] = {"now": 0, "update": 1, "move": 2, "any": 3}
     __decisions__ = None
 
     def __init__(
@@ -127,7 +148,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         )
         _LinkNode.__init__(self)
         self._cell: PatchCell = None
-        self._container: LinkContainer = model.human
         self._decisions: _DecisionFactory = self._setup_decisions()
 
     def __repr__(self) -> str:
@@ -140,20 +160,20 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
 
     @property
     def decisions(self) -> _DecisionFactory:
-        """Decisions that this agent makes."""
+        """The decisions that this actor makes."""
         return self._decisions
 
     # alias of decisions
     d = decisions
 
     @property
-    def layer(self) -> mg.RasterLayer:
-        """Get the layer where the agent is located."""
+    def layer(self) -> mg.RasterLayer | None:
+        """Get the layer where the actor is located."""
         return None if self._cell is None else self._cell.layer
 
     @property
     def on_earth(self) -> bool:
-        """Whether agent stands on a cell"""
+        """Whether agent stands on a cell."""
         return bool(self._cell)
 
     @property
@@ -183,25 +203,43 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
 
     @cached_property
     def move(self) -> _Movements:
-        """Manipulating agent's location."""
+        """A proxy for manipulating actor's location.
+
+        1. `move.to()`: moves the actor to another cell.
+        2. `move.off()`: removes the actor from the current layer.
+        3. `move.by()`: moves the actor by a distance.
+        4. `move.random()`: moves the actor to a random cell.
+        """
         return _Movements(self)
 
     @cached_property
     def link(self) -> _LinkProxy:
-        """连接"""
+        """A proxy which can be used to manipulate the links:
+
+        1. `link.to()`: creates a new link from this actor to another.
+        2. `link.by()`: creates a new link from another to this actor.
+        3. `link.get()`: gets the links of this actor.
+        4. `link.has()`: checks if there is a link between this actor and another.
+        5. `link.unlink()`: removes a link between this actor and another.
+        6. `link.clean()`: removes all links of this actor.
+        """
         return _LinkProxy(self, self.model)
 
     def _get_correct_target(self, target: Targets, attr: str) -> Targets:
         """Which targets should be used when getting or setting."""
+        # If the target is not None, get the target from dict.
         if target is not None:
             if isinstance(target, str):
                 target = TARGET_KEYWORDS.get(target, target)
                 target = {"self": self, "at": self.at}[target]
             return target
+        # If the attribute is in the agent, the agent is the target.
         if hasattr(self, attr):
             return self
+        # If the attribute is in the cell, the cell is the target.
         if self.on_earth and hasattr(self.at, attr):
             return self._cell
+        # If the attribute is not found, raise an error.
         warn = "Set a new attribute outside '__init__' is not allowed."
         raise AttributeError(f"Attribute '{attr}' not found in {self}. {warn}")
 
@@ -209,31 +247,50 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         self,
         attr: str,
         target: Optional[Self | PatchCell] = None,
-        **kwargs,
     ) -> Any:
         """Gets attribute value from target.
-        attr:
-            The name of the attribute to get.
-        aggfunc:
-            The function to aggregate the result.
-        target:
-            The target to get the attribute from. If None, the agent itself is the target.
-            1. If the target is an agent, get the attribute from the agent.
-            2. If the target is a cell, get the attribute from the cell.
+
+        Parameters:
+            attr:
+                The name of the attribute to get.
+            target:
+                The target to get the attribute from.
+                If None, the agent itself is the target.
+                If the target is an agent, get the attribute from the agent.
+                If the target is a cell, get the attribute from the cell.
+
+        Returns:
+            The value of the attribute.
         """
         target = self._get_correct_target(target, attr=attr)
-        return (
-            getattr(self, attr)
-            if target is self
-            else target.get(attr, **kwargs)
-        )
+        return getattr(self, attr) if target is self else target.get(attr)
 
     def set(self, attr: str, value: Any, target: Targets) -> None:
-        """Sets the value of an attribute."""
+        """Sets the value of an attribute.
+
+        Parameters:
+            attr:
+                The name of the attribute to set.
+            value:
+                The value to set the attribute to.
+            target:
+                The target to set the attribute on. If None, the agent itself is the target.
+                1. If the target is an agent, set the attribute on the agent.
+                2. If the target is a cell, set the attribute on the cell.
+
+        Raises:
+            TypeError:
+                If the attribute is not a string.
+            ABSESpyError:
+                If the attribute is protected.
+        """
+        # If the attribute is not a string, raise an error.
         if not isinstance(attr, str):
             raise TypeError("The attribute must be a string.")
+        # If the attribute is protected, raise an error
         if attr.startswith("_"):
             raise ABSESpyError(f"Attribute '{attr}' is protected.")
+        # Set the attribute on the target.
         target = self._get_correct_target(target=target, attr=attr)
         setattr(target, attr, value)
 

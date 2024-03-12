@@ -73,6 +73,9 @@ class _Component:
         """
         return self._model.settings.get(self.name, DictConfig({}))
 
+    # alias of params
+    p = params
+
     @property
     def args(self) -> DictConfig:
         """Returns read-only component's arguments.

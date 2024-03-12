@@ -25,7 +25,7 @@ class TestMovements:
     def test_move_to_cell(self, cell_0_0: PatchCell, cell_0_1: PatchCell):
         """Test the movement of agents."""
         # arrange
-        actor = cell_0_1.agents.create(Actor, singleton=True)
+        actor = cell_0_1.agents.new(Actor, singleton=True)
         # action
         actor.move.to(cell_0_0)
         # assert
@@ -38,7 +38,7 @@ class TestMovements:
     ):
         """Test the movement of agents."""
         # arrange
-        actor = model.agents.create(Actor, singleton=True)
+        actor = model.agents.new(Actor, singleton=True)
         # action
         actor.move.to(cell_0_1.pos, cell_0_1.layer)
         # assert
@@ -53,7 +53,7 @@ class TestMovements:
         new_module = model.nature.create_module(
             how="from_resolution", shape=(1, 2)
         )
-        actor = cell_0_0.agents.create(Actor, singleton=True)
+        actor = cell_0_0.agents.new(Actor, singleton=True)
         another_layer_cell = new_module.cells[0][0]
         # action
         with pytest.raises(ABSESpyError):
@@ -66,7 +66,7 @@ class TestMovements:
     def test_move_off(self, cell_0_0: PatchCell):
         """Test the movement of agents."""
         # arrange
-        actor = cell_0_0.agents.create(Actor, singleton=True)
+        actor = cell_0_0.agents.new(Actor, singleton=True)
         # action
         actor.move.off()
         # assert
@@ -95,7 +95,7 @@ class TestMovements:
         """Test the movement of agents."""
         # arrange
         cell: PatchCell = cells[location[0], location[1]]
-        actor = cell.agents.create(Actor, singleton=True)
+        actor = cell.agents.new(Actor, singleton=True)
         # action
         actor.move.by(direction=direction, distance=distance)
         # assert
@@ -133,7 +133,7 @@ class TestMovements:
     ):
         """测试随机移动"""
         # Arrange
-        actor = cell_0_0.agents.create(Actor, singleton=True)
+        actor = cell_0_0.agents.new(Actor, singleton=True)
         cell_0_0.test = prob[0]
         cell_0_1.test = prob[1]
         cell_1_0.test = prob[2]

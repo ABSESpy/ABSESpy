@@ -5,10 +5,24 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+The main modelling framework of ABSESpy.
+"""
+
 from __future__ import annotations
 
 import sys
-from typing import Generic, Optional, Tuple, Type, TypeVar
+from typing import (
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeAlias,
+    TypeVar,
+    Union,
+)
 
 from loguru import logger
 from mesa import DataCollector, Model
@@ -23,7 +37,7 @@ from .container import _AgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
-from .states import States
+from .states import _States
 from .time import TimeDriver
 
 # Logging configuration
@@ -37,9 +51,10 @@ logger.add(
 # Dynamically load type hints from users' input type
 N = TypeVar("N")
 H = TypeVar("H")
+Reporter: TypeAlias = Dict[str, Union[str, callable]]
 
 
-class MainModel(Generic[N], Model, _Notice, States):
+class MainModel(Generic[H, N], Model, _Notice, _States):
     """
     Base class of a main ABSESpy model.
 
@@ -56,13 +71,15 @@ class MainModel(Generic[N], Model, _Notice, States):
         time:
             Time driver.
         params:
-            Parameters of the model.
+            Parameters of the model, having another alias `.p`.
         run_id:
             The run id of the current model. It's useful in batch run.
         agents:
-            The container of all agents. One model only has one specific container where all alive agents are stored.
+            The container of all agents.
+            One model only has one specific container where all alive agents are stored.
         actors:
-            All agents as a list. A model can create multiple lists referring different actors.
+            All agents on the earth (added to a specific PatchCell) as a list.
+            A model can create multiple lists referring different actors.
     """
 
     def __init__(
@@ -75,12 +92,16 @@ class MainModel(Generic[N], Model, _Notice, States):
     ) -> None:
         Model.__init__(self, **kwargs)
         _Notice.__init__(self)
-        States.__init__(self)
+        _States.__init__(self)
 
-        self._breeds: dict = {}
-        self._containers: list = []
+        self._breeds: dict[str, Type[Actor]] = {}
+        self._containers: List[_AgentsContainer] = []
         self._settings = DictConfig(parameters)
         self._version: str = __version__
+        if not issubclass(human_class, BaseHuman):
+            raise TypeError(f"{human_class} is not a subclass of BaseHuman.")
+        if not issubclass(nature_class, BaseNature):
+            raise TypeError(f"{nature_class} is not a subclass of BaseNature.")
         self._human = human_class(self)
         self._nature = nature_class(self)
         self._agents = _AgentsContainer(
@@ -90,16 +111,16 @@ class MainModel(Generic[N], Model, _Notice, States):
         self._run_id: int | None = run_id
         self.schedule = BaseScheduler(model=self)
         self.initialize_data_collector()
-        self._trigger("initialize", order=("nature", "human"))
-        self._trigger("set_state", code=1)  # initial state
+        self._do_each("initialize", order=("nature", "human"))
+        self._do_each("set_state", code=1)  # initial state
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         version = self._version
         return f"<{self.name}-{version}({self.state})>"
 
-    def _trigger(self, _func: str, order: Tuple[str] = None, **kwargs) -> None:
+    def _do_each(self, _func: str, order: Tuple[str] = None, **kwargs) -> None:
         _obj = {"model": self, "nature": self.nature, "human": self.human}
-        if not order:
+        if order is None:
             order = ("model", "nature", "human")
         for name in order:
             if name not in _obj:
@@ -108,12 +129,17 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     @property
     def run_id(self) -> int | None:
-        """The run id of the current model. It's useful in batch run."""
+        """The run id of the current model.
+        It's useful in batch run.
+        When running a single model, the run id is None.
+        """
         return self._run_id
 
     @property
     def name(self) -> str:
-        """name of the model. By default, it's the lowercase of class name. E.g.: TestModel -> testmodel."""
+        """name of the model.
+        By default, it's the class name.
+        """
         return self.__class__.__name__
 
     @property
@@ -123,30 +149,45 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     @property
     def settings(self) -> DictConfig:
-        """Structured parameters of the model. Other module or submodules can search the configurations here structurally.
+        """Structured parameters of the model.
+        Other module or submodules can search the configurations here structurally.
 
-        For an example, if the settings is a nested DictConfig like {'nature': {'test': 3}}, users can access the parameter 'test = 3' by `model.nature.params.test`.
+        For an example, if the settings is a nested DictConfig like {'nature': {'test': 3}},
+        users can access the parameter 'test' by both ways:
+            1. `model.nature.params.test`.
+            2. `model.nature.p.test`.
         """
         return self._settings
 
     @property
     def agents(self) -> _AgentsContainer:
-        """The container of all agents. One model only has one specific container where all alive agents are stored."""
+        """The container of all agents.
+        One model only has one specific container where all alive agents are stored.
+        Users can access, manipulate, and create agents by this container:
+
+        For instances:
+        1. `model.agents.get()` to access all agents.
+        2. `model.agents.new(Actor, num=3)` to create 3 agents of Actor.
+        3. `model.agents.register(Actor)` to register a new breed of agents to the whole model.
+        4. `model.agents.trigger()` to trigger a specific event to all agents.
+        """
         return self._agents
 
     @property
     def actors(self) -> ActorsList:
-        """All agents as a list. A model can create multiple lists referring different actors."""
-        return self.agents.get()
+        """All agents on the earth as an `ActorList`.
+        A model can create multiple lists referring different actors.
+        """
+        return self.agents.get().select({"on_earth": True})
 
     @property
-    def human(self) -> H:
-        """The Human class"""
+    def human(self) -> Union[H, BaseHuman]:
+        """The Human subsystem."""
         return self._human
 
     @property
-    def nature(self) -> N:
-        """The Nature module"""
+    def nature(self) -> Union[N, BaseNature]:
+        """The Nature subsystem."""
         return self._nature
 
     @property
@@ -161,7 +202,7 @@ class MainModel(Generic[N], Model, _Notice, States):
 
     @property
     def breeds(self) -> Tuple[str]:
-        """The breeds of agents in the model."""
+        """All breeds in the model."""
         return tuple(self._breeds.keys())
 
     @breeds.setter
@@ -173,9 +214,15 @@ class MainModel(Generic[N], Model, _Notice, States):
         for container in self._containers:
             container[breed.breed] = set()
 
-    def run_model(self, steps: int | None = None) -> None:
-        """Start running the model, until the end situation is triggered."""
-        logger.info(f"Setting up {self.name}...")
+    def run_model(self, steps: Optional[int] = None) -> None:
+        """Start running the model.
+
+        In order, the model will go through the following steps:
+        1. Call `model.setup()` method.
+        2. Call `model.step()` method.
+        3. Repeating steps, until the end situation is triggered
+        4. Call `model.end()` method.
+        """
         self._setup()
         while self.running:
             logger.debug(f"Current tick: {self.time.tick}")
@@ -183,39 +230,53 @@ class MainModel(Generic[N], Model, _Notice, States):
             self.time.go()
             if self.time.tick == steps:
                 self.running = False
-            # self.time.stdout()
         self._end()
 
-    def setup(self):
+    def setup(self) -> None:
         """Users can custom what to do when the model is setup and going to start running."""
 
-    def step(self):
+    def step(self) -> None:
         """A step of the model."""
 
-    def end(self):
+    def end(self) -> None:
         """Users can custom what to do when the model is end."""
 
-    def _setup(self):
-        self._trigger("setup", order=("model", "nature", "human"))
-        self._trigger("set_state", code=2)
+    def _setup(self) -> None:
+        logger.info(f"Setting up {self.name}...")
+        self._do_each("setup", order=("model", "nature", "human"))
+        self._do_each("set_state", code=2)
 
-    def _step(self):
-        self._trigger("step", order=("model", "nature", "human"))
+    def _step(self) -> None:
+        self._do_each("step", order=("model", "nature", "human"))
         self.schedule.step()
         self.datacollector.collect(self)
 
-    def _end(self):
-        self._trigger("end", order=("nature", "human", "model"))
-        self._trigger("set_state", code=3)
+    def _end(self) -> None:
+        self._do_each("end", order=("nature", "human", "model"))
+        self._do_each("set_state", code=3)
         logger.info(f"Ending {self.name}")
 
     def initialize_data_collector(
         self,
-        model_reporters=None,
-        agent_reporters=None,
-        tables=None,
+        model_reporters: Optional[Reporter] = None,
+        agent_reporters: Optional[Reporter] = None,
+        tables: Optional[Reporter] = None,
     ) -> None:
-        """initialize_data_collector"""
+        """Initialize data collector for this ABSESpy Model.
+        This method overrides the default `DataCollector` of `mesa.Model`.
+        When initializing, users can set the model-level reporters, agent-level reporters,
+        and tables not only by parameters but also by config file.
+
+        Parameters:
+            model_reporters:
+                A dictionary of model-level reporters.
+            agent_reporters:
+                A dictionary of agent-level reporters.
+            tables:
+                A list of tables to collect data.
+
+        Example:
+        """
         to_reports: DictConfig = self.settings.get(
             "reports", OmegaConf.create({})
         )
@@ -226,8 +287,8 @@ class MainModel(Generic[N], Model, _Notice, States):
             reporting_model.update(model_reporters)
         if agent_reporters is not None:
             reporting_agents.update(agent_reporters)
-        convert_to_python_expression(reporting_model)
-        convert_to_python_expression(reporting_agents)
+        _convert_to_python_expression(reporting_model)
+        _convert_to_python_expression(reporting_agents)
         self.datacollector = DataCollector(
             model_reporters=reporting_model,
             agent_reporters=reporting_agents,
@@ -235,7 +296,7 @@ class MainModel(Generic[N], Model, _Notice, States):
         )
 
 
-def convert_to_python_expression(
+def _convert_to_python_expression(
     expression_dict: dict[str, str]
 ) -> dict[str, any]:
     """Convert a Python expression string to a Python expression."""

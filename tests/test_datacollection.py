@@ -61,7 +61,7 @@ class TestDataCollector:
         """test agent data collector"""
         # arrange
         datacollector = model_cfg.datacollector
-        farmer = model_cfg.agents.create(farmer_cls, singleton=True)
+        farmer = model_cfg.agents.new(farmer_cls, singleton=True)
         model_cfg.test = 1  # not important
         # act
         model_cfg.run_model()

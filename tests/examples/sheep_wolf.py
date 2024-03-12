@@ -48,7 +48,7 @@ class Animal(Actor):
         """Reproduce if there's enough energy."""
         if self.random.random() < self.params.rep_rate:
             self.energy /= 2
-            self.at.agents.create(self.__class__)
+            self.at.agents.new(self.__class__)
 
 
 class Wolf(Animal):
@@ -96,8 +96,8 @@ class WolfSheepModel(MainModel):
             cell_cls=Grass,
         )
         # add sheep and wolves
-        self.agents.create(Wolf, self.params.n_wolves)
-        self.agents.create(Sheep, self.params.n_sheep)
+        self.agents.new(Wolf, self.params.n_wolves)
+        self.agents.new(Sheep, self.params.n_sheep)
         # without a specific position, agents will move randomly on the layer.
         self.agents.apply(lambda x: x.move.to(pos="random", layer=grassland))
 

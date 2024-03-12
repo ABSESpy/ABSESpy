@@ -28,6 +28,28 @@ class TestMainContainer:
     测试用于整个模型的主体容器。
     """
 
+    @pytest.fixture(name="container")
+    def test_three_agents_container(
+        self, model: MainModel
+    ) -> _AgentsContainer:
+        """测试用于整个模型的主体容器，用于Examples。"""
+
+        class Actor1(Actor):
+            """for testing"""
+
+            test = 1
+
+        class Actor2(Actor):
+            """for testing"""
+
+            test = "testing"
+
+        model = MainModel()
+        model.agents.new(Actor, singleton=True)
+        model.agents.new(Actor1, num=2)
+        model.agents.new(Actor2, num=3)
+        return model.agents
+
     def test_empty_container(self, model: MainModel):
         """测试空容器。"""
         # arrange
@@ -62,7 +84,7 @@ class TestMainContainer:
         container: _AgentsContainer = model.agents
 
         # action
-        actor = container.create(Actor, singleton=True)
+        actor = container.new(Actor, singleton=True)
 
         # assert
         assert actor in container.get("Actor")
@@ -99,7 +121,7 @@ class TestMainContainer:
         # action
         for a, n in zip(init_agent, agent_num):
             breed_cls = breeds.get(a)
-            container.create(breed_cls, n)
+            container.new(breed_cls, n)
         # assert
         assert repr(container) == expected_repr
 
@@ -146,14 +168,33 @@ class TestMainContainer:
         """测试获取主体"""
         # arrange
         container = model.agents
-        admin = container.create(admin_cls, singleton=True)
-        farmer = container.create(farmer_cls, singleton=True)
+        admin = container.new(admin_cls, singleton=True)
+        farmer = container.new(farmer_cls, singleton=True)
 
         # action / assert
         assert container.get("Admin") == {admin}
         assert container.get("Farmer") == {farmer}
         assert container.get() == {admin, farmer}
         assert isinstance(container.get(), ActorsList)
+
+    def test_get_example(self, container):
+        """Testing example in container.get()"""
+
+        g1 = container.get("Actor1")
+        assert repr(g1) == "<ActorsList: (2)Actor1>"
+        g2 = container.get()
+        assert repr(g2) == "<ActorsList: (1)Actor; (2)Actor1; (3)Actor2>"
+
+    def test_select_example(self, container: _AgentsContainer):
+        """Testing example in container.select()"""
+        g1 = container.select("Actor")
+        assert repr(g1) == "<ActorsList: (1)Actor>"
+        g2 = container.select("test == 1")
+        assert repr(g2) == "<ActorsList: (2)Actor1>"
+        g3 = container.select({"test": 1})
+        assert repr(g3) == "<ActorsList: (2)Actor1>"
+        g4 = container.select({"test": "testing"})
+        assert repr(g4) == "<ActorsList: (3)Actor2>"
 
     def test_max_length(self):
         """测试容器的最大长度"""
@@ -162,7 +203,7 @@ class TestMainContainer:
         container = model.agents
 
         # action
-        container.create(Actor, 4)
+        container.new(Actor, 4)
 
         # assert
         assert container.is_full is True
@@ -170,7 +211,7 @@ class TestMainContainer:
         assert len(container) == 4
         assert repr(container) == "<ModelAgents: (4)Actor>"
         with pytest.raises(ABSESpyError):
-            container.create(Actor, 1)
+            container.new(Actor, 1)
 
     def test_main_container(self, model, farmer_cls, admin_cls):
         """测试容器的属性"""
@@ -178,8 +219,8 @@ class TestMainContainer:
         container = model.agents
 
         # action
-        a_farmer = container.create(farmer_cls, singleton=True)
-        admins_5 = container.create(admin_cls, 5)
+        a_farmer = container.new(farmer_cls, singleton=True)
+        admins_5 = container.new(admin_cls, 5)
         assert isinstance(a_farmer, Actor)
         assert len(container) == 6
         assert repr(container) == "<ModelAgents: (1)Farmer; (5)Admin>"
@@ -207,7 +248,7 @@ class TestMainContainer:
         # arrange
         container: _AgentsContainer = model.agents
         for b, n in zip(init_breeds, num):
-            container.create(breeds.get(b), n)
+            container.new(breeds.get(b), n)
 
         # act / assert
         assert container.has(breed) == expected
@@ -236,7 +277,7 @@ class TestCellContainer:
         """测试添加一个主体"""
         # arrange / action
         cell_container = cell_0_1.agents
-        actor = cell_container.create(Actor, singleton=True)
+        actor = cell_container.new(Actor, singleton=True)
 
         # assert
         # 从这里创建的主体应该在直接在该斑块上
@@ -258,7 +299,7 @@ class TestCellContainer:
         """Test remove cell from everywhere."""
         # arrange
         cell_container = cell_0_0.agents
-        actor = cell_container.create(Actor, singleton=True)
+        actor = cell_container.new(Actor, singleton=True)
         cell_container.remove(actor)
 
         # assert

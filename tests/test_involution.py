@@ -79,7 +79,7 @@ def test_load_decisions():
 def setup_agents():
     """Setup three poor guys for involution tests."""
     model = MainModel()
-    agents: Iterable[InvolutingActor] = model.agents.create(InvolutingActor, 3)
+    agents: Iterable[InvolutingActor] = model.agents.new(InvolutingActor, 3)
     agent1, agent2, agent3 = agents
 
     agent1.working_hrs = 7

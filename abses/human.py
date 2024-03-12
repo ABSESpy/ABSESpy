@@ -59,7 +59,7 @@ class HumanModule(Module):
         """Actor collections defined."""
         return set(self._collections.keys())
 
-    def actors(self, name: str | None = None) -> ActorsList[Actor]:
+    def actors(self, name: Optional[str] = None) -> ActorsList[Actor]:
         """Different selections of agents"""
         if name is None:
             return self.agents.get()
@@ -100,7 +100,7 @@ class HumanModule(Module):
             ```
             # Create 5 actors to query
             model=MainModel()
-            model.agents.create(Actor, 5)
+            model.agents.new(Actor, 5)
 
             module = HumanModule(model=model)
             actors = module.define(name='first', selection='ids=0')

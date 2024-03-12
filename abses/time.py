@@ -56,7 +56,7 @@ def time_condition(condition: dict, when_run: bool = True) -> callable:
 
 
         model = MainModel(parameters=parameters)
-        agent = model.agents.create(TestActor, 1, singleton=True)
+        agent = model.agents.new(TestActor, 1, singleton=True)
 
         for _ in range(10):
             print(f"Time now is {model.time}")

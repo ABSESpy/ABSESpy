@@ -194,8 +194,8 @@ class MyActor(Actor):
 
 
 model = MainModel()
-actors = model.agents.create(Actor, 5)
-my_actor = model.agents.create(MyActor, singleton=True)
+actors = model.agents.new(Actor, 5)
+my_actor = model.agents.new(MyActor, singleton=True)
 
 my_actor.say_hi()
 print(model.agents)
@@ -223,11 +223,11 @@ class MyModel(MainModel):
 
     def setup(self):
         n_agents = self.params.get('init_agents')
-        self.agents.create(Actor, n_agents)
+        self.agents.new(Actor, n_agents)
 
     def step(self):
         n_agents = self.params.get('n_agents')
-        self.agents.create(Actor, n_agents)
+        self.agents.new(Actor, n_agents)
 
     def end(self):
         n_agents = len(self.agents)

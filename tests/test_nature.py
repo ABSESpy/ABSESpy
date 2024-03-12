@@ -114,9 +114,9 @@ class TestPatchModule:
     def test_selecting_by_value(self, model: MainModel, module: PatchModule):
         """测试选择斑块"""
         # arrange
-        model.agents.create(Actor, singleton=True)
+        model.agents.new(Actor, singleton=True)
         # act
-        cells = module.select_cells("init_value")
+        cells = module.select("init_value")
         # assert
         assert len(cells) == 3  # init_value = [0, 1, 2, 3]
 
@@ -135,13 +135,13 @@ class TestPatchModule:
         """测试使用地理图形选择斑块"""
         # arrange
         module = PatchModule.from_resolution(model, shape=shape)
-        actor: Actor = module.cells[0][0].agents.create(Actor, singleton=True)
+        actor: Actor = module.cells[0][0].agents.new(Actor, singleton=True)
         module.apply_raster(
             np.arange(shape[0] * shape[1]).reshape(module.shape3d),
             attr_name="test",
         )
         # act
-        cells = module.select_cells(where=box(*geometry))
+        cells = module.select(where=box(*geometry))
         cells.apply(
             lambda cell: cell.link.to(
                 actor, link_name="test_link", mutual=True
@@ -191,14 +191,14 @@ class TestPatchModule:
         # arrange
         module = PatchModule.from_resolution(model, shape=(4, 4))
         box1, box2 = box(*(0, 0, 2, 2)), box(*(1, 1, 4, 4))
-        agent1 = model.agents.create(Actor, singleton=True, geometry=box1)
-        agent2 = model.agents.create(Actor, singleton=True, geometry=box2)
+        agent1 = model.agents.new(Actor, singleton=True, geometry=box1)
+        agent2 = model.agents.new(Actor, singleton=True, geometry=box2)
 
         # act
-        module.select_cells(box1).apply(
+        module.select(box1).apply(
             lambda c: c.link.to(agent1, "link", mutual=True)
         )
-        module.select_cells(box2).apply(
+        module.select(box2).apply(
             lambda c: c.link.to(agent2, "link", mutual=True)
         )
 
@@ -230,7 +230,7 @@ class TestPatchModule:
     ):
         """Testing"""
         # arrange
-        cell_0_0.agents.create(Actor, singleton=True)
+        cell_0_0.agents.new(Actor, singleton=True)
         # act
         result = module.apply(ufunc=ufunc)
         # assert

@@ -5,11 +5,15 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+The spatial module.
+"""
+
 from __future__ import annotations
 
 import functools
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 try:
     from typing import Self
@@ -29,7 +33,6 @@ from mesa_geo.raster_layers import Cell
 from rasterio import mask
 from shapely import Geometry
 
-from abses.links import _LinkNode
 from abses.modules import CompositeModule, Module
 from abses.random import ListRandom
 
@@ -41,9 +44,6 @@ from .sequences import ActorsList
 if TYPE_CHECKING:
     from abses.main import MainModel
 
-# logger = logging.getLogger(__name__)
-# logger.info("Using rioxarray version: %s", rioxarray.__version__)
-
 DEFAULT_WORLD = {
     "width": 10,
     "height": 10,
@@ -53,22 +53,35 @@ CRS = "epsg:4326"
 
 
 class PatchModule(Module, mg.RasterLayer):
-    # 基础的空间模块，继承这个类来创建一个子模块。看[这个教程](../tutorial/beginner/organize_model_structure.ipynb)来了解模型结构。这也是一个栅格图层，继承自 `mesa-geo` 的`RasterLayer`类，并可以放置主体。
     """
     The spatial sub-module base class.
-    Inherit from this class to create a submodule. Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure. This is also a raster layer, inherited from the 'mesa-geo.RasterLayer' class, and can place agents.
+    Inherit from this class to create a submodule.
+    [This tutorial](../tutorial/beginner/organize_model_structure.ipynb) shows the model structure.
+    This is also a raster layer, inherited from the 'mesa-geo.RasterLayer' class.
+    ABSESpy extends this class, so it can:
+    1. place agents (by `_CellAgentsContainer` class.)
+    2. work with `xarray`, `rasterio` packages for better data I/O workflow.
 
     Attributes:
         cell_properties:
-            The accessible attributes of cells stored in this layer. All `PatchCell` methods which are decorated by the decorator `raster_attribute` should be appeared here.
+            The accessible attributes of cells stored in this layer.
+            When a `PatchCell`'s method is decorated by `raster_attribute`,
+            it should be appeared here as a property attribute.
         attributes:
-            All accessible attributes from this layer.
-        file:
-            If the module is created by reading a raster dataset, save the file path.
+            All accessible attributes from this layer,
+            including cell_properties.
         shape2d:
             Raster shape in 2D (heigh, width).
         shape3d:
-            Raster shape in 3D (1, heigh, width).
+            Raster shape in 3D (1, heigh, width),
+            this is for compatibility with `mg.RasterLayer` and `rasterio`.
+        array_cells:
+            Array type of the `PatchCell` stored in this module.
+        coords:
+            Coordinate system of the raster data.
+            This is useful when working with `xarray.DataArray`.
+        random:
+            A random proxy by calling the cells as an `ActorsList`.
     """
 
     def __init__(self, model, name=None, **kwargs):
@@ -83,7 +96,9 @@ class PatchModule(Module, mg.RasterLayer):
 
     @property
     def cell_properties(self) -> set[str]:
-        """The accessible attributes of cells stored in this layer. All `PatchCell` methods which are decorated by the decorator `raster_attribute` should be appeared here."""
+        """The accessible attributes of cells stored in this layer.
+        All `PatchCell` methods decorated by `raster_attribute` should be appeared here.
+        """
         return self.cell_cls.__attribute_properties__()
 
     @property
@@ -142,13 +157,22 @@ class PatchModule(Module, mg.RasterLayer):
             model:
                 ABSESpy Model that the new module belongs.
             name:
-                Name of the new module. If None (by default), using lowercase of the '__class__.__name__'. E.g., class NewModule -> newmodule.
+                Name of the new module.
+                If None (by default), using lowercase of the '__class__.__name__'.
+                E.g., class Module -> module.
             shape:
-                Array shape (height, width) of the new module. For example, if shape=(3, 5), it means the new module will store 15 cells.
+                Array shape (height, width) of the new module.
+                For example, `shape=(3, 5)` means the new module stores 15 cells.
             crs:
-                Coordinate Reference Systems. If passing a string object, should be able to parsed by `pyproj`. By default, we use CRS = "epsg:4326".
+                Coordinate Reference Systems.
+                If passing a string object, should be able to parsed by `pyproj`.
+                By default, we use CRS = "epsg:4326".
             resolution:
-                Spatial Resolution when creating the coordinates. By default 1, it means shape (3, 5) will generate coordinates like {y: [0, 1, 2], x: [0, 1, 2, 3, 4]}. Similar, when using resolution=0.1, it will be {y: [.0, .1, .2], x: [.0, .1, .2, .3, .4]}.
+                Spatial Resolution when creating the coordinates.
+                By default 1, it means shape (3, 5) will generate coordinates:
+                {y: [0, 1, 2], x: [0, 1, 2, 3, 4]}.
+                Similar, when using resolution=0.1,
+                it will be {y: [.0, .1, .2], x: [.0, .1, .2, .3, .4]}.
             cell_cls:
                 Class type of `PatchCell` to create.
 
@@ -181,9 +205,13 @@ class PatchModule(Module, mg.RasterLayer):
             model:
                 ABSESpy Model that the new module belongs.
             layer:
-                Another layer to copy. These attributes will be copied: the coordinates, the crs, and the shape.
+                Another layer to copy.
+                These attributes will be copied:
+                including the coordinates, the crs, and the shape.
             name:
-                Name of the new module. If None (by default), using lowercase of the '__class__.__name__'. E.g., class NewModule -> newmodule.
+                Name of the new module.
+                If None (by default), using lowercase of the '__class__.__name__'.
+                E.g., class Module -> module.
             cell_cls:
                 Class type of `PatchCell` to create.
 
@@ -222,7 +250,9 @@ class PatchModule(Module, mg.RasterLayer):
             attr_name:
                 Assign a attribute name to the loaded raster data.
             name:
-                Name of the new module. If None (by default), using lowercase of the '__class__.__name__'. E.g., class NewModule -> newmodule.
+                Name of the new module.
+                If None (by default), using lowercase of the '__class__.__name__'.
+                E.g., class Module -> module.
             cell_cls:
                 Class type of `PatchCell` to create.
 
@@ -329,51 +359,6 @@ class PatchModule(Module, mg.RasterLayer):
             # Open the dataset again for reading and return
             return mem_file.open()
 
-    def link_by_geometry(
-        self,
-        actors: Actor | Iterable[Actor],
-        link: Optional[str] = None,
-        refer_layer: str | None = None,
-        **kwargs: Any,
-    ) -> None:
-        """Relates all cells intersecting a given geometry.
-
-        Parameters:
-            actors:
-                An Actor or an iterable object of actors (e.g., `ActorsList`) who has existing geometry.
-                This method allows each agent create a mask by the geometry, and then link the cells within the sphere to this agent.
-            link:
-                The link info to save.
-            refer_layer:
-                The layer to be a refer of spatial sphere.
-                If the referred layer has nodata in some cells,
-                those cells won't be linked to his actor.
-            **kwargs:
-                Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
-
-        Raises:
-            TypeError:
-                If the input agent type is not inherit from `Actor`.
-            AttributeError:
-                The current actor doesn't have a valid geometry info.
-            ABSESpyError:
-                If the referred layer is not available in attributes.
-        """
-        if hasattr(actors, "__iter__"):
-            for agent in actors:
-                self.link_by_geometry(agent, link, refer_layer, **kwargs)
-            return
-        # For a single actor
-        if not isinstance(actors, _LinkNode):
-            raise TypeError(
-                f"Type '{type(actors)}' can not be linked, make sure your agent is a valid subclass of `Actor`."
-            )
-        if not actors.geometry:
-            raise AttributeError(f"Agent {actors} has no geometry.")
-        cells = self.select_cells(actors.geometry, **kwargs)
-        for cell in cells:
-            cell.link.to(node=actors, link_name=link, mutual=True)
-
     def get_xarray(self, attr_name: Optional[str] = None) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates.
 
@@ -402,7 +387,7 @@ class PatchModule(Module, mg.RasterLayer):
     @property
     def random(self) -> ListRandom:
         """Randomly"""
-        return self.select_cells().random
+        return self.select().random
 
     def _select_by_geometry(
         self, geometry: Geometry, refer_layer: Optional[str] = None, **kwargs
@@ -412,6 +397,8 @@ class PatchModule(Module, mg.RasterLayer):
         Parameters:
             geometry:
                 Shapely Geometry to search intersected cells.
+            refer_layer:
+                The attribute name to refer when filtering cells.
             **kwargs:
                 Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
 
@@ -430,10 +417,26 @@ class PatchModule(Module, mg.RasterLayer):
         out_image, _ = mask.mask(data, [geometry], **kwargs)
         return out_image.reshape(self.shape2d)
 
-    def select_cells(
+    def select(
         self, where: Optional[str | np.ndarray | Geometry] = None
     ) -> ActorsList[PatchCell]:
-        """Select cells from."""
+        """Select cells from this layer.
+
+        Parameters:
+            where:
+                The condition to select cells.
+                If None (by default), select all cells.
+                If a string, select cells by the attribute name.
+                If a numpy.ndarray, select cells by the mask array.
+                If a Shapely Geometry, select cells by the intersection with the geometry.
+
+        Raises:
+            TypeError:
+                If the input type is not supported.
+
+        Returns:
+            An `ActorsList` with all selected cells stored.
+        """
         if isinstance(where, Geometry):
             mask_ = self._select_by_geometry(geometry=where)
         elif (
@@ -446,8 +449,20 @@ class PatchModule(Module, mg.RasterLayer):
             )
         return ActorsList(self.model, self.array_cells[mask_.astype(bool)])
 
-    def apply(self, ufunc, *args, **kwargs):
-        """Apply a function to array cells."""
+    def apply(self, ufunc, *args, **kwargs) -> np.ndarray:
+        """Apply a function to array cells.
+
+        Parameters:
+            ufunc:
+                A function to apply.
+            *args:
+                Positional arguments to pass to the function.
+            **kwargs:
+                Keyword arguments to pass to the function.
+
+        Returns:
+            The result of the function applied to the array cells.
+        """
         func = functools.partial(ufunc, *args, **kwargs)
         return np.vectorize(func)(self.array_cells, *args, **kwargs)
 
@@ -478,7 +493,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
     @property
     def major_layer(self) -> PatchModule | None:
         """The major layer of nature module.
-        By default, it's the first layer that user created.
+        By default, it's the first created layer.
         """
         return self._major_layer
 
@@ -513,7 +528,8 @@ class BaseNature(mg.GeoSpace, CompositeModule):
             gdf:
                 The `geopandas.GeoDataFrame` object to convert.
             unique_id:
-                A column name, denotes which column will be converted to unique index of created geo-agents (Social-ecological system Actors).
+                A column name, to be converted to unique index
+                of created geo-agents (Social-ecological system Actors).
             agent_cls:
                 Agent class to create.
 

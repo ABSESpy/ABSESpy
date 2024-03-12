@@ -95,6 +95,7 @@ class TestComponent:
         component = _Component(model, "test")
         assert "test" in model.settings
         assert component.params == expected
+        assert component.p == expected
 
     @pytest.mark.parametrize(
         "settings, expected",

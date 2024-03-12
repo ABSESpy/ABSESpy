@@ -34,7 +34,8 @@ def selecting(actor, selection: Union[str, Dict[str, Any]]) -> bool:
 
     Parameters:
         selection:
-            Either a string or a dictionary of key-value pairs that represent agent attributes to be checked against.
+            Either a string or a dictionary of key-value pairs.
+            Each represents agent attributes to be checked against.
 
     Returns:
         Whether the agent is selected or not

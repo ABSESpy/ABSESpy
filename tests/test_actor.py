@@ -28,7 +28,7 @@ class TestActor:
     def test_attributes(self, model: MainModel):
         """测试主体的属性"""
         # arrange / act
-        actor = model.agents.create(Actor, singleton=True)
+        actor = model.agents.new(Actor, singleton=True)
 
         # act / assert
         assert actor.on_earth is False
@@ -41,7 +41,7 @@ class TestActor:
     ):
         """Test moving"""
         # arrange
-        actor = model.agents.create(Actor, singleton=True)
+        actor = model.agents.new(Actor, singleton=True)
         # act
         pos = (0, 0)
         actor.move.to(layer=module, pos=pos)
@@ -54,8 +54,8 @@ class TestActor:
     def test_die(self, model: MainModel, cell_0_0: PatchCell):
         """Test die"""
         # arrange
-        actor1 = model.agents.create(Actor, num=1, singleton=True)
-        actor2 = cell_0_0.agents.create(Actor, singleton=True)
+        actor1 = model.agents.new(Actor, num=1, singleton=True)
+        actor2 = cell_0_0.agents.new(Actor, singleton=True)
         # act
         actor1.die()
         actor2.die()
@@ -75,7 +75,7 @@ class TestActor:
     def test_get(self, cell_0_0: PatchCell, attr, target, expected):
         """Test getting values."""
         # arrange
-        actor = cell_0_0.agents.create(Actor, singleton=True)
+        actor = cell_0_0.agents.new(Actor, singleton=True)
         cell_0_0.test1 = 1
         cell_0_0.test2 = 2
         actor.test2 = 3
@@ -95,7 +95,7 @@ class TestActor:
     def test_set(self, cell_0_0: PatchCell, attr, value, target):
         """Test setting values."""
         # arrange
-        actor = cell_0_0.agents.create(Actor, singleton=True)
+        actor = cell_0_0.agents.new(Actor, singleton=True)
         # act
         actor.set(attr=attr, value=value, target=target)
         # assert
@@ -112,7 +112,7 @@ class TestActor:
     def test_set_cell(self, cell_0_0: PatchCell, attr, value, target):
         """Test setting values."""
         # arrange
-        actor = cell_0_0.agents.create(Actor, singleton=True)
+        actor = cell_0_0.agents.new(Actor, singleton=True)
         # act
         actor.set(attr=attr, value=value, target=target)
         # assert

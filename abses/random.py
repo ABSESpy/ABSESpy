@@ -140,7 +140,9 @@ class ListRandom:
             else self._to_actors_list(chosen)
         )
 
-    def link(self, link: str, p: float = 1.0) -> List[Tuple[Actor, Actor]]:
+    def link(
+        self, link: str, p: float = 1.0, mutual: bool = True
+    ) -> List[Tuple[Actor, Actor]]:
         """Random build links between actors.
 
         Parameters:
@@ -155,7 +157,7 @@ class ListRandom:
         Example:
             ```
             # generate three actors
-            actors = model.agents.create(Actor, 3)
+            actors = model.agents.new(Actor, 3)
             # with `probability=1`, all possible actor-actor links would be generated.
             >>> actors.random.link('test', p=1)
             >>> a1, a2, a3 = actors
@@ -165,8 +167,8 @@ class ListRandom:
             ```
         """
         linked_combs = []
-        for actor1, actor2 in list(combinations(self.actors, 2)):
+        for source, target in list(combinations(self.actors, 2)):
             if np.random.random() < p:
-                actor1.link.to(actor2, link_name=link, mutual=True)
-                linked_combs.append((actor1, actor2))
+                source.link.to(target, link_name=link, mutual=mutual)
+                linked_combs.append((source, target))
         return linked_combs

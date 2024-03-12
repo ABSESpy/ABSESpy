@@ -13,7 +13,7 @@ STATES = {
 }
 
 
-class States:
+class _States:
     """
     模型的主要部分（自然模块和人类模块），动作将发送给 Mediator 进行记录
     """

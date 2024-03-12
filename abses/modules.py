@@ -7,11 +7,12 @@
 
 """
 模型的基本模块。
+Basic implementation of the model's module.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Type
 
 from loguru import logger
 
@@ -19,14 +20,14 @@ from abses.tools.func import iter_func
 
 from .bases import _Notice
 from .objects import _BaseObj
-from .states import States
+from .states import _States
 
 if TYPE_CHECKING:
     from .main import MainModel
 
 
 class Module(_BaseObj):
-    """基本的模块"""
+    """Basic module for the model."""
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
         _BaseObj.__init__(self, model, observer=True, name=name)
@@ -38,7 +39,7 @@ class Module(_BaseObj):
 
     @property
     def opening(self) -> bool:
-        """模块处于打开或关闭状态"""
+        """If the module is open."""
         return self._open
 
     @opening.setter
@@ -51,38 +52,38 @@ class Module(_BaseObj):
 
     def initialize(self):
         """
-        Initialization after handle parameters.
+        Initialization before handle parameters.
         """
 
     def setup(self):
         """
-        Initialization before handle parameters.
+        Initialization after handle parameters.
         """
 
     def step(self):
         """
-        每当时间前进时触发
+        Called every time step.
         """
 
     def end(self):
         """
-        每当时间后退时触发
+        Called at the end of the simulation.
         """
 
 
 # Composite
-class CompositeModule(Module, States, _Notice):
+class CompositeModule(Module, _States, _Notice):
     """基本的组合模块，可以创建次级模块"""
 
     def __init__(self, model: MainModel, name: str = None) -> None:
         Module.__init__(self, model, name=name)
-        States.__init__(self)
+        _States.__init__(self)
         _Notice.__init__(self)
         self._modules: List[Module] = []
 
     @property
     def modules(self) -> List[Module]:
-        """当前模块的次级模块"""
+        """All attached sub-modules."""
         return self._modules
 
     @Module.opening.setter
@@ -92,12 +93,36 @@ class CompositeModule(Module, States, _Notice):
         Module.opening.fset(self, value)
 
     def create_module(
-        self, module_class: Module, how: Optional[str] = None, **kwargs
+        self,
+        module_class: Type[Module] = Module,
+        how: Optional[str] = None,
+        **kwargs,
     ) -> Module:
-        """创建次级模块"""
+        """Create a module and attach it to the model.
+
+        Parameters:
+            module_class:
+                The class of the module to be created.
+                Must be a subclass of Module.
+                If not given, the default module will be created.
+            how:
+                The method to create the module.
+                If not given, the module will be created by its __init__ method.
+            **kwargs:
+                The parameters to initialize the module.
+
+        Raises:
+            TypeError:
+                If the module class is not a subclass of Module.
+            ValueError:
+                If the creating method is not valid.
+
+        Returns:
+            The created module.
+        """
         if not issubclass(module_class, Module):
             raise TypeError(
-                f"Module class {module_class} must inherited from a module."
+                f"Module {module_class} not inherited from a module."
             )
         if not how:
             module = module_class(model=self._model, **kwargs)
@@ -105,7 +130,7 @@ class CompositeModule(Module, States, _Notice):
             creating_method = getattr(module_class, how)
             module = creating_method(model=self.model, **kwargs)
         else:
-            raise TypeError(f"{how} is not a valid creating method.")
+            raise ValueError(f"{how} is not a valid creating method.")
         setattr(self, module.name, module)  # register as module
         self.attach(module)
         self.modules.append(module)  # register as module
