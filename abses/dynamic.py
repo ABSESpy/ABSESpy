@@ -8,10 +8,11 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, List
 
 if TYPE_CHECKING:
     from .objects import _BaseObj
+    from .time import TimeDriver
 
 
 class _DynamicVariable:
@@ -42,7 +43,7 @@ class _DynamicVariable:
         return self._name
 
     @property
-    def obj(self):
+    def obj(self) -> _BaseObj:
         """Returns a base object instance
 
         Returns:
@@ -58,7 +59,7 @@ class _DynamicVariable:
         self._obj = obj
 
     @property
-    def data(self):
+    def data(self) -> Any:
         """Returns unused data
 
         Returns:
@@ -68,7 +69,7 @@ class _DynamicVariable:
         return self._data
 
     @property
-    def function(self):
+    def function(self) -> Callable:
         """Get the function that calculates the variable
 
         Returns:
@@ -78,16 +79,16 @@ class _DynamicVariable:
         return self._function
 
     @property
-    def time(self):
+    def time(self) -> TimeDriver:
         """Get the model time driver
 
         Returns:
             time:
-                abses.time._TimeDriver
+                abses.time.TimeDriver
         """
         return self.obj.time
 
-    def get_required_attributes(self, function: Callable):
+    def get_required_attributes(self, function: Callable) -> List[str]:
         """Get the function required attributes
 
         Returns:

@@ -115,7 +115,7 @@ class PatchCell(mg.Cell, _LinkNode):
         Automatically update the value if it is the dynamic variable of the layer.
 
         Parameters:
-            attr_name:
+            attr:
                 The name of attribute to get.
 
         Returns:

@@ -108,7 +108,7 @@ class _AgentsContainer(dict):
         breed_cls: Type[Actor],
         num: int = 1,
         singleton: bool = False,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> Union[Actor, ActorsList[Actor]]:
         """Create one or more actors of the given breed class.
 
@@ -169,7 +169,7 @@ class _AgentsContainer(dict):
                 agents.extend(values)
         return agents
 
-    def trigger(self, *args, **kwargs) -> Any:
+    def trigger(self, *args: Any, **kwargs: Any) -> Any:
         """Trigger a function for all agents in the container.
 
         This method calls the `trigger` method of the list of agents in the container,

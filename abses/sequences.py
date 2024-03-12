@@ -232,7 +232,7 @@ class ActorsList(list):
         """
         return np.array([getattr(actor, attr) for actor in self])
 
-    def trigger(self, func_name: str, *args, **kwargs) -> np.ndarray:
+    def trigger(self, func_name: str, *args: Any, **kwargs: Any) -> np.ndarray:
         """Call a method with the given name on all actors in the sequence.
 
         Parameters:

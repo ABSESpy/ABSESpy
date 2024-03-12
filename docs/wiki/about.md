@@ -13,7 +13,7 @@ ABM is simulated over time: agents make decisions and act based on their attribu
 > [!INFO]Definition
 > ‘**Social-ecological systems**’ (SES) is a concept for understanding the intertwined nature of human and natural systems in an interconnected and interdependent way ^[@biggs2021].
 
-**SESs** are not merely social plus ecological systems, but cohesive, integrated systems characterised by strong connections and feedbacks within and between social and ecological components that determine their overall dynamics ^[@folke2010]. As such, SES are a type of [complex adaptive systems]({{cas}}), and studying SESs often requires the methods or the applications to cover the social domains, ecological domains, and the [emergence] from their dynamic interdependence ^[@folke2016].
+**SESs** are not merely social plus ecological systems, but cohesive, integrated systems characterised by strong connections and feedbacks within and between social and ecological components that determine their overall dynamics ^[@folke2010]. As such, SES are a type of [complex adaptive system], and studying SESs often requires the methods or the applications to cover the social domains, ecological domains, and the [emergence] from their dynamic interdependence ^[@folke2016].
 
 ## ABM is an essential method in studying SES
 

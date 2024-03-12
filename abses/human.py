@@ -35,7 +35,7 @@ class HumanModule(Module):
     """The `Human` sub-module base class.
 
     Note:
-        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
+        Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure.
 
     Attributes:
         agents:

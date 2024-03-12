@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import functools
 from numbers import Number
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 try:
     from typing import Self
@@ -53,10 +53,10 @@ CRS = "epsg:4326"
 
 
 class PatchModule(Module, mg.RasterLayer):
-    # 基础的空间模块，继承这个类来创建一个子模块。看[这个教程](../features/architectural_elegance.md)来了解模型结构。这也是一个栅格图层，继承自 `mesa-geo` 的`RasterLayer`类，并可以放置主体。
+    # 基础的空间模块，继承这个类来创建一个子模块。看[这个教程](../tutorial/beginner/organize_model_structure.ipynb)来了解模型结构。这也是一个栅格图层，继承自 `mesa-geo` 的`RasterLayer`类，并可以放置主体。
     """
     The spatial sub-module base class.
-    Inherit from this class to create a submodule. Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure. This is also a raster layer, inherited from the 'mesa-geo.RasterLayer' class, and can place agents.
+    Inherit from this class to create a submodule. Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure. This is also a raster layer, inherited from the 'mesa-geo.RasterLayer' class, and can place agents.
 
     Attributes:
         cell_properties:
@@ -334,12 +334,12 @@ class PatchModule(Module, mg.RasterLayer):
         actors: Actor | Iterable[Actor],
         link: Optional[str] = None,
         refer_layer: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Relates all cells intersecting a given geometry.
 
         Parameters:
-            geo_agent:
+            actors:
                 An Actor or an iterable object of actors (e.g., `ActorsList`) who has existing geometry.
                 This method allows each agent create a mask by the geometry, and then link the cells within the sphere to this agent.
             link:
@@ -455,7 +455,7 @@ class PatchModule(Module, mg.RasterLayer):
 class BaseNature(mg.GeoSpace, CompositeModule):
     """The Base Nature Module.
     Note:
-        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
+        Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure.
         This is NOT a raster layer, but can be seen as a container of different raster layers.
         Users can create new raster layer (i.e., `PatchModule`) by `create_module` method.
         By default, an initialized ABSESpy model will init an instance of this `BaseNature` as `nature` module.
@@ -532,7 +532,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         self,
         module_class: Module = PatchModule,
         how: str | None = None,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> PatchModule:
         """Creates a submodule of the raster layer.
 

@@ -185,10 +185,10 @@ class TestLinkProxy:
         getattr(a2.link, to_or_by)(a3, link3, mutual=mutual)
 
         # assert
-        assert a1.link == set([link1, link2])
-        assert a2.link == set([link1, link3])
-        assert a3.link == set([link2, link3])
-        assert set(container.links) == set([link1, link2, link3])
+        assert a1.link == {link1, link2}
+        assert a2.link == {link1, link3}
+        assert a3.link == {link2, link3}
+        assert set(container.links) == {link1, link2, link3}
         assert container.has_link(link1, a1, a2) == expected
         assert container.has_link(link2, a1, a3) == expected
         assert container.has_link(link3, a2, a3) == expected
