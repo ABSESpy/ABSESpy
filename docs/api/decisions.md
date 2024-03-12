@@ -6,4 +6,4 @@ date: 2023-01-10
 
 :::abses.decision.Decision
 
-:::abses.decision.DecisionFactory
+:::abses.decision._DecisionFactory

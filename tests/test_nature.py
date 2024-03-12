@@ -5,314 +5,269 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Tuple
+"""测试自然模块
+"""
 
 import geopandas as gpd
 import numpy as np
 import pytest
+import rasterio as rio
+import xarray
 from shapely.geometry import Point, box
 
 from abses.actor import Actor
 from abses.cells import raster_attribute
-from abses.errors import ABSESpyError
-from abses.links import LinkContainer, LinkNode
+from abses.links import _LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
 from abses.sequences import ActorsList
 
 
-class MockActor(LinkNode):
+class MockActor(_LinkNode):
     """测试行动者"""
 
     def __init__(self, geometry=None):
         super().__init__()
         self.geometry = geometry
         self.test = 1
-        self.container = LinkContainer()
 
 
 class MockPatchCell(PatchCell):
     """测试斑块"""
 
+    def __init__(self, x=1, y=2, pos=None, indices=None):
+        super().__init__(pos, indices)
+        self._x = x
+        self._y = y
+
     @raster_attribute
     def x(self) -> int:
-        return 1
+        """x"""
+        return self._x
+
+    @x.setter
+    def x(self, value) -> None:
+        self._x = value
 
     @raster_attribute
     def y(self) -> int:
-        return 2
+        """y"""
+        return self._y
+
+    @y.setter
+    def y(self, value) -> None:
+        self._y = value
 
 
-def test_setup_attributes():
-    """测试斑块提取属性"""
-    instance = MockPatchCell()
-    properties = instance.__attribute_properties__()
-    assert isinstance(properties, set)
-    assert instance.x == 1
-    assert instance.y == 2
-    assert "x" in properties
-    assert "y" in properties
-    model = MainModel()
-    shape = (6, 5)
-    patch_module = PatchModule.from_resolution(
-        model, shape=shape, cell_cls=MockPatchCell
+class TestPatchModule:
+    """测试斑块模型"""
+
+    @pytest.mark.parametrize(
+        "y_changed, expected",
+        [
+            (2, 8),
+            # ('1', '1111'),
+            (2.5, 10),
+        ],
     )
-    assert "x" in patch_module.attributes
-    assert "y" in patch_module.attributes
-    assert len(patch_module.attributes) == 2
-    assert patch_module.get_raster("x").sum() == 30
+    def test_setup_attributes(self, model, y_changed, expected):
+        """测试斑块提取属性"""
+        # arrange / act
+        module = PatchModule.from_resolution(
+            model, shape=(2, 2), cell_cls=MockPatchCell
+        )
+        for cell in module:
+            cell.y = y_changed
+        # assert
+        assert "x" in module.cell_properties
+        assert "y" in module.cell_properties
+        assert "x" in module.attributes
+        assert "y" in module.attributes
+        assert len(module.attributes) == 2
+        assert module.get_raster("x").sum() == 4
+        assert module.get_raster("y").sum() == expected
 
-
-def test_patch_cell_attachment():
-    """测试斑块可以连接到一个主体"""
-    cell = LinkNode()
-    cell.container = LinkContainer()
-    actor = MockActor()
-    cell.link_to(actor, "actor_1")
-
-    assert "actor_1" in cell.links
-    assert len(cell.links) == 1
-    assert actor in cell.linked("actor_1")
-
-
-def test_patch_module_properties():
-    """测试一个斑块模块"""
-    model = MainModel(seed=42)
-    shape = (6, 5)
-    patch_module = PatchModule.from_resolution(model, shape=shape)
-
-    assert patch_module.shape2d == shape
-    assert patch_module.shape3d == (1, *shape)
-    assert patch_module.array_cells.shape == shape
-    assert isinstance(patch_module.random_positions(5), ActorsList)
-    coords = patch_module.coords
-    assert "x" in coords and "y" in coords
-    assert len(coords["x"]) == 5 and len(coords["y"]) == 6
-
-    actor = MockActor()
-    patch_module.land_allotment(
-        agent=actor, link="land", where=np.ones(shape, dtype=bool)
+    @pytest.mark.parametrize(
+        "shape, num",
+        [
+            ((5, 6), 5),
+            ((1, 1), 1),
+        ],
     )
-    assert np.all(patch_module.has_agent(link="land") == 1)
+    def test_properties(self, model: MainModel, shape, num):
+        """测试一个斑块模块"""
+        # arrange / act
+        module = PatchModule.from_resolution(
+            model, shape=shape, cell_cls=MockPatchCell
+        )
+        coords = module.coords
 
+        # assert
+        assert module.shape2d == shape
+        assert module.shape3d == (1, *shape)
+        assert module.array_cells.shape == shape
+        assert isinstance(module.random.choice(num), (ActorsList, PatchCell))
+        assert "x" in coords and "y" in coords
+        assert len(coords["x"]) == shape[1]
+        assert len(coords["y"]) == shape[0]
 
-@pytest.fixture(name="raster_layer")
-def simple_raster_layer() -> PatchModule:
-    """测试一个斑块模块"""
-    # Sample setup for RasterLayer (you may need to adjust based on your setup)
-    model = MainModel()
-    width, height = 10, 10
-    layer = PatchModule.from_resolution(model=model, shape=(width, height))
-    data = np.random.rand(1, height, width)
-    layer.apply_raster(data, "test_1")
-    return layer
+    def test_selecting_by_value(self, model: MainModel, module: PatchModule):
+        """测试选择斑块"""
+        # arrange
+        model.agents.new(Actor, singleton=True)
+        # act
+        cells = module.select("init_value")
+        # assert
+        assert len(cells) == 3  # init_value = [0, 1, 2, 3]
 
-
-def test_get_dataarray(raster_layer: PatchModule):
-    """测试获取数据数组"""
-    data = np.random.random(raster_layer.shape3d)
-    raster_layer.apply_raster(data, "test_2")
-    data = np.random.random(raster_layer.shape3d)
-    raster_layer.apply_raster(data, "test_3")
-    dataarray_2d = raster_layer.get_xarray("test_2")
-    assert dataarray_2d.shape == raster_layer.shape2d
-    dataarray_3d = raster_layer.get_xarray()
-    assert dataarray_3d.shape == (3, *raster_layer.shape2d)
-
-
-def test_geometric_cells(raster_layer):
-    """测试几何搜索"""
-    # Define a geometry (for this example, a box)
-    geom = box(2, 2, 8, 8)
-
-    # Get cells intersecting with the geometry
-    cells = raster_layer.geometric_cells(geom)
-
-    # Check if each cell's position is within the geometry
-    for cell in cells:
-        x, y = cell.pos
-        assert geom.contains(
-            box(x, y, x + 1, y + 1)
-        ), f"Cell at {x}, {y} is not within the geometry!"
-
-
-@pytest.fixture(name="linked_raster_layer")
-def simple_linked_raster_layer(raster_layer):
-    """测试每一个斑块可以连接到一个主体"""
-    # Define a polygon (for this example, a box)
-    geom = box(2, 2, 8, 8)
-    agent = Actor(model=raster_layer.model, geometry=geom)
-    agent.test = 1
-    raster_layer.link_by_geometry(agent, "link")
-    return agent, raster_layer
-
-
-def test_link_by_geometry(linked_raster_layer):
-    """测试每一个斑块可以连接到一个主体"""
-    agent, raster_layer = linked_raster_layer
-    cells = agent.linked("link")
-    arr = raster_layer.linked_attr(attr_name="test", link="link")
-    assert np.nansum(arr) == len(cells)
-
-
-def test_batch_link_by_geometry(raster_layer):
-    """测试批量将一些斑块连接到某个主体"""
-    agents = [MockActor(box(2, 2, 4, 4)), MockActor(box(6, 6, 8, 8))]
-
-    raster_layer.link_by_geometry(agents, "link")
-    arr = raster_layer.linked_attr(attr_name="test", link="link")
-    assert np.nansum(arr) == 8
-
-    overlapped = [MockActor(box(2, 2, 7, 7)), MockActor(box(6, 6, 8, 8))]
-    raster_layer.link_by_geometry(overlapped, "link")
-    with pytest.raises(ValueError):
-        arr2 = raster_layer.linked_attr(attr_name="test", link="link")
-    arr2 = raster_layer.linked_attr(
-        attr_name="test", link="link", how="random"
+    @pytest.mark.parametrize(
+        "shape, geometry, expected_len, expected_sum",
+        [
+            ((2, 2), (0, 0, 2, 2), 4, 6),
+            ((3, 3), (1, 1, 3, 3), 4, 12),
+            ((3, 3), (1, 1, 2, 2), 1, 4),
+            ((3, 3), (0, 0, 2, 2), 4, 20),
+        ],  # 这里box是从左下角到右上角进行选择的
     )
-    assert np.nansum(arr2) == 25 + 4 - 1  # one agent is overlapped
+    def test_selecting_by_geometry(
+        self, model: MainModel, shape, geometry, expected_len, expected_sum
+    ):
+        """测试使用地理图形选择斑块"""
+        # arrange
+        module = PatchModule.from_resolution(model, shape=shape)
+        actor: Actor = module.cells[0][0].agents.new(Actor, singleton=True)
+        module.apply_raster(
+            np.arange(shape[0] * shape[1]).reshape(module.shape3d),
+            attr_name="test",
+        )
+        # act
+        cells = module.select(where=box(*geometry))
+        cells.apply(
+            lambda cell: cell.link.to(
+                actor, link_name="test_link", mutual=True
+            )
+        )
+        # assert
+        assert len(cells) == expected_len
+        assert cells.array("test").sum() == expected_sum
+        assert actor.link.get("test_link") == cells
 
-
-def test_read_attrs_from_linked_agent(linked_raster_layer):
-    """测试从相连接的主体中读取属性"""
-    _, raster_layer = linked_raster_layer
-    array = raster_layer.linked_attr("test", link="link")
-    assert isinstance(array, np.ndarray)
-    assert array.shape == raster_layer.shape2d
-    assert np.nansum(array) == 36
-
-    # 测试某个主体是否被正确链接并读取
-    linked_cell = raster_layer.array_cells[4][4]
-    not_linked_cell = raster_layer.array_cells[1][1]
-
-    assert linked_cell.linked_attr("test", link="link") == 1
-    with pytest.raises(ValueError):
-        not_linked_cell.linked_attr("test", link="link")
-
-    with pytest.raises(AttributeError):
-        linked_cell.linked_attr("not_a_attr", link="link")
-
-
-def test_major_layer(raster_layer):
-    """测试选择主要图层"""
-    layer = raster_layer
-    model = layer.model
-    assert model.nature.total_bounds is None
-    model.nature.major_layer = layer
-    assert model.nature.total_bounds is layer.total_bounds
-
-
-def test_create_agents_from_gdf():
-    """测试从GeoDataFrame创建主体"""
-    # Step 1: Create a sample geopandas.GeoDataFrame with some dummy data
-    data = {
-        "name": ["agent_1", "agent_2", "agent_3"],
-        "age": [25, 30, 35],
-        "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
-    }
-    gdf = gpd.GeoDataFrame(data, crs="epsg:4326")
-
-    # Initialize BaseNature instance
-    model = MainModel()
-    nature = model.nature
-
-    # Step 2: Use the create_agents_from_gdf method
-    agents = nature.create_agents_from_gdf(
-        gdf, unique_id="name", agent_cls=Actor
+    @pytest.mark.parametrize(
+        "func_name, attr, data_type, dims",
+        [
+            ("get_xarray", "test", xarray.DataArray, 2),
+            ("get_xarray", None, xarray.DataArray, 3),
+            ("get_raster", "test", np.ndarray, 3),
+            ("get_raster", None, np.ndarray, 3),
+            ("get_rasterio", "test", rio.DatasetReader, 2),
+            ("get_rasterio", None, rio.DatasetReader, 2),
+        ],
     )
+    def test_get_data(
+        self, module: PatchModule, attr, data_type, func_name, dims
+    ):
+        """测试获取数据数组"""
+        # arrange
+        data = np.random.random(module.shape3d)
+        module.apply_raster(data, "test")
+        # act
+        got_data = getattr(module, func_name)(attr)
+        # assert
+        assert len(got_data.shape) == dims
+        assert isinstance(got_data, data_type), f"{type(got_data)}"
 
-    # Step 3: Assert number of created agents
-    assert len(agents) == len(gdf)
-
-    # Step 4: Check each agent's attributes and geometry
-    for idx, agent in enumerate(agents):
-        assert agent.unique_id == gdf.iloc[idx]["name"]
-        assert agent.age == gdf.iloc[idx]["age"]
-        assert agent.geometry == gdf.iloc[idx]["geometry"]
-
-
-def test_copy_layer(raster_layer: PatchModule):
-    """测试复制图层"""
-    layer = raster_layer
-    layer2 = layer.model.nature.create_module(
-        PatchModule, how="copy_layer", layer=layer
+    @pytest.mark.parametrize(
+        "cell_pos, linked",
+        [
+            ((1, 1), (True, True)),
+            ((0, 0), (True, False)),
+            ((2, 2), (False, True)),
+        ],
     )
-    assert layer.shape2d == layer2.shape2d
+    def test_cell_linked_by_two_agents(
+        self, model: MainModel, cell_pos, linked
+    ):
+        """测试批量将一些斑块连接到某个主体"""
+        # arrange
+        module = PatchModule.from_resolution(model, shape=(4, 4))
+        box1, box2 = box(*(0, 0, 2, 2)), box(*(1, 1, 4, 4))
+        agent1 = model.agents.new(Actor, singleton=True, geometry=box1)
+        agent2 = model.agents.new(Actor, singleton=True, geometry=box2)
 
+        # act
+        module.select(box1).apply(
+            lambda c: c.link.to(agent1, "link", mutual=True)
+        )
+        module.select(box2).apply(
+            lambda c: c.link.to(agent2, "link", mutual=True)
+        )
 
-def test_loc():
-    """测试定位"""
-    model = MainModel()
-    width, height = 2, 3
-    layer = PatchModule.from_resolution(model=model, shape=(height, width))
-    data = np.arange(6).reshape(1, 3, 2)
-    layer.apply_raster(data, "test")
+        # assert
+        linked_agents = module.cells[cell_pos[0]][cell_pos[1]].link.get("link")
+        assert (agent1 in linked_agents, agent2 in linked_agents) == linked
 
-    agent = Actor(model=model)
-    agent.put_on_layer(layer, (0, 0))
-    assert agent.loc("test") == 4
+    def test_major_layer(self, model, module):
+        """测试选择主要图层"""
+        assert model.nature.major_layer is module
+        assert model.nature.total_bounds is module.total_bounds
 
-
-@pytest.fixture(name="cells")
-def my_cells() -> Tuple[PatchCell]:
-    """模拟两个斑块"""
-    model = MainModel()
-    test = model.nature.create_module(
-        how="from_resolution", name="test", shape=(1, 2)
+    @pytest.mark.parametrize(
+        "ufunc, expected",
+        [
+            (lambda c: c.init_value, np.arange(4)),
+            (
+                lambda c: c.agents.has(),
+                np.array([0, 0, 1, 0]),
+            ),
+        ],
     )
-    cell_1 = test.cells[0][0]
-    cell_2 = test.cells[1][0]
-    return cell_1, cell_2
+    def test_apply(
+        self,
+        module: PatchModule,
+        ufunc,
+        expected,
+        cell_0_0: PatchCell,
+    ):
+        """Testing"""
+        # arrange
+        cell_0_0.agents.new(Actor, singleton=True)
+        # act
+        result = module.apply(ufunc=ufunc)
+        # assert
+        assert result.shape == module.shape2d
+        np.testing.assert_array_equal(result, expected.reshape(module.shape2d))
 
+    def test_create_agents_from_gdf(self, model):
+        """测试从GeoDataFrame创建主体"""
+        # Step 1: Create a sample geopandas.GeoDataFrame with some dummy data
+        data = {
+            "name": ["agent_1", "agent_2", "agent_3"],
+            "age": [25, 30, 35],
+            "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
+        }
+        gdf = gpd.GeoDataFrame(data, crs="epsg:4326")
 
-class Dog(Actor):
-    """a dog for testing"""
+        # Initialize BaseNature instance
+        nature = model.nature
 
+        # Step 2: Use the create_agents_from_gdf method
+        agents = nature.create_agents_from_gdf(
+            gdf, unique_id="name", agent_cls=Actor
+        )
 
-@pytest.fixture(name="agents")
-def my_agents() -> Tuple[Dog]:
-    """模拟两个主体"""
-    model = MainModel()
-    agent_1 = Dog(model=model)
-    agent_2 = Dog(model=model)
-    return agent_1, agent_2
+        # Step 3: Assert number of created agents
+        assert len(agents) == len(gdf)
 
+        # Step 4: Check each agent's attributes and geometry
+        for idx, agent in enumerate(agents):
+            assert agent.unique_id == gdf.iloc[idx]["name"]
+            assert agent.age == gdf.iloc[idx]["age"]
+            assert agent.geometry == gdf.iloc[idx]["geometry"]
 
-def test_add_agent(cells, agents):
-    """测试添加主体"""
-    agent1, agent2 = agents
-    assert agent1.breed == agent2.breed == "Dog"
-    cell1, cell2 = cells
-    # Test adding the first agent of a breed
-    agent1.put_on(cell1)
-    with pytest.raises(ABSESpyError):
-        cell2.add(agent1)
-    assert agent1 in cell1.agents
-
-    cell1.add(agent2)
-    assert len(cell1.agents) == 2
-
-
-def test_remove_agent(agents, cells):
-    """测试移除主体"""
-    agent1, agent2 = agents
-    cell1, cell2 = cells
-    # Add some initial agents
-    agent1.put_on(cell1)
-    agent2.put_on(cell2)
-
-    # Test removing one agent
-    cell1.remove(agent1)
-    assert "Dog" not in cell1._agents
-    assert "Dog" in cell2._agents
-    assert agent1 not in cell1.agents
-
-    agent2.put_on(cell1)
-    assert agent2 in cell1.agents
-    assert agent2 not in cell2.agents
-    agent2.put_on(cell1)
-    assert not agent1.on_earth
-    assert agent2.on_earth
-    agent1.put_on(cell1)
-    assert len(cell1.agents) == 2
-    agent2.put_on(cell2)
+    def test_copy_layer(self, model, module: PatchModule):
+        """测试复制图层"""
+        layer2 = model.nature.create_module(
+            PatchModule, how="copy_layer", layer=module, name="test2"
+        )
+        assert module.shape2d == layer2.shape2d
+        assert layer2.name == "test2"

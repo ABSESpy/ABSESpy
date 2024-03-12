@@ -5,35 +5,42 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""ActorsList is a sequence of actors.
+It's used to manipulate the actors quickly in batch.
+"""
+
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
+from functools import partial
 from numbers import Number
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     List,
     Optional,
-    Self,
-    TypeAlias,
     Union,
     overload,
 )
+
+try:
+    from typing import Self, TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias, Self
 
 import mesa_geo as mg
 import numpy as np
 
 from abses.errors import ABSESpyError
 from abses.random import ListRandom
+from abses.selection import selecting
 
 from .tools.func import make_list
 
 if TYPE_CHECKING:
     from .actor import Actor
-
-# logger = logging.getLogger("__name__") ###################################3
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 
@@ -133,7 +140,7 @@ class ActorsList(list):
                 Positions that return True will be selected.
         """
         if isinstance(selection, (str, dict)):
-            bool_ = [actor.selecting(selection) for actor in self]
+            bool_ = [selecting(actor, selection) for actor in self]
         elif isinstance(selection, (list, tuple, np.ndarray)):
             bool_ = make_list(selection)
         else:
@@ -235,7 +242,7 @@ class ActorsList(list):
         """
         return np.array([getattr(actor, attr) for actor in self])
 
-    def trigger(self, func_name: str, *args, **kwargs) -> np.ndarray:
+    def trigger(self, func_name: str, *args: Any, **kwargs: Any) -> np.ndarray:
         """Call a method with the given name on all actors in the sequence.
 
         Parameters:
@@ -253,3 +260,20 @@ class ActorsList(list):
             getattr(actor, func_name)(*args, **kwargs) for actor in iter(self)
         ]
         return np.array(results)
+
+    def apply(self, ufunc: Callable, *args: Any, **kwargs: Any) -> np.ndarray:
+        """Apply ufunc to all actors in the sequence.
+
+        Parameters:
+            ufunc:
+                The function to apply to each actor.
+            *args:
+                Positional arguments to pass to the function.
+            **kwargs:
+                Keyword arguments to pass to the function.
+
+        Returns:
+            An array of the results of applying the function to each actor.
+        """
+        func = partial(ufunc, *args, **kwargs)
+        return np.array(list(map(func, self)))

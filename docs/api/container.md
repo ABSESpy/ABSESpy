@@ -1,4 +1,9 @@
+---
+title: Actors' Container
+authors: SongshGeo
+date: 2024-03-13
+---
 
-# Actors' Container
+:::abses.container._AgentsContainer
 
-:::abses.container.AgentsContainer
+:::abses.container._CellAgentsContainer

@@ -5,13 +5,28 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+Components 是模型的基本组件，负责调度参数，让参数配置模块化。
+
+用户在进行继承的时候，可以在类属性`__args__`中设定该模块必须的参数。
+如果该参数在实验中没有被读取到，则会报错。
+
+以下类继承了这个基本类：
+1. 模型所有的模块
+2. 主模型
+3. TimeDriver 时间驱动器
+4. DataCollector 数据收集器
+"""
+
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Iterable, Optional, Set, Union
 
 from omegaconf import DictConfig
 
-from .tools.func import make_list
+from abses.tools.func import make_list
+from abses.tools.regex import MODULE_NAME
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -19,7 +34,7 @@ if TYPE_CHECKING:
 
 class _Component:
     """
-    Class _Component is used to represent a component of the model. Extends _Log class to be able to log any issues.
+    Class _Component is used to represent a component of the model.
     Components are foundational pieces in constructing the model's entities.
     It is initialized with a model and a optional name.
     """
@@ -28,8 +43,8 @@ class _Component:
 
     def __init__(self, model: MainModel, name: Optional[str] = None):
         self._args: Set[str] = set()
-        self._model = model
-        self.name = name
+        self._model: MainModel = model
+        self.name: str = name
         self.add_args(self.__args__)
 
     @property
@@ -38,14 +53,18 @@ class _Component:
         return self._name
 
     @name.setter
-    def name(self, value: None | str) -> None:
+    def name(self, value: Optional[str]) -> None:
         """Set the name of the component"""
         if value is None:
             value = self.__class__.__name__.lower()
+        if not isinstance(value, str):
+            raise TypeError(f"Name must be a string, not {type(value)}.")
+        if not re.match(MODULE_NAME, value):
+            raise ValueError(f"Name '{value}' is not a valid name.")
         self._name = value
 
     @property
-    def params(self) -> dict:
+    def params(self) -> DictConfig:
         """Returns read-only model's parameters.
 
         Returns:
@@ -53,6 +72,9 @@ class _Component:
                 Dictionary of model's parameters.
         """
         return self._model.settings.get(self.name, DictConfig({}))
+
+    # alias of params
+    p = params
 
     @property
     def args(self) -> DictConfig:
@@ -70,7 +92,6 @@ class _Component:
         Parameters:
             args :
                 Model's parameters to be added as component's arguments.
-
         """
         args_set = set(make_list(args))
         for arg in args_set:

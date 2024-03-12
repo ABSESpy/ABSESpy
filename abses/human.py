@@ -5,29 +5,37 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-import sys
-from typing import Callable, Dict, Set, TypeAlias, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, Union
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from loguru import logger
 from omegaconf import DictConfig
 
 from abses.actor import Actor
+from abses.links import _LinkContainer
 
 from .cells import PatchCell
-from .container import AgentsContainer
-from .links import LinkContainer
+from .container import _AgentsContainer
 from .modules import CompositeModule, Module
 from .sequences import ActorsList, Selection
 
 Actors: TypeAlias = Union[ActorsList, Selection, Actor]
 Trigger: TypeAlias = Union[str, Callable]
+if TYPE_CHECKING:
+    from abses import MainModel
 
 
 class HumanModule(Module):
     """The `Human` sub-module base class.
 
     Note:
-        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
+        Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure.
 
     Attributes:
         agents:
@@ -36,26 +44,25 @@ class HumanModule(Module):
             Actor collections defined.
     """
 
-    def __init__(self, model, name=None):
+    def __init__(self, model: MainModel, name: Optional[str] = None):
         Module.__init__(self, model, name)
         logger.info("Initializing a new Human Module...")
-        self._agents = AgentsContainer(model)
         self._collections: Dict[str, Selection] = DictConfig({})
 
     @property
-    def agents(self) -> AgentsContainer:
+    def agents(self) -> _AgentsContainer:
         """The agents container of this ABSESpy model."""
-        return self._agents
+        return self.model.agents
 
     @property
     def collections(self) -> Set[str]:
         """Actor collections defined."""
         return set(self._collections.keys())
 
-    def actors(self, name: str | None = None) -> ActorsList[Actor]:
+    def actors(self, name: Optional[str] = None) -> ActorsList[Actor]:
         """Different selections of agents"""
         if name is None:
-            return self.agents.to_list()
+            return self.agents.get()
         if name not in self._collections:
             raise KeyError(f"{name} is not defined.")
         selection = self._collections[name]
@@ -93,7 +100,7 @@ class HumanModule(Module):
             ```
             # Create 5 actors to query
             model=MainModel()
-            model.agents.create(Actor, 5)
+            model.agents.new(Actor, 5)
 
             module = HumanModule(model=model)
             actors = module.define(name='first', selection='ids=0')
@@ -111,14 +118,10 @@ class HumanModule(Module):
         return selected
 
 
-class BaseHuman(CompositeModule, HumanModule, LinkContainer):
-    """The Base Human Module.
-
-    Note:
-        Look at [this tutorial](../features/architectural_elegance.md) to understand the model structure.
-    """
+class BaseHuman(CompositeModule, HumanModule, _LinkContainer):
+    """The Base Human Module."""
 
     def __init__(self, model, name="human"):
-        LinkContainer.__init__(self)
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
+        _LinkContainer.__init__(self)

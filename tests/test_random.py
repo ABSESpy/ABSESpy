@@ -23,7 +23,7 @@ class TestRandomActorsList:
     def test_seed(self, main: MainModel):
         """测试随机种子是一致的"""
         # arrange
-        actors = main.agents.create(Actor, num=3)
+        actors = main.agents.new(Actor, num=3)
         seed = getattr(main, "_seed")
         assert actors.random.seed == seed
 
@@ -36,15 +36,15 @@ class TestRandomActorsList:
     def test_link(self, main):
         """测试随机互相连接"""
         # arrange
-        actors = main.agents.create(Actor, num=3)
+        actors = main.agents.new(Actor, num=3)
 
         # act
         linked_combs = actors.random.link("test")
 
         # assert
         assert len(linked_combs) == 3
-        assert actors[1] in actors[0].linked("test")
-        assert actors[2] in actors[0].linked("test")
+        assert actors[1] in actors[0].link.get("test")
+        assert actors[2] in actors[0].link.get("test")
 
     @pytest.mark.parametrize(
         "actors_num, p, expected_p",
@@ -72,7 +72,7 @@ class TestRandomActorsList:
     def test_clean_p(self, main: MainModel, actors_num, p, expected_p):
         """测试清理概率"""
         # arrange
-        agents = main.agents.create(Actor, num=actors_num)
+        agents = main.agents.new(Actor, num=actors_num)
         agents.update("test", p)
 
         # act
@@ -90,7 +90,7 @@ class TestRandomActorsList:
     )
     def test_bad_choose(self, main: MainModel, num, size, replace):
         """测试不能选取的一些情况"""
-        agents = main.agents.create(Actor, num=num)
+        agents = main.agents.new(Actor, num=num)
 
         # act / assert
         with pytest.raises(ABSESpyError):
@@ -112,7 +112,7 @@ class TestRandomActorsList:
     def test_random_choose(self, main: MainModel, size, p, replace, expected):
         """测试从列表中随机抽取"""
         # arrange
-        agents = main.agents.create(Actor, num=2)
+        agents = main.agents.new(Actor, num=2)
 
         # act
         chosen = agents.random.choice(
@@ -136,7 +136,7 @@ class TestRandomActorsList:
     def test_random_choose_one(self, main: MainModel, p, expected):
         """测试从列表中随机抽取"""
         # arrange
-        agents = main.agents.create(Actor, num=2)
+        agents = main.agents.new(Actor, num=2)
 
         # act
         chosen = agents.random.choice(prob=p, as_list=False)

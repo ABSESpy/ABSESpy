@@ -194,8 +194,8 @@ class MyActor(Actor):
 
 
 model = MainModel()
-actors = model.agents.create(Actor, 5)
-my_actor = model.agents.create(MyActor, singleton=True)
+actors = model.agents.new(Actor, 5)
+my_actor = model.agents.new(MyActor, singleton=True)
 
 my_actor.say_hi()
 print(model.agents)
@@ -223,11 +223,11 @@ class MyModel(MainModel):
 
     def setup(self):
         n_agents = self.params.get('init_agents')
-        self.agents.create(Actor, n_agents)
+        self.agents.new(Actor, n_agents)
 
     def step(self):
         n_agents = self.params.get('n_agents')
-        self.agents.create(Actor, n_agents)
+        self.agents.new(Actor, n_agents)
 
     def end(self):
         n_agents = len(self.agents)
@@ -259,34 +259,18 @@ Not scared by these parameters, are you? Things are very simple:
 
 !!! tip
 
-    You don't have to worry about writing a long long nested dictionary for the parameters in practice. `ABSESpy` allows users to easily [manage complex parameters using configuration files].
+    You don't have to worry about writing a long long nested dictionary for the parameters in practice. `ABSESpy` allows users to easily manage complex parameters by [using configuration files].
 
 ## What to do for the next
 
 Congratulations! So far, you have become familiar with the main concepts of the `ABSESpy` framework and know how to run a model.
+
 We encourage you to return to our [Guide Checklist], find out the feature or example model which most attractive to you.
-Once you've decide to develop your own ABM by using `ABSESpy`, we have [detailed tutorials] for users from different levels, happy coding!
 
-<!-- Perhaps you've already got a taste of one of the main charms of `ABSESpy`: this framework is tailor-made for socio-ecological systems (SES).
-Users should inherit their own modules and subjects from the most basic classes such as `BaseNature`, `BaseHuman`, and `Actor`, then organize models using our provided running framework and parameter configuration system.
-
-But that's just basics, there's much more to `ABSESpy`. Whether defining natural systems, human systems or subjects, you will find that `ABSESpy` can save users a lot of time. This is because some functions helpful for SES research have been implemented in this framework thanks to academia's understanding and accumulation of theoretical frameworks for SES characteristics. -->
-
-<!--
-恭喜！目前为止你已经熟悉了`ABSESpy`框架的主要理念，并且知道了如何运行起来一个模型。
-也许你已经初步感受到`ABSESpy`的主要魅力之一了：这个框架的结构是为社会-生态系统（SES）量身打造的。用户应该从`BaseNature`, `BaseHuman`, `Actor`这几个最主要的基本类里，继承出自己的模块和主体，再用我们提供的运行框架和参数配置系统进行模型组织。
-
-但这只是基本，`ABSESpy`的功能远不止于此。无论是定义自然系统、人类系统、还是定义主体，你将会发现`ABSESpy`能够节约用户大量的时间。这是因为，得益于学术界对SES特性的认识和理论框架的积累，一些有助于研究SES的功能已在本框架中得到了实现。
-
-接下来，我们推荐参考如下介绍：
-
-1. 【社会子系统】实现人类决策过程模拟的建模框架
-2. 【自然子系统】如何建立自然系统
-3. 【主体】如何创建主体
-4. 【模型】
-5. 【模型】 -->
+Once you've decide to develop your own ABM by using `ABSESpy`, our well-organized [API documentation] should be a good reference. We also have [detailed tutorials] for users from different levels, happy coding!
 
 <!-- Links -->
   [Guide Checklist]: guide_checklist.md
   [detailed tutorials]: ../tutorial/tutorial.md
-  [manage complex parameters using configuration files]: ../tutorial/beginner/manage_parameters.ipynb
+  [using configuration files]: ../tutorial/beginner/manage_parameters.ipynb
+  [API documentation]: ../api/api.md

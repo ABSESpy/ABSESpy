@@ -11,14 +11,14 @@ This showcases the use of `ABSESpy` for ABM. We divide the models into two types
     ---
     Here, we developed the model to explore the evolution of livelihood in the South of China.
 
-    [:octicons-arrow-right-24: Checkout](south_china_livelihood.md)
-
+    [:octicons-arrow-right-24: Checkout](official/south_china_livelihood.md)
+<!--
 -   :robot:{ .lg .middle } __Yellow River Water Quota__
 
     ---
 
     This agent-based model shows how water uses were change by water quota policy in the Yellow River Basin, China.
 
-    [:octicons-arrow-right-24: Checkout](yellow_river_water_quota.md)
+    [:octicons-arrow-right-24: Checkout](official/yellow_river_water_quota.md) -->
 
 </div>

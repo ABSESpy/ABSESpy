@@ -7,36 +7,36 @@
 
 import pytest
 
-from abses.states import States
+from abses.states import _States
 
 
 # Tests
 def test_status_initial_state():
-    status = States()
+    status = _States()
     assert status.state == "new"
 
 
 def test_status_state_property():
-    status = States()
+    status = _States()
     status.set_state(1)
     assert status.state == "init"
 
 
 def test_status_invalid_state_setting():
-    status = States()
+    status = _States()
     with pytest.raises(ValueError, match="Invalid state 4, valid: .*!"):
         status.set_state(4)
 
 
 def test_status_repeat_state_setting():
-    status = States()
+    status = _States()
     status.set_state(1)
     with pytest.raises(ValueError, match="Setting state repeat: init!"):
         status.set_state(1)
 
 
 def test_status_retreat_state_setting():
-    status = States()
+    status = _States()
     status.set_state(3)
     with pytest.raises(
         ValueError, match="State cannot retreat from complete to ready!"

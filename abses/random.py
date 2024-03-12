@@ -35,6 +35,17 @@ class ListRandom:
 
         return ActorsList(self.model, objs=objs)
 
+    def _when_empty(self, when_empty: str) -> str:
+        if when_empty not in ("raise exception", "return None"):
+            raise ValueError(
+                f"Unknown value for `when_empty` parameter: {when_empty}"
+            )
+        if when_empty == "raise exception":
+            raise ABSESpyError(
+                "Trying to choose an actor from an empty `ActorsList`."
+            )
+        return None
+
     @overload
     def clean_p(self, p: str) -> np.ndarray:
         ...
@@ -79,6 +90,7 @@ class ListRandom:
         prob: np.ndarray | None | str = None,
         replace: bool = False,
         as_list: bool = False,
+        when_empty: str = "raise exception",
     ) -> Actor | ActorsList:
         """Randomly choose one or more actors from the current self object.
 
@@ -109,11 +121,13 @@ class ListRandom:
                 Not enough actors to choose in this `ActorsList`.
         """
         instances_num = len(self.actors)
+        if instances_num == 0:
+            return self._when_empty(when_empty=when_empty)
         if not isinstance(size, int):
             raise ValueError(f"{size} isn't an integer size.")
-        if not instances_num or (instances_num < size & ~replace):
+        if instances_num < size and not replace:
             raise ABSESpyError(
-                f"Trying to choose {size} actors from an `ActorsList` {self.actors}."
+                f"Trying to choose {size} actors from {self.actors}."
             )
         if prob is not None:
             prob = self.clean_p(prob=prob)
@@ -126,7 +140,9 @@ class ListRandom:
             else self._to_actors_list(chosen)
         )
 
-    def link(self, link: str, p: float = 1.0) -> List[Tuple[Actor, Actor]]:
+    def link(
+        self, link: str, p: float = 1.0, mutual: bool = True
+    ) -> List[Tuple[Actor, Actor]]:
         """Random build links between actors.
 
         Parameters:
@@ -141,18 +157,18 @@ class ListRandom:
         Example:
             ```
             # generate three actors
-            actors = model.agents.create(Actor, 3)
+            actors = model.agents.new(Actor, 3)
             # with `probability=1`, all possible actor-actor links would be generated.
             >>> actors.random.link('test', p=1)
             >>> a1, a2, a3 = actors
-            >>> assert a1.linked('test) == [a2, a3]
-            >>> assert a2.linked('test) == [a1, a3]
-            >>> assert a3.linked('test) == [a1, a2]
+            >>> assert a1.link.get('test) == [a2, a3]
+            >>> assert a2.link.get('test) == [a1, a3]
+            >>> assert a3.link.get('test) == [a1, a2]
             ```
         """
         linked_combs = []
-        for actor1, actor2 in list(combinations(self.actors, 2)):
+        for source, target in list(combinations(self.actors, 2)):
             if np.random.random() < p:
-                actor1.link_to(actor2, link=link, mutual=True)
-                linked_combs.append((actor1, actor2))
+                source.link.to(target, link_name=link, mutual=mutual)
+                linked_combs.append((source, target))
         return linked_combs

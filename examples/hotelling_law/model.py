@@ -27,7 +27,7 @@ class Hotelling(MainModel):
         self.nature.create_module(how="from_resolution", shape=(12, 12))
 
         # Create a list of agents
-        self.agents.create(Shop, self.num_agents)
+        self.agents.new(Shop, self.num_agents)
 
         # Placed agents on the grid randomly
         positions = rng.integers(12, size=(self.num_agents, 2), dtype=np.int8)

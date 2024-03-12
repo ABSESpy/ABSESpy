@@ -18,9 +18,14 @@ from typing import (
     Iterable,
     List,
     Optional,
-    TypeAlias,
+    Type,
     Union,
 )
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from abses.tools.func import camel_to_snake
 
@@ -122,7 +127,9 @@ class Decision:
                     raise AttributeError(
                         f"{self.breed} doesn't have an attribute 'decisions'"
                     )
-                if not isinstance(getattr(self, "decisions"), DecisionFactory):
+                if not isinstance(
+                    getattr(self, "decisions"), _DecisionFactory
+                ):
                     raise TypeError("Type of a decision must be decision.")
                 decision_obj = self.decisions.get(cls.name)
                 if not decision_obj.has_strategy(strategy):
@@ -191,7 +198,7 @@ class Decision:
     def setup(self) -> None:
         """Overwrite to setup an initial strategy for this decision."""
 
-    def _find_methods(self, symbol="making") -> Callable:
+    def _find_methods(self, symbol="making") -> Any:
         methods = inspect.getmembers(self.agent, predicate=inspect.ismethod)
         for _, func in methods:
             if hasattr(func, f"__{symbol}__"):
@@ -209,7 +216,7 @@ class Decision:
         """Overwrite this method to do something else after make decision."""
 
 
-class DecisionFactory:
+class _DecisionFactory:
     """Creating and containing decisions of an agent."""
 
     def __init__(
@@ -234,7 +241,7 @@ class DecisionFactory:
             )
         self._agent = agent
 
-    def parse_decisions(self, decisions: Iterable[type(Decision)]):
+    def parse_decisions(self, decisions: Iterable[Type[Decision]]):
         """Parse decisions and save into the container.
 
         Parameters:

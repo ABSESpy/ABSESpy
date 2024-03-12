@@ -1,4 +1,40 @@
 
+<a id='changelog-0.5.0'></a>
+# 0.5.0 — 2024-03-12
+
+## Performance improvements
+
+- [x] #zap⚡️ improve code formats
+- [x] #build🏗 upgrade dependencies and using typing-extension
+
+## New Features
+
+- [x] #feat✨ Agents now can use `move.to` a random `pos` on a layer
+- [x] #feat✨ Random choose now can select from an empty list
+- [x] #feat✨ actors' movement by new proxy class
+
+## Documentation changes
+
+- [x] #docs📄 updating docs notebooks for beginners
+- [x] #docs📄 refactoring the structure of api docs
+- [x] #docs📄 improve docs format
+
+## Fixed bugs
+
+- [x] #bug🐛 use typing_extensions to make abses compatible to python 3.9
+- [x] #bug🐛 alter nature now behaves correctly
+- [x] #bug🐛 fixing `Main Nature` `total_bounds` check ambigious
+- [x] #bug🐛 fixing `random.replace` arg doesn't work problem
+
+## Refactoring
+
+- [x] #refactor♻️ separate `_CellAgentsContainer` and `AgentsContainer`
+- [x] #refactor♻️ using default schedule and data collector, but compatible to attrs config
+- [x] #refactor♻️ AgentsContainer private and not singleton anymore
+- [x] refactoring `nature`, `Actor` `links` and its tests
+- [x] store agents by container in PatchCell
+- [x] use `get`, `set` methods to control the actor's behaviors
+
 <a id='changelog-0.4.2'></a>
 # 0.4.2 — 2024-01-11
 

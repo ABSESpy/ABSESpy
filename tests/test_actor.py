@@ -5,93 +5,115 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-from typing import Tuple, TypeAlias
+"""
+测试行动者，包括
+1. 新建的行动者拥有正确的属性；
+2. 移动到某个斑块上
+3. 死亡
+4. 获取属性值（自己或所在斑块）
+5. 设置属性值（自己或所在斑块）
+"""
 
-import networkx as nx
 import pytest
 
 from abses import MainModel
 from abses.actor import Actor
 from abses.cells import PatchCell
 from abses.nature import PatchModule
-from abses.sequences import ActorsList
 
 
-def test_actor_attributes():
-    """测试主体的属性"""
-    model = MainModel()
-    actor = Actor(model=model)
-    layer = PatchModule.from_resolution(model)
+class TestActor:
+    """Test the Actor class."""
 
-    assert actor.on_earth is False
-    assert actor.breed == "Actor"
-    pos = (3, 3)
-    actor.put_on_layer(layer=layer, pos=pos)
-    assert actor.on_earth is True
-    assert actor.pos == pos
-    assert len(actor.here) == 1
-    assert actor.here == ActorsList(model, [actor])
+    def test_attributes(self, model: MainModel):
+        """测试主体的属性"""
+        # arrange / act
+        actor = model.agents.new(Actor, singleton=True)
 
+        # act / assert
+        assert actor.on_earth is False
+        assert actor.breed == "Actor"
+        assert actor.at is None
+        assert actor.unique_id == 1
 
-def test_actor_selecting():
-    """测试主体的选取"""
-    model = MainModel()
-    actor = Actor(model=model)
-    actor.test1 = 1
-    actor.test2 = "testing"
-    selection = {"test1": 1, "test2": "testing"}
-    selection2 = "test1 == 1, test2 == testing"
-    selection3 = "Actor"
+    def test_movements(
+        self, model: MainModel, module: PatchModule, cell_0_0: PatchCell
+    ):
+        """Test moving"""
+        # arrange
+        actor = model.agents.new(Actor, singleton=True)
+        # act
+        pos = (0, 0)
+        actor.move.to(layer=module, pos=pos)
+        # assert
+        assert actor.on_earth is True
+        assert len(actor.at.agents) == 1
+        assert actor.at is cell_0_0
+        assert actor.layer is module
 
-    assert actor.selecting(selection=selection)
-    assert actor.selecting(selection=selection2)
-    assert actor.selecting(selection=selection3)
+    def test_die(self, model: MainModel, cell_0_0: PatchCell):
+        """Test die"""
+        # arrange
+        actor1 = model.agents.new(Actor, num=1, singleton=True)
+        actor2 = cell_0_0.agents.new(Actor, singleton=True)
+        # act
+        actor1.die()
+        actor2.die()
+        # assert
+        assert actor1 not in model.agents
+        assert actor2 not in model.agents
+        assert len(model.agents) == 0
 
-    class Farmer(Actor):
-        """测试用"""
-
-        def __init__(self, model, observer: bool = True) -> None:
-            super().__init__(model, observer)
-            self.test2 = 2
-            self.test2 = "testing"
-
-    actor2 = Farmer(model=model)
-    assert actor2.selecting(selection=selection) is False
-    assert actor2.selecting(selection=selection2) is False
-    assert actor2.selecting(selection=selection3) is False
-
-
-Links: TypeAlias = Tuple[MainModel, PatchCell, PatchCell, Actor, Actor]
-
-
-@pytest.fixture(name="links")
-def test_links() -> Links:
-    """测试主体的连接"""
-    model = MainModel()
-    test = model.nature.create_module(
-        how="from_resolution", name="test", shape=(1, 2)
+    @pytest.mark.parametrize(
+        "attr, target, expected",
+        [
+            ("test2", None, 3),
+            ("test2", "self", 3),
+            ("test2", "at", 2),
+        ],
     )
-    cell_1 = test.cells[0][0]
-    cell_2 = test.cells[1][0]
-    agent_1 = Actor(model=model)
-    agent_2 = Actor(model=model)
-    return model, cell_1, cell_2, agent_1, agent_2
+    def test_get(self, cell_0_0: PatchCell, attr, target, expected):
+        """Test getting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        cell_0_0.test1 = 1
+        cell_0_0.test2 = 2
+        actor.test2 = 3
+        # act
+        value = actor.get(attr=attr, target=target)
+        # assert
+        assert value == expected
 
+    @pytest.mark.parametrize(
+        "attr, target, value",
+        [
+            ("test1", "self", 1),
+            ("test2", "me", "testing text"),
+            ("test", "actor", ["test", "test1", "test2"]),
+        ],
+    )
+    def test_set(self, cell_0_0: PatchCell, attr, value, target):
+        """Test setting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        # act
+        actor.set(attr=attr, value=value, target=target)
+        # assert
+        assert getattr(actor, attr) == value
 
-def test_linked(links: Links):
-    """测试主体的连接"""
-    model, cell_1, cell_2, agent_1, agent_2 = links
-    agent_1.link_to(cell_1, "land")
-    agent_2.link_to(cell_2, "land")
-    agent_1.link_to(agent_2, link="friend")
-
-    assert cell_1 in agent_1.linked("land")
-    assert cell_2 in agent_2.linked("land")
-    assert agent_1 in agent_2.linked("friend")
-    assert agent_2 in agent_1.linked("friend")
-
-    friends = model.human.get_graph("friend")
-    lands = model.human.get_graph("land")
-    assert model.human.links
-    assert len(nx.degree(friends)) == 2
-    assert len(nx.degree(lands)) == 4
+    @pytest.mark.parametrize(
+        "attr, target, value",
+        [
+            ("test1", "at", 1),
+            ("test1", "nature", 1),
+            ("test1", "world", 1),
+        ],
+    )
+    def test_set_cell(self, cell_0_0: PatchCell, attr, value, target):
+        """Test setting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        # act
+        actor.set(attr=attr, value=value, target=target)
+        # assert
+        assert getattr(cell_0_0, attr) == value
