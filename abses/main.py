@@ -12,17 +12,12 @@ The main modelling framework of ABSESpy.
 from __future__ import annotations
 
 import sys
-from typing import (
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeAlias,
-    TypeVar,
-    Union,
-)
+from typing import Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from loguru import logger
 from mesa import DataCollector, Model
