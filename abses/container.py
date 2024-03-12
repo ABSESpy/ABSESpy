@@ -438,7 +438,7 @@ class _CellAgentsContainer(_AgentsContainer):
         breed_cls: Actor,
         num: int = 1,
         singleton: TYPE_CHECKING = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> Actor | ActorsList:
         """Creates a new actor or a list of actors of the given breed class.
         The created actors are added to both the cell and the model's global container.

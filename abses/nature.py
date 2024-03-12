@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import functools
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 try:
     from typing import Self
@@ -449,7 +449,7 @@ class PatchModule(Module, mg.RasterLayer):
             )
         return ActorsList(self.model, self.array_cells[mask_.astype(bool)])
 
-    def apply(self, ufunc, *args, **kwargs) -> np.ndarray:
+    def apply(self, ufunc: Callable, *args: Any, **kwargs: Any) -> np.ndarray:
         """Apply a function to array cells.
 
         Parameters:

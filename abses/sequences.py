@@ -14,7 +14,16 @@ from __future__ import annotations
 from collections.abc import Iterable
 from functools import partial
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Union,
+    overload,
+)
 
 try:
     from typing import Self, TypeAlias
@@ -252,7 +261,7 @@ class ActorsList(list):
         ]
         return np.array(results)
 
-    def apply(self, ufunc: callable, *args, **kwargs) -> np.ndarray:
+    def apply(self, ufunc: Callable, *args: Any, **kwargs: Any) -> np.ndarray:
         """Apply ufunc to all actors in the sequence.
 
         Parameters:

@@ -22,17 +22,16 @@ __all__ = [
     "PatchModule",
     "Actor",
     "Decision",
-    "_DecisionFactory",
     "ActorsList",
-    "_AgentsContainer",
     "PatchCell",
     "perception",
 ]
 __version__ = "v0.4.2"
 
 from .actor import Actor, perception
-from .container import ActorsList, _AgentsContainer
-from .decision import Decision, _DecisionFactory
+from .container import ActorsList
+from .decision import Decision
 from .human import BaseHuman
 from .main import MainModel
 from .nature import BaseNature, PatchCell, PatchModule
+from .time import time_condition

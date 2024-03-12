@@ -11,7 +11,7 @@ This script is used to manipulate actors' movements.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, Optional, Tuple, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, Optional, Tuple, TypeAlias
 
 import mesa_geo as mg
 from mesa.space import Coordinate
@@ -208,7 +208,7 @@ class _Movements:
         cell = self.layer.array_cells[new_indices[0]][new_indices[1]]
         self.actor.move.to(cell)
 
-    def random(self, prob: Optional[str] = None, **kwargs) -> None:
+    def random(self, prob: Optional[str] = None, **kwargs: Any) -> None:
         """Move the actor to a random location nearby.
 
         Parameters:

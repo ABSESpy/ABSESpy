@@ -37,17 +37,23 @@ nav:
         - Community Examples: examples/community.md
     - API references:
         - API: api/api.md
-        - Model: api/model.md
-        - Natural Modules: api/nature.md
-        - Human Modules: api/human.md
-        - Cells: api/cells.md
-        - Actor (Agent): api/agents.md
-        - Actors Container: api/container.md
-        - Actors Operation: api/sequences.md
-        - Time Control: api/time.md
-        - Decisions: api/decisions.md
-        - Random: api/random.md
-        - Variables: api/variables.md
+        - Model structure:
+          - Main Model: api/model.md
+          - Natural Modules: api/nature.md
+          - PatchModule (layer): api/layer.md
+          - Human Modules: api/human.md
+          - Cells: api/cells.md
+        - Actors' Operation:
+          - Actor (Agent): api/agents.md
+          - Actors Container: api/container.md
+          - Actors List: api/sequences.md
+          - Movements: api/move.md
+          - Interlinks: api/links.md
+          - Decisions: api/decisions.md
+        - Workflow Control:
+          - Time Control: api/time.md
+          - Random: api/random.md
+          - Variables: api/variables.md
 
 theme:
     name: "material"
