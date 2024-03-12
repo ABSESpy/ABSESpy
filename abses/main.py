@@ -200,6 +200,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """The global parameters of this model."""
         return self.settings.get("model", DictConfig({}))
 
+    # alias for model's parameters
+    p = params
+
     @property
     def breeds(self) -> Tuple[str]:
         """All breeds in the model."""

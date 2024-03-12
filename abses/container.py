@@ -54,7 +54,6 @@ class _AgentsContainer(dict):
         return "ModelAgents"
 
     def __repr__(self) -> str:
-        # rep = self.to_list().__repr__()[13:-1]
         strings = [f"({len(v)}){k}" for k, v in self.items()]
         return f"<{str(self)}: {'; '.join(strings)}>"
 
