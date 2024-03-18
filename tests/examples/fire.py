@@ -71,7 +71,7 @@ class Forest(MainModel):
         chosen_patches = grid.random.choice(self.num_trees, replace=False)
         # create trees on the selected patches.
         chosen_patches.trigger("grow")
-        # ignite the trees in the leftest column.
+        # ignite the trees in the leftmost column.
         ActorsList(self, grid.array_cells[:, 0]).trigger("ignite")
 
     def step(self):
