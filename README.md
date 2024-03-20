@@ -55,7 +55,8 @@ Its ultimate objective is to become the go-to choice for agent-based modeling wh
 
 ## Features
 
-![abses_API](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/abses_API.png)
+<img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/abses_API.png" alt="ABSESpy API structure" style="max-width:500px;max-height:500px;width:auto;height:auto;">
+
 
 - 🌍 Modeling social-ecological system with geo-data.
 - 🤖 Managing and manipulating agents with ease of cake.
