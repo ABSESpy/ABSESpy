@@ -8,7 +8,8 @@
 """狼羊草模型
 """
 
-from abses import Actor, MainModel, PatchCell, PatchModule
+from abses import Actor, MainModel, PatchCell
+from abses.cells import raster_attribute
 
 
 class Grass(PatchCell):
@@ -28,6 +29,16 @@ class Grass(PatchCell):
                 self._countdown = 5
             else:
                 self._countdown -= 1
+
+    @raster_attribute
+    def empty(self) -> bool:
+        """Return True if the cell is empty, False otherwise."""
+        return self._empty
+
+    @empty.setter
+    def empty(self, value: bool) -> None:
+        """Set the empty status of the cell."""
+        self._empty = value
 
 
 class Animal(Actor):
@@ -89,7 +100,7 @@ class WolfSheepModel(MainModel):
 
     def setup(self):
         # initialize a grid
-        grassland: PatchModule = self.nature.create_module(
+        grassland = self.nature.create_module(
             how="from_resolution",
             shape=self.params.shape,
             name="grassland",
@@ -102,15 +113,15 @@ class WolfSheepModel(MainModel):
         self.agents.apply(lambda x: x.move.to(pos="random", layer=grassland))
 
     def step(self):
-        self.nature.grassland.trigger("grow")
+        self.nature.grassland.apply(lambda c: c.grow())
         self.check_end()
 
     def check_end(self):
         """Check if the model should stop."""
         # end model
-        if not self.agents.get("Sheep"):
+        if not self.agents.has("Sheep"):
             self.running = False
-        elif not self.agents.get("Wolf"):
+        elif not self.agents.has("Wolf"):
             self.running = False
-        elif len(self.actors.select("Sheep")) >= 400:
+        elif self.agents.has("Sheep") >= 400:
             self.running = False

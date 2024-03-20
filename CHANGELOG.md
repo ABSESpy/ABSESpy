@@ -1,4 +1,17 @@
 
+<a id='changelog-0.5.1'></a>
+# 0.5.1 — 2024-03-20
+
+## Documentation changes
+
+- [x] #docs📄 Update all tutorials
+- [x] #docs📄 Update readme
+
+## Refactoring
+
+- [x] #refactor♻️ Refactoring some tests
+- [x] #refactor♻️ Remove some died codes.
+
 <a id='changelog-0.5.0'></a>
 # 0.5.0 — 2024-03-12
 

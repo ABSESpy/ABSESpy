@@ -149,6 +149,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         _LinkNode.__init__(self)
         self._cell: PatchCell = None
         self._decisions: _DecisionFactory = self._setup_decisions()
+        self._setup()
 
     def __repr__(self) -> str:
         return f"<{self.breed} [{self.unique_id}]>"
@@ -301,3 +302,12 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
             self.move.off()
         self.model.agents.remove(self)  # 从总模型里移除
         del self
+
+    def _setup(self) -> None:
+        """Setup the actor."""
+        self.setup()
+
+    def setup(self) -> None:
+        """Overwrite this method.
+        It should be called when the actor is initialized.
+        """

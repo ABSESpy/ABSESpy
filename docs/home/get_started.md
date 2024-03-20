@@ -1,3 +1,19 @@
+---
+title: Get Started
+authors: Shuang Song
+date: 2024-03-10
+---
+
+## Introduction
+
+`ABSESpy` has been designed to be a flexible and easy-to-use framework for agent-based modeling (ABM) of social-ecological systems (SES). It is built on top of the [Mesa] framework, which is a popular ABM framework in Python. `ABSESpy` provides a set of tools and utilities to help users to build, run, and analyze ABM models of SESs.
+
+This getting-started tutorial help you to run the simplest workflow with `ABSESpy` framework. If you have agent-based modeling experience and prefer to learn using `ABSESpy` by examples, you can check out the [official examples].
+
+Following diagram shows the basic structure of the `ABSESpy`'s API. Take it easy, you don't have to be familiar with all the features in this beginning stage. You can always go to the [API documentation] page to find a specific feature.
+
+![abses_API](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/abses_API.png)
+
 ## Get `ABSESpy` model running
 
 Assuming you've successfully installed `ABSESpy`, along with all its dependencies, and properly configured the environment to import the module into your workspace. Running the first blank model that performs no action is straightforward - simply import, initialize, and run...
@@ -274,3 +290,5 @@ Once you've decide to develop your own ABM by using `ABSESpy`, our well-organize
   [detailed tutorials]: ../tutorial/tutorial.md
   [using configuration files]: ../tutorial/beginner/manage_parameters.ipynb
   [API documentation]: ../api/api.md
+  [official examples]: ../examples/official.md
+  [Mesa]: https://github.com/projectmesa/mesa

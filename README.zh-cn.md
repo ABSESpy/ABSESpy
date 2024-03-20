@@ -1,4 +1,4 @@
-# ABSESpy: Agent-Based Modeling Framework for Social-Ecological Systems
+# ABSESpy: 社会-生态系统多主体建模框架
 
 ![ABSES_banner](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-10-19%20at%2019.08.12@2x.png)
 
@@ -38,29 +38,28 @@
 ---
 Language: [English Readme] | [简体中文]
 
-**[<kbd> <br> Install <br> </kbd>][Install]**
-**[<kbd> <br> Getting started <br> </kbd>][Getting Started]**
-**[<kbd> <br> Tutorials <br> </kbd>][Tutorials]**
-**[<kbd> <br> Contribute <br> </kbd>][Contribute]**
+**[<kbd> <br> 安装 <br> </kbd>][Install]**
+**[<kbd> <br> 指南 <br> </kbd>][Getting Started]**
+**[<kbd> <br> 教程 <br> </kbd>][Tutorials]**
+**[<kbd> <br> 贡献 <br> </kbd>][Contribute]**
 
 </div>
 
-`ABSESpy` is an agent-based modeling (ABM) framework based on [Mesa], but it focus more on simulating real-world problems.
-Tailored specifically for social-ecological systems (SES), or coupled human-nature systems, `ABSESpy` simplifies the interactions between agents and their grid-like environment.
-Its ultimate objective is to become the go-to choice for agent-based modeling when working with human-involved environment changes.
+`ABSESpy` 是一个基于[Mesa]的多主体建模框架，但专门为模拟现实世界问题而设计。
+作为专门为社会-生态系统建模而量身定制的框架，`ABSESpy`能够简化主体与网格环境（如栅格地理数据）之间的交互。
+我们的愿景是成为在处理人类环境变化时的多主体建模的首选框架。
 
-## Features
+## 主要特性
 
 <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/ABSESpy%20API.jpg" alt="ABSESpy API structure" style="max-width:400px;max-height:400px;width:auto;height:auto;">
 
+- 🌍 用地理数据模拟社会生态系统。
+- 🤖 轻松管理和操控代理。
+- 🕙 让你的模型与现实世界时间保持一致。
+- 📁 使用配置文件处理复杂模型。
+- 🙋 还有更多...
 
-- 🌍 Modeling social-ecological system with geo-data.
-- 🤖 Managing and manipulating agents with ease of cake.
-- 🕙 Make your model coherent with real-world time.
-- 📁 Handling complex models with a configuration file.
-- 🙋 and more...
-
-## Thanks to all contributors
+## 向贡献者们致谢
 
 <div align="center"><p>
 <a href="https://github.com/ABSESpy/ABSESpy/graphs/contributors">

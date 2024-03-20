@@ -5,6 +5,10 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""
+PyTest fixtures.
+"""
+
 import numpy as np
 import pytest
 from hydra import compose, initialize
@@ -16,8 +20,25 @@ from abses.nature import PatchCell, PatchModule
 @pytest.fixture(name="test_config")
 def test_config():
     """Test config"""
-    with initialize(version_base=None, config_path="."):
+    with initialize(version_base=None, config_path="config"):
         cfg = compose(config_name="test_config.yaml")
+    return cfg
+
+
+@pytest.fixture(name="water_quota_config")
+def test_water_quota_config():
+    """Test config"""
+    with initialize(version_base=None, config_path="config"):
+        cfg = compose(config_name="water_quota.yaml")
+    return cfg
+
+
+@pytest.fixture(name="main_config")
+def test_main_config():
+    """Test main config"""
+    # 加载项目层面的配置
+    with initialize(version_base=None, config_path="config"):
+        cfg = compose(config_name="testing")
     return cfg
 
 
