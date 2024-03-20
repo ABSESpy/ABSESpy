@@ -37,13 +37,9 @@
 
 ---
 Language: [English Readme] | [简体中文]
-
 **[<kbd> <br> 安装 <br> </kbd>][Install]** 
-
 **[<kbd> <br> 指南 <br> </kbd>][Getting Started]**
-
 **[<kbd> <br> 教程 <br> </kbd>][Tutorials]**
-
 **[<kbd> <br> 贡献 <br> </kbd>][Contribute]**
 
 </div>
