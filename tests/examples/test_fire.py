@@ -1,6 +1,17 @@
+#!/usr/bin/env python 3.11.0
+# -*-coding:utf-8 -*-
+# @Author  : Shuang (Twist) Song
+# @Contact   : SongshGeo@gmail.com
+# GitHub   : https://github.com/SongshGeo
+# Website: https://cv.songshgeo.com/
+
+"""
+Test fire spread model.
+"""
+
 import pytest
 
-from .examples.fire import Forest, Tree
+from examples.fire_spread.model import Forest
 
 
 @pytest.mark.parametrize(
@@ -13,6 +24,8 @@ from .examples.fire import Forest, Tree
     ],
 )
 class TestFire:
+    """Test fire spread model."""
+
     def test_init(self, cfg):
         """Test initialization."""
         model = Forest(parameters=cfg)

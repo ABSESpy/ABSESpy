@@ -134,8 +134,8 @@ class Hotelling(MainModel):
         )
 
         # Create some agents on random cells
-        cells = layer.select().random.choice(size=num_agents)
-        cells.apply(lambda x: x.agents.new(Shop))
+        shops = self.agents.new(Shop, num_agents)
+        shops.apply(lambda shop: shop.move.to("random", layer=layer))
 
     def step(self):
         # recalculate areas and assign them to each agent
