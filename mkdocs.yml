@@ -30,7 +30,8 @@ nav:
           - B06: tutorial/beginner/movement.ipynb
           - B07: tutorial/beginner/hotelling_tutorial.ipynb
         - Advanced Level:
-          - A01: tutorial/advanced/human_behavior_simulation.ipynb
+          - A01: tutorial/advanced/geodata.ipynb
+          - A02: tutorial/advanced/human_behavior_simulation.ipynb
         # - Competing Level:
     - Examples:
         - Official Examples: examples/official.md

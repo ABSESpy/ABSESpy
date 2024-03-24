@@ -104,6 +104,8 @@ class PatchCell(mg.Cell, _LinkNode):
             raise ABSESpyError("PatchCell can only belong to one layer.")
         # set layer property
         self._layer = layer
+        # set layer's model as the model
+        self.model = layer.model
         # set agents container
         self._agents = _CellAgentsContainer(layer.model, cell=self)
 

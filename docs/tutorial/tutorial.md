@@ -31,13 +31,13 @@ You're looking to create and operate a basic model by `ABSESpy` framework. Wonde
 [:material-book: __B06__](beginner/movement.ipynb) Move your agents in the artificial world.
 { .card }
 
-[:material-book: __B07__](beginner/hotelling_tutorial.ipynb) Your first full model example, a classic heuristic model[^1].
+[:material-book: __B07__](beginner/fire_tutorial.ipynb) Your first full model example, a classic heuristic model[^1].
 { .card }
 
-[:material-book: __B08__](beginner/fire_tutorial.ipynb) A classic agent-based model.
+[:material-book: __B08__](beginner/predation_tutorial.ipynb) Example of wolf-Sheep predation model, managing breeds.
 { .card }
 
-[:material-book: __B09__](beginner/predation_tutorial.ipynb) Wolf-Sheep predation model.
+[:material-book: __B09__](beginner/hotelling_tutorial.ipynb) Learn links between `Actor` and `PatchCell`.
 { .card }
 
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
@@ -50,10 +50,10 @@ You have gained a thorough understanding of the agent-based model. Now, you are 
 
 <div class="grid" markdown>
 
-[:material-book: __A01__](advanced/human_behavior_simulation.ipynb) How to apply an advanced [human behavior simulation framework]?
+[:material-book: __A01__](advanced/geodata.ipynb) Including real-world geographic datasets.
 { .card }
 
-[:material-book: __A02__](advanced/geodata.ipynb) Including real-world geographic datasets.
+[:material-book: __A02__](advanced/human_behavior_simulation.ipynb) Implement an advanced [human behavior simulation framework] automatically.
 { .card }
 
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
