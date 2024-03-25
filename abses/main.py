@@ -40,7 +40,14 @@ logger.remove(0)
 logger.add(
     sys.stderr,
     format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<15}] | {message}",
-    level="INFO",
+    level="WARNING",
+)
+# 'w' mode in add() method will clean the contents of the logging.log file before writing to it
+logger.add(
+    "logging.log",
+    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<15}] | {message}",
+    level="DEBUG",
+    mode="w",
 )
 
 # Dynamically load type hints from users' input type
