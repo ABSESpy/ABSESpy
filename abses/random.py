@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from itertools import combinations
-from typing import TYPE_CHECKING, Iterable, List, Tuple, overload
+from typing import TYPE_CHECKING, Iterable, List, Literal, Tuple, overload
 
 import numpy as np
 
@@ -19,6 +19,13 @@ if TYPE_CHECKING:
     from abses.actor import Actor
     from abses.main import MainModel
     from abses.sequences import ActorsList
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
+
+WHEN_EMPTY: TypeAlias = Literal["only", "random", "first"]
 
 
 class ListRandom:
@@ -35,7 +42,7 @@ class ListRandom:
 
         return ActorsList(self.model, objs=objs)
 
-    def _when_empty(self, when_empty: str) -> str:
+    def _when_empty(self, when_empty: WHEN_EMPTY) -> str:
         if when_empty not in ("raise exception", "return None"):
             raise ValueError(
                 f"Unknown value for `when_empty` parameter: {when_empty}"
@@ -90,7 +97,7 @@ class ListRandom:
         prob: np.ndarray | None | str = None,
         replace: bool = False,
         as_list: bool = False,
-        when_empty: str = "raise exception",
+        when_empty: WHEN_EMPTY = "raise exception",
     ) -> Actor | ActorsList:
         """Randomly choose one or more actors from the current self object.
 

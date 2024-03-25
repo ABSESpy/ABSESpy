@@ -6,6 +6,8 @@
 # Website: https://cv.songshgeo.com/
 """测试列表
 """
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
@@ -86,3 +88,68 @@ class TestSequences:
             lambda f: f.link.to(actor, link_name="test", mutual=True)
         )
         assert actor.link.get("test") == farmers
+
+
+class TestSequenceAttrGetter:
+    """Test Sequence Attribute Getter"""
+
+    def create_actors_with_metric(self, model: MainModel, n: int):
+        """Create actors with metric."""
+        actors = model.agents.new(Actor, n)
+        for i, actor in enumerate(actors):
+            actor.test = float(i)
+        return actors
+
+    @pytest.mark.parametrize(
+        "how, expected",
+        [
+            ("only", 0.0),
+            ("item", 0.0),
+            ("random", 0.0),
+        ],
+    )
+    def test_get_only_agent(self, model: MainModel, how, expected):
+        """Test that the get_only_agent function."""
+        # arrange
+        actors = self.create_actors_with_metric(model, 1)
+        # act
+        result = actors.get("test", how=how)
+        # assert
+        assert result == actors[0].test == expected
+
+    @pytest.mark.parametrize(
+        "how, expected",
+        [
+            ("item", 0.0),
+            ("random", 1.0),
+        ],
+    )
+    def test_get_attr(self, model: MainModel, how, expected):
+        """Test that the agg_agents_attr function."""
+        # arrange
+        actors = self.create_actors_with_metric(model, 3)
+        actors.random.choice = MagicMock(return_value=actors[1])
+        assert actors.random.choice() == actors[1]
+
+        # act
+        result = actors.get("test", how=how)
+        # assert
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        "n, how, error, to_match",
+        [
+            (1, "not a method", ValueError, "Invalid how method"),
+            (0, "only", ValueError, "No agent found."),
+            (2, "only", ValueError, "More than one agent."),
+        ],
+    )
+    def test_agg_agents_attr_error(
+        self, model: MainModel, n, how, error, to_match
+    ):
+        """Test that the agg_agents_attr function raises an error."""
+        # arrange
+        actors = self.create_actors_with_metric(model, n=n)
+        # act / assert
+        with pytest.raises(error, match=to_match):
+            actors.get("test", how=how)
