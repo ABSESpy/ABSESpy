@@ -248,6 +248,16 @@ class TestLinkProxy:
         # assert
         assert expected == (node2 in results, node3 in results)
 
+    def test_bad_get(self, tres_nodes: List[Actor]):
+        """Test that the get method raises an error if the link is not found."""
+        # arrange
+        node1, _, _ = tres_nodes
+
+        # act / assert
+        with pytest.raises(KeyError, match="test"):
+            node1.link.get("test")
+        assert not node1.link.get("test", default=True)
+
     @pytest.mark.parametrize(
         "link_name, direction, expected_2, expected_3",
         [

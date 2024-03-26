@@ -311,3 +311,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         """Overwrite this method.
         It should be called when the actor is initialized.
         """
+
+    def moving(self, cell: PatchCell) -> None:
+        """Overwrite this method.
+        It should be called when the actor is moved.
+        """

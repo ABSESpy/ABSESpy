@@ -1,4 +1,19 @@
 
+<a id='changelog-0.5.2'></a>
+# 0.5.2 — 2024-03-26
+
+## Performance improvements
+
+- [x] #zap⚡️ improve getting performance from container
+
+## New Features
+
+- [x] #feat✨ now getting link name can be with a default empty return
+- [x] #feat✨ getting an attr value from a `ActorsList`
+- [x] #feat✨ before moving, `Actor` may do something
+- [x] #feat✨ possible to control max length when customize `PatchCell`
+- [x] #feat✨  getting an item or None from `ActorsList` or container
+
 <a id='changelog-0.5.1'></a>
 # 0.5.1 — 2024-03-20
 

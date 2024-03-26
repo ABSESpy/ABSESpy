@@ -12,7 +12,7 @@ It's used to manipulate the actors quickly in batch.
 from __future__ import annotations
 
 from collections.abc import Iterable
-from functools import partial
+from functools import cached_property, partial
 from numbers import Number
 from typing import (
     TYPE_CHECKING,
@@ -20,6 +20,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    Literal,
     Optional,
     Union,
     overload,
@@ -43,6 +44,7 @@ if TYPE_CHECKING:
     from .actor import Actor
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
+HOW: TypeAlias = Literal["only", "random", "item"]
 
 
 def get_only_agent(agents: ActorsList) -> Actor:
@@ -52,14 +54,6 @@ def get_only_agent(agents: ActorsList) -> Actor:
     if len(agents) == 1:
         return agents[0]
     raise ValueError("More than one agent.")
-
-
-def agg_agents_attr(agents: ActorsList, attr, how: str = "only") -> Any:
-    """Retrieve the attribute of an either specified or randomly chosen agent."""
-    if how == "only":
-        return getattr(get_only_agent(agents), attr)
-    if how == "random":
-        return getattr(np.random.choice(agents), attr)
 
 
 class ActorsList(list):
@@ -110,7 +104,7 @@ class ActorsList(list):
             return False
         return True
 
-    @property
+    @cached_property
     def random(self) -> ListRandom:
         """随机模块"""
         return ListRandom(actors=self, model=self._model)
@@ -159,7 +153,7 @@ class ActorsList(list):
             ActorList: A subset of origin agents list.
         """
         ids = make_list(ids)
-        return self.select([agent.id in ids for agent in self])
+        return self.select([agent.unique_id in ids for agent in self])
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None
@@ -277,3 +271,49 @@ class ActorsList(list):
         """
         func = partial(ufunc, *args, **kwargs)
         return np.array(list(map(func, self)))
+
+    def get(
+        self, attr: str, how: HOW = "only", default: Optional[Any] = None
+    ) -> Any:
+        """Retrieve the attribute of an either specified or randomly chosen agent.
+
+        Parameters:
+            attr:
+                The name of the attribute to retrieve.
+            how:
+                The method to use to retrieve the attribute. Can be either "only" or "random".
+
+        Returns:
+            The attribute of the specified agent.
+        """
+        if agent := self.item(how=how, index=0):
+            return agent.get(attr)
+        if default is not None:
+            return default
+        raise ValueError("No agent found or default value.")
+
+    def item(self, how: HOW = "item", index: int = 0) -> Actor | None:
+        """Retrieve one agent if possible.
+
+        Parameters:
+            how:
+                The method to use to retrieve the agent.
+                Can be either "only", "item", or "random".
+                If "only", it will return the only agent in the container.
+                In this case, the container must have only one agent.
+                If more than one or no agent is found, it will raise an error.
+                If "item", it will return the agent at the given index.
+                If "random", it will return a randomly chosen agent.
+            index:
+                The index of the agent to retrieve.
+
+        Returns:
+            The agent if found, otherwise None.
+        """
+        if how == "only":
+            return get_only_agent(self)
+        if how == "random":
+            return self.random.choice(when_empty="return None")
+        if how == "item":
+            return self[index] if len(self) > index else None
+        raise ValueError(f"Invalid how method '{how}'.")
