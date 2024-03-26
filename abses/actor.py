@@ -192,6 +192,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
                 "Cannot set location directly because the actor is not added to the cell."
             )
         self._cell = cell
+        self.pos = cell.pos
 
     @at.deleter
     def at(self) -> None:
