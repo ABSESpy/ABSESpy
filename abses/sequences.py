@@ -293,7 +293,23 @@ class ActorsList(list):
         raise ValueError("No agent found or default value.")
 
     def item(self, how: HOW = "item", index: int = 0) -> Actor | None:
-        """Retrieve the one agent."""
+        """Retrieve one agent if possible.
+
+        Parameters:
+            how:
+                The method to use to retrieve the agent.
+                Can be either "only", "item", or "random".
+                If "only", it will return the only agent in the container.
+                In this case, the container must have only one agent.
+                If more than one or no agent is found, it will raise an error.
+                If "item", it will return the agent at the given index.
+                If "random", it will return a randomly chosen agent.
+            index:
+                The index of the agent to retrieve.
+
+        Returns:
+            The agent if found, otherwise None.
+        """
         if how == "only":
             return get_only_agent(self)
         if how == "random":

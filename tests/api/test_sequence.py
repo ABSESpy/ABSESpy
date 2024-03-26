@@ -89,6 +89,43 @@ class TestSequences:
         )
         assert actor.link.get("test") == farmers
 
+    @pytest.mark.parametrize(
+        "num, index, how, expected",
+        [
+            (3, 1, "item", 1),
+            (3, 1, "random", 1),
+            (1, 0, "only", 0),
+        ],
+    )
+    def test_item(self, model: MainModel, num, index, how, expected):
+        """Test that the item function."""
+        # arrange
+        actors = model.agents.new(Actor, num=num)
+        expected = actors[expected]
+        actors.random.choice = MagicMock(return_value=expected)
+        # act
+        result = actors.item(index=index, how=how)
+        # assert
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        "how, num, index, error, to_match",
+        [
+            ("not a method", 3, 1, ValueError, "Invalid how method"),
+            ("only", 2, 0, ValueError, "More than one agent."),
+            ("only", 0, 0, ValueError, "No agent found."),
+        ],
+    )
+    def test_bad_item(
+        self, model: MainModel, how, num, index, error, to_match
+    ):
+        """Test that the item function raises an error."""
+        # arrange
+        actors = model.agents.new(Actor, num=num)
+        # act / assert
+        with pytest.raises(error, match=to_match):
+            actors.item(index=index, how=how)
+
 
 class TestSequenceAttrGetter:
     """Test Sequence Attribute Getter"""
