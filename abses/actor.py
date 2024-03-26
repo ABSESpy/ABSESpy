@@ -313,7 +313,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         It should be called when the actor is initialized.
         """
 
-    def moving(self, cell: PatchCell) -> None:
+    def moving(self, cell: PatchCell) -> Optional[bool]:
         """Overwrite this method.
         It should be called when the actor is moved.
+        The return value is whether the actor can move to the cell.
         """
