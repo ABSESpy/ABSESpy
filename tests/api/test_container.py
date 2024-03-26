@@ -182,8 +182,7 @@ class TestMainContainer:
 
         g1 = container.get("Actor1")
         assert repr(g1) == "<ActorsList: (2)Actor1>"
-        g2 = container.get()
-        assert repr(g2) == "<ActorsList: (1)Actor; (2)Actor1; (3)Actor2>"
+        assert len(container.get()) == 6
 
     def test_select_example(self, container: _AgentsContainer):
         """Testing example in container.select()"""
@@ -213,7 +212,7 @@ class TestMainContainer:
         with pytest.raises(ABSESpyError):
             container.new(Actor, 1)
 
-    def test_main_container(self, model, farmer_cls, admin_cls):
+    def test_main_container(self, model: MainModel, farmer_cls, admin_cls):
         """测试容器的属性"""
         # arrange
         container = model.agents

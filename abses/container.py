@@ -60,6 +60,9 @@ class _AgentsContainer(dict):
     def __contains__(self, name) -> bool:
         return name in self.get()
 
+    def __call__(self, *args, **kwargs) -> ActorsList[Actor]:
+        return self.get(*args, **kwargs)
+
     @property
     def model(self) -> MainModel:
         """The ABSESpy model where the container belongs to."""
@@ -217,12 +220,16 @@ class _AgentsContainer(dict):
             >>> '<ActorsList: (1)Actor; (2)Actor1; (3)Actor2>'
             ```
         """
+        # specified breeds
         breeds = self.model.breeds if breeds is None else make_list(breeds)
-        agents = ActorsList(self._model)
-        for k, values in self.items():
-            if k in breeds:
-                agents.extend(values)
-        return agents
+        # get all available agents
+        agents = {
+            a
+            for breed, actors in self.items()
+            if breed in breeds
+            for a in actors
+        }
+        return ActorsList(self._model, objs=agents)
 
     def trigger(self, *args: Any, **kwargs: Any) -> Any:
         """Trigger a function for all agents in the container.
