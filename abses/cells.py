@@ -61,6 +61,9 @@ def raster_attribute(func):
 
 class PatchCell(mg.Cell, _LinkNode):
     """A patch cell of a `RasterLayer`.
+    Subclassing this class to create a custom cell.
+    When class attribute `max_agents` is assigned,
+    the `agents` property will be limited to the number of agents.
 
     Attributes:
         agents:
@@ -68,6 +71,8 @@ class PatchCell(mg.Cell, _LinkNode):
         layer:
             The `RasterLayer` where this `PatchCell` belongs.
     """
+
+    max_agents: Optional[int] = None
 
     def __init__(self, pos=None, indices=None):
         mg.Cell.__init__(self, pos, indices)
@@ -107,7 +112,9 @@ class PatchCell(mg.Cell, _LinkNode):
         # set layer's model as the model
         self.model = layer.model
         # set agents container
-        self._agents = _CellAgentsContainer(layer.model, cell=self)
+        self._agents = _CellAgentsContainer(
+            layer.model, cell=self, max_len=getattr(self, "max_agents", None)
+        )
 
     @property
     def agents(self) -> _CellAgentsContainer:
