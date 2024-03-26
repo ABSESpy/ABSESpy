@@ -1,4 +1,14 @@
 
+<a id='changelog-0.5.3'></a>
+# 0.5.3 — 2024-03-26
+
+## Fixed bugs
+
+- [x] #bug🐛 Only alive actors can apply default methods by decorator `alive_required` now.
+- [x] #bug🐛 now moving has a return to control continue to move or not.
+- [x] #bug🐛 now update the position attribute correctly after moving
+- [x] #bug🐛 fixing release drafter to the latest version
+
 <a id='changelog-0.5.2'></a>
 # 0.5.2 — 2024-03-26
 

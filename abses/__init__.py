@@ -28,7 +28,7 @@ __all__ = [
     "alive_required",
     "time_condition",
 ]
-__version__ = "v0.5.2"
+__version__ = "v0.5.3"
 
 from .actor import Actor, alive_required, perception
 from .container import ActorsList
