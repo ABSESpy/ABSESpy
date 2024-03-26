@@ -16,10 +16,30 @@
 
 import pytest
 
-from abses import MainModel
+from abses import MainModel, alive_required
 from abses.actor import Actor
 from abses.cells import PatchCell
 from abses.nature import PatchModule
+
+
+class DeadMan(Actor):
+    """测试用，另一个类别的主体"""
+
+    def __repr__(self) -> str:
+        return "I'm alive." if self.alive else "I'm dead."
+
+    def die_once(self) -> None:
+        """死一次"""
+        self.die()
+
+    @alive_required
+    def speak(self) -> str:
+        """如果活着，才能说话"""
+        return repr(self)
+
+    def speak_bad(self) -> str:
+        """如果活着，才能说话"""
+        return f"{repr(self)} but, I'm speaking! Fuck."
 
 
 class TestActor:
@@ -117,3 +137,29 @@ class TestActor:
         actor.set(attr=attr, value=value, target=target)
         # assert
         assert getattr(cell_0_0, attr) == value
+
+
+class TestCustomizedActor:
+    """Test the customized Actor class."""
+
+    def test_die(self, model: MainModel):
+        """Test die"""
+        # arrange
+        actor = model.agents.new(Actor, singleton=True)
+        # act
+        actor.die()
+        actor.die()
+        # assert
+        assert actor not in model.agents
+        assert actor.get() is None
+
+    def test_city_die(self, model: MainModel):
+        """Test die"""
+        # arrange
+        man: DeadMan = model.agents.new(DeadMan, singleton=True)
+        # act
+        man.die_once()
+        # assert
+        assert man.speak() is None, "Dead man speaks! Crazy."
+        assert man.get() is None
+        assert isinstance(man.speak_bad(), str)
