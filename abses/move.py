@@ -66,7 +66,9 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
     if agent.on_earth:
         agent.move.off()
     # before moving to the new cell, agent may do something
-    agent.moving(cell=cell)
+    keep_moving = agent.moving(cell=cell)
+    if keep_moving is False:
+        return
     # put the agent on the new cell after check.
     cell.agents.add(agent, register=True)
     agent.at = cell

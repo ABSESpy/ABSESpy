@@ -52,6 +52,18 @@ TARGET_KEYWORDS = {
 }
 
 
+def alive_required(method):
+    """
+    A decorator that only executes the method when the object's alive attribute is True.
+    """
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs) -> Any:
+        return method(self, *args, **kwargs) if self.alive else None
+
+    return wrapper
+
+
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
     """clean the result of a perception.
 
@@ -149,6 +161,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         _LinkNode.__init__(self)
         self._cell: PatchCell = None
         self._decisions: _DecisionFactory = self._setup_decisions()
+        self._alive: bool = True
         self._setup()
 
     def __repr__(self) -> str:
@@ -158,6 +171,11 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
         return _DecisionFactory(self, decisions)
+
+    @property
+    def alive(self) -> bool:
+        """Whether the actor is alive."""
+        return self._alive
 
     @property
     def decisions(self) -> _DecisionFactory:
@@ -192,6 +210,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
                 "Cannot set location directly because the actor is not added to the cell."
             )
         self._cell = cell
+        self.pos = cell.pos
 
     @at.deleter
     def at(self) -> None:
@@ -244,6 +263,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         warn = "Set a new attribute outside '__init__' is not allowed."
         raise AttributeError(f"Attribute '{attr}' not found in {self}. {warn}")
 
+    @alive_required
     def get(
         self,
         attr: str,
@@ -266,6 +286,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         target = self._get_correct_target(target, attr=attr)
         return getattr(self, attr) if target is self else target.get(attr)
 
+    @alive_required
     def set(self, attr: str, value: Any, target: Targets) -> None:
         """Sets the value of an attribute.
 
@@ -295,12 +316,14 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         target = self._get_correct_target(target=target, attr=attr)
         setattr(target, attr, value)
 
+    @alive_required
     def die(self) -> None:
         """Kills the agent (self)"""
         self.link.clean()  # 从链接中移除
         if self.on_earth:  # 如果在地上，那么从地块上移除
             self.move.off()
         self.model.agents.remove(self)  # 从总模型里移除
+        self._alive = False  # 设置为死亡状态
         del self
 
     def _setup(self) -> None:
@@ -312,7 +335,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         It should be called when the actor is initialized.
         """
 
-    def moving(self, cell: PatchCell) -> None:
+    def moving(self, cell: PatchCell) -> Optional[bool]:
         """Overwrite this method.
         It should be called when the actor is moved.
+        The return value is whether the actor can move to the cell.
         """
