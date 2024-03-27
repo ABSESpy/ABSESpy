@@ -60,6 +60,9 @@ class _AgentsContainer(dict):
     def __contains__(self, name) -> bool:
         return name in self.get()
 
+    def __call__(self, *args, **kwargs) -> ActorsList[Actor]:
+        return self.get(*args, **kwargs)
+
     @property
     def model(self) -> MainModel:
         """The ABSESpy model where the container belongs to."""
@@ -217,12 +220,16 @@ class _AgentsContainer(dict):
             >>> '<ActorsList: (1)Actor; (2)Actor1; (3)Actor2>'
             ```
         """
+        # specified breeds
         breeds = self.model.breeds if breeds is None else make_list(breeds)
-        agents = ActorsList(self._model)
-        for k, values in self.items():
-            if k in breeds:
-                agents.extend(values)
-        return agents
+        # get all available agents
+        agents = {
+            a
+            for breed, actors in self.items()
+            if breed in breeds
+            for a in actors
+        }
+        return ActorsList(self._model, objs=agents)
 
     def trigger(self, *args: Any, **kwargs: Any) -> Any:
         """Trigger a function for all agents in the container.
@@ -388,6 +395,26 @@ class _AgentsContainer(dict):
                 The function to apply to all agents in the container.
         """
         return self.get().apply(func, *args, **kwargs)
+
+    def item(self, how: str = "item", index: int = 0) -> Actor | None:
+        """Retrieve one agent if possible.
+
+        Parameters:
+            how:
+                The method to use to retrieve the agent.
+                Can be either "only", "item", or "random".
+                If "only", it will return the only agent in the container.
+                In this case, the container must have only one agent.
+                If more than one or no agent is found, it will raise an error.
+                If "item", it will return the agent at the given index.
+                If "random", it will return a randomly chosen agent.
+            index:
+                The index of the agent to retrieve.
+
+        Returns:
+            The agent if found, otherwise None.
+        """
+        return self.get().item(how=how, index=index)
 
 
 class _CellAgentsContainer(_AgentsContainer):

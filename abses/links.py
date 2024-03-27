@@ -257,6 +257,7 @@ class _LinkContainer:
         node: LinkingNode,
         link_name: Optional[str] = None,
         direction: Direction = None,
+        default: bool = False,
     ) -> ActorsList[LinkingNode]:
         """Get the linked nodes.
 
@@ -289,6 +290,8 @@ class _LinkContainer:
             raise ValueError(f"Invalid direction {direction}")
         agents = set()
         for name in link_names:
+            if name not in data and default:
+                continue
             agents = agents.union(data[name].get(node, set()))
         return agents
 
@@ -326,10 +329,15 @@ class _LinkProxy:
         return self.human.owns_links(self.node, direction=direction)
 
     def get(
-        self, link_name: Optional[str] = None, direction: Direction = "out"
+        self,
+        link_name: Optional[str] = None,
+        direction: Direction = "out",
+        default: bool = False,
     ) -> Set[LinkingNode]:
         """Get the linked nodes."""
-        agents = self.human.linked(self.node, link_name, direction=direction)
+        agents = self.human.linked(
+            self.node, link_name, direction=direction, default=default
+        )
         return ActorsList(self.model, agents)
 
     def has(

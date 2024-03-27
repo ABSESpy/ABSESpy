@@ -62,8 +62,14 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
         raise TypeError(
             f"Agent must be put on a `abses.PatchCell`, instead of {type(cell)}"
         )
+    # leave the old cell.
     if agent.on_earth:
         agent.move.off()
+    # before moving to the new cell, agent may do something
+    keep_moving = agent.moving(cell=cell)
+    if keep_moving is False:
+        return
+    # put the agent on the new cell after check.
     cell.agents.add(agent, register=True)
     agent.at = cell
     # self.geometry = Point(cell.layer.transform * cell.indices)
