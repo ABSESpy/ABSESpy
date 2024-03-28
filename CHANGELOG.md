@@ -1,4 +1,28 @@
 
+<a id='changelog-0.5.4'></a>
+# 0.5.4 — 2024-03-28
+
+## Documentation changes
+
+- [x] #docs📄 Line 24: 'research' not 'researches'
+- [x] #docs📄 Line 44: rather than 'et al.' maybe use actual words (e.g. 'and others') so as not to confuse against the file suffixes which are similar abbreviations
+- [x] #docs📄  Line 55: What do you mean by 'practicing' here? This doesn't seem right. Please edit to clarify
+- [x] #docs📄  Lines 57-65: I'm surprised these three points (Perceptions, Decision-making, Response) don't match the words used in Fig 2 (Options, Evaluate, Behaviour). Or are the latter three (in the Fig) all part of the 'decision-making' step? Aligning the steps in the list with the figure would be useful, I think
+- [x] #docs📄  Line 76: I think 'vary' should be 'varying'
+- [x] #docs📄  Line 93: 'more accurate' - this is a relative statement, so please clarify 'more accurate' than what?
+- [x] #docs📄  Line 99: ( wang2022h? )) is not included in the reference list
+- [x] #docs📄  Line 100: it's good that you recognise the similarity here to `AgentPy` but you don't then clearly explain how `absespy` is beneficial for SES researchers - maybe you could highlight the explicit functionality for representing the 'nature' side of CHANS (`AgentPy` really focuses on the 'human' side).
+- [x] #docs📄  Line 108: 'merely heuristic' - I think this is a little over-critical of NetLogo, which can incorporate 'real-world' (I think you mean 'empirical'?) data although not at the scale `absespy` could. I suggest you edit here to focus on the value of `absespy` for working with large-scale, empirical data so that models can run more efficiently than would be possible for the same data in NetLogo. You might also highlight your `TimeDriver` module which is a benefit over NetLogo's more simple 'ticks'
+
+- [x] #docs📄  L105 & L151: netlogo and Netlogo should be NetLogo
+- [x] #docs📄  L42, L98, L101 & L153 : mesa-geo and Mesa-geo should be Mesa-Geo
+- [x] #docs📄  L95, L97, L98, L102, L129 & L153 : mesa should be Mesa
+- [x] #docs📄  L96: abce should be ABCE
+- [x] #docs📄  L128, L148 & L154: python should be Python
+
+- [x] #docs📄 Update project readme
+- [x] #docs📄 Improve JOSS paper overall.
+
 <a id='changelog-0.5.3'></a>
 # 0.5.3 — 2024-03-26
 
