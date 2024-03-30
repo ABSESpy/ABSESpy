@@ -45,9 +45,7 @@ Language: [English Readme] | [简体中文]
 
 </div>
 
-`ABSESpy` is an agent-based modeling (ABM) framework based on [Mesa], but it focus more on simulating real-world problems.
-Tailored specifically for social-ecological systems (SES), or coupled human-nature systems, `ABSESpy` simplifies the interactions between agents and their grid-like environment.
-Its ultimate objective is to become the go-to choice for agent-based modeling when working with human-involved environment changes.
+`ABSESpy` is a novel agent-based modeling (ABM) framework that facilitates socio-ecological systems (SES) research. It serves as an extension package of [Mesa], the most popular ABM framework, and further enhances agents' interactions with other components, especially grid-like spaces. With a configuration file for managing parameters and an improved data Input/Output system, `ABSESpy`'s modularity and low-coupling design enable elegant maintenance of large modeling projects. In addition, `ABSESpy` includes a schedule that aligns models' tick with the calendar time. These innovations position `ABSESpy` as a valuable tool in fostering more ABMs for real-world SES issues. Its ultimate aim is to become the go-to choice for ABM when working with a human-involved changing world.
 
 ## Features
 
