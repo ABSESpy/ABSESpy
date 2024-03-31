@@ -447,7 +447,8 @@ class PatchModule(Module, mg.RasterLayer):
             raise TypeError(
                 f"{type(where)} is not supported for selecting cells."
             )
-        return ActorsList(self.model, self.array_cells[mask_.astype(bool)])
+        mask_ = np.nan_to_num(mask_, 0).astype(bool)
+        return ActorsList(self.model, self.array_cells[mask_])
 
     def apply(self, ufunc: Callable, *args: Any, **kwargs: Any) -> np.ndarray:
         """Apply a function to array cells.
