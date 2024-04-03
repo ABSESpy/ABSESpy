@@ -169,3 +169,6 @@ setup_insiders.sh
 
 # 文档的草稿
 drafts
+
+# log files
+*.log

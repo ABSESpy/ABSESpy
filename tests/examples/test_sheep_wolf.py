@@ -8,3 +8,4 @@
 """
 Test wolf-sheep model.
 """
+from examples.wolf_sheep.model import Grass

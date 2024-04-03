@@ -130,7 +130,10 @@ class Hotelling(MainModel):
         num_agents = self.params.get("n_agents", 3)
         # Initialize a grid
         layer = self.nature.create_module(
-            cell_cls=Customer, how="from_resolution", shape=(10, 10)
+            cell_cls=Customer,
+            name="market",
+            how="from_resolution",
+            shape=(10, 10),
         )
 
         # Create some agents on random cells
