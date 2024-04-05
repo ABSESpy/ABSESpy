@@ -21,7 +21,7 @@ Components 是模型的基本组件，负责调度参数，让参数配置模块
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Iterable, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Set, Union
 
 from omegaconf import DictConfig
 
@@ -39,12 +39,14 @@ class _Component:
     It is initialized with a model and a optional name.
     """
 
-    __args__ = []
+    __args__: Iterable[str] = []
 
-    def __init__(self, model: MainModel, name: Optional[str] = None):
+    def __init__(self, model: MainModel[Any, Any], name: Optional[str] = None):
         self._args: Set[str] = set()
-        self._model: MainModel = model
-        self.name: str = name
+        self._model: MainModel[Any, Any] = model
+        if name is None:
+            name = self.__class__.__name__.lower()
+        self.name = name
         self.add_args(self.__args__)
 
     @property
@@ -53,15 +55,13 @@ class _Component:
         return self._name
 
     @name.setter
-    def name(self, value: Optional[str]) -> None:
+    def name(self, value: str) -> None:
         """Set the name of the component"""
-        if value is None:
-            value = self.__class__.__name__.lower()
         if not isinstance(value, str):
             raise TypeError(f"Name must be a string, not {type(value)}.")
         if not re.match(MODULE_NAME, value):
             raise ValueError(f"Name '{value}' is not a valid name.")
-        self._name = value
+        self._name: str = value
 
     @property
     def params(self) -> DictConfig:

@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Set, Union
 
 try:
     from typing import TypeAlias
@@ -25,8 +25,8 @@ from .container import _AgentsContainer
 from .modules import CompositeModule, Module
 from .sequences import ActorsList, Selection
 
-Actors: TypeAlias = Union[ActorsList, Selection, Actor]
-Trigger: TypeAlias = Union[str, Callable]
+Actors: TypeAlias = Union[ActorsList[Actor], Selection, Actor]
+Trigger: TypeAlias = Union[str, Callable[..., Any]]
 if TYPE_CHECKING:
     from abses import MainModel
 
@@ -44,10 +44,10 @@ class HumanModule(Module):
             Actor collections defined.
     """
 
-    def __init__(self, model: MainModel, name: Optional[str] = None):
+    def __init__(self, model: MainModel[Any, Any], name: Optional[str] = None):
         Module.__init__(self, model, name)
         logger.info("Initializing a new Human Module...")
-        self._collections: Dict[str, Selection] = DictConfig({})
+        self._collections: Dict[str, Selection] = {}
 
     @property
     def agents(self) -> _AgentsContainer:
@@ -80,7 +80,7 @@ class HumanModule(Module):
                 f"Cell must be a subclass of Cell, instead of {type(cell)}."
             )
 
-    def define(self, name: str, selection: Selection) -> ActorsList:
+    def define(self, name: str, selection: Selection) -> ActorsList[Actor]:
         """Define a query of actors and save it into collections.
 
         Parameters:
@@ -121,7 +121,7 @@ class HumanModule(Module):
 class BaseHuman(CompositeModule, HumanModule, _LinkContainer):
     """The Base Human Module."""
 
-    def __init__(self, model, name="human"):
+    def __init__(self, model: MainModel[Any, Any], name: str = "human"):
         HumanModule.__init__(self, model, name)
         CompositeModule.__init__(self, model, name=name)
         _LinkContainer.__init__(self)

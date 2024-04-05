@@ -11,15 +11,31 @@ import threading
 from collections import deque
 from datetime import datetime
 from functools import total_ordering, wraps
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Union,
+    cast,
+)
 
 import pendulum
+from omegaconf import DictConfig
+from pendulum.datetime import DateTime
+from pendulum.duration import Duration
 
 from abses.components import _Component
 
 if TYPE_CHECKING:
     from .main import MainModel
 
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 VALID_DT_ATTRS = (
     "years",
@@ -32,7 +48,7 @@ VALID_DT_ATTRS = (
 )
 
 
-def time_condition(condition: dict, when_run: bool = True) -> callable:
+def time_condition(condition: dict, when_run: bool = True) -> Callable:
     """
     A decorator to run a method based on a time condition.
 
@@ -114,7 +130,7 @@ class TimeDriver(_Component):
     See tutorial to see more.
     """
 
-    _instances = {}
+    _instances: Dict[MainModel[Any, Any], Self] = {}
     _lock = threading.Lock()
 
     def __new__(cls, model: MainModel):
@@ -128,11 +144,12 @@ class TimeDriver(_Component):
 
     def __init__(self, model: MainModel):
         super().__init__(model=model, name="time")
-        self._model: MainModel = model
+        self._model: MainModel[Any, Any] = model
         self._tick: int = 0
-        self._start_dt: Optional[datetime] = None
-        self._duration: Optional[pendulum.duration] = None
-        self._history = deque()
+        self._start_dt: DateTime = pendulum.instance(datetime.now(), tz=None)
+        self._end_dt: Optional[Union[DateTime, int]] = None
+        self._duration: Optional[Duration] = None
+        self._history: deque = deque()
         self._parse_time_settings()
 
     def __repr__(self) -> str:
@@ -146,7 +163,9 @@ class TimeDriver(_Component):
         return self.dt.__eq__(other)
 
     def __lt__(self, other: object) -> bool:
-        return self.dt.__lt__(other)
+        if isinstance(other, (DateTime, datetime)):
+            return self.dt < other
+        raise NotImplementedError(f"Cannot compare with {other}.")
 
     @property
     def should_end(self) -> bool:
@@ -215,11 +234,11 @@ class TimeDriver(_Component):
     def _parse_time_settings(self) -> None:
         """Setup the time driver."""
         # Parse the start time settings
-        self.start_dt = self.params.get("start")
+        self.start_dt = self.params.get("start", None)
         # logger.debug(f"start_dt: {self.start_dt}")
 
         # Parse the end time settings
-        self.end_dt = self.params.get("end")
+        self.end_dt = self.params.get("end", None)
         # logger.debug(f"end_dt: {self.end_dt}")
 
         # Parse the duration settings
@@ -227,7 +246,7 @@ class TimeDriver(_Component):
         # logger.debug(f"duration: {self.duration}")
 
         # Parse the irregular settings
-        self._irregular = self.params.get("irregular")
+        self.irregular: bool = self.params.get("irregular", False)
         # logger.debug("irregular: {}", self._irregular)
         # logger.debug("Ticking mode: {}", self.ticking_mode)
 
@@ -235,11 +254,23 @@ class TimeDriver(_Component):
         self._history.append(self.dt)
 
     @property
-    def duration(self) -> pendulum.duration | None:
+    def irregular(self) -> bool:
+        """Returns the irregular mode of the time driver."""
+        return self._irregular
+
+    @irregular.setter
+    def irregular(self, value: bool) -> None:
+        """Set the irregular mode of the time driver."""
+        if not isinstance(value, bool):
+            raise TypeError("Irregular mode must be a boolean.")
+        self._irregular = value
+
+    @property
+    def duration(self) -> Duration | None:
         """Returns the duration of the time driver."""
         return self._duration
 
-    def parse_duration(self, duration: Dict[str, int]) -> None:
+    def parse_duration(self, duration: DictConfig) -> None:
         """Set the duration of the time driver."""
         valid_attributes = VALID_DT_ATTRS
         valid_dict = {}
@@ -254,31 +285,31 @@ class TimeDriver(_Component):
             self._duration = pendulum.duration(**valid_dict)
 
     @property
-    def start_dt(self) -> datetime | None:
+    def start_dt(self) -> DateTime:
         """Returns the starting time for the model."""
         return self._start_dt
 
     @start_dt.setter
-    def start_dt(self, dt: datetime | None) -> None:
+    def start_dt(self, dt: Optional[Union[datetime, DateTime, str]]) -> None:
         """Set the starting time."""
         if isinstance(dt, datetime):
             self._start_dt = pendulum.instance(dt, tz=None)
         elif dt is None:
             self._start_dt = pendulum.instance(datetime.now(), tz=None)
         elif isinstance(dt, str):
-            self._start_dt = pendulum.parse(dt, tz=None)
+            self._start_dt = cast(DateTime, pendulum.parse(dt, tz=None))
         else:
             raise TypeError(
                 "Start time must be a datetime object or a string."
             )
 
     @property
-    def end_dt(self) -> datetime | int | None:
+    def end_dt(self) -> Optional[Union[datetime, int]]:
         """The real-world time or the ticks when the model should be end."""
         return self._end_dt
 
     @end_dt.setter
-    def end_dt(self, dt: datetime | int | None) -> None:
+    def end_dt(self, dt: Optional[Union[datetime, DateTime, str]]) -> None:
         if isinstance(dt, int) and dt <= 0:
             raise ValueError("End time cannot be negative.")
         if isinstance(dt, int):
@@ -288,19 +319,19 @@ class TimeDriver(_Component):
         elif dt is None:
             self._end_dt = None
         elif isinstance(dt, str):
-            self._end_dt = pendulum.parse(dt, tz=None)
+            self._end_dt = cast(DateTime, pendulum.parse(dt, tz=None))
         else:
             raise TypeError("End time must be a datetime object or a string.")
 
     @property
-    def dt(self) -> datetime:
+    def dt(self) -> DateTime:
         """The current real-world time for the model without timezone information."""
         return self._dt
 
     @dt.setter
-    def dt(self, dt: datetime) -> None:
+    def dt(self, dt: DateTime) -> None:
         """Set the current real-world time."""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, DateTime):
             raise TypeError("dt must be a datetime object.")
         self._dt = dt
 
@@ -310,23 +341,18 @@ class TimeDriver(_Component):
         return self.dt.day
 
     @property
-    def dayofweek(self) -> int:
+    def day_of_week(self) -> int:
         """Returns the number for the day of the week for the model."""
-        return self.dt.dayofweek
+        return self.dt.day_of_week
 
     @property
-    def dayofyear(self) -> int:
+    def day_of_year(self) -> int:
         """Returns the day of the year for the model."""
-        return self.dt.dayofyear
-
-    @property
-    def daysinmonth(self) -> int:
-        """Get the total number of days of the month that this period falls on for the model."""
-        return self.dt.daysinmonth
+        return self.dt.day_of_year
 
     @property
     def days_in_month(self) -> int:
-        """Get the total number of days in the month that this period falls on for the model."""
+        """Get the total number of days of the month that this period falls on for the model."""
         return self.dt.days_in_month
 
     @property
@@ -350,54 +376,34 @@ class TimeDriver(_Component):
         return self.dt.quarter
 
     @property
-    def qyear(self) -> int:
-        """Fiscal year a model's Period lies in according to its starting-quarter."""
-        return self.dt.qyear
-
-    @property
     def second(self) -> int:
         """Get the second component of a model's Period."""
         return self.dt.second
 
     @property
-    def ordinal(self) -> int:
-        """Returns period ordinal, which is the number of periods elapsed since a starting period."""
-        return self.dt.ordinal
-
-    @property
     def is_leap_year(self) -> bool:
         """Return True if the period's year is in a leap year."""
-        return self.dt.is_leap_year
+        return self.dt.is_leap_year()
 
     @property
-    def week(self) -> int:
+    def week_of_year(self) -> int:
         """Get the week of the year on the given Period."""
-        return self.dt.week
+        return self.dt.week_of_year
+
+    @property
+    def week_of_month(self) -> int:
+        """Get the week of the month on the given Period."""
+        return self.dt.week_of_month
 
     @property
     def weekday(self) -> int:
         """Day of the week the period lies in, with Monday=0 and Sunday=6."""
-        return self.dt.weekday
-
-    @property
-    def weekofyear(self) -> int:
-        """Get the week of the year on the given Period."""
-        return self.dt.weekofyear
+        return self.dt.weekday()
 
     @property
     def year(self) -> int:
         """Return the year this Period falls on."""
         return self.dt.year
-
-    @property
-    def day_of_year(self) -> int:
-        """Return the day of the year."""
-        return self.dt.day_of_year
-
-    @property
-    def day_of_week(self) -> int:
-        """Day of the week the period lies in, with Monday=0 and Sunday=6."""
-        return self.dt.day_of_week
 
     def strftime(self, fmt: str) -> str:
         """Returns a string representing the current time.

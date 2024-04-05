@@ -42,7 +42,7 @@ MovingDirection: TypeAlias = Literal[
 
 def _get_layer_and_position(
     pos: Coordinate | PatchCell, layer: Optional[PatchModule] = None
-) -> Tuple[Coordinate, PatchModule]:
+) -> Tuple[Optional[PatchModule], Coordinate]:
     if isinstance(pos, mg.Cell):
         if layer is not None and layer is not pos.layer:
             raise ABSESpyError(
@@ -79,7 +79,7 @@ def move_agent_to(
     agent: Actor,
     layer: PatchModule,
     pos: Coordinate | mg.Cell,
-) -> bool:
+) -> None:
     """Move an Actor to another position of this layer.
 
     Parameters:
@@ -119,11 +119,13 @@ class _Movements:
         # self.direction = actor.direction
 
     @property
-    def layer(self) -> PatchModule:
+    def layer(self) -> Optional[PatchModule]:
         """The current layer of the operating actor."""
         return self.actor.layer
 
-    def _operating_layer(self, layer: PatchModule) -> PatchModule:
+    def _operating_layer(
+        self, layer: Optional[PatchModule]
+    ) -> Optional[PatchModule]:
         """
         This method is used to check if the input layer is consistent with the actor's layer.
         """
@@ -163,17 +165,24 @@ class _Movements:
         if isinstance(pos, str) and pos == "random":
             # 随机分配一个该图层的位置
             operating_layer = self._operating_layer(layer=layer)
+            assert operating_layer is not None
             pos = operating_layer.select().random.choice()
         else:
             # 检查这个位置的类型，返回图层和位置
             layer, pos = _get_layer_and_position(pos, layer=layer)
             operating_layer = self._operating_layer(layer=layer)
+            assert operating_layer is not None
         move_agent_to(self.actor, layer=operating_layer, pos=pos)
 
     def off(self) -> None:
         """Remove the actor from the world."""
+        if self.actor.at is None:
+            raise ABSESpyError("The actor is not located on a cell.")
         if self.actor.on_earth:
-            self.actor.at.agents.remove(self.actor)
+            container = self.actor.at.agents
+            if container is None:
+                raise ABSESpyError("The actor is not located on a cell.")
+            container.remove(self.actor)
         del self.actor.at
 
     def by(self, direction: MovingDirection, distance: int = 1) -> None:
@@ -193,7 +202,7 @@ class _Movements:
             ValueError:
                 If the direction is invalid.
         """
-        if not self.actor.on_earth:
+        if (self.actor.at is None) or (self.layer is None):
             raise ABSESpyError(
                 "The actor is not located on a cell, thus cannot move."
             )
@@ -229,5 +238,7 @@ class _Movements:
                 Passing keyword args to `PatchCell.neighboring`,
                 used to select neighboring cells.
         """
+        if self.actor.at is None:
+            raise ABSESpyError("The actor is not located on a cell.")
         cells = self.actor.at.neighboring(**kwargs)
         self.actor.move.to(cells.random.choice(prob=prob))

@@ -14,8 +14,11 @@ Actor, PatchCell can be used to create links.
 from __future__ import annotations
 
 import contextlib
+from abc import abstractmethod
+from functools import cached_property
 from typing import (
     TYPE_CHECKING,
+    Any,
     Dict,
     Iterable,
     List,
@@ -23,6 +26,8 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Union,
+    cast,
 )
 
 with contextlib.suppress(ImportError):
@@ -42,6 +47,9 @@ if TYPE_CHECKING:
 
 LinkingNode: TypeAlias = "Actor | PatchCell"
 Direction: TypeAlias = Optional[Literal["in", "out"]]
+DEFAULT_TARGETS: Tuple[str, str] = ("cell", "actor")
+TargetName: TypeAlias = Union[Literal["cell", "actor"], str]
+AttrGetter: TypeAlias = Union["Actor", "PatchCell", ActorsList["Actor"]]
 
 
 class _LinkContainer:
@@ -53,19 +61,18 @@ class _LinkContainer:
         self._cached_networks: Dict[str, object] = {}
 
     @property
-    def links(self) -> tuple[str]:
+    def links(self) -> Tuple[str, ...]:
         """Get the links of a certain type."""
         return tuple(self._links.keys())
 
-    @links.setter
-    def links(self, link_name: str) -> None:
-        """Set the links."""
+    def _add_a_link_name(self, link_name: str) -> None:
+        """Add a link."""
         self._links[link_name] = {}
         self._back_links[link_name] = {}
 
     def owns_links(
         self, node: LinkingNode, direction: Direction = "out"
-    ) -> Tuple[str]:
+    ) -> Tuple[str, ...]:
         """The links a specific node owns."""
         if direction == "out":
             data = self._links
@@ -104,7 +111,7 @@ class _LinkContainer:
     ) -> None:
         """Register a link."""
         if link_name not in self._links:
-            self.links = link_name
+            self._add_a_link_name(link_name)
         if source not in self._links[link_name]:
             self._links[link_name][source] = set()
         if target not in self._back_links[link_name]:
@@ -112,7 +119,7 @@ class _LinkContainer:
 
     def has_link(
         self, link_name: str, source: LinkingNode, target: LinkingNode
-    ) -> tuple[bool]:
+    ) -> Tuple[bool, bool]:
         """If any link exists between source and target.
 
         Parameters:
@@ -209,7 +216,7 @@ class _LinkContainer:
             link_name = [link_name]
         if not isinstance(link_name, Iterable):
             raise TypeError(f"{link_name} is not an iterable.")
-        return link_name
+        return list(link_name)
 
     def clean_links_of(
         self,
@@ -258,7 +265,7 @@ class _LinkContainer:
         link_name: Optional[str] = None,
         direction: Direction = None,
         default: bool = False,
-    ) -> ActorsList[LinkingNode]:
+    ) -> Set[LinkingNode]:
         """Get the linked nodes.
 
         Parameters:
@@ -283,12 +290,12 @@ class _LinkContainer:
         elif direction == "out":
             data = self._links
         elif direction is None:
-            return self.linked(node, link_name, direction="in") | self.linked(
-                node, link_name, direction="out"
-            )
+            in_links = self.linked(node, link_name, direction="in")
+            out_links = self.linked(node, link_name, direction="out")
+            return in_links | out_links
         else:
             raise ValueError(f"Invalid direction {direction}")
-        agents = set()
+        agents: Set[LinkingNode] = set()
         for name in link_names:
             if name not in data and default:
                 continue
@@ -300,7 +307,7 @@ class _LinkProxy:
     """Proxy for linking."""
 
     def __init__(self, node: LinkingNode, model: MainModel) -> None:
-        self.node: _LinkNode = node
+        self.node: LinkingNode = node
         self.model: MainModel = model
         self.human: _LinkContainer = model.human
 
@@ -308,14 +315,16 @@ class _LinkProxy:
         """Check if the link exists."""
         return link_name in self.human.links
 
-    def __eq__(self, __value: tuple[str]) -> bool:
+    def __eq__(self, __value: object) -> bool:
         """Check if the links are equal to a set of strings."""
+        if not isinstance(__value, Iterable):
+            return NotImplemented
         return set(__value) == set(self.owning())
 
     def __repr__(self) -> str:
         return str(self.owning())
 
-    def owning(self, direction: Direction = None) -> Tuple[str]:
+    def owning(self, direction: Direction = None) -> Tuple[str, ...]:
         """Links that this object has.
 
         Parameters:
@@ -333,7 +342,7 @@ class _LinkProxy:
         link_name: Optional[str] = None,
         direction: Direction = "out",
         default: bool = False,
-    ) -> Set[LinkingNode]:
+    ) -> ActorsList[LinkingNode]:
         """Get the linked nodes."""
         agents = self.human.linked(
             self.node, link_name, direction=direction, default=default
@@ -342,7 +351,7 @@ class _LinkProxy:
 
     def has(
         self, link_name: str, node: Optional[LinkingNode] = None
-    ) -> tuple[bool]:
+    ) -> Tuple[bool, bool]:
         """Check if the node has the link.
 
         Parameters:
@@ -418,7 +427,7 @@ class _LinkProxy:
         )
 
     def clean(
-        self, link_name: Optional[str] = None, direction: Optional[str] = None
+        self, link_name: Optional[str] = None, direction: Direction = None
     ):
         """Clean all the related links from this node.
 
@@ -439,11 +448,108 @@ class _LinkProxy:
         )
 
 
+class _BreedDescriptor:
+    """A descriptor to get the breed of a node."""
+
+    def __get__(self, _: Any, owner: Any) -> str:
+        return owner.__name__ if owner else self.__class__.__name__
+
+
 class _LinkNode:
     """节点类"""
 
-    @classmethod
-    @property
-    def breed(cls) -> str:
-        """种类"""
-        return cls.__name__
+    breed = _BreedDescriptor()
+
+    @abstractmethod
+    def _default_redirection(self, target: Optional[TargetName]) -> AttrGetter:
+        """默认重定向"""
+
+    @cached_property
+    def link(self) -> _LinkProxy:
+        """A proxy which can be used to manipulate the links:
+
+        1. `link.to()`: creates a new link from this actor to another.
+        2. `link.by()`: creates a new link from another to this actor.
+        3. `link.get()`: gets the links of this actor.
+        4. `link.has()`: checks if there is a link between this actor and another.
+        5. `link.unlink()`: removes a link between this actor and another.
+        6. `link.clean()`: removes all links of this actor.
+        """
+        return _LinkProxy(cast(LinkingNode, self), getattr(self, "model"))
+
+    def _redirect_getting(self, target: Optional[TargetName]) -> AttrGetter:
+        """Which targets should be used when getting or setting."""
+        # If the target is not None, get the default target.
+        if target is None or target in DEFAULT_TARGETS:
+            return self._default_redirection(target)
+        if target in self.link:
+            return self.link.get(link_name=target)
+        raise ABSESpyError(f"Unknown target {target}.")
+
+    def get(
+        self,
+        attr: str,
+        target: Optional[TargetName] = None,
+    ) -> Any:
+        """Gets attribute value from target.
+
+        Parameters:
+            attr:
+                The name of the attribute to get.
+            target:
+                The target to get the attribute from.
+                If None, the agent itself is the target.
+                If the target is an agent, get the attribute from the agent.
+                If the target is a cell, get the attribute from the cell.
+
+        Returns:
+            The value of the attribute.
+        """
+        if target in DEFAULT_TARGETS:
+            return self._default_redirection(target).get(attr)
+        if hasattr(self, attr):
+            assert (
+                target is None
+            ), "The target '{target}' is ignored because '{self}' already has attr '{attr}'."
+            return getattr(self, attr)
+        return self._redirect_getting(target=target).get(attr)
+
+    def set(
+        self, attr: str, value: Any, target: Optional[TargetName] = None
+    ) -> None:
+        """Sets the value of an attribute.
+
+        Parameters:
+            attr:
+                The name of the attribute to set.
+            value:
+                The value to set the attribute to.
+            target:
+                The target to set the attribute on. If None, the agent itself is the target.
+                1. If the target is an agent, set the attribute on the agent.
+                2. If the target is a cell, set the attribute on the cell.
+
+        Raises:
+            TypeError:
+                If the attribute is not a string.
+            ABSESpyError:
+                If the attribute is protected.
+        """
+        # If the attribute is not a string, raise an error.
+        if not isinstance(attr, str):
+            raise TypeError("The attribute must be a string.")
+        # If the attribute is protected, raise an error
+        if attr.startswith("_"):
+            raise ABSESpyError(f"Attribute '{attr}' is protected.")
+        if target in DEFAULT_TARGETS:
+            self._default_redirection(target).set(attr, value)
+            return
+        # Set the attribute on the target.
+        if hasattr(self, attr):
+            assert (
+                target is None
+            ), "The target '{target}' is ignored, because '{self}' already has attr '{attr}'."
+            setattr(self, attr, value)
+        else:
+            new_target = self._redirect_getting(target=target)
+            new_target.set(attr, value)

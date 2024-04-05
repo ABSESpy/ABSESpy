@@ -20,6 +20,7 @@ from typing import (
     Optional,
     Type,
     Union,
+    cast,
 )
 
 try:
@@ -38,16 +39,16 @@ Strategy: TypeAlias = Union[str, None, bool, Number]
 class Decision:
     """Decision class of actor."""
 
-    __strategies__: Optional[Dict] = None
-    _strategies: Optional[Dict] = None
+    __strategies__: Dict[str, Strategy] = {}
+    _strategies: Dict[str, Strategy] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.validate_strategies(cls.__strategies__)
         cls.set_strategies(cls.__strategies__)
 
-    def __init__(self, agent: Actor = None) -> None:
-        self._agent: Actor = agent
+    def __init__(self, agent: Optional[Actor] = None) -> None:
+        self._agent: Optional[Actor] = agent
         self._strategy: Any = self._setup()
 
     def __repr__(self) -> str:
@@ -87,18 +88,17 @@ class Decision:
             )
 
     @classmethod
-    def set_strategies(cls, strategies: Strategy) -> None:
+    def set_strategies(cls, strategies: Dict[str, Strategy]) -> None:
         """Parsing strategies and save into properties."""
         cls._strategies = strategies
 
-    @classmethod
     @property
-    def strategies(cls) -> Dict:
-        """Possible strategies."""
-        return cls._strategies
+    def strategies(self) -> Dict[str, Strategy]:
+        """Get all strategies."""
+        return self._strategies
 
     @property
-    def agent(self) -> Actor:
+    def agent(self) -> Optional[Actor]:
         """Decision-maker."""
         return self._agent
 
@@ -113,7 +113,7 @@ class Decision:
             cls.validate_strategy(result)
             return result
 
-        decorated.__making__ = cls
+        setattr(decorated, "__making__", cls)
         return decorated
 
     @classmethod
@@ -131,15 +131,15 @@ class Decision:
                     getattr(self, "decisions"), _DecisionFactory
                 ):
                     raise TypeError("Type of a decision must be decision.")
-                decision_obj = self.decisions.get(cls.name)
+                decision_obj = self.decisions.get(cast(str, cls.name))
                 if not decision_obj.has_strategy(strategy):
                     raise TypeError(
                         f"Decision '{cls.name}' doesn't have strategy {strategy}."
                     )
                 return func(self, *args, **kwargs)
 
-            wrapper.__response__ = cls
-            wrapper.__expected__ = strategy
+            setattr(wrapper, "__response__", cls)
+            setattr(wrapper, "__expected__", strategy)
             return wrapper
 
         # decorator.__response__ = cls
@@ -183,7 +183,7 @@ class Decision:
         Returns:
             If the strategy exists, return True, otherwise returns False.
         """
-        return strategy in cls.strategies.keys()
+        return strategy in cls._strategies.keys()
 
     @property
     def now(self) -> Any:
@@ -191,7 +191,7 @@ class Decision:
         return self._strategy
 
     def _setup(self) -> Any:
-        if init_strategy := self.setup():
+        if init_strategy := self.setup():  # type: ignore[error-code, func-returns-value]
             self.validate_strategy(init_strategy)
         return init_strategy
 
@@ -220,10 +220,14 @@ class _DecisionFactory:
     """Creating and containing decisions of an agent."""
 
     def __init__(
-        self, agent: Actor, decisions: Optional[Iterable[Decision]] = None
+        self,
+        agent: Actor,
+        decisions: Optional[Iterable[Type[Decision]]] = None,
     ) -> None:
         self.agent: Actor = agent
         self._decisions: Dict[str, Decision] = {}
+        if decisions is None:
+            decisions = []
         self.parse_decisions(decisions)
 
     @property

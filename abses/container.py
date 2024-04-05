@@ -12,7 +12,17 @@ Container for actors.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Optional,
+    Type,
+    Union,
+)
+
+import numpy as np
 
 try:
     from typing import TypeAlias
@@ -23,7 +33,7 @@ from loguru import logger
 
 from abses.actor import Actor, Breeds
 from abses.errors import ABSESpyError
-from abses.sequences import ActorsList, Selection
+from abses.sequences import HOW, ActorsList, Selection
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
@@ -39,13 +49,13 @@ class _AgentsContainer(dict):
 
     def __init__(
         self,
-        model: MainModel,
+        model: MainModel[Any, Any],
         max_len: None | int = None,
     ):
         super().__init__({b: set() for b in model.breeds})
         self._model: MainModel = model
         model._containers.append(self)
-        self._max_length: int = max_len
+        self._max_length: Optional[int] = max_len
 
     def __len__(self) -> int:
         return len(self.get())
@@ -57,14 +67,16 @@ class _AgentsContainer(dict):
         strings = [f"({len(v)}){k}" for k, v in self.items()]
         return f"<{str(self)}: {'; '.join(strings)}>"
 
-    def __contains__(self, name) -> bool:
-        return name in self.get()
+    def __contains__(self, actor: object) -> bool:
+        if not isinstance(actor, Actor):
+            raise TypeError(f"{type(actor)} is not a Actor.")
+        return actor in self.get()
 
-    def __call__(self, *args, **kwargs) -> ActorsList[Actor]:
+    def __call__(self, *args: Breeds, **kwargs: Breeds) -> ActorsList[Actor]:
         return self.get(*args, **kwargs)
 
     @property
-    def model(self) -> MainModel:
+    def model(self) -> MainModel[Any, Any]:
         """The ABSESpy model where the container belongs to."""
         return self._model
 
@@ -142,7 +154,7 @@ class _AgentsContainer(dict):
         breed_cls: Type[Actor],
         num: int = 1,
         singleton: bool = False,
-        **kwargs: dict[str, Any],
+        **kwargs: Any,
     ) -> Union[Actor, ActorsList[Actor]]:
         """Create one or more actors of the given breed class.
 
@@ -183,9 +195,12 @@ class _AgentsContainer(dict):
             self.add(agent)
             self.model.schedule.add(agent)
         # return the created actor(s).
+        actors_list: ActorsList[Actor] = ActorsList(
+            model=self.model, objs=objs
+        )
         if singleton:
-            return objs[0] if num == 1 else objs
-        return ActorsList(model=self.model, objs=objs)
+            return objs[0] if num == 1 else actors_list
+        return actors_list
 
     def get(self, breeds: Breeds = None) -> ActorsList[Actor]:
         """Get all entities of specified breeds to a list.
@@ -387,7 +402,7 @@ class _AgentsContainer(dict):
         """
         return len(self.get(breeds=breeds))
 
-    def apply(self, func: callable, *args, **kwargs) -> None:
+    def apply(self, func: Callable, *args: Any, **kwargs: Any) -> np.ndarray:
         """Apply a function to all agents in the container.
 
         Parameters:
@@ -396,7 +411,7 @@ class _AgentsContainer(dict):
         """
         return self.get().apply(func, *args, **kwargs)
 
-    def item(self, how: str = "item", index: int = 0) -> Actor | None:
+    def item(self, how: HOW = "item", index: int = 0) -> Actor | None:
         """Retrieve one agent if possible.
 
         Parameters:
@@ -421,7 +436,10 @@ class _CellAgentsContainer(_AgentsContainer):
     """Container for agents located at cells."""
 
     def __init__(
-        self, model: MainModel, cell: PatchCell, max_len: int | None = None
+        self,
+        model: MainModel[Any, Any],
+        cell: PatchCell,
+        max_len: int | None = None,
     ):
         super().__init__(model, max_len)
         self._cell = cell
@@ -429,9 +447,7 @@ class _CellAgentsContainer(_AgentsContainer):
     def __str__(self) -> str:
         return "CellAgents"
 
-    def _add_one(
-        self, agent: Actor, register: TYPE_CHECKING = False
-    ) -> TYPE_CHECKING:
+    def _add_one(self, agent: Actor, register: bool = False) -> None:
         if agent.on_earth and agent not in self:
             e1 = f"{agent} is on another cell thus cannot be added."
             e2 = "You may use 'actor.move.to()' to change its location."
@@ -461,9 +477,9 @@ class _CellAgentsContainer(_AgentsContainer):
 
     def new(
         self,
-        breed_cls: Actor,
+        breed_cls: Type[Actor],
         num: int = 1,
-        singleton: TYPE_CHECKING = False,
+        singleton: bool = False,
         **kwargs: Any,
     ) -> Actor | ActorsList:
         """Creates a new actor or a list of actors of the given breed class.
