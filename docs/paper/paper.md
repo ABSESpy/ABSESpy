@@ -40,29 +40,29 @@ The popular programming language `Python` is among the first choices for scienti
 
 ## Design structures
 
-`ABSESpy`'s low-coupling design enables the implementation of maintainable projects by separating the human and natural subsystems within SESs (Figure 1 \autoref{fig:api}). While the human subsystem manages actors (i.e., agents) and their interactions, the natural submodule typically handles how actors live in, move through, and interact with grid-like patch layers. This architecture also supports adding specialized submodules in each subsystem to represent varying processes with modularity.
+`ABSESpy`'s low-coupling design enables the implementation of maintainable projects by separating the human and natural subsystems within SESs (\autoref{fig:1}). While the human subsystem manages actors (i.e., agents) and their interactions, the natural submodule typically handles how actors live in, move through, and interact with grid-like patch layers. This architecture also supports adding specialized submodules in each subsystem to represent varying processes with modularity.
 
 `ABSESpy` includes the default schedule, data collector, and batch runner utilities, available as a `Mesa` package but with enhanced functionality. It also introduces a calendar-like time driver and supports configuration management using YAML configuration files. In addition, the packages `Xarray` [@hoyer2017xarray] and `Mesa-Geo` [@wang_mesa-geo_2022] are embedded to implement an Input/Output driver for different geographic datasets (`.tif`, `.nc`, `.json`, `.shp`, and others). The design focuses on two core improvements: (1) handling actors and their interactions and (2) enhancing the reality and manageability of ABMs.
 
-![Diagram of the designed structures and included utilities of `ABSESpy`](api_diagram.png)\label{fig:api}.
+![Diagram of the designed structures and included utilities of `ABSESpy`.\label{fig:1}](api_diagram.png).
 
 ## Handling actors and their interactions
 
 Under the context of SES, `ABSESpy` conceptualizes "agents" as `Actor`s managed within a global `ActorsContainer` which can be manipulated in batches through any `ActorsList`. Users can also query, select, or apply a function to a subset of actors by `ActorsList`. Furthermore, whenever users link some `Actor`s with others or some `PatchCell`s, `Networkx` can automatically convert these linkages into a graph. Thus, it enables actors to interact through social networks or implement a social-ecological network analysis.
 
-Since `ABSESpy` recognizes the centrality of human behavior in SES studies, it also provides a standard workflow based on a popular theoretical framework for decision-making (Figure 2 \autoref{fig:2}.) [@schluter2017, @beckage2022]. The following main steps can be implemented seamlessly when working with `ABSESpy`:
+Since `ABSESpy` recognizes the centrality of human behavior in SES studies, it also provides a standard workflow based on a popular theoretical framework for decision-making (\autoref{fig:2}.) [@schluter2017; @beckage2022]. The following main steps can be implemented seamlessly when working with `ABSESpy`:
 
 1. **Perceptions**:  An `Actor` holds perceptions of natural and human subsystems by observing global/environmental variables (cognition) or learning from links with others (contagion). `ABSESpy` helps users dynamically define an expression to update perceptions as `Actor`s' attributes.
 2. **Decision-making**: `Actor`s evaluate potential options to determine how to act in the current situation. `ABSESpy` includes utilities for pre-defined options, thus enabling auto-triggering actions by passing an evaluating function.
 3. **Response**: Some actions may lead to feedback towards human or natural subsystems as a response. Besides many available actions, such as spatial relocation and setting attributes, `ABSESpy` also includes tools to avoid the feedback that causes a nested loop.
 
-![Decision-making workflow for simulating human behavior.](decision-making.png)\label{fig:2}
+![Decision-making workflow for simulating human behavior.\label{fig:2}](decision-making.png){ width=80% }
 
-##  Enhancing the reality and manageability of ABMs
+## Enhancing the reality and manageability of ABMs
 
-To enhance reality, `ABSESpy` provides an innovative time control mechanism to bridge the gap between the association of ABM and real-world time (Figure 3 \autoref{fig:3}.). In addition to `Mesa`'s standard tick-based time advancement, users can implement calendar temporal modes to match the diverse scales of SES phenomena with `ABSESpy`. The model can represent time intervals from minutes to years by defining the calendar time for each simulation step. This flexibility is crucial when modeling real-world events like natural cycles or periodic human activities.
+To enhance reality, `ABSESpy` provides an innovative time control mechanism to bridge the gap between the association of ABM and real-world time (\autoref{fig:3}.). In addition to `Mesa`'s standard tick-based time advancement, users can implement calendar temporal modes to match the diverse scales of SES phenomena with `ABSESpy`. The model can represent time intervals from minutes to years by defining the calendar time for each simulation step. This flexibility is crucial when modeling real-world events like natural cycles or periodic human activities.
 
-![Calendar time module enhances real-world social-ecological system modeling approaches.](real-world.png)\label{fig:3}
+![Calendar time module enhances real-world social-ecological system modeling approaches.\label{fig:3}](real-world.png)
 
 `ABSESpy` includes utilities for manageability purposes based on the above time control mechanism. The commonly used one is automatically importing and updating temporal time series datasets like monthly or daily weather. Users can also specify time conditions to apply or not apply any model method, such as customizing a "`get_up()`" method to `Actor` and only calling it at 8:00 am in a one-hour-per-step model. Finally, all parameters can be stored in YAML configuration files with readable expressions. For example, passing parameters `{"start": '2022-12-31', "end": '2024-01-01', "years": 1}` to the `time` module means the simulation starts at the end of 2022 and ends when the beginning of 2024 is reached. Since each step represents a year, the model only goes one step.
 
