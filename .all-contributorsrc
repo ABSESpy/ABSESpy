@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "jordanperr",
+      "name": "Jordan Perr-Sauer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/355615?v=4",
+      "profile": "http://jperr.com",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "ABSESpy",
+  "projectOwner": "ABSESpy"
+}
