@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "ejsimley",
+      "name": "ejsimley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40040961?v=4",
+      "profile": "https://github.com/ejsimley",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "ABSESpy",
+  "projectOwner": "ABSESpy"
+}
