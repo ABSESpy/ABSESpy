@@ -60,11 +60,14 @@ Language: [English Readme] | [简体中文]
 
 ## Thanks to all contributors
 
-<div align="center"><p>
-<a href="https://github.com/ABSESpy/ABSESpy/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ABSESpy/ABSESpy" />
-</a>
-</div>
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
   [Mesa]: https://github.com/projectmesa/mesa
   [Contribute]: https://absespy.github.io/ABSESpy/home/contribution/
