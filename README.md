@@ -1,7 +1,4 @@
 # ABSESpy: Agent-Based Modeling Framework for Social-Ecological Systems
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ![ABSES_banner](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-10-19%20at%2019.08.12@2x.png)
 
@@ -68,7 +65,15 @@ Language: [English Readme] | [简体中文]
 - 📁 Handling complex models with a configuration file.
 - 🙋 and more...
 
-## Contributors
+  [Mesa]: https://github.com/projectmesa/mesa
+  [Contribute]: https://absespy.github.io/ABSESpy/home/contribution/
+  [Getting Started]: https://absespy.github.io/ABSESpy/home/get_started/
+  [Install]: https://absespy.github.io/ABSESpy/home/Installation/
+  [Tutorials]: https://absespy.github.io/ABSESpy/tutorial/tutorial/
+  [简体中文]: README.zh-cn.md
+  [English Readme]: README.md
+
+## ## Contributors ✨
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -85,16 +90,6 @@ Language: [English Readme] | [简体中文]
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
-
-  [Mesa]: https://github.com/projectmesa/mesa
-  [Contribute]: https://absespy.github.io/ABSESpy/home/contribution/
-  [Getting Started]: https://absespy.github.io/ABSESpy/home/get_started/
-  [Install]: https://absespy.github.io/ABSESpy/home/Installation/
-  [Tutorials]: https://absespy.github.io/ABSESpy/tutorial/tutorial/
-  [简体中文]: README.zh-cn.md
-  [English Readme]: README.md
-
-## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
