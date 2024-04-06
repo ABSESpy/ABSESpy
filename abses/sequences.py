@@ -19,20 +19,25 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generic,
     List,
     Literal,
     Optional,
+    Sized,
+    TypeVar,
     Union,
+    cast,
     overload,
 )
 
 try:
-    from typing import Self, TypeAlias
+    from typing import TypeAlias
 except ImportError:
-    from typing_extensions import TypeAlias, Self
+    from typing_extensions import TypeAlias
 
 import mesa_geo as mg
 import numpy as np
+from numpy.typing import NDArray
 
 from abses.errors import ABSESpyError
 from abses.random import ListRandom
@@ -41,10 +46,13 @@ from abses.selection import selecting
 from .tools.func import make_list
 
 if TYPE_CHECKING:
+    from abses.main import MainModel
+
     from .actor import Actor
 
-Selection: TypeAlias = Union[str, Iterable[bool]]
+Selection: TypeAlias = Union[str, Iterable[bool], Dict[str, bool]]
 HOW: TypeAlias = Literal["only", "random", "item"]
+ActorType = TypeVar("ActorType", bound="Actor")
 
 
 def get_only_agent(agents: ActorsList) -> Actor:
@@ -56,10 +64,12 @@ def get_only_agent(agents: ActorsList) -> Actor:
     raise ValueError("More than one agent.")
 
 
-class ActorsList(list):
+class ActorsList(List[ActorType], Generic[ActorType]):
     """A list of actors in an agent-based model."""
 
-    def __init__(self, model, objs=()):
+    def __init__(
+        self, model: MainModel[Any, Any], objs: Iterable[Actor] = ()
+    ) -> None:
         super().__init__(objs)
         self._model = model
 
@@ -67,10 +77,10 @@ class ActorsList(list):
         results = [f"({len(v)}){k}" for k, v in self.to_dict().items()]
         return f"<ActorsList: {'; '.join(results)}>"
 
-    def __eq__(self, other: Iterable) -> bool:
+    def __eq__(self, other: Iterable[Any]) -> bool:
         return (
             all(actor in other for actor in self)
-            if self._is_same_length(other)
+            if self._is_same_length(cast(Sized, other))
             else False
         )
 
@@ -79,7 +89,7 @@ class ActorsList(list):
         ...
 
     @overload
-    def __getitem__(self, index: slice) -> Self:
+    def __getitem__(self, index: slice) -> ActorsList[Actor]:
         ...
 
     def __getitem__(self, index):
@@ -90,9 +100,7 @@ class ActorsList(list):
             else results
         )
 
-    def _is_same_length(
-        self, length: Iterable[Any], rep_error: bool = False
-    ) -> bool:
+    def _is_same_length(self, length: Sized, rep_error: bool = False) -> bool:
         """Check if the length of input is as same as the number of actors."""
         if not hasattr(self, "__len__"):
             raise ValueError(f"{type(length)} object is not iterable.")
@@ -109,13 +117,13 @@ class ActorsList(list):
         """随机模块"""
         return ListRandom(actors=self, model=self._model)
 
-    def to_dict(self) -> Dict[str, Self]:
+    def to_dict(self) -> Dict[str, ActorsList[Actor]]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.
 
         Returns:
             key is the breed of actors, and values are corresponding actors.
         """
-        dic = {}
+        dic: Dict[str, ActorsList[Actor]] = {}
         for actor in iter(self):
             breed = actor.breed
             if breed not in dic:
@@ -124,7 +132,7 @@ class ActorsList(list):
                 dic[breed].append(actor)
         return dic
 
-    def select(self, selection: Selection) -> Self:
+    def select(self, selection: Selection) -> ActorsList[Actor]:
         """
         Returns a new :class:`ActorList` based on `selection`.
 
@@ -157,7 +165,7 @@ class ActorsList(list):
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None
-    ) -> Self:
+    ) -> ActorsList[Actor]:
         """
         Selects the elements of the sequence that are better than a given value or actor
         based on a specified metric.
@@ -194,7 +202,7 @@ class ActorsList(list):
             return self.select(diff > 0)
         raise ABSESpyError(f"Invalid than type {type(than)}.")
 
-    def update(self, attr: str, values: Iterable[any]) -> None:
+    def update(self, attr: str, values: Iterable[Any]) -> None:
         """Update the specified attribute of each agent in the sequence with the corresponding value in the given iterable.
 
         Parameters:
@@ -207,11 +215,11 @@ class ActorsList(list):
             ValueError:
                 If the length of the values iterable does not match the length of the sequence.
         """
-        self._is_same_length(values, rep_error=True)
+        self._is_same_length(cast(Sized, values), rep_error=True)
         for agent, val in zip(self, values):
             setattr(agent, attr, val)
 
-    def split(self, where: Iterable[int]) -> np.ndarray:
+    def split(self, where: NDArray[Any]) -> List[NDArray[np.object_]]:
         """Split agents into N+1 groups.
 
         Parameters:
@@ -221,8 +229,7 @@ class ActorsList(list):
         Returns:
             np.ndarray: N+1 groups: agents array
         """
-        to_split = np.array(self)
-        return np.hsplit(to_split, where)
+        return np.hsplit(np.array(self), where)
 
     def array(self, attr: str) -> np.ndarray:
         """Convert the specified attribute of all actors to a numpy array.
@@ -292,7 +299,19 @@ class ActorsList(list):
             return default
         raise ValueError("No agent found or default value.")
 
-    def item(self, how: HOW = "item", index: int = 0) -> Actor | None:
+    def set(self, attr: str, value: Any) -> None:
+        """Set the attribute of all agents in the sequence to the specified value.
+
+        Parameters:
+            attr:
+                The name of the attribute to set.
+            value:
+                The value to set the attribute to.
+        """
+        for agent in iter(self):
+            agent.set(attr, value)
+
+    def item(self, how: HOW = "item", index: int = 0) -> Optional[Actor]:
         """Retrieve one agent if possible.
 
         Parameters:
@@ -313,7 +332,8 @@ class ActorsList(list):
         if how == "only":
             return get_only_agent(self)
         if how == "random":
-            return self.random.choice(when_empty="return None")
+            actor = self.random.choice(when_empty="return None")
+            return cast(Optional["Actor"], actor)
         if how == "item":
             return self[index] if len(self) > index else None
         raise ValueError(f"Invalid how method '{how}'.")

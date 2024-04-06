@@ -12,7 +12,7 @@ Basic implementation of the model's module.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Type
 
 from loguru import logger
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class Module(_BaseObj):
     """Basic module for the model."""
 
-    def __init__(self, model: MainModel, name: Optional[str] = None):
+    def __init__(self, model: MainModel[Any, Any], name: Optional[str] = None):
         _BaseObj.__init__(self, model, observer=True, name=name)
         self._open: bool = True
 
@@ -75,7 +75,9 @@ class Module(_BaseObj):
 class CompositeModule(Module, _States, _Notice):
     """基本的组合模块，可以创建次级模块"""
 
-    def __init__(self, model: MainModel, name: str = None) -> None:
+    def __init__(
+        self, model: MainModel[Any, Any], name: Optional[str] = None
+    ) -> None:
         Module.__init__(self, model, name=name)
         _States.__init__(self)
         _Notice.__init__(self)
@@ -86,15 +88,19 @@ class CompositeModule(Module, _States, _Notice):
         """All attached sub-modules."""
         return self._modules
 
-    @Module.opening.setter
+    @property
+    def opening(self) -> bool:
+        return self._open
+
+    @opening.setter
     def opening(self, value: bool) -> None:
         for module in self.modules:
             module.opening = value
-        Module.opening.fset(self, value)
+        self._open = value
 
     def create_module(
         self,
-        module_class: Type[Module] = Module,
+        module_class: Optional[Type[Module]] = None,
         how: Optional[str] = None,
         **kwargs,
     ) -> Module:
@@ -120,10 +126,12 @@ class CompositeModule(Module, _States, _Notice):
         Returns:
             The created module.
         """
-        if not issubclass(module_class, Module):
-            raise TypeError(
-                f"Module {module_class} not inherited from a module."
-            )
+        if module_class is None:
+            module_class = Module
+        else:
+            assert issubclass(
+                module_class, Module
+            ), f"Module {module_class} not inherited from a module."
         if not how:
             module = module_class(model=self._model, **kwargs)
         elif hasattr(module_class, how):

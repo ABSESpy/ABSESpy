@@ -20,8 +20,8 @@ class _States:
 
     _states = STATES
 
-    def __init__(self):
-        self._state = 0  # new model
+    def __init__(self) -> None:
+        self._state: int = 0  # new model
 
     @property
     def state(self) -> str:

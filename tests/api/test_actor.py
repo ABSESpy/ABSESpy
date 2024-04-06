@@ -88,15 +88,14 @@ class TestActor:
         "attr, target, expected",
         [
             ("test2", None, 3),
-            ("test2", "self", 3),
-            ("test2", "at", 2),
+            ("test2", "actor", 3),
+            ("test2", "cell", 2),
         ],
     )
     def test_get(self, cell_0_0: PatchCell, attr, target, expected):
         """Test getting values."""
         # arrange
         actor = cell_0_0.agents.new(Actor, singleton=True)
-        cell_0_0.test1 = 1
         cell_0_0.test2 = 2
         actor.test2 = 3
         # act
@@ -107,8 +106,8 @@ class TestActor:
     @pytest.mark.parametrize(
         "attr, target, value",
         [
-            ("test1", "self", 1),
-            ("test2", "me", "testing text"),
+            ("test", "actor", 1),
+            ("test", None, "testing text"),
             ("test", "actor", ["test", "test1", "test2"]),
         ],
     )
@@ -116,6 +115,7 @@ class TestActor:
         """Test setting values."""
         # arrange
         actor = cell_0_0.agents.new(Actor, singleton=True)
+        actor.test = 0
         # act
         actor.set(attr=attr, value=value, target=target)
         # assert
@@ -124,14 +124,14 @@ class TestActor:
     @pytest.mark.parametrize(
         "attr, target, value",
         [
-            ("test1", "at", 1),
-            ("test1", "nature", 1),
-            ("test1", "world", 1),
+            ("test1", "cell", 1),
+            ("test1", None, 1),
         ],
     )
     def test_set_cell(self, cell_0_0: PatchCell, attr, value, target):
         """Test setting values."""
         # arrange
+        cell_0_0.test1 = 0
         actor = cell_0_0.agents.new(Actor, singleton=True)
         # act
         actor.set(attr=attr, value=value, target=target)
