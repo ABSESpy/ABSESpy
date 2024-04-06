@@ -11,22 +11,29 @@
 
 from __future__ import annotations
 
-from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional
+from numbers import Number
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 import mesa_geo as mg
 
 from abses import ActorsList
 from abses.container import _CellAgentsContainer
 from abses.errors import ABSESpyError
-from abses.links import _LinkNode, _LinkProxy
+from abses.links import TargetName, _LinkNode
 
 if TYPE_CHECKING:
-    from abses.main import MainModel
+    from abses.main import H, MainModel, N
     from abses.nature import PatchModule
 
+try:
+    from typing import Self, TypeAlias
+except ImportError:
+    from typing_extensions import Self, TypeAlias
 
-def raster_attribute(func):
+Pos: TypeAlias = Tuple[int, int]
+
+
+def raster_attribute(func: Callable[..., Union[Number, str]]) -> property:
     """Turn the method into a property that the patch can extract.
     Examples:
         ```
@@ -55,7 +62,7 @@ def raster_attribute(func):
         ])
         ```
     """
-    func.is_decorated = True
+    setattr(func, "is_decorated", True)
     return property(func)
 
 
@@ -74,11 +81,13 @@ class PatchCell(mg.Cell, _LinkNode):
 
     max_agents: Optional[int] = None
 
-    def __init__(self, pos=None, indices=None):
+    def __init__(
+        self, pos: Optional[Pos] = None, indices: Optional[Pos] = None
+    ):
         mg.Cell.__init__(self, pos, indices)
         _LinkNode.__init__(self)
         self._agents: Optional[_CellAgentsContainer] = None
-        self._layer: Optional[mg.RasterLayer] = None
+        self._layer: Optional[PatchModule] = None
 
     def __repr__(self) -> str:
         return f"<Cell at {self.layer}[{self.pos}]>"
@@ -99,34 +108,40 @@ class PatchCell(mg.Cell, _LinkNode):
     @property
     def layer(self) -> PatchModule:
         """`RasterLayer` where this `PatchCell` belongs."""
+        if self._layer is None:
+            raise ABSESpyError(
+                "PatchCell must belong to a layer."
+                f"However, {self} has no layer."
+                "Did you create this cell in the correct way?"
+            )
         return self._layer
 
     @layer.setter
     def layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, mg.RasterLayer):
             raise TypeError(f"{type(layer)} is not valid layer.")
-        if self.layer is not None:
+        if self._layer is not None:
             raise ABSESpyError("PatchCell can only belong to one layer.")
         # set layer property
         self._layer = layer
         # set layer's model as the model
-        self.model = layer.model
+        self.model: MainModel[Any, Any] = layer.model
         # set agents container
         self._agents = _CellAgentsContainer(
             layer.model, cell=self, max_len=getattr(self, "max_agents", None)
         )
 
     @property
-    def agents(self) -> _CellAgentsContainer:
+    def agents(self) -> Optional[_CellAgentsContainer]:
         """The agents located at here."""
         return self._agents
 
-    @cached_property
-    def link(self) -> _LinkProxy:
-        """The link to the patch."""
-        return _LinkProxy(node=self, model=self.layer.model)
+    def _default_redirection(
+        self, target: Optional[TargetName]
+    ) -> _CellAgentsContainer | None:
+        return self if target == "cell" else self.agents
 
-    def get(self, attr: str) -> Any:
+    def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
         """Gets the value of an attribute or registered property.
         Automatically update the value if it is the dynamic variable of the layer.
 
@@ -144,9 +159,7 @@ class PatchCell(mg.Cell, _LinkNode):
         """
         if attr in self.layer.dynamic_variables:
             self.layer.dynamic_var(attr_name=attr)
-        if not hasattr(self, attr):
-            raise AttributeError(f"{attr} not exists in {self.layer}.")
-        return getattr(self, attr)
+        return super().get(attr=attr, target=target)
 
     def neighboring(
         self,
@@ -154,7 +167,7 @@ class PatchCell(mg.Cell, _LinkNode):
         radius: int = 1,
         include_center: bool = False,
         annular: bool = False,
-    ) -> ActorsList:
+    ) -> ActorsList[Self]:
         """Get the grid around the patch."""
         cells = self.layer.get_neighboring_cells(
             self.pos, moore=moore, radius=radius, include_center=include_center

@@ -12,8 +12,17 @@ The spatial module.
 from __future__ import annotations
 
 import functools
-from numbers import Number
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Type,
+    Union,
+    cast,
+)
 
 try:
     from typing import Self
@@ -84,7 +93,12 @@ class PatchModule(Module, mg.RasterLayer):
             A random proxy by calling the cells as an `ActorsList`.
     """
 
-    def __init__(self, model, name=None, **kwargs):
+    def __init__(
+        self,
+        model: MainModel[Any, Any],
+        name: Optional[str] = None,
+        **kwargs: Any,
+    ):
         Module.__init__(self, model, name=name)
         mg.RasterLayer.__init__(self, **kwargs)
         logger.info("Initializing a new Model Layer...")
@@ -92,7 +106,7 @@ class PatchModule(Module, mg.RasterLayer):
 
         for cell in self:
             cell.layer = self
-        self._updated_ticks = []
+        self._updated_ticks: List[int] = []
 
     @property
     def cell_properties(self) -> set[str]:
@@ -144,11 +158,11 @@ class PatchModule(Module, mg.RasterLayer):
     @classmethod
     def from_resolution(
         cls,
-        model: MainModel,
-        name: str = None,
+        model: MainModel[Any, Any],
+        name: Optional[str] = None,
         shape: Coordinate = (10, 10),
         crs: Optional[pyproj.CRS | str] = CRS,
-        resolution: Number = 1,
+        resolution: Union[int, float] = 1,
         cell_cls: type[PatchCell] = PatchCell,
     ) -> Self:
         """Create a layer from resolution.
@@ -194,10 +208,10 @@ class PatchModule(Module, mg.RasterLayer):
     @classmethod
     def copy_layer(
         cls,
-        model: MainModel,
+        model: MainModel[Any, Any],
         layer: Self,
         name: Optional[str] = None,
-        cell_cls: PatchCell = PatchCell,
+        cell_cls: Type[PatchCell] = PatchCell,
     ) -> Self:
         """Copy an existing layer to create a new layer.
 
@@ -237,7 +251,7 @@ class PatchModule(Module, mg.RasterLayer):
         raster_file: str,
         cell_cls: type[Cell] = PatchCell,
         attr_name: str | None = None,
-        model: None | MainModel = None,
+        model: Optional[MainModel[Any, Any]] = None,
         name: str | None = None,
     ) -> Self:
         """Create a raster layer module from a file.
@@ -257,6 +271,8 @@ class PatchModule(Module, mg.RasterLayer):
                 Class type of `PatchCell` to create.
 
         """
+        if model is None:
+            raise ABSESpyError("No `model` module defined for module.")
         with rio.open(raster_file, "r") as dataset:
             values = dataset.read()
             _, height, width = values.shape
@@ -279,10 +295,14 @@ class PatchModule(Module, mg.RasterLayer):
         obj.apply_raster(values, attr_name=attr_name)
         return obj
 
-    def _attr_or_array(self, data: None | str | np.ndarray) -> np.ndarray:
+    def _attr_or_array(
+        self, data: None | str | np.ndarray | xr.DataArray
+    ) -> np.ndarray:
         """Determine the incoming data type and turn it into a reasonable array."""
         if data is None:
             return np.ones(self.shape2d)
+        if isinstance(data, xr.DataArray):
+            data = data.to_numpy()
         if isinstance(data, np.ndarray):
             if data.shape == self.shape2d:
                 return data
@@ -390,7 +410,10 @@ class PatchModule(Module, mg.RasterLayer):
         return self.select().random
 
     def _select_by_geometry(
-        self, geometry: Geometry, refer_layer: Optional[str] = None, **kwargs
+        self,
+        geometry: Geometry,
+        refer_layer: Optional[str] = None,
+        **kwargs: Dict[str, Any],
     ) -> np.ndarray:
         """Gets all the cells that intersect the given geometry.
 
@@ -418,7 +441,8 @@ class PatchModule(Module, mg.RasterLayer):
         return out_image.reshape(self.shape2d)
 
     def select(
-        self, where: Optional[str | np.ndarray | Geometry] = None
+        self,
+        where: Optional[str | np.ndarray | xr.DataArray | Geometry] = None,
     ) -> ActorsList[PatchCell]:
         """Select cells from this layer.
 
@@ -447,10 +471,12 @@ class PatchModule(Module, mg.RasterLayer):
             raise TypeError(
                 f"{type(where)} is not supported for selecting cells."
             )
-        mask_ = np.nan_to_num(mask_, 0).astype(bool)
+        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool)
         return ActorsList(self.model, self.array_cells[mask_])
 
-    def apply(self, ufunc: Callable, *args: Any, **kwargs: Any) -> np.ndarray:
+    def apply(
+        self, ufunc: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> np.ndarray:
         """Apply a function to array cells.
 
         Parameters:
@@ -483,11 +509,13 @@ class BaseNature(mg.GeoSpace, CompositeModule):
             The spatial scope of the model's concern. By default, uses the major layer of this model.
     """
 
-    def __init__(self, model, name="nature"):
+    def __init__(
+        self, model: MainModel[Any, Any], name: str = "nature"
+    ) -> None:
         CompositeModule.__init__(self, model, name=name)
         crs = self.params.get("crs", CRS)
         mg.GeoSpace.__init__(self, crs=crs)
-        self._major_layer = None
+        self._major_layer: Optional[PatchModule] = None
 
         logger.info("Initializing a new Base Nature module...")
 
@@ -499,7 +527,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         return self._major_layer
 
     @major_layer.setter
-    def major_layer(self, layer: PatchModule):
+    def major_layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, PatchModule):
             raise TypeError(f"{layer} is not PatchModule.")
         self._major_layer = layer
@@ -547,8 +575,8 @@ class BaseNature(mg.GeoSpace, CompositeModule):
 
     def create_module(
         self,
-        module_class: Module = PatchModule,
-        how: str | None = None,
+        module_class: Optional[Type[Module]] = None,
+        how: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> PatchModule:
         """Creates a submodule of the raster layer.
@@ -557,18 +585,27 @@ class BaseNature(mg.GeoSpace, CompositeModule):
             module_class:
                 The custom module class.
             how:
-                Class method to call when creating the new sub-module (raster layer). So far, there are three options:
+                Class method to call when creating the new sub-module (raster layer).
+                So far, there are three options:
                     `from_resolution`: by selecting shape and resolution.
                     `from_file`: by input of a geo-tiff dataset.
                     `copy_layer`: by copying shape, resolution, bounds, crs, and coordinates of an existing submodule.
                 if None (by default), just simply create a sub-module without any custom methods (i.e., use the base class `PatchModule`).
             **kwargs:
-                Any other arg passed to the creation method. See corresponding method of your how option from `PatchModule` class methods.
+                Any other arg passed to the creation method.
+                See corresponding method of your how option from `PatchModule` class methods.
 
         Returns:
             the created new module.
         """
-        module = super().create_module(module_class, how, **kwargs)
+        if module_class is None:
+            module_class = PatchModule
+        assert issubclass(
+            module_class, PatchModule
+        ), "Must be a `PatchModule`."
+        module = cast(
+            PatchModule, super().create_module(module_class, how, **kwargs)
+        )
         # 如果是第一个创建的模块,则将其作为主要的图层
         if not self.layers:
             self.major_layer = module

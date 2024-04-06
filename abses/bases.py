@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class _Notice:
     """Notice class for the observer pattern."""
 
-    __glob_vars__: Set[str] = []
+    __glob_vars__: Set[str] = set()
 
     def __init__(self, observer: Optional[_Observer] = None):
         self.observers: Set[_Observer] = set()

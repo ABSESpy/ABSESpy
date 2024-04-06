@@ -12,7 +12,20 @@ The main modelling framework of ABSESpy.
 from __future__ import annotations
 
 import sys
-from typing import Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 try:
     from typing import TypeAlias
@@ -51,9 +64,15 @@ logger.add(
 )
 
 # Dynamically load type hints from users' input type
-N = TypeVar("N")
-H = TypeVar("H")
-Reporter: TypeAlias = Dict[str, Union[str, callable]]
+N = TypeVar("N", bound=BaseNature)
+H = TypeVar("H", bound=BaseHuman)
+Reporter: TypeAlias = Union[str, Callable[..., Any]]
+SubSystemType: TypeAlias = Literal["model", "nature", "human"]
+SubSystem = Union[
+    SubSystemType,
+    Tuple[SubSystemType, SubSystemType],
+    Tuple[SubSystemType, SubSystemType, SubSystemType],
+]
 
 
 class MainModel(Generic[H, N], Model, _Notice, _States):
@@ -87,25 +106,21 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def __init__(
         self,
         parameters: DictConfig = DictConfig({}),
-        human_class: Type[H] = BaseHuman,
-        nature_class: Type[N] = BaseNature,
+        human_class: Optional[Type[H]] = None,
+        nature_class: Optional[Type[N]] = None,
         run_id: Optional[int] = None,
-        **kwargs,
+        **kwargs: Optional[Any],
     ) -> None:
         Model.__init__(self, **kwargs)
         _Notice.__init__(self)
         _States.__init__(self)
 
-        self._breeds: dict[str, Type[Actor]] = {}
+        self.running: bool = True
+        self._breeds: Dict[str, Type[Actor]] = {}
         self._containers: List[_AgentsContainer] = []
         self._settings = DictConfig(parameters)
         self._version: str = __version__
-        if not issubclass(human_class, BaseHuman):
-            raise TypeError(f"{human_class} is not a subclass of BaseHuman.")
-        if not issubclass(nature_class, BaseNature):
-            raise TypeError(f"{nature_class} is not a subclass of BaseNature.")
-        self._human = human_class(self)
-        self._nature = nature_class(self)
+        self._check_subsystems(h_cls=human_class, n_cls=nature_class)
         self._agents = _AgentsContainer(
             model=self, max_len=kwargs.get("max_agents")
         )
@@ -120,10 +135,28 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         version = self._version
         return f"<{self.name}-{version}({self.state})>"
 
-    def _do_each(self, _func: str, order: Tuple[str] = None, **kwargs) -> None:
+    def _check_subsystems(
+        self, h_cls: Optional[Type[H]], n_cls: Optional[Type[N]]
+    ) -> None:
+        """Check if the subsystems are correctly set."""
+        if h_cls is None:
+            h_cls = cast(Type[H], BaseHuman)
+        else:
+            assert issubclass(h_cls, BaseHuman)
+        if n_cls is None:
+            n_cls = cast(Type[N], BaseNature)
+        else:
+            assert issubclass(n_cls, BaseNature)
+        self._human = h_cls(self)
+        self._nature = n_cls(self)
+
+    def _do_each(
+        self,
+        _func: str,
+        order: SubSystem = ("model", "nature", "human"),
+        **kwargs: Any,
+    ) -> None:
         _obj = {"model": self, "nature": self.nature, "human": self.human}
-        if order is None:
-            order = ("model", "nature", "human")
         for name in order:
             if name not in _obj:
                 raise ValueError(f"{name} is not a valid component.")
@@ -176,7 +209,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         return self._agents
 
     @property
-    def actors(self) -> ActorsList:
+    def actors(self) -> ActorsList[Actor]:
         """All agents on the earth as an `ActorList`.
         A model can create multiple lists referring different actors.
         """
@@ -206,7 +239,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     p = params
 
     @property
-    def breeds(self) -> Tuple[str]:
+    def breeds(self) -> Tuple[str, ...]:
         """All breeds in the model."""
         return tuple(self._breeds.keys())
 
@@ -229,7 +262,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         4. Call `model.end()` method.
         """
         self._setup()
-        while self.running:
+        while self.running is True:
             logger.debug(f"Current tick: {self.time.tick}")
             self._step()
             self.time.go()
@@ -263,8 +296,8 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
     def initialize_data_collector(
         self,
-        model_reporters: Optional[Reporter] = None,
-        agent_reporters: Optional[Reporter] = None,
+        model_reporters: Optional[Dict[str, Reporter]] = None,
+        agent_reporters: Optional[Dict[str, Reporter]] = None,
         tables: Optional[Reporter] = None,
     ) -> None:
         """Initialize data collector for this ABSESpy Model.
@@ -282,16 +315,17 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
         Example:
         """
-        to_reports: DictConfig = self.settings.get(
-            "reports", OmegaConf.create({})
+        cfg: DictConfig = self.settings.get("reports", OmegaConf.create({}))
+        to_reports = cast(
+            Dict[str, Dict[str, Reporter]],
+            OmegaConf.to_container(cfg, resolve=True),
         )
-        to_reports = OmegaConf.to_container(to_reports, resolve=True)
-        reporting_model: DictConfig = to_reports.get("model", {})
-        reporting_agents: DictConfig = to_reports.get("agents", {})
+        reporting_model: Dict[str, Reporter] = to_reports.get("model", {})
+        reporting_agents: Dict[str, Reporter] = to_reports.get("agents", {})
         if model_reporters is not None:
-            reporting_model.update(model_reporters)
+            reporting_model |= model_reporters
         if agent_reporters is not None:
-            reporting_agents.update(agent_reporters)
+            reporting_agents |= agent_reporters
         _convert_to_python_expression(reporting_model)
         _convert_to_python_expression(reporting_agents)
         self.datacollector = DataCollector(
@@ -302,9 +336,13 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
 
 def _convert_to_python_expression(
-    expression_dict: dict[str, str]
-) -> dict[str, any]:
+    expression_dict: Dict[str, Reporter]
+) -> None:
     """Convert a Python expression string to a Python expression."""
     for key, value in expression_dict.items():
+        if not isinstance(value, str):
+            continue
         if value.startswith(":"):
-            expression_dict[key] = eval(value[1:])  # pylint: disable=eval-used
+            func = eval(value[1:])  # pylint: disable=eval-used
+            assert callable(func), f"{value} is not a callable function."
+            expression_dict[key] = func

@@ -8,7 +8,16 @@
 from __future__ import annotations
 
 from itertools import combinations
-from typing import TYPE_CHECKING, Iterable, List, Literal, Tuple, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 
@@ -25,13 +34,13 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-WHEN_EMPTY: TypeAlias = Literal["only", "random", "first"]
+WHEN_EMPTY: TypeAlias = Literal["raise exception", "return None"]
 
 
 class ListRandom:
     """Create a random generator from an `ActorsList`"""
 
-    def __init__(self, model: MainModel, actors: ActorsList) -> None:
+    def __init__(self, model: MainModel[Any, Any], actors: ActorsList) -> None:
         self.model = model
         self.actors = actors
         self.seed = getattr(model, "_seed", 0)
@@ -42,7 +51,7 @@ class ListRandom:
 
         return ActorsList(self.model, objs=objs)
 
-    def _when_empty(self, when_empty: WHEN_EMPTY) -> str:
+    def _when_empty(self, when_empty: WHEN_EMPTY) -> None:
         if when_empty not in ("raise exception", "return None"):
             raise ValueError(
                 f"Unknown value for `when_empty` parameter: {when_empty}"
@@ -51,13 +60,8 @@ class ListRandom:
             raise ABSESpyError(
                 "Trying to choose an actor from an empty `ActorsList`."
             )
-        return None
 
-    @overload
-    def clean_p(self, p: str) -> np.ndarray:
-        ...
-
-    def clean_p(self, prob: np.ndarray) -> np.ndarray:
+    def clean_p(self, prob: Union[np.ndarray, str]) -> np.ndarray:
         """Clean the probabilities.
         Any negative values, NaN values, or zeros will be recognized as in-valid probabilities.
         For all valid probabilities, normalize them into a prob-array (the sum is equal to 1.0).
@@ -98,7 +102,7 @@ class ListRandom:
         replace: bool = False,
         as_list: bool = False,
         when_empty: WHEN_EMPTY = "raise exception",
-    ) -> Actor | ActorsList:
+    ) -> Optional[Actor | ActorsList[Actor]]:
         """Randomly choose one or more actors from the current self object.
 
         Parameters:
@@ -129,7 +133,8 @@ class ListRandom:
         """
         instances_num = len(self.actors)
         if instances_num == 0:
-            return self._when_empty(when_empty=when_empty)
+            self._when_empty(when_empty=when_empty)
+            return None
         if not isinstance(size, int):
             raise ValueError(f"{size} isn't an integer size.")
         if instances_num < size and not replace:

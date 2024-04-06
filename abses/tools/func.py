@@ -10,7 +10,7 @@
 """
 
 import logging
-from typing import Any, List
+from typing import Any, Callable, List
 
 import numpy as np
 from scipy import ndimage
@@ -75,7 +75,7 @@ def make_list(element: Any, keep_none: bool = False) -> List:
     return element
 
 
-def iter_func(elements: str) -> callable:
+def iter_func(elements: str) -> Callable:
     """
     A decorator broadcasting function to all elements if available.
 
@@ -88,7 +88,7 @@ def iter_func(elements: str) -> callable:
         The decorated class method.
     """
 
-    def broadcast(func: callable) -> callable:
+    def broadcast(func: Callable) -> Callable:
         def broadcast_func(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
             if not hasattr(self, elements):

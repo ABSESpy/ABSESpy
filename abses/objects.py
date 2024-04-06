@@ -29,7 +29,7 @@ class _BaseObj(_Observer, _Component):
 
     def __init__(
         self,
-        model: MainModel,
+        model: MainModel[Any, Any],
         observer: Optional[bool] = True,
         name: Optional[str] = None,
     ):
@@ -59,19 +59,6 @@ class _BaseObj(_Observer, _Component):
         """
         return self._model
 
-    @property
-    def dynamic_variables(self) -> Dict[str, Any]:
-        """Returns read-only model's dynamic variables.
-
-        Returns:
-            Dict[str, Any]:
-                Dictionary of model's dynamic variables.
-        """
-        if not self._dynamic_variables:
-            return {}
-        for k, v in self._dynamic_variables.items():
-            return {k: v.now()}
-
     @model.setter
     def model(self, model: MainModel):
         """Sets the model object.
@@ -83,6 +70,18 @@ class _BaseObj(_Observer, _Component):
         if not isinstance(model, mesa.Model):
             raise TypeError("Model must be an instance of mesa.Model")
         self._model = model
+
+    @property
+    def dynamic_variables(self) -> Dict[str, Any]:
+        """Returns read-only model's dynamic variables.
+
+        Returns:
+            Dict[str, Any]:
+                Dictionary of model's dynamic variables.
+        """
+        if not self._dynamic_variables:
+            return {}
+        return {k: v.now() for k, v in self._dynamic_variables.items()}
 
     def add_dynamic_variable(
         self, name: str, data: Any, function: Callable
