@@ -73,7 +73,7 @@ Language: [English Readme] | [简体中文]
   [简体中文]: README.zh-cn.md
   [English Readme]: README.md
 
-## ## Contributors ✨
+## Contributors ✨
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
