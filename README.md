@@ -1,4 +1,7 @@
 # ABSESpy: Agent-Based Modeling Framework for Social-Ecological Systems
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ![ABSES_banner](https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/CleanShot%202023-10-19%20at%2019.08.12@2x.png)
 
@@ -63,6 +66,13 @@ Language: [English Readme] | [简体中文]
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ejsimley"><img src="https://avatars.githubusercontent.com/u/40040961?v=4?s=100" width="100px;" alt="ejsimley"/><br /><sub><b>ejsimley</b></sub></a><br /><a href="https://github.com/ABSESpy/ABSESpy/commits?author=ejsimley" title="Documentation">📖</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
@@ -76,3 +86,16 @@ Language: [English Readme] | [简体中文]
   [Tutorials]: https://absespy.github.io/ABSESpy/tutorial/tutorial/
   [简体中文]: README.zh-cn.md
   [English Readme]: README.md
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
