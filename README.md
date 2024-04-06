@@ -82,6 +82,7 @@ Language: [English Readme] | [简体中文]
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://cv.songshgeo.com"><img src="https://avatars.githubusercontent.com/u/45836839?v=4?s=100" width="100px;" alt="Shuang Song"/><br /><sub><b>Shuang Song</b></sub></a><br /><a href="https://github.com/ABSESpy/ABSESpy/commits?author=SongshGeo" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/CtJiao"><img src="https://avatars.githubusercontent.com/u/94903112?v=4?s=100" width="100px;" alt="Chentai Jiao"/><br /><sub><b>Chentai Jiao</b></sub></a><br /><a href="https://github.com/ABSESpy/ABSESpy/commits?author=CtJiao" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
