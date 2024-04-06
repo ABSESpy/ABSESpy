@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "RHammond2",
+      "name": "Rob Hammond",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13874373?v=4",
+      "profile": "https://www.linkedin.com/in/rob-hammond-33583756/",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "ABSESpy",
+  "projectOwner": "ABSESpy"
+}
