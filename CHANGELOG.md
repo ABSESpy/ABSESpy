@@ -1,4 +1,27 @@
 
+<a id='changelog-0.5.5'></a>
+# 0.5.5 — 2024-04-06
+
+## Refactoring
+
+- [x] #refactor♻️ Improved code formats
+
+## Documentation changes
+
+- [x] **LINE 30**: Missing space between "...tools (Schlüter et al., 2023)" and "to implement...". Should appear as "...tools (Schlüter et al., 2023) to implement..."
+- [x] **LINE 42**: The figure reference "(Figure 1)" should not be bold but instead use formatting that enables linking to the actual figure. You can see how this is done in other JOSS publications such as [https://joss.theoj.org/papers/10.21105/joss.06294](https://joss.theoj.org/papers/10.21105/joss.06294)[](https://www.sci-hub.ee/10.21105/joss.06294). I'll only mention this for This figure, but note that this should be done for all figure references in your paper.
+- [x] **LINE 48**: The statement "...but somehow enhanced." should be changed here. Perhaps use "...but with enhanced functionality." or the something similar.
+- [x] **LINE 49**: Since YAML is a data serialization language, it should be referenced by its name here instead of the extension which sometimes varies. So instead of "...through .yaml files." you could use "...through the use of YAML configuration files." or something similar. You can read more about YAML [here](https://yaml.org/) if you like. Note that there are several of these usages throughout the paper that you may need to correct.
+- [x] **LINE 53**: Wording is off here. Instead of "...(2) enhancing reality and manageability of ABMs." something like the following would be more clear "...(2) enhancing the reality and manageability of ABMs." This is phrased several times like this throughout the paper, so please let me know if it should be written as stated. I'll not mention the other occurrences, but address those if needed.
+- [x] **LINE 56**: "...and can be..." should be "...which can be..."
+- [x] **LINE 63**: "(Schlüter et al., 2017), (Beckage et al., 2022)" should appear as "(Schlüter et al., 2017; Beckage et al., 2022)"
+- [x] **LINE 87-88**: You use the formatting `{"start: '2022-12-31', "end": 2024-01-01, year: 1}` please add in what I believe should be the correct, consistent formatting as following: `{"start: "2022-12-31", "end": "2024-01-01", "year": 1}`. Please correct me if I am wrong. I am also assuming "year" requires an integer as you have written.
+- [x] **LINE 88**: "...to the 'time' module..." should be formatted as "...to the `time` module..." where backticks are used.
+- [x] **LINE 102**: You use "input/output" though earlier in the paper you use "Input/Ouput" please choose one method to be consistent.
+- [x] **LINE 131**: Your reference for the Janssen et al. paper is not formatted correctly. See [https://www.jasss.org/11/2/6/citation.html](https://www.jasss.org/11/2/6/citation.html)
+- [x] **LINE 135**: Should have a colon after "In". See [https://link.springer.com/chapter/10.1007/978-3-030-61255-9_30#citeas](https://link.springer.com/chapter/10.1007/978-3-030-61255-9_30#citeas)[](https://www.sci-hub.ee/10.1007/978-3-030-61255-9_30)
+- [x] **LINE 159**: Missing colon after "In" see [https://link.springer.com/chapter/10.1007/978-3-319-67217-5_2#citeas](https://link.springer.com/chapter/10.1007/978-3-319-67217-5_2#citeas)[](https://www.sci-hub.ee/10.1007/978-3-319-67217-5_2)
+
 <a id='changelog-0.5.4'></a>
 # 0.5.4 — 2024-03-28
 
