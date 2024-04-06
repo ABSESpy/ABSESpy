@@ -1,4 +1,16 @@
 
+<a id='changelog-0.5.6'></a>
+# 0.5.6 — 2024-04-06
+
+## Refactoring
+
+- [x] #refactor♻️ improve code formats
+
+## Documentation changes
+
+- [x] #docs📄 updated fundings in paper
+- [x] #docs📄 updated README contributors
+
 <a id='changelog-0.5.5'></a>
 # 0.5.5 — 2024-04-06
 
