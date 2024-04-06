@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "SongshGeo",
+      "name": "Shuang Song",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45836839?v=4",
+      "profile": "http://cv.songshgeo.com",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "ABSESpy",
+  "projectOwner": "ABSESpy"
+}
