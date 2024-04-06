@@ -7,6 +7,9 @@
     <!-- <a href="https://joss.theoj.org/papers/b6f6440bc05648fa7945bec1ae901e52">
         <img alt="Latest release" src="https://joss.theoj.org/papers/b6f6440bc05648fa7945bec1ae901e52/status.svg?style=for-the-badge&logo=probot&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41" />
     </a> -->
+    <a href="#contributors-">
+        <img alt="Latest release" src="https://img.shields.io/badge/all_contributors-1-orange.svg?style=for-the-badge&logo=probot&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41" />
+    </a>
     <a href="https://github.com/absespy/ABSESpy/releases/latest">
         <img alt="Latest release" src="https://img.shields.io/github/v/release/absespy/ABSESpy?style=for-the-badge&logo=probot&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41" />
     </a>
