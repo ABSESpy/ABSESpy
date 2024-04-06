@@ -74,6 +74,6 @@ Many open-source SES models are published on `CoMSES` [@janssen2008] and use `Ne
 
 ## Acknowledgment
 
-This research has been supported by the National Natural Science Foundation of China (grant no. 42041007) and the National Natural Science Foundation of China Joint Fund for Scientific Research on Yellow River (grant no. U2243601).
+This research has been supported by the National Natural Science Foundation of China (grant no. 42041007) and the National Natural Science Foundation of China (grant no. U2243601).
 
 ## References
