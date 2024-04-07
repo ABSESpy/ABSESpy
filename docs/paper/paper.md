@@ -13,8 +13,10 @@ authors:
 - name: Shuai Wang
   affiliation: 1
   corresponding: true
+  orcid: 0000-0003-1595-9858
 - name: Chentai Jiao
   affiliation: 1
+  orcid: 0000-0003-1737-9814
 - name: Elías José Mantilla
   affiliation: 2
 affiliations:
