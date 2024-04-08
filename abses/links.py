@@ -507,10 +507,12 @@ class _LinkNode:
         """
         if target in DEFAULT_TARGETS:
             return self._default_redirection(target).get(attr)
+        if target is None:
+            return getattr(self, attr)
         if hasattr(self, attr):
             assert (
                 target is None
-            ), "The target '{target}' is ignored because '{self}' already has attr '{attr}'."
+            ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
             return getattr(self, attr)
         return self._redirect_getting(target=target).get(attr)
 

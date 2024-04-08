@@ -19,6 +19,7 @@ import pytest
 from abses import MainModel, alive_required
 from abses.actor import Actor
 from abses.cells import PatchCell
+from abses.errors import ABSESpyError
 from abses.nature import PatchModule
 
 
@@ -149,6 +150,35 @@ class TestGettingValues:
         value = actor.get(attr=attr, target=target)
         # assert
         assert value == expected
+
+    @pytest.mark.parametrize(
+        "attr, target, error, msg",
+        [
+            ("test2", None, AttributeError, "no attribute 'test2'"),
+            ("test2", "cell", AttributeError, "no attribute 'test2'"),
+            ("test2", "actor", AttributeError, "no attribute 'test2'"),
+            (
+                "test",
+                "not_a_target",
+                AssertionError,
+                "already has attr 'test'",
+            ),
+            ("test2", "not_a_target", ABSESpyError, "Unknown target"),
+            ("test2", "linking", AttributeError, "no attribute 'test2'"),
+        ],
+    )
+    def test_get_wrong(self, cell_0_0: PatchCell, attr, target, error, msg):
+        """Testing getting values in batch.
+        When the target is None, the agent itself is the target.
+        """
+        # arrange
+        actor1 = cell_0_0.agents.new(Actor, singleton=True)
+        actor1.link.to(cell_0_0, "linking")
+        actor1.test = 1
+        cell_0_0.test = 2
+        # act / assert
+        with pytest.raises(error, match=msg):
+            actor1.get(attr, target=target)
 
 
 class TestSettingValues:
