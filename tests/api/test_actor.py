@@ -85,43 +85,6 @@ class TestActor:
         assert len(model.agents) == 0
 
     @pytest.mark.parametrize(
-        "attr, target, expected",
-        [
-            ("test2", None, 3),
-            ("test2", "actor", 3),
-            ("test2", "cell", 2),
-        ],
-    )
-    def test_get(self, cell_0_0: PatchCell, attr, target, expected):
-        """Test getting values."""
-        # arrange
-        actor = cell_0_0.agents.new(Actor, singleton=True)
-        cell_0_0.test2 = 2
-        actor.test2 = 3
-        # act
-        value = actor.get(attr=attr, target=target)
-        # assert
-        assert value == expected
-
-    @pytest.mark.parametrize(
-        "attr, target, value",
-        [
-            ("test", "actor", 1),
-            ("test", None, "testing text"),
-            ("test", "actor", ["test", "test1", "test2"]),
-        ],
-    )
-    def test_set(self, cell_0_0: PatchCell, attr, value, target):
-        """Test setting values."""
-        # arrange
-        actor = cell_0_0.agents.new(Actor, singleton=True)
-        actor.test = 0
-        # act
-        actor.set(attr=attr, value=value, target=target)
-        # assert
-        assert getattr(actor, attr) == value
-
-    @pytest.mark.parametrize(
         "attr, target, value",
         [
             ("test1", "cell", 1),
@@ -163,3 +126,48 @@ class TestCustomizedActor:
         assert man.speak() is None, "Dead man speaks! Crazy."
         assert man.get() is None
         assert isinstance(man.speak_bad(), str)
+
+
+class TestGettingValues:
+    """Test getting values."""
+
+    @pytest.mark.parametrize(
+        "attr, target, expected",
+        [
+            ("test2", None, 3),
+            ("test2", "actor", 3),
+            ("test2", "cell", 2),
+        ],
+    )
+    def test_get_happy_path(self, cell_0_0: PatchCell, attr, target, expected):
+        """Test getting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        cell_0_0.test2 = 2
+        actor.test2 = 3
+        # act
+        value = actor.get(attr=attr, target=target)
+        # assert
+        assert value == expected
+
+
+class TestSettingValues:
+    """Test setting values."""
+
+    @pytest.mark.parametrize(
+        "attr, target, value",
+        [
+            ("test", "actor", 1),
+            ("test", None, "testing text"),
+            ("test", "actor", ["test", "test1", "test2"]),
+        ],
+    )
+    def test_set_happy_path(self, cell_0_0: PatchCell, attr, value, target):
+        """Test setting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        actor.test = 0
+        # act
+        actor.set(attr=attr, value=value, target=target)
+        # assert
+        assert getattr(actor, attr) == value
