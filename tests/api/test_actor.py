@@ -201,3 +201,33 @@ class TestSettingValues:
         actor.set(attr=attr, value=value, target=target)
         # assert
         assert getattr(actor, attr) == value
+
+    @pytest.mark.parametrize(
+        "attr, target, error, msg",
+        [
+            ("test2", None, AttributeError, "no attribute 'test2'"),
+            ("test2", "cell", AttributeError, "no attribute 'test2'"),
+            ("test2", "actor", AttributeError, "no attribute 'test2'"),
+            (
+                "test",
+                "not_a_target",
+                AssertionError,
+                "already has attr 'test'",
+            ),
+            ("test2", "not_a_target", ABSESpyError, "Unknown target"),
+            ("test2", "linking", AttributeError, "no attribute 'test2'"),
+            ("_test", "linking", ABSESpyError, "is protected"),
+        ],
+    )
+    def test_set_wrong(self, cell_0_0: PatchCell, attr, target, error, msg):
+        """Testing getting values in batch.
+        When the target is None, the agent itself is the target.
+        """
+        # arrange
+        actor1 = cell_0_0.agents.new(Actor, singleton=True)
+        actor1.link.to(cell_0_0, "linking")
+        actor1.test = 1
+        cell_0_0.test = 2
+        # act / assert
+        with pytest.raises(error, match=msg):
+            actor1.set(attr, 3, target=target)

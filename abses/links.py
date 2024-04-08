@@ -546,11 +546,16 @@ class _LinkNode:
         if target in DEFAULT_TARGETS:
             self._default_redirection(target).set(attr, value)
             return
+        if target is None:
+            if not hasattr(self, attr):
+                raise AttributeError(f"{self} has no attribute '{attr}'.")
+            setattr(self, attr, value)
+            return
         # Set the attribute on the target.
         if hasattr(self, attr):
             assert (
                 target is None
-            ), "The target '{target}' is ignored, because '{self}' already has attr '{attr}'."
+            ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
             setattr(self, attr, value)
         else:
             new_target = self._redirect_getting(target=target)
