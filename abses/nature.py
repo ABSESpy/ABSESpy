@@ -29,7 +29,6 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-import geopandas
 import mesa_geo as mg
 import numpy as np
 import pyproj
@@ -45,7 +44,6 @@ from shapely import Geometry
 from abses.modules import CompositeModule, Module
 from abses.random import ListRandom
 
-from .actor import Actor
 from .cells import PatchCell
 from .errors import ABSESpyError
 from .sequences import ActorsList
@@ -493,6 +491,22 @@ class PatchModule(Module, mg.RasterLayer):
         func = functools.partial(ufunc, *args, **kwargs)
         return np.vectorize(func)(self.array_cells, *args, **kwargs)
 
+    def sel(self, where) -> ActorsList[PatchCell]:
+        """Select cells from this layer.
+
+        Parameters:
+            where:
+                The condition to select cells.
+                If None (by default), select all cells.
+                If a string, select cells by the attribute name.
+                If a numpy.ndarray, select cells by the mask array.
+                If a Shapely Geometry, select cells by the intersection with the geometry.
+
+        Returns:
+            An `ActorsList` with all selected cells stored.
+        """
+        return self.select(where)
+
 
 class BaseNature(mg.GeoSpace, CompositeModule):
     """The Base Nature Module.
@@ -544,34 +558,6 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         if hasattr(self, "major_layer") and self.major_layer:
             return self.major_layer.total_bounds
         return None
-
-    def create_agents_from_gdf(
-        self,
-        gdf: geopandas.GeoDataFrame,
-        unique_id: str = "Index",
-        agent_cls: type[Actor] = Actor,
-    ) -> ActorsList[Actor]:
-        """Create actors from a `geopandas.GeoDataFrame` object.
-
-        Parameters:
-            gdf:
-                The `geopandas.GeoDataFrame` object to convert.
-            unique_id:
-                A column name, to be converted to unique index
-                of created geo-agents (Social-ecological system Actors).
-            agent_cls:
-                Agent class to create.
-
-        Returns:
-            An `ActorsList` with all new created actors stored.
-        """
-        creator = mg.AgentCreator(
-            model=self.model, agent_class=agent_cls, crs=self.crs
-        )
-        agents = creator.from_GeoDataFrame(gdf=gdf, unique_id=unique_id)
-        self.model.agents.register(agent_cls)
-        self.model.agents.add(agents)
-        return ActorsList(model=self.model, objs=agents)
 
     def create_module(
         self,

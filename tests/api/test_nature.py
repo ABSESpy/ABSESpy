@@ -237,7 +237,7 @@ class TestPatchModule:
         assert result.shape == module.shape2d
         np.testing.assert_array_equal(result, expected.reshape(module.shape2d))
 
-    def test_create_agents_from_gdf(self, model):
+    def test_create_agents_from_gdf(self, model: MainModel):
         """测试从GeoDataFrame创建主体"""
         # Step 1: Create a sample geopandas.GeoDataFrame with some dummy data
         data = {
@@ -247,11 +247,8 @@ class TestPatchModule:
         }
         gdf = gpd.GeoDataFrame(data, crs="epsg:4326")
 
-        # Initialize BaseNature instance
-        nature = model.nature
-
         # Step 2: Use the create_agents_from_gdf method
-        agents = nature.create_agents_from_gdf(
+        agents = model.agents.new_from_gdf(
             gdf, unique_id="name", agent_cls=Actor
         )
 
