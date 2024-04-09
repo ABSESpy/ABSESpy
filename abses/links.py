@@ -48,7 +48,7 @@ if TYPE_CHECKING:
 LinkingNode: TypeAlias = "Actor | PatchCell"
 Direction: TypeAlias = Optional[Literal["in", "out"]]
 DEFAULT_TARGETS: Tuple[str, str] = ("cell", "actor")
-TargetName: TypeAlias = Union[Literal["cell", "actor"], str]
+TargetName: TypeAlias = Union[Literal["cell", "actor", "self"], str]
 AttrGetter: TypeAlias = Union["Actor", "PatchCell", ActorsList["Actor"]]
 
 
@@ -506,15 +506,15 @@ class _LinkNode:
             The value of the attribute.
         """
         if target in DEFAULT_TARGETS:
-            return self._default_redirection(target).get(attr)
-        if target is None:
+            return self._default_redirection(target).get(attr, "self")
+        if target == "self":
             return getattr(self, attr)
         if hasattr(self, attr):
             assert (
                 target is None
             ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
             return getattr(self, attr)
-        return self._redirect_getting(target=target).get(attr)
+        return self._redirect_getting(target=target).get(attr, "self")
 
     def set(
         self, attr: str, value: Any, target: Optional[TargetName] = None
@@ -544,9 +544,9 @@ class _LinkNode:
         if attr.startswith("_"):
             raise ABSESpyError(f"Attribute '{attr}' is protected.")
         if target in DEFAULT_TARGETS:
-            self._default_redirection(target).set(attr, value)
+            self._default_redirection(target).set(attr, value, "self")
             return
-        if target is None:
+        if target == "self":
             if not hasattr(self, attr):
                 raise AttributeError(f"{self} has no attribute '{attr}'.")
             setattr(self, attr, value)
@@ -559,4 +559,4 @@ class _LinkNode:
             setattr(self, attr, value)
         else:
             new_target = self._redirect_getting(target=target)
-            new_target.set(attr, value)
+            new_target.set(attr, value, "self")

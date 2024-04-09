@@ -48,7 +48,7 @@ from .tools.func import make_list
 if TYPE_CHECKING:
     from abses.main import MainModel
 
-    from .actor import Actor
+    from .actor import Actor, TargetName
 
 Selection: TypeAlias = Union[str, Iterable[bool], Dict[str, bool]]
 HOW: TypeAlias = Literal["only", "random", "item"]
@@ -280,7 +280,11 @@ class ActorsList(List[ActorType], Generic[ActorType]):
         return np.array(list(map(func, self)))
 
     def get(
-        self, attr: str, how: HOW = "only", default: Optional[Any] = None
+        self,
+        attr: str,
+        target: Optional[TargetName] = None,
+        how: HOW = "only",
+        default: Optional[Any] = None,
     ) -> Any:
         """Retrieve the attribute of an either specified or randomly chosen agent.
 
@@ -294,12 +298,14 @@ class ActorsList(List[ActorType], Generic[ActorType]):
             The attribute of the specified agent.
         """
         if agent := self.item(how=how, index=0):
-            return agent.get(attr)
+            return agent.get(attr, target=target)
         if default is not None:
             return default
         raise ValueError("No agent found or default value.")
 
-    def set(self, attr: str, value: Any) -> None:
+    def set(
+        self, attr: str, value: Any, target: Optional[TargetName] = None
+    ) -> None:
         """Set the attribute of all agents in the sequence to the specified value.
 
         Parameters:
@@ -309,7 +315,7 @@ class ActorsList(List[ActorType], Generic[ActorType]):
                 The value to set the attribute to.
         """
         for agent in iter(self):
-            agent.set(attr, value)
+            agent.set(attr, value, target=target)
 
     def item(self, how: HOW = "item", index: int = 0) -> Optional[Actor]:
         """Retrieve one agent if possible.
