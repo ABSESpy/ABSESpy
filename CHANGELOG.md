@@ -1,4 +1,18 @@
 
+<a id='changelog-0.5.7'></a>
+# 0.5.7 — 2024-04-10
+
+## Fixed bugs
+
+- [x] #bug🐛 Fixing default getter setter for `ActorsList`, `Actor`, and `PatchCell`
+- [x] #bug🐛  AttributeError when getting value with wrong key
+
+## Documentation changes
+
+- [x] #docs📄 adding authors' ORCID of the paper
+- [x] #docs📄 correcting installation from source tutorial
+- [x] #docs📄  fixing Mantilla Ibarra name and capitalizing refers
+
 <a id='changelog-0.5.6'></a>
 # 0.5.6 — 2024-04-06
 
