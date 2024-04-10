@@ -19,6 +19,7 @@ import pytest
 from abses import MainModel, alive_required
 from abses.actor import Actor
 from abses.cells import PatchCell
+from abses.errors import ABSESpyError
 from abses.nature import PatchModule
 
 
@@ -85,43 +86,6 @@ class TestActor:
         assert len(model.agents) == 0
 
     @pytest.mark.parametrize(
-        "attr, target, expected",
-        [
-            ("test2", None, 3),
-            ("test2", "actor", 3),
-            ("test2", "cell", 2),
-        ],
-    )
-    def test_get(self, cell_0_0: PatchCell, attr, target, expected):
-        """Test getting values."""
-        # arrange
-        actor = cell_0_0.agents.new(Actor, singleton=True)
-        cell_0_0.test2 = 2
-        actor.test2 = 3
-        # act
-        value = actor.get(attr=attr, target=target)
-        # assert
-        assert value == expected
-
-    @pytest.mark.parametrize(
-        "attr, target, value",
-        [
-            ("test", "actor", 1),
-            ("test", None, "testing text"),
-            ("test", "actor", ["test", "test1", "test2"]),
-        ],
-    )
-    def test_set(self, cell_0_0: PatchCell, attr, value, target):
-        """Test setting values."""
-        # arrange
-        actor = cell_0_0.agents.new(Actor, singleton=True)
-        actor.test = 0
-        # act
-        actor.set(attr=attr, value=value, target=target)
-        # assert
-        assert getattr(actor, attr) == value
-
-    @pytest.mark.parametrize(
         "attr, target, value",
         [
             ("test1", "cell", 1),
@@ -163,3 +127,107 @@ class TestCustomizedActor:
         assert man.speak() is None, "Dead man speaks! Crazy."
         assert man.get() is None
         assert isinstance(man.speak_bad(), str)
+
+
+class TestGettingValues:
+    """Test getting values."""
+
+    @pytest.mark.parametrize(
+        "attr, target, expected",
+        [
+            ("test2", None, 3),
+            ("test2", "actor", 3),
+            ("test2", "cell", 2),
+        ],
+    )
+    def test_get_happy_path(self, cell_0_0: PatchCell, attr, target, expected):
+        """Test getting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        cell_0_0.test2 = 2
+        actor.test2 = 3
+        # act
+        value = actor.get(attr=attr, target=target)
+        # assert
+        assert value == expected
+
+    @pytest.mark.parametrize(
+        "attr, target, error, msg",
+        [
+            ("test2", None, AttributeError, "no attribute 'test2'"),
+            ("test2", "cell", AttributeError, "no attribute 'test2'"),
+            ("test2", "actor", AttributeError, "no attribute 'test2'"),
+            (
+                "test",
+                "not_a_target",
+                AssertionError,
+                "already has attr 'test'",
+            ),
+            ("test2", "not_a_target", ABSESpyError, "Unknown target"),
+            ("test2", "linking", AttributeError, "no attribute 'test2'"),
+        ],
+    )
+    def test_get_wrong(self, cell_0_0: PatchCell, attr, target, error, msg):
+        """Testing getting values in batch.
+        When the target is None, the agent itself is the target.
+        """
+        # arrange
+        actor1 = cell_0_0.agents.new(Actor, singleton=True)
+        actor1.link.to(cell_0_0, "linking")
+        actor1.test = 1
+        cell_0_0.test = 2
+        # act / assert
+        with pytest.raises(error, match=msg):
+            actor1.get(attr, target=target)
+
+
+class TestSettingValues:
+    """Test setting values."""
+
+    @pytest.mark.parametrize(
+        "attr, target, value",
+        [
+            ("test", "actor", 1),
+            ("test", None, "testing text"),
+            ("test", "actor", ["test", "test1", "test2"]),
+        ],
+    )
+    def test_set_happy_path(self, cell_0_0: PatchCell, attr, value, target):
+        """Test setting values."""
+        # arrange
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        actor.test = 0
+        # act
+        actor.set(attr=attr, value=value, target=target)
+        # assert
+        assert getattr(actor, attr) == value
+
+    @pytest.mark.parametrize(
+        "attr, target, error, msg",
+        [
+            ("test2", None, AttributeError, "no attribute 'test2'"),
+            ("test2", "cell", AttributeError, "no attribute 'test2'"),
+            ("test2", "actor", AttributeError, "no attribute 'test2'"),
+            (
+                "test",
+                "not_a_target",
+                AssertionError,
+                "already has attr 'test'",
+            ),
+            ("test2", "not_a_target", ABSESpyError, "Unknown target"),
+            ("test2", "linking", AttributeError, "no attribute 'test2'"),
+            ("_test", "linking", ABSESpyError, "is protected"),
+        ],
+    )
+    def test_set_wrong(self, cell_0_0: PatchCell, attr, target, error, msg):
+        """Testing getting values in batch.
+        When the target is None, the agent itself is the target.
+        """
+        # arrange
+        actor1 = cell_0_0.agents.new(Actor, singleton=True)
+        actor1.link.to(cell_0_0, "linking")
+        actor1.test = 1
+        cell_0_0.test = 2
+        # act / assert
+        with pytest.raises(error, match=msg):
+            actor1.set(attr, 3, target=target)

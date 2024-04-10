@@ -28,7 +28,7 @@ repository into a subfolder of your project root which might be useful if you
 want to use the very latest version:
 
 ```sh
-git clone https://github.com/ABSESpy/ABSESpy
+git clone https://github.com/ABSESpy/ABSESpy abses
 ```
 
 Next, install the theme and its dependencies with:
