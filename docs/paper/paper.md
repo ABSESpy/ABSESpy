@@ -17,7 +17,7 @@ authors:
 - name: Chentai Jiao
   affiliation: 1
   orcid: 0000-0003-1737-9814
-- name: Elías José Mantilla
+- name: Elías José Mantilla Ibarra
   affiliation: 2
 affiliations:
  - name: Faculty of Geographical Science, Beijing Normal University. 100875, Beijing, China.
