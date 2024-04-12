@@ -15,6 +15,7 @@ from numbers import Number
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 import mesa_geo as mg
+from mesa_geo.raster_layers import RasterBase
 
 from abses import ActorsList
 from abses.container import _CellAgentsContainer
@@ -118,7 +119,7 @@ class PatchCell(mg.Cell, _LinkNode):
 
     @layer.setter
     def layer(self, layer: PatchModule) -> None:
-        if not isinstance(layer, mg.RasterLayer):
+        if not isinstance(layer, RasterBase):
             raise TypeError(f"{type(layer)} is not valid layer.")
         if self._layer is not None:
             raise ABSESpyError("PatchCell can only belong to one layer.")

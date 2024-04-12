@@ -11,17 +11,24 @@ The spatial module.
 
 from __future__ import annotations
 
+import copy
 import functools
+import itertools
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
+    Iterable,
+    Iterator,
     List,
     Optional,
+    Sequence,
+    Set,
     Type,
     Union,
     cast,
+    overload,
 )
 
 try:
@@ -36,9 +43,10 @@ import rasterio as rio
 import rioxarray
 import xarray as xr
 from loguru import logger
-from mesa.space import Coordinate
-from mesa_geo.raster_layers import Cell
+from mesa.space import Coordinate, accept_tuple_argument
+from mesa_geo.raster_layers import RasterBase
 from rasterio import mask
+from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
 
 from abses.modules import CompositeModule, Module
@@ -59,7 +67,7 @@ DEFAULT_WORLD = {
 CRS = "epsg:4326"
 
 
-class PatchModule(Module, mg.RasterLayer):
+class PatchModule(Module, RasterBase):
     """
     The spatial sub-module base class.
     Inherit from this class to create a submodule.
@@ -95,16 +103,101 @@ class PatchModule(Module, mg.RasterLayer):
         self,
         model: MainModel[Any, Any],
         name: Optional[str] = None,
+        cell_cls: Type[PatchCell] = PatchCell,
         **kwargs: Any,
     ):
+        """This method copied some of the `mesa-geo.RasterLayer`'s methods."""
         Module.__init__(self, model, name=name)
-        mg.RasterLayer.__init__(self, **kwargs)
+        RasterBase.__init__(self, **kwargs)
+        self.cell_cls = cell_cls
         logger.info("Initializing a new Model Layer...")
         logger.info(f"Using rioxarray version: {rioxarray.__version__}")
 
-        for cell in self:
-            cell.layer = self
+        self._cells: List[List[type[PatchCell]]] = []
+        # obj_array = np.empty((self.height, self.width), dtype=object)
+        for x in range(self.width):
+            col: list[type[PatchCell]] = []
+            for y in range(self.height):
+                row_idx, col_idx = self.height - y - 1, x
+                cell = cell_cls(pos=(x, y), indices=(row_idx, col_idx))
+                # obj_array[row_idx, col_idx] = cell
+                cell.layer = self
+                col.append(cell)
+            self._cells.append(col)
+
+        self._attributes: Set[str] = set()
         self._updated_ticks: List[int] = []
+
+    @property
+    def cells(self) -> List[List[type[PatchCell]]]:
+        """The cells stored in this layer."""
+        return self._cells
+
+    @overload
+    def __getitem__(self, index: int) -> List[type[PatchCell]]:
+        ...
+
+    @overload
+    def __getitem__(
+        self, index: tuple[int | slice, int | slice]
+    ) -> PatchCell | list[PatchCell]:
+        ...
+
+    @overload
+    def __getitem__(self, index: Sequence[Coordinate]) -> list[PatchCell]:
+        ...
+
+    def __getitem__(
+        self,
+        index: int | Sequence[Coordinate] | tuple[int | slice, int | slice],
+    ) -> PatchCell | list[Type[PatchCell]]:
+        """
+        Access contents from the grid.
+        """
+
+        if isinstance(index, int):
+            # cells[x]
+            return self.cells[index]
+
+        if isinstance(index[0], tuple):
+            # cells[(x1, y1), (x2, y2)]
+            index = cast(Sequence[Coordinate], index)
+
+            cells = []
+            for pos in index:
+                x1, y1 = pos
+                cells.append(self.cells[x1][y1])
+            return cells
+
+        x, y = index
+
+        if isinstance(x, int) and isinstance(y, int):
+            # cells[x, y]
+            x, y = cast(Coordinate, index)
+            return self.cells[x][y]
+
+        if isinstance(x, int):
+            # cells[x, :]
+            x = slice(x, x + 1)
+
+        if isinstance(y, int):
+            # grid[:, y]
+            y = slice(y, y + 1)
+
+        # cells[:, :]
+        x, y = (cast(slice, x), cast(slice, y))
+        cells = []
+        for rows in self.cells[x]:
+            cells.extend(iter(rows[y]))
+        return cells
+
+    def __iter__(self) -> Iterator[PatchCell]:
+        """
+        Create an iterator that chains the rows of the cells together
+        as if it is one list
+        """
+
+        return itertools.chain.from_iterable(*self.cells)
 
     @property
     def cell_properties(self) -> set[str]:
@@ -247,7 +340,7 @@ class PatchModule(Module, mg.RasterLayer):
     def from_file(
         cls,
         raster_file: str,
-        cell_cls: type[Cell] = PatchCell,
+        cell_cls: type[PatchCell] = PatchCell,
         attr_name: str | None = None,
         model: Optional[MainModel[Any, Any]] = None,
         name: str | None = None,
@@ -293,6 +386,30 @@ class PatchModule(Module, mg.RasterLayer):
         obj.apply_raster(values, attr_name=attr_name)
         return obj
 
+    def to_crs(self, crs, inplace=False) -> Self | None:
+        super()._to_crs_check(crs)
+        layer = self if inplace else copy.copy(self)
+
+        src_crs = rio.crs.CRS.from_user_input(layer.crs)
+        dst_crs = rio.crs.CRS.from_user_input(crs)
+        if not layer.crs.is_exact_same(crs):
+            transform, _, _ = calculate_default_transform(
+                src_crs,
+                dst_crs,
+                self.width,
+                self.height,
+                *layer.total_bounds,
+            )
+            layer.total_bounds = [
+                *transform_bounds(src_crs, dst_crs, *layer.total_bounds)
+            ]
+            layer.crs = crs
+            layer.transform = transform
+
+        if not inplace:
+            return layer
+        return None
+
     def _attr_or_array(
         self, data: None | str | np.ndarray | xr.DataArray
     ) -> np.ndarray:
@@ -310,20 +427,6 @@ class PatchModule(Module, mg.RasterLayer):
         if isinstance(data, str) and data in self.attributes:
             return self.get_raster(data)
         raise TypeError("Invalid data type or shape.")
-
-    def get_raster(self, attr_name: Optional[str] = None) -> np.ndarray:
-        """Obtaining the Raster layer by attribute.
-
-        Parameters:
-            attr_name:
-                The attribute to retrieve. Update it if it is a dynamic variable. If None (by default), retrieve all attributes as a 3D array.
-
-        Returns:
-            A 3D array of attribute.
-        """
-        if attr_name not in self._dynamic_variables:
-            return super().get_raster(attr_name)
-        return self.dynamic_var(attr_name=attr_name).reshape(self.shape3d)
 
     def dynamic_var(self, attr_name: str) -> np.ndarray:
         """Update and get dynamic variable.
@@ -506,6 +609,235 @@ class PatchModule(Module, mg.RasterLayer):
             An `ActorsList` with all selected cells stored.
         """
         return self.select(where)
+
+    def coord_iter(self) -> Iterator[tuple[PatchCell, int, int]]:
+        """
+        An iterator that returns coordinates as well as cell contents.
+        """
+
+        for row in range(self.width):
+            for col in range(self.height):
+                yield self.cells[row][col], row, col  # cell, x, y
+
+    def apply_raster(
+        self, data: np.ndarray, attr_name: str | None = None
+    ) -> None:
+        """
+        Apply raster data to the cells.
+
+        :param np.ndarray data: 2D numpy array with shape (1, height, width).
+        :param str | None attr_name: Name of the attribute to be added to the cells.
+            If None, a random name will be generated. Default is None.
+        :raises ValueError: If the shape of the data is not (1, height, width).
+        """
+
+        if data.shape != (1, self.height, self.width):
+            raise ValueError(
+                f"Data shape does not match raster shape. "
+                f"Expected {(1, self.height, self.width)}, received {data.shape}."
+            )
+        if attr_name is None:
+            attr_name = f"attribute_{len(self.cell_cls.__dict__)}"
+        self._attributes.add(attr_name)
+        for x in range(self.width):
+            for y in range(self.height):
+                setattr(
+                    self.cells[x][y],
+                    attr_name,
+                    data[0, self.height - y - 1, x],
+                )
+
+    def get_raster(self, attr_name: Optional[str] = None) -> np.ndarray:
+        """Obtaining the Raster layer by attribute.
+
+        Parameters:
+            attr_name:
+                The attribute to retrieve. Update it if it is a dynamic variable. If None (by default), retrieve all attributes as a 3D array.
+
+        Returns:
+            A 3D array of attribute.
+        """
+        if attr_name in self._dynamic_variables:
+            return self.dynamic_var(attr_name=attr_name).reshape(self.shape3d)
+        if attr_name is not None and attr_name not in self.attributes:
+            raise ValueError(
+                f"Attribute {attr_name} does not exist. "
+                f"Choose from {self.attributes}, or set `attr_name` to `None` to retrieve all."
+            )
+        if attr_name is None:
+            num_bands = len(self.attributes)
+            attr_names = self.attributes
+        else:
+            num_bands = 1
+            attr_names = {attr_name}
+        data = np.empty((num_bands, self.height, self.width))
+        for ind, name in enumerate(attr_names):
+            for x in range(self.width):
+                for y in range(self.height):
+                    data[ind, self.height - y - 1, x] = getattr(
+                        self.cells[x][y], name
+                    )
+        return data
+
+    def iter_neighborhood(
+        self,
+        pos: Coordinate,
+        moore: bool,
+        include_center: bool = False,
+        radius: int = 1,
+    ) -> Iterator[Coordinate]:
+        """
+        Return an iterator over cell coordinates that are in the
+        neighborhood of a certain point.
+
+        :param Coordinate pos: Coordinate tuple for the neighborhood to get.
+        :param bool moore: Whether to use Moore neighborhood or not. If True,
+            return Moore neighborhood (including diagonals). If False, return
+            Von Neumann neighborhood (exclude diagonals).
+        :param bool include_center: If True, return the (x, y) cell as well.
+            Otherwise, return surrounding cells only. Default is False.
+        :param int radius: Radius, in cells, of the neighborhood. Default is 1.
+        :return: An iterator over cell coordinates that are in the neighborhood.
+            For example with radius 1, it will return list with number of elements
+            equals at most 9 (8) if Moore, 5 (4) if Von Neumann (if not including
+            the center).
+        :rtype: Iterator[Coordinate]
+        """
+
+        yield from self.get_neighborhood(pos, moore, include_center, radius)
+
+    def iter_neighbors(
+        self,
+        pos: Coordinate,
+        moore: bool,
+        include_center: bool = False,
+        radius: int = 1,
+    ) -> Iterator[PatchCell]:
+        """
+        Return an iterator over neighbors to a certain point.
+
+        :param Coordinate pos: Coordinate tuple for the neighborhood to get.
+        :param bool moore: Whether to use Moore neighborhood or not. If True,
+            return Moore neighborhood (including diagonals). If False, return
+            Von Neumann neighborhood (exclude diagonals).
+        :param bool include_center: If True, return the (x, y) cell as well.
+            Otherwise, return surrounding cells only. Default is False.
+        :param int radius: Radius, in cells, of the neighborhood. Default is 1.
+        :return: An iterator of cells that are in the neighborhood; at most 9 (8)
+            if Moore, 5 (4) if Von Neumann (if not including the center).
+        :rtype: Iterator[Cell]
+        """
+
+        neighborhood = self.get_neighborhood(
+            pos, moore, include_center, radius
+        )
+        return self.iter_cell_list_contents(neighborhood)
+
+    @accept_tuple_argument
+    def iter_cell_list_contents(
+        self, cell_list: Iterable[Coordinate]
+    ) -> Iterator[PatchCell]:
+        """
+        Returns an iterator of the contents of the cells
+        identified in cell_list.
+
+        :param Iterable[Coordinate] cell_list: Array-like of (x, y) tuples,
+            or single tuple.
+        :return: An iterator of the contents of the cells identified in cell_list.
+        :rtype: Iterator[Cell]
+        """
+
+        # Note: filter(None, iterator) filters away an element of iterator that
+        # is falsy. Hence, iter_cell_list_contents returns only non-empty
+        # contents.
+        return filter(None, (self.cells[x][y] for x, y in cell_list))
+
+    @accept_tuple_argument
+    def get_cell_list_contents(
+        self, cell_list: Iterable[Coordinate]
+    ) -> list[PatchCell]:
+        """
+        Returns a list of the contents of the cells
+        identified in cell_list.
+
+        Note: this method returns a list of cells.
+
+        :param Iterable[Coordinate] cell_list: Array-like of (x, y) tuples,
+            or single tuple.
+        :return: A list of the contents of the cells identified in cell_list.
+        :rtype: List[Cell]
+        """
+
+        return list(self.iter_cell_list_contents(cell_list))
+
+    @functools.lru_cache(maxsize=1000)
+    def get_neighborhood(
+        self,
+        pos: Coordinate,
+        moore: bool,
+        include_center: bool = False,
+        radius: int = 1,
+    ) -> list[Coordinate]:
+        coordinates: set[Coordinate] = set()
+
+        x, y = pos
+        for dy, dx in itertools.product(
+            range(-radius, radius + 1), range(-radius, radius + 1)
+        ):
+            if dx == 0 and dy == 0 and not include_center:
+                continue
+            # Skip coordinates that are outside manhattan distance
+            if not moore and abs(dx) + abs(dy) > radius:
+                continue
+
+            coord = (x + dx, y + dy)
+
+            if self.out_of_bounds(coord):
+                continue
+            coordinates.add(coord)
+        return sorted(coordinates)
+
+    def get_neighboring_cells(
+        self,
+        pos: Coordinate,
+        moore: bool,
+        include_center: bool = False,
+        radius: int = 1,
+    ) -> list[PatchCell]:
+        neighboring_cell_idx = self.get_neighborhood(
+            pos, moore, include_center, radius
+        )
+        return [self.cells[idx[0]][idx[1]] for idx in neighboring_cell_idx]
+
+    def to_file(
+        self,
+        raster_file: str,
+        attr_name: str | None = None,
+        driver: str = "GTiff",
+    ) -> None:
+        """
+        Writes a raster layer to a file.
+
+        :param str raster_file: The path to the raster file to write to.
+        :param str | None attr_name: The name of the attribute to write to the raster.
+            If None, all attributes are written. Default is None.
+        :param str driver: The GDAL driver to use for writing the raster file.
+            Default is 'GTiff'. See GDAL docs at https://gdal.org/drivers/raster/index.html.
+        """
+
+        data = self.get_raster(attr_name)
+        with rio.open(
+            raster_file,
+            "w",
+            driver=driver,
+            width=self.width,
+            height=self.height,
+            count=data.shape[0],
+            dtype=data.dtype,
+            crs=self.crs,
+            transform=self.transform,
+        ) as dataset:
+            dataset.write(data)
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

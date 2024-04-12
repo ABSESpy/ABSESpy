@@ -20,6 +20,7 @@ except ImportError:
 
 import mesa_geo as mg
 from mesa.space import Coordinate
+from mesa_geo.raster_layers import RasterBase
 
 from abses.errors import ABSESpyError
 
@@ -96,7 +97,7 @@ def move_agent_to(
         If the operation is successful.
     """
     expected_layer, pos = _get_layer_and_position(pos)
-    if not isinstance(layer, mg.RasterLayer):
+    if not isinstance(layer, RasterBase):
         raise TypeError(f"{layer} is not mg.RasterLayer.")
     if expected_layer and expected_layer is not layer:
         raise ABSESpyError(
