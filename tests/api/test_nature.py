@@ -58,10 +58,9 @@ class TestPatchModulePositions:
         indices 应该是和 cell 的索引一致。
         """
         # arrange
-        cell = module.cells[1][1]
+        cell = module.array_cells[1, 1]
         # act / assert
-        assert cell.pos == (1, 1)
-        assert cell.indices == (0, 1)
+        assert cell.indices == (1, 1)
 
     @pytest.mark.parametrize(
         "index, expected_value",
@@ -199,9 +198,10 @@ class TestPatchModule:
     @pytest.mark.parametrize(
         "cell_pos, linked",
         [
-            ((1, 1), (True, True)),
-            ((0, 0), (True, False)),
+            ((2, 1), (True, True)),
+            ((0, 0), (False, False)),
             ((2, 2), (False, True)),
+            ((0, 3), (False, True)),
         ],
     )
     def test_cell_linked_by_two_agents(
@@ -223,7 +223,8 @@ class TestPatchModule:
         )
 
         # assert
-        linked_agents = module.cells[cell_pos[0]][cell_pos[1]].link.get("link")
+        row, col = cell_pos
+        linked_agents = module.cells[row, col].link.get("link")
         assert (agent1 in linked_agents, agent2 in linked_agents) == linked
 
     def test_major_layer(self, model, module):
@@ -237,7 +238,7 @@ class TestPatchModule:
             (lambda c: c.init_value, np.arange(4)),
             (
                 lambda c: c.agents.has(),
-                np.array([0, 0, 1, 0]),
+                np.array([1, 0, 0, 0]),
             ),
         ],
     )

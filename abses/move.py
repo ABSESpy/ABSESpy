@@ -49,7 +49,7 @@ def _get_layer_and_position(
             raise ABSESpyError(
                 "The input layer is not consistent with the cell's layer."
             )
-        return pos.layer, pos.pos
+        return pos.layer, pos.indices
     if isinstance(pos, tuple) and len(pos) == 2:
         return layer, pos
     raise TypeError(f"Invalid position type {pos}.")
@@ -105,7 +105,7 @@ def move_agent_to(
         )
     if layer.out_of_bounds(pos):
         raise ValueError(f"Position {pos} is out of bounds.")
-    cell = layer.cells[pos[0]][pos[1]]
+    cell = layer.array_cells[pos[0], pos[1]]
     _put_agent_on_cell(agent, cell)
 
 

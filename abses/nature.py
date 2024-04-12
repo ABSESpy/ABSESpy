@@ -13,13 +13,11 @@ from __future__ import annotations
 
 import copy
 import functools
-import itertools
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
-    Iterable,
     Iterator,
     List,
     Optional,
@@ -43,7 +41,7 @@ import rasterio as rio
 import rioxarray
 import xarray as xr
 from loguru import logger
-from mesa.space import Coordinate, accept_tuple_argument
+from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
 from rasterio import mask
 from rasterio.warp import calculate_default_transform, transform_bounds
@@ -51,6 +49,7 @@ from shapely import Geometry
 
 from abses.modules import CompositeModule, Module
 from abses.random import ListRandom
+from abses.tools.func import get_buffer
 
 from .cells import PatchCell
 from .errors import ABSESpyError
@@ -113,40 +112,16 @@ class PatchModule(Module, RasterBase):
         logger.info("Initializing a new Model Layer...")
         logger.info(f"Using rioxarray version: {rioxarray.__version__}")
 
-        self._cells: List[List[PatchCell]] = []
-        # obj_array = np.empty((self.height, self.width), dtype=object)
-        for x in range(self.width):
-            col: list[PatchCell] = []
-            for y in range(self.height):
-                row_idx, col_idx = self.height - y - 1, x
-                cell = cell_cls(
-                    layer=self, pos=(x, y), indices=(row_idx, col_idx)
-                )
-                # obj_array[row_idx, col_idx] = cell
-                col.append(cell)
-            self._cells.append(col)
-
+        func = np.vectorize(lambda row, col: cell_cls(self, (row, col)))
+        self._cells: np.ndarray = np.fromfunction(
+            func, shape=(self.height, self.width), dtype=object
+        )
         self._attributes: Set[str] = set()
-        self._updated_ticks: List[int] = []
 
     @property
     def cells(self) -> List[List[PatchCell]]:
         """The cells stored in this layer."""
         return self._cells
-
-    @overload
-    def __getitem__(self, index: int) -> List[type[PatchCell]]:
-        ...
-
-    @overload
-    def __getitem__(
-        self, index: tuple[int | slice, int | slice]
-    ) -> PatchCell | list[PatchCell]:
-        ...
-
-    @overload
-    def __getitem__(self, index: Sequence[Coordinate]) -> list[PatchCell]:
-        ...
 
     def __getitem__(
         self,
@@ -155,50 +130,16 @@ class PatchModule(Module, RasterBase):
         """
         Access contents from the grid.
         """
-
-        if isinstance(index, int):
-            # cells[x]
-            return self.cells[index]
-
-        if isinstance(index[0], tuple):
-            # cells[(x1, y1), (x2, y2)]
-            index = cast(Sequence[Coordinate], index)
-
-            cells = []
-            for pos in index:
-                x1, y1 = pos
-                cells.append(self.cells[x1][y1])
-            return cells
-
-        x, y = index
-
-        if isinstance(x, int) and isinstance(y, int):
-            # cells[x, y]
-            x, y = cast(Coordinate, index)
-            return self.cells[x][y]
-
-        if isinstance(x, int):
-            # cells[x, :]
-            x = slice(x, x + 1)
-
-        if isinstance(y, int):
-            # grid[:, y]
-            y = slice(y, y + 1)
-
-        # cells[:, :]
-        x, y = (cast(slice, x), cast(slice, y))
-        cells = []
-        for rows in self.cells[x]:
-            cells.extend(iter(rows[y]))
-        return cells
+        return self.array_cells.__getitem__(index)
 
     def __iter__(self) -> Iterator[PatchCell]:
         """
         Create an iterator that chains the rows of the cells together
         as if it is one list
         """
-
-        return itertools.chain.from_iterable(self.cells)
+        for row in self.array_cells:
+            for obj in row:
+                yield obj
 
     @property
     def cell_properties(self) -> set[str]:
@@ -226,12 +167,13 @@ class PatchModule(Module, RasterBase):
         """
         return 1, self.height, self.width
 
-    @property
+    @functools.cached_property
     def array_cells(self) -> np.ndarray:
         """Array type of the `PatchCell` stored in this module."""
-        return np.flipud(np.array(self.cells).T)
+        # return np.flipud(np.array(self.cells).T)
+        return self._cells
 
-    @property
+    @functools.cached_property
     def coords(self) -> Coordinate:
         """Coordinate system of the raster data.
         This is useful when working with `xarray.DataArray`.
@@ -439,15 +381,12 @@ class PatchModule(Module, RasterBase):
         Returns:
             2D numpy.ndarray data of the variable.
         """
-        if self.time.tick in self._updated_ticks:
-            return super().dynamic_var(attr_name)
         array = super().dynamic_var(attr_name)
         # 判断算出来的是一个符合形状的矩阵
         self._attr_or_array(array)
         # 将矩阵转换为三维，并更新空间数据
         array_3d = array.reshape(self.shape3d)
         self.apply_raster(array_3d, attr_name=attr_name)
-        self._updated_ticks.append(self.time.tick)
         return array
 
     def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
@@ -611,14 +550,11 @@ class PatchModule(Module, RasterBase):
         """
         return self.select(where)
 
-    def coord_iter(self) -> Iterator[tuple[PatchCell, int, int]]:
+    def coord_iter(self) -> Iterator[tuple[Coordinate, PatchCell]]:
         """
         An iterator that returns coordinates as well as cell contents.
         """
-
-        for row in range(self.width):
-            for col in range(self.height):
-                yield self.cells[row][col], row, col  # cell, x, y
+        return np.ndenumerate(self.array_cells)
 
     def apply_raster(
         self, data: np.ndarray, attr_name: str | None = None
@@ -640,13 +576,9 @@ class PatchModule(Module, RasterBase):
         if attr_name is None:
             attr_name = f"attribute_{len(self.cell_cls.__dict__)}"
         self._attributes.add(attr_name)
-        for x in range(self.width):
-            for y in range(self.height):
-                setattr(
-                    self.cells[x][y],
-                    attr_name,
-                    data[0, self.height - y - 1, x],
-                )
+        np.vectorize(lambda cell, value: setattr(cell, attr_name, value))(
+            self.array_cells, data
+        )
 
     def get_raster(self, attr_name: Optional[str] = None) -> np.ndarray:
         """Obtaining the Raster layer by attribute.
@@ -666,110 +598,26 @@ class PatchModule(Module, RasterBase):
                 f"Choose from {self.attributes}, or set `attr_name` to `None` to retrieve all."
             )
         if attr_name is None:
-            num_bands = len(self.attributes)
             attr_names = self.attributes
         else:
-            num_bands = 1
             attr_names = {attr_name}
-        data = np.empty((num_bands, self.height, self.width))
-        for ind, name in enumerate(attr_names):
-            for x in range(self.width):
-                for y in range(self.height):
-                    data[ind, self.height - y - 1, x] = getattr(
-                        self.cells[x][y], name
-                    )
-        return data
+        data = []
+        for name in attr_names:
+            array = np.vectorize(getattr)(self.array_cells, name)
+            data.append(array)
+        return np.stack(data)
 
-    def iter_neighborhood(
+    @overload
+    def get_neighborhood(
         self,
         pos: Coordinate,
         moore: bool,
         include_center: bool = False,
         radius: int = 1,
-    ) -> Iterator[Coordinate]:
-        """
-        Return an iterator over cell coordinates that are in the
-        neighborhood of a certain point.
-
-        :param Coordinate pos: Coordinate tuple for the neighborhood to get.
-        :param bool moore: Whether to use Moore neighborhood or not. If True,
-            return Moore neighborhood (including diagonals). If False, return
-            Von Neumann neighborhood (exclude diagonals).
-        :param bool include_center: If True, return the (x, y) cell as well.
-            Otherwise, return surrounding cells only. Default is False.
-        :param int radius: Radius, in cells, of the neighborhood. Default is 1.
-        :return: An iterator over cell coordinates that are in the neighborhood.
-            For example with radius 1, it will return list with number of elements
-            equals at most 9 (8) if Moore, 5 (4) if Von Neumann (if not including
-            the center).
-        :rtype: Iterator[Coordinate]
-        """
-
-        yield from self.get_neighborhood(pos, moore, include_center, radius)
-
-    def iter_neighbors(
-        self,
-        pos: Coordinate,
-        moore: bool,
-        include_center: bool = False,
-        radius: int = 1,
-    ) -> Iterator[PatchCell]:
-        """
-        Return an iterator over neighbors to a certain point.
-
-        :param Coordinate pos: Coordinate tuple for the neighborhood to get.
-        :param bool moore: Whether to use Moore neighborhood or not. If True,
-            return Moore neighborhood (including diagonals). If False, return
-            Von Neumann neighborhood (exclude diagonals).
-        :param bool include_center: If True, return the (x, y) cell as well.
-            Otherwise, return surrounding cells only. Default is False.
-        :param int radius: Radius, in cells, of the neighborhood. Default is 1.
-        :return: An iterator of cells that are in the neighborhood; at most 9 (8)
-            if Moore, 5 (4) if Von Neumann (if not including the center).
-        :rtype: Iterator[Cell]
-        """
-
-        neighborhood = self.get_neighborhood(
-            pos, moore, include_center, radius
-        )
-        return self.iter_cell_list_contents(neighborhood)
-
-    @accept_tuple_argument
-    def iter_cell_list_contents(
-        self, cell_list: Iterable[Coordinate]
-    ) -> Iterator[PatchCell]:
-        """
-        Returns an iterator of the contents of the cells
-        identified in cell_list.
-
-        :param Iterable[Coordinate] cell_list: Array-like of (x, y) tuples,
-            or single tuple.
-        :return: An iterator of the contents of the cells identified in cell_list.
-        :rtype: Iterator[Cell]
-        """
-
-        # Note: filter(None, iterator) filters away an element of iterator that
-        # is falsy. Hence, iter_cell_list_contents returns only non-empty
-        # contents.
-        return filter(None, (self.cells[x][y] for x, y in cell_list))
-
-    @accept_tuple_argument
-    def get_cell_list_contents(
-        self, cell_list: Iterable[Coordinate]
-    ) -> list[PatchCell]:
-        """
-        Returns a list of the contents of the cells
-        identified in cell_list.
-
-        Note: this method returns a list of cells.
-
-        :param Iterable[Coordinate] cell_list: Array-like of (x, y) tuples,
-            or single tuple.
-        :return: A list of the contents of the cells identified in cell_list.
-        :rtype: List[Cell]
-        """
-
-        return list(self.iter_cell_list_contents(cell_list))
+        annular: bool = False,
+        return_mask: bool = True,
+    ) -> np.ndarray:
+        ...
 
     @functools.lru_cache(maxsize=1000)
     def get_neighborhood(
@@ -778,37 +626,19 @@ class PatchModule(Module, RasterBase):
         moore: bool,
         include_center: bool = False,
         radius: int = 1,
-    ) -> list[Coordinate]:
-        coordinates: set[Coordinate] = set()
-
-        x, y = pos
-        for dy, dx in itertools.product(
-            range(-radius, radius + 1), range(-radius, radius + 1)
-        ):
-            if dx == 0 and dy == 0 and not include_center:
-                continue
-            # Skip coordinates that are outside manhattan distance
-            if not moore and abs(dx) + abs(dy) > radius:
-                continue
-
-            coord = (x + dx, y + dy)
-
-            if self.out_of_bounds(coord):
-                continue
-            coordinates.add(coord)
-        return sorted(coordinates)
-
-    def get_neighboring_cells(
-        self,
-        pos: Coordinate,
-        moore: bool,
-        include_center: bool = False,
-        radius: int = 1,
-    ) -> list[PatchCell]:
-        neighboring_cell_idx = self.get_neighborhood(
-            pos, moore, include_center, radius
+        annular: bool = False,
+        return_mask: bool = False,
+    ) -> ActorsList[PatchCell] | np.ndarray:
+        """Getting neighboring positions of the given coordinate."""
+        mask_arr = np.zeros(self.shape2d, dtype=bool)
+        mask_arr[pos[0], pos[1]] = True
+        mask_arr = get_buffer(
+            mask_arr, radius=radius, moor=moore, annular=annular
         )
-        return [self.cells[idx[0]][idx[1]] for idx in neighboring_cell_idx]
+        mask_arr[pos[0], pos[1]] = include_center
+        if return_mask:
+            return mask_arr
+        return ActorsList(self.model, self.array_cells[mask_arr])
 
     def to_file(
         self,
@@ -839,6 +669,18 @@ class PatchModule(Module, RasterBase):
             transform=self.transform,
         ) as dataset:
             dataset.write(data)
+
+    def out_of_bounds(self, pos: Coordinate) -> bool:
+        """
+        Determines whether position is off the grid.
+
+        :param Coordinate pos: Position to check.
+        :return: True if position is off the grid, False otherwise.
+        :rtype: bool
+        """
+
+        row, col = pos
+        return row < 0 or row >= self.height or col < 0 or col >= self.width
 
 
 class BaseNature(mg.GeoSpace, CompositeModule):

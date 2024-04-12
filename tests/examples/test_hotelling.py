@@ -32,10 +32,10 @@ class TestCustomer:
             7, 0
         ]  # np.ndarray[8, 0] equivalent to position (0, 1)
         c.find_preference()
-        assert c.link.get("prefer", direction="in")[0].at.pos == (0, 0)
+        assert c.link.get("prefer", direction="in")[0].pos == (0, 0)
         model.actors[0].price = 1000
         c.find_preference()
-        assert c.link.get("prefer", direction="in")[1].at.pos == (9, 9)
+        assert c.link.get("prefer", direction="in")[1].pos == (9, 9)
 
 
 class TestShop:

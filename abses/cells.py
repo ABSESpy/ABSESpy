@@ -82,16 +82,13 @@ class PatchCell(_LinkNodeCell):
 
     max_agents: Optional[int] = None
 
-    def __init__(
-        self, layer, pos: Optional[Pos] = None, indices: Optional[Pos] = None
-    ):
+    def __init__(self, layer, indices: Optional[Pos] = None):
         _LinkNodeCell.__init__(self)
-        self.pos = pos
         self.indices = indices
         self._set_layer(layer=layer)
 
     def __repr__(self) -> str:
-        return f"<Cell at {self.layer}[{self.pos}]>"
+        return f"<Cell at {self.layer}[{self.indices}]>"
 
     @classmethod
     def __attribute_properties__(cls) -> set[str]:
@@ -162,12 +159,10 @@ class PatchCell(_LinkNodeCell):
         annular: bool = False,
     ) -> ActorsList[_LinkNodeCell]:
         """Get the grid around the patch."""
-        cells = self.layer.get_neighboring_cells(
-            self.pos, moore=moore, radius=radius, include_center=include_center
+        return self.layer.get_neighborhood(
+            self.indices,
+            moore=moore,
+            radius=radius,
+            include_center=include_center,
+            annular=annular,
         )
-        if annular:
-            interiors = self.layer.get_neighboring_cells(
-                self.pos, moore=moore, radius=radius - 1, include_center=False
-            )
-            return ActorsList(self.model, set(cells) - set(interiors))
-        return ActorsList(self.model, cells)

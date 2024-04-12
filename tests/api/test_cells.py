@@ -56,12 +56,10 @@ class TestCellNeighboring:
             "Happy path - Test case 1",
             "Happy path - Test case 2",
             "Happy path - Test case 3",
-            # "Edge case - Test case 4",
+            "Edge case - Test case 4",
             "Edge case - Test case 5",
-            "Edge case - Test case 6",
-            # "Error case - Test case 7",
-            "Error case - Test case 8",
-            "Error case - Test case 9",
+            "Error case - Test case 6",
+            "Error case - Test case 7",
         ],
     )
     def test_get_neighboring_cells(

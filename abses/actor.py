@@ -39,10 +39,9 @@ from abses.objects import _BaseObj
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
-    from abses.human import _LinkContainer
+    from abses.cells import Pos
     from abses.main import MainModel
     from abses.nature import PatchCell, PatchModule
-    from abses.sequences import ActorsList
 
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
@@ -214,7 +213,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
                 "Cannot set location directly because the actor is not added to the cell."
             )
         self._cell = cell
-        self.pos = cell.pos
 
     @at.deleter
     def at(self) -> None:
@@ -225,6 +223,16 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
                 "Cannot remove location directly because the actor is still on earth."
             )
         self._cell = None
+
+    @property
+    def pos(self) -> Optional[Pos]:
+        """Position of the actor."""
+        return None if self.at is None else self.at.indices
+
+    @pos.setter
+    def pos(self, value) -> None:
+        if value is not None:
+            raise TypeError("Trying to set position.")
 
     @cached_property
     def move(self) -> _Movements:

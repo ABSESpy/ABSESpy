@@ -40,7 +40,7 @@ class TestMovements:
         # arrange
         actor = model.agents.new(Actor, singleton=True)
         # action
-        actor.move.to(cell_0_1.pos, cell_0_1.layer)
+        actor.move.to(cell_0_1.indices, cell_0_1.layer)
         # assert
         assert actor.at is cell_0_1
         actor.move.to((0, 0))
@@ -54,7 +54,7 @@ class TestMovements:
             how="from_resolution", shape=(1, 2)
         )
         actor = cell_0_0.agents.new(Actor, singleton=True)
-        another_layer_cell = new_module.cells[0][0]
+        another_layer_cell = new_module.array_cells[0, 0]
         # action
         with pytest.raises(ABSESpyError):
             actor.move.to(another_layer_cell)
@@ -141,4 +141,4 @@ class TestMovements:
         # Act
         actor.move.random(prob="test", include_center=include_center)
         # Assert
-        assert actor.at.pos in expected
+        assert actor.at.indices in expected

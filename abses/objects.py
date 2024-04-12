@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import mesa
 
@@ -38,6 +38,7 @@ class _BaseObj(_Observer, _Component):
             model.attach(self)
         self._model = model
         self._dynamic_variables: Dict[str, _DynamicVariable] = {}
+        self._updated_ticks: List[int] = []
 
     @property
     def time(self) -> TimeDriver:
@@ -108,4 +109,6 @@ class _BaseObj(_Observer, _Component):
             attr_name:
                 Dynamic variable's name.
         """
+        if self.time.tick in self._updated_ticks:
+            return self._dynamic_variables[attr_name].cache
         return self._dynamic_variables[attr_name].now()

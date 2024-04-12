@@ -101,25 +101,25 @@ def mock_module(model) -> PatchModule:
 @pytest.fixture(name="cell_0_0", scope="function")
 def mock_cell_0_0(module) -> PatchCell:
     """获取模块的第 (0, 0) 个斑块"""
-    return module.cells[0][0]
+    return module.array_cells[0, 0]
 
 
 @pytest.fixture(name="cell_0_1", scope="function")
 def mock_cell_0_1(module) -> PatchCell:
     """获取模块的第 (0, 1) 个斑块"""
-    return module.cells[0][1]
+    return module.array_cells[0, 1]
 
 
 @pytest.fixture(name="cell_1_0", scope="function")
 def mock_cell_1_0(module) -> PatchCell:
     """获取模块的第 (1, 0) 个斑块"""
-    return module.cells[1][0]
+    return module.array_cells[1, 0]
 
 
 @pytest.fixture(name="cell_1_1", scope="function")
 def mock_cell_1_1(module) -> PatchCell:
     """获取模块的第 (1, 1) 个斑块"""
-    return module.cells[1][1]
+    return module.array_cells[1, 1]
 
 
 @pytest.fixture(name="cells", scope="function")
