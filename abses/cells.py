@@ -13,22 +13,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
-import mesa_geo as mg
 from mesa_geo.raster_layers import RasterBase
 
 from abses import ActorsList
 from abses.container import _CellAgentsContainer
 from abses.errors import ABSESpyError
-from abses.links import TargetName, _LinkNode
+from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:
     from abses.main import H, MainModel, N
     from abses.nature import PatchModule
 
 try:
-    from typing import Self, TypeAlias
+    from typing import TypeAlias
 except ImportError:
-    from typing_extensions import Self, TypeAlias
+    from typing_extensions import TypeAlias
 
 Pos: TypeAlias = Tuple[int, int]
 
@@ -68,7 +67,7 @@ def raster_attribute(
     return property(func)
 
 
-class PatchCell(mg.Cell, _LinkNode):
+class PatchCell(_LinkNodeCell):
     """A patch cell of a `RasterLayer`.
     Subclassing this class to create a custom cell.
     When class attribute `max_agents` is assigned,
@@ -86,9 +85,9 @@ class PatchCell(mg.Cell, _LinkNode):
     def __init__(
         self, layer, pos: Optional[Pos] = None, indices: Optional[Pos] = None
     ):
-        mg.Cell.__init__(self, pos, indices)
-        _LinkNode.__init__(self)
-        self._agents: Optional[_CellAgentsContainer] = None
+        _LinkNodeCell.__init__(self)
+        self.pos = pos
+        self.indices = indices
         self._set_layer(layer=layer)
 
     def __repr__(self) -> str:
@@ -131,14 +130,9 @@ class PatchCell(mg.Cell, _LinkNode):
         )
 
     @property
-    def agents(self) -> Optional[_CellAgentsContainer]:
+    def agents(self) -> _CellAgentsContainer:
         """The agents located at here."""
         return self._agents
-
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> _CellAgentsContainer | None:
-        return self if target == "cell" else self.agents
 
     def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
         """Gets the value of an attribute or registered property.
@@ -166,7 +160,7 @@ class PatchCell(mg.Cell, _LinkNode):
         radius: int = 1,
         include_center: bool = False,
         annular: bool = False,
-    ) -> ActorsList[Self]:
+    ) -> ActorsList[_LinkNodeCell]:
         """Get the grid around the patch."""
         cells = self.layer.get_neighboring_cells(
             self.pos, moore=moore, radius=radius, include_center=include_center

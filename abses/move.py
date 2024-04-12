@@ -11,18 +11,18 @@ This script is used to manipulate actors' movements.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Literal, Optional, Tuple, cast
 
 try:
     from typing import TypeAlias
 except ImportError:
     from typing_extensions import TypeAlias
 
-import mesa_geo as mg
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
 
 from abses.errors import ABSESpyError
+from abses.links import _LinkNodeCell
 
 if TYPE_CHECKING:
     from abses.actor import Actor
@@ -44,7 +44,7 @@ MovingDirection: TypeAlias = Literal[
 def _get_layer_and_position(
     pos: Coordinate | PatchCell, layer: Optional[PatchModule] = None
 ) -> Tuple[Optional[PatchModule], Coordinate]:
-    if isinstance(pos, mg.Cell):
+    if isinstance(cast("PatchCell", pos), _LinkNodeCell):
         if layer is not None and layer is not pos.layer:
             raise ABSESpyError(
                 "The input layer is not consistent with the cell's layer."
@@ -59,7 +59,7 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
     """
     This function is used to put an agent on a cell.
     """
-    if not isinstance(cell, mg.Cell):
+    if not isinstance(cell, _LinkNodeCell):
         raise TypeError(
             f"Agent must be put on a `abses.PatchCell`, instead of {type(cell)}"
         )
@@ -79,7 +79,7 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
 def move_agent_to(
     agent: Actor,
     layer: PatchModule,
-    pos: Coordinate | mg.Cell,
+    pos: Coordinate | _LinkNodeCell,
 ) -> None:
     """Move an Actor to another position of this layer.
 
@@ -98,7 +98,7 @@ def move_agent_to(
     """
     expected_layer, pos = _get_layer_and_position(pos)
     if not isinstance(layer, RasterBase):
-        raise TypeError(f"{layer} is not mg.RasterLayer.")
+        raise TypeError(f"{layer} is not valid 'PatchModule'.")
     if expected_layer and expected_layer is not layer:
         raise ABSESpyError(
             f"{pos} expects operation on the layer {expected_layer}, got input {layer}."

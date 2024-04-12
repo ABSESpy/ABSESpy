@@ -33,7 +33,7 @@ import mesa_geo as mg
 
 from abses.decision import _DecisionFactory
 from abses.errors import ABSESpyError
-from abses.links import TargetName, _LinkNode
+from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
 from abses.move import _Movements
 from abses.objects import _BaseObj
 from abses.tools.func import make_list
@@ -113,7 +113,7 @@ def perception(
     )
 
 
-class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
+class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     """
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
@@ -162,7 +162,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         mg.GeoAgent.__init__(
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
-        _LinkNode.__init__(self)
+        _LinkNodeActor.__init__(self)
         self._cell: Optional[PatchCell] = None
         self._decisions: _DecisionFactory = self._setup_decisions()
         self._alive: bool = True
@@ -170,11 +170,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
 
     def __repr__(self) -> str:
         return f"<{self.breed} [{self.unique_id}]>"
-
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> Optional[PatchCell]:
-        return self if target == "actor" else self._cell
 
     def _setup_decisions(self) -> _DecisionFactory:
         """Decisions that this actor makes."""
@@ -212,7 +207,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
     @at.setter
     def at(self, cell: PatchCell) -> None:
         """Set the cell where the actor is located."""
-        if not isinstance(cell, mg.Cell):
+        if not isinstance(cell, _LinkNodeCell):
             raise TypeError(f"{cell} is not a cell.")
         if self not in cell.agents:
             raise ABSESpyError(

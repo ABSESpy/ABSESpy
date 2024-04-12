@@ -17,19 +17,9 @@ from shapely.geometry import Point, box
 
 from abses.actor import Actor
 from abses.cells import raster_attribute
-from abses.links import _LinkNode
 from abses.main import MainModel
 from abses.nature import PatchCell, PatchModule
 from abses.sequences import ActorsList
-
-
-class MockActor(_LinkNode):
-    """测试行动者"""
-
-    def __init__(self, geometry=None):
-        super().__init__()
-        self.geometry = geometry
-        self.test = 1
 
 
 class MockPatchCell(PatchCell):
@@ -57,6 +47,36 @@ class MockPatchCell(PatchCell):
     @y.setter
     def y(self, value) -> None:
         self._y = value
+
+
+class TestPatchModulePositions:
+    """测试斑块模型的位置选取"""
+
+    def test_pos_and_indices(self, module: PatchModule):
+        """测试位置和索引。
+        pos 应该是和 cell 的位置一致
+        indices 应该是和 cell 的索引一致。
+        """
+        # arrange
+        cell = module.cells[1][1]
+        # act / assert
+        assert cell.pos == (1, 1)
+        assert cell.indices == (0, 1)
+
+    @pytest.mark.parametrize(
+        "index, expected_value",
+        [
+            ((1, 1), 3),
+            ((0, 0), 0),
+        ],
+    )
+    def test_array_cells(self, module: PatchModule, index, expected_value):
+        """测试数组单元格"""
+        # arrange
+        module.apply_raster(np.arange(4).reshape(1, 2, 2), "test")
+        # act / assert
+        cell = module.array_cells[index[0], index[1]]
+        assert cell.test == expected_value
 
 
 class TestPatchModule:
