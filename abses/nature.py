@@ -113,15 +113,16 @@ class PatchModule(Module, RasterBase):
         logger.info("Initializing a new Model Layer...")
         logger.info(f"Using rioxarray version: {rioxarray.__version__}")
 
-        self._cells: List[List[type[PatchCell]]] = []
+        self._cells: List[List[PatchCell]] = []
         # obj_array = np.empty((self.height, self.width), dtype=object)
         for x in range(self.width):
-            col: list[type[PatchCell]] = []
+            col: list[PatchCell] = []
             for y in range(self.height):
                 row_idx, col_idx = self.height - y - 1, x
-                cell = cell_cls(pos=(x, y), indices=(row_idx, col_idx))
+                cell = cell_cls(
+                    layer=self, pos=(x, y), indices=(row_idx, col_idx)
+                )
                 # obj_array[row_idx, col_idx] = cell
-                cell.layer = self
                 col.append(cell)
             self._cells.append(col)
 
@@ -129,7 +130,7 @@ class PatchModule(Module, RasterBase):
         self._updated_ticks: List[int] = []
 
     @property
-    def cells(self) -> List[List[type[PatchCell]]]:
+    def cells(self) -> List[List[PatchCell]]:
         """The cells stored in this layer."""
         return self._cells
 
@@ -150,7 +151,7 @@ class PatchModule(Module, RasterBase):
     def __getitem__(
         self,
         index: int | Sequence[Coordinate] | tuple[int | slice, int | slice],
-    ) -> PatchCell | list[Type[PatchCell]]:
+    ) -> PatchCell | list[PatchCell]:
         """
         Access contents from the grid.
         """
@@ -197,7 +198,7 @@ class PatchModule(Module, RasterBase):
         as if it is one list
         """
 
-        return itertools.chain.from_iterable(*self.cells)
+        return itertools.chain.from_iterable(self.cells)
 
     @property
     def cell_properties(self) -> set[str]:
@@ -895,7 +896,7 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         self,
         module_class: Optional[Type[Module]] = None,
         how: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> PatchModule:
         """Creates a submodule of the raster layer.
 

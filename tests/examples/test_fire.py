@@ -26,12 +26,6 @@ def setup():
 class TestTree:
     """Test tree cell."""
 
-    def test_init(self):
-        """Test initialization."""
-        tree = Tree()
-        assert tree.state == 0
-        assert tree is not None
-
     def test_setup(self, tree_fixture):
         """Test initialization."""
         forest, tree = tree_fixture

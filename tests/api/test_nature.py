@@ -35,8 +35,8 @@ class MockActor(_LinkNode):
 class MockPatchCell(PatchCell):
     """测试斑块"""
 
-    def __init__(self, x=1, y=2, pos=None, indices=None):
-        super().__init__(pos, indices)
+    def __init__(self, *agrs, x=1, y=2, **kwargs):
+        super().__init__(*agrs, **kwargs)
         self._x = x
         self._y = y
 

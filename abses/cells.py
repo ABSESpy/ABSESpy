@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-from numbers import Number
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 import mesa_geo as mg
@@ -34,7 +33,9 @@ except ImportError:
 Pos: TypeAlias = Tuple[int, int]
 
 
-def raster_attribute(func: Callable[..., Union[Number, str]]) -> property:
+def raster_attribute(
+    func: Callable[[Any], Union[str | int | float]]
+) -> property:
     """Turn the method into a property that the patch can extract.
     Examples:
         ```
@@ -83,12 +84,12 @@ class PatchCell(mg.Cell, _LinkNode):
     max_agents: Optional[int] = None
 
     def __init__(
-        self, pos: Optional[Pos] = None, indices: Optional[Pos] = None
+        self, layer, pos: Optional[Pos] = None, indices: Optional[Pos] = None
     ):
         mg.Cell.__init__(self, pos, indices)
         _LinkNode.__init__(self)
         self._agents: Optional[_CellAgentsContainer] = None
-        self._layer: Optional[PatchModule] = None
+        self._set_layer(layer=layer)
 
     def __repr__(self) -> str:
         return f"<Cell at {self.layer}[{self.pos}]>"
@@ -117,12 +118,9 @@ class PatchCell(mg.Cell, _LinkNode):
             )
         return self._layer
 
-    @layer.setter
-    def layer(self, layer: PatchModule) -> None:
+    def _set_layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, RasterBase):
             raise TypeError(f"{type(layer)} is not valid layer.")
-        if self._layer is not None:
-            raise ABSESpyError("PatchCell can only belong to one layer.")
         # set layer property
         self._layer = layer
         # set layer's model as the model
