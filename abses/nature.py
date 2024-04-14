@@ -19,7 +19,6 @@ from typing import (
     Callable,
     Dict,
     Iterator,
-    List,
     Optional,
     Sequence,
     Set,
@@ -30,19 +29,20 @@ from typing import (
 )
 
 try:
-    from typing import Self
+    from typing import Self, TypeAlias
 except ImportError:
-    from typing_extensions import Self
+    from typing_extensions import Self, TypeAlias
 
 import numpy as np
 import pyproj
-import rasterio as rio
+import rasterio
 import rioxarray
 import xarray as xr
 from loguru import logger
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
 from rasterio import mask
+from rasterio.enums import Resampling
 from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
 
@@ -57,12 +57,12 @@ from .sequences import ActorsList
 if TYPE_CHECKING:
     from abses.main import MainModel
 
-DEFAULT_WORLD = {
-    "width": 10,
-    "height": 10,
-    "resolution": 1,
-}
 CRS = "epsg:4326"
+Raster: TypeAlias = Union[
+    np.ndarray,
+    xr.DataArray,
+    xr.Dataset,
+]
 
 
 class _PatchModuleFactory(_ModuleFactory):
@@ -188,7 +188,7 @@ class _PatchModuleFactory(_ModuleFactory):
 
         """
         to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
-        with rio.open(raster_file, "r") as dataset:
+        with rasterio.open(raster_file, "r") as dataset:
             values = dataset.read()
             _, height, width = values.shape
             total_bounds = [
@@ -264,7 +264,7 @@ class PatchModule(Module, RasterBase):
         self._attributes: Set[str] = set()
 
     @property
-    def cells(self) -> List[List[PatchCell]]:
+    def cells(self) -> np.ndarray:
         """The cells stored in this layer."""
         return self._cells
 
@@ -291,6 +291,16 @@ class PatchModule(Module, RasterBase):
         All `PatchCell` methods decorated by `raster_attribute` should be appeared here.
         """
         return self.cell_cls.__attribute_properties__()
+
+    @functools.cached_property
+    def xda(self) -> xr.DataArray:
+        """Get the xarray raster layer with spatial coordinates."""
+        arr = np.ones(self.shape2d)
+        xda = xr.DataArray(data=arr, coords=self.coords)
+        xda = xda.rio.write_crs(self.crs)
+        xda = xda.rio.set_spatial_dims("x", "y")
+        xda = xda.rio.write_transform(self.transform)
+        return xda.rio.write_coordinate_system()
 
     @property
     def attributes(self) -> set[str]:
@@ -322,23 +332,20 @@ class PatchModule(Module, RasterBase):
         """Coordinate system of the raster data.
         This is useful when working with `xarray.DataArray`.
         """
-        x_arr = np.linspace(
-            self.total_bounds[0], self.total_bounds[2], self.width
-        )
-        y_arr = np.linspace(
-            self.total_bounds[3], self.total_bounds[1], self.height
-        )
+        min_x, min_y, max_x, max_y = self.total_bounds
+        coords_x = np.linspace(min_x, max_x, self.width, endpoint=False)
+        coords_y = np.linspace(min_y, max_y, self.height, endpoint=False)
         return {
-            "y": y_arr,
-            "x": x_arr,
+            "y": coords_y,
+            "x": coords_x,
         }
 
     def to_crs(self, crs, inplace=False) -> Self | None:
         super()._to_crs_check(crs)
         layer = self if inplace else copy.copy(self)
 
-        src_crs = rio.crs.CRS.from_user_input(layer.crs)
-        dst_crs = rio.crs.CRS.from_user_input(crs)
+        src_crs = rasterio.crs.CRS.from_user_input(layer.crs)
+        dst_crs = rasterio.crs.CRS.from_user_input(crs)
         if not layer.crs.is_exact_same(crs):
             transform, _, _ = calculate_default_transform(
                 src_crs,
@@ -391,7 +398,9 @@ class PatchModule(Module, RasterBase):
         self.apply_raster(array_3d, attr_name=attr_name)
         return array
 
-    def get_rasterio(self, attr_name: str | None = None) -> rio.MemoryFile:
+    def get_rasterio(
+        self, attr_name: str | None = None
+    ) -> rasterio.MemoryFile:
         """Gets the Rasterio raster layer corresponding to the attribute. Save to a temporary rasterio memory file.
 
         Parameters:
@@ -408,7 +417,7 @@ class PatchModule(Module, RasterBase):
         # 如果获取到的是2维，重整为3维
         if len(data.shape) != 3:
             data = data.reshape(self.shape3d)
-        with rio.MemoryFile() as mem_file:
+        with rasterio.MemoryFile() as mem_file:
             with mem_file.open(
                 driver="GTiff",
                 height=data.shape[1],
@@ -468,7 +477,7 @@ class PatchModule(Module, RasterBase):
             refer_layer:
                 The attribute name to refer when filtering cells.
             **kwargs:
-                Args pass to the function `rasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterio.readthedocs.io/en/latest/api/rasterio.mask.html) for details.
+                Args pass to the function `rasterasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterasterio.readthedocs.io/en/latest/api/rasterasterio.mask.html) for details.
 
         Raises:
             ABSESpyError:
@@ -560,29 +569,70 @@ class PatchModule(Module, RasterBase):
         """
         return np.ndenumerate(self.array_cells)
 
-    def apply_raster(
-        self, data: np.ndarray, attr_name: str | None = None
+    def _add_attribute(
+        self,
+        data: np.ndarray,
+        attr_name: Optional[str] = None,
     ) -> None:
-        """
-        Apply raster data to the cells.
-
-        :param np.ndarray data: 2D numpy array with shape (1, height, width).
-        :param str | None attr_name: Name of the attribute to be added to the cells.
-            If None, a random name will be generated. Default is None.
-        :raises ValueError: If the shape of the data is not (1, height, width).
-        """
-
-        if data.shape != (1, self.height, self.width):
+        data = np.squeeze(data)
+        if data.shape != self.shape2d:
             raise ValueError(
                 f"Data shape does not match raster shape. "
-                f"Expected {(1, self.height, self.width)}, received {data.shape}."
+                f"Expected {self.shape2d}, received {data.shape}."
             )
         if attr_name is None:
-            attr_name = f"attribute_{len(self.cell_cls.__dict__)}"
+            attr_name = f"attribute_{len(self.attributes)}"
         self._attributes.add(attr_name)
-        np.vectorize(lambda cell, value: setattr(cell, attr_name, value))(
-            self.array_cells, data
+        np.vectorize(setattr)(self.array_cells, attr_name, data)
+
+    def _add_dataarray(
+        self,
+        data: xr.DataArray,
+        attr_name: Optional[str] = None,
+        cover_crs: bool = False,
+        resampling_method: str = "nearest",
+    ) -> None:
+        if cover_crs:
+            data.rio.write_crs(self.crs, inplace=True)
+        resampling = getattr(Resampling, resampling_method)
+        data = data.rio.reproject_match(
+            self.xda,
+            resampling=resampling,
         )
+        self._add_attribute(data.to_numpy(), attr_name)
+
+    def apply_raster(
+        self, data: Raster, attr_name: str | None = None, **kwargs: Any
+    ) -> None:
+        """Apply raster data to the cells.
+
+        Parameters:
+            data:
+                np.ndarray data: 2D numpy array with shape (1, height, width).
+                xr.DataArray data: xarray DataArray with spatial coordinates.
+                xr.Dataset data: xarray Dataset with spatial coordinates.
+            attr_name:
+                Name of the attribute to be added to the cells.
+                If None, a random name will be generated.
+                Default is None.
+            **kwargs:
+                cover_crs:
+                    Whether to cover the crs of the input data.
+                    If False, it assumes the input data has crs info.
+                    If True, it will cover the crs of the input data by the crs of this layer.
+                    Default is False.
+                resampling_method:
+                    The [resampling method](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling) when reprojecting the input data.
+        """
+        if isinstance(data, np.ndarray):
+            self._add_attribute(data, attr_name)
+        elif isinstance(data, xr.DataArray):
+            self._add_dataarray(data, attr_name, **kwargs)
+        elif isinstance(data, xr.Dataset):
+            if attr_name is None:
+                raise ValueError("Attribute name is required for xr.Dataset.")
+            dataarray = data[attr_name]
+            self._add_dataarray(dataarray, attr_name, **kwargs)
 
     def get_raster(self, attr_name: Optional[str] = None) -> np.ndarray:
         """Obtaining the Raster layer by attribute.
@@ -662,7 +712,7 @@ class PatchModule(Module, RasterBase):
         """
 
         data = self.get_raster(attr_name)
-        with rio.open(
+        with rasterio.open(
             raster_file,
             "w",
             driver=driver,
