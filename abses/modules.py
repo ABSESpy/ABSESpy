@@ -12,7 +12,16 @@ Basic implementation of the model's module.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Type
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+)
 
 from loguru import logger
 
@@ -29,7 +38,11 @@ if TYPE_CHECKING:
 class Module(_BaseObj):
     """Basic module for the model."""
 
-    def __init__(self, model: MainModel[Any, Any], name: Optional[str] = None):
+    def __init__(
+        self,
+        model: MainModel[Any, Any],
+        name: Optional[str] = None,
+    ):
         _BaseObj.__init__(self, model, observer=True, name=name)
         self._open: bool = True
 
@@ -71,39 +84,45 @@ class Module(_BaseObj):
         """
 
 
-# Composite
-class CompositeModule(Module, _States, _Notice):
-    """基本的组合模块，可以创建次级模块"""
+ModuleType = TypeVar("ModuleType", bound=Module)
 
-    def __init__(
-        self, model: MainModel[Any, Any], name: Optional[str] = None
-    ) -> None:
-        Module.__init__(self, model, name=name)
-        _States.__init__(self)
-        _Notice.__init__(self)
-        self._modules: List[Module] = []
+
+class _ModuleFactory(object):
+    """To create a module."""
+
+    methods: List[str] = []
+    default_cls: type[Module] = Module
+
+    def __init__(self, father) -> None:
+        self.father: CompositeModule = father
+        self.modules: Dict[str, Module] = {}
+
+    def __iter__(self) -> Iterator[Module]:
+        return iter(self.modules.values())
+
+    def _check_cls(
+        self, module_cls: Optional[Type[ModuleType]]
+    ) -> Type[Module]:
+        """Check if the provided class is a valid module class."""
+        if module_cls is None:
+            return self.default_cls
+        if not issubclass(module_cls, self.default_cls):
+            raise TypeError(
+                f"'{module_cls}' not a subclass of {self.default_cls}."
+            )
+        return module_cls
 
     @property
-    def modules(self) -> List[Module]:
-        """All attached sub-modules."""
-        return self._modules
+    def is_empty(self) -> bool:
+        """If the factory is empty."""
+        return len(self.modules.keys()) == 0
 
-    @property
-    def opening(self) -> bool:
-        return self._open
-
-    @opening.setter
-    def opening(self, value: bool) -> None:
-        for module in self.modules:
-            module.opening = value
-        self._open = value
-
-    def create_module(
+    def new(
         self,
-        module_class: Optional[Type[Module]] = None,
         how: Optional[str] = None,
+        module_class: Optional[Type[ModuleType]] = None,
         **kwargs,
-    ) -> Module:
+    ) -> ModuleType:
         """Create a module and attach it to the model.
 
         Parameters:
@@ -126,23 +145,48 @@ class CompositeModule(Module, _States, _Notice):
         Returns:
             The created module.
         """
-        if module_class is None:
-            module_class = Module
-        else:
-            assert issubclass(
-                module_class, Module
-            ), f"Module {module_class} not inherited from a module."
+        self._check_cls(module_cls=module_class)
         if not how:
-            module = module_class(model=self._model, **kwargs)
-        elif hasattr(module_class, how):
-            creating_method = getattr(module_class, how)
-            module = creating_method(model=self.model, **kwargs)
+            module = module_class(model=self.father.model, **kwargs)
+        elif hasattr(self, how):
+            module = getattr(self, how)(model=self.father.model, **kwargs)
         else:
-            raise ValueError(f"{how} is not a valid creating method.")
-        setattr(self, module.name, module)  # register as module
-        self.attach(module)
-        self.modules.append(module)  # register as module
+            raise ValueError(
+                f"{how} is not a valid method for creating module."
+                f"Choose from {self.methods} for {self.default_cls}"
+            )
+        # setattr(self, module.name, module)  # register as module
+        self.father.attach(module)
+        self.modules[module.name] = module  # register as module
         return module
+
+
+# Composite
+class CompositeModule(Module, _States, _Notice):
+    """基本的组合模块，可以创建次级模块"""
+
+    def __init__(
+        self, model: MainModel[Any, Any], name: Optional[str] = None
+    ) -> None:
+        Module.__init__(self, model, name=name)
+        _States.__init__(self)
+        _Notice.__init__(self)
+        self._modules = _ModuleFactory(self)
+
+    @property
+    def modules(self) -> _ModuleFactory:
+        """All attached sub-modules."""
+        return self._modules
+
+    @property
+    def opening(self) -> bool:
+        return self._open
+
+    @opening.setter
+    def opening(self, value: bool) -> None:
+        for module in self.modules:
+            module.opening = value
+        self._open = value
 
     @iter_func("modules")
     def initialize(self):
@@ -159,3 +203,7 @@ class CompositeModule(Module, _States, _Notice):
     @iter_func("modules")
     def end(self):
         return super().end()
+
+    def create_module(self, module_cls, *args, **kwargs):
+        """Create a module."""
+        return self.modules.new(module_class=module_cls, *args, **kwargs)

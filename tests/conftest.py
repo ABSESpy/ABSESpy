@@ -87,7 +87,7 @@ def mock_model() -> MainModel:
 
 
 @pytest.fixture(name="module", scope="function")
-def mock_module(model) -> PatchModule:
+def mock_module(model: MainModel) -> PatchModule:
     """创建一个（2*2）的斑块模块"""
     module: PatchModule = model.nature.create_module(
         how="from_resolution", shape=(2, 2)

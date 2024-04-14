@@ -34,7 +34,6 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-import mesa_geo as mg
 import numpy as np
 import pyproj
 import rasterio as rio
@@ -47,7 +46,7 @@ from rasterio import mask
 from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
 
-from abses.modules import CompositeModule, Module
+from abses.modules import CompositeModule, Module, _ModuleFactory
 from abses.random import ListRandom
 from abses.tools.func import get_buffer
 
@@ -64,6 +63,152 @@ DEFAULT_WORLD = {
     "resolution": 1,
 }
 CRS = "epsg:4326"
+
+
+class _PatchModuleFactory(_ModuleFactory):
+    def __init__(self, father) -> None:
+        super().__init__(father)
+        self.default_cls = PatchModule
+
+    def from_resolution(
+        self,
+        model: MainModel[Any, Any],
+        name: Optional[str] = None,
+        shape: Coordinate = (10, 10),
+        crs: Optional[pyproj.CRS | str] = CRS,
+        resolution: Union[int, float] = 1,
+        module_cls: Optional[type[PatchModule]] = None,
+        cell_cls: type[PatchCell] = PatchCell,
+    ) -> PatchModule:
+        """Create a layer from resolution.
+
+        Parameters:
+            model:
+                ABSESpy Model that the new module belongs.
+            name:
+                Name of the new module.
+                If None (by default), using lowercase of the '__class__.__name__'.
+                E.g., class Module -> module.
+            shape:
+                Array shape (height, width) of the new module.
+                For example, `shape=(3, 5)` means the new module stores 15 cells.
+            crs:
+                Coordinate Reference Systems.
+                If passing a string object, should be able to parsed by `pyproj`.
+                By default, we use CRS = "epsg:4326".
+            resolution:
+                Spatial Resolution when creating the coordinates.
+                By default 1, it means shape (3, 5) will generate coordinates:
+                {y: [0, 1, 2], x: [0, 1, 2, 3, 4]}.
+                Similar, when using resolution=0.1,
+                it will be {y: [.0, .1, .2], x: [.0, .1, .2, .3, .4]}.
+            cell_cls:
+                Class type of `PatchCell` to create.
+
+        Returns:
+            A new instance of self ("PatchModule").
+        """
+        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
+        height, width = shape
+        total_bounds = [0, 0, width * resolution, height * resolution]
+        return to_create(
+            model,
+            name=name,
+            width=width,
+            height=height,
+            crs=crs,
+            total_bounds=total_bounds,
+            cell_cls=cell_cls,
+        )
+
+    def copy_layer(
+        self,
+        model: MainModel[Any, Any],
+        layer: PatchModule,
+        name: Optional[str] = None,
+        module_cls: Optional[Type[PatchModule]] = None,
+        cell_cls: Type[PatchCell] = PatchCell,
+    ) -> PatchModule:
+        """Copy an existing layer to create a new layer.
+
+        Parameters:
+            model:
+                ABSESpy Model that the new module belongs.
+            layer:
+                Another layer to copy.
+                These attributes will be copied:
+                including the coordinates, the crs, and the shape.
+            name:
+                Name of the new module.
+                If None (by default), using lowercase of the '__class__.__name__'.
+                E.g., class Module -> module.
+            cell_cls:
+                Class type of `PatchCell` to create.
+
+        Returns:
+            A new instance of self ("PatchModule").
+        """
+        if not isinstance(layer, PatchModule):
+            raise TypeError(f"{layer} is not a valid PatchModule.")
+        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
+        return to_create(
+            model=model,
+            name=name,
+            width=layer.width,
+            height=layer.height,
+            crs=layer.crs,
+            total_bounds=layer.total_bounds,
+            cell_cls=cell_cls,
+        )
+
+    def from_file(
+        self,
+        raster_file: str,
+        model: MainModel[Any, Any],
+        attr_name: str | None = None,
+        cell_cls: type[PatchCell] = PatchCell,
+        module_cls: Optional[Type[PatchModule]] = None,
+        name: str | None = None,
+    ) -> PatchModule:
+        """Create a raster layer module from a file.
+
+        Parameters:
+            raster_file:
+                File path of a geo-tiff dataset.
+            model:
+                ABSESpy Model that the new module belongs.
+            attr_name:
+                Assign a attribute name to the loaded raster data.
+            name:
+                Name of the new module.
+                If None (by default), using lowercase of the '__class__.__name__'.
+                E.g., class Module -> module.
+            cell_cls:
+                Class type of `PatchCell` to create.
+
+        """
+        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
+        with rio.open(raster_file, "r") as dataset:
+            values = dataset.read()
+            _, height, width = values.shape
+            total_bounds = [
+                dataset.bounds.left,
+                dataset.bounds.bottom,
+                dataset.bounds.right,
+                dataset.bounds.top,
+            ]
+        obj = to_create(
+            model=model,
+            name=name,
+            width=width,
+            height=height,
+            crs=dataset.crs,
+            total_bounds=total_bounds,
+            cell_cls=cell_cls,
+        )
+        # obj._transform = dataset.transform
+        obj.apply_raster(values, attr_name=attr_name)
+        return obj
 
 
 class PatchModule(Module, RasterBase):
@@ -138,8 +283,7 @@ class PatchModule(Module, RasterBase):
         as if it is one list
         """
         for row in self.array_cells:
-            for obj in row:
-                yield obj
+            yield from row
 
     @property
     def cell_properties(self) -> set[str]:
@@ -189,146 +333,6 @@ class PatchModule(Module, RasterBase):
             "x": x_arr,
         }
 
-    @classmethod
-    def from_resolution(
-        cls,
-        model: MainModel[Any, Any],
-        name: Optional[str] = None,
-        shape: Coordinate = (10, 10),
-        crs: Optional[pyproj.CRS | str] = CRS,
-        resolution: Union[int, float] = 1,
-        cell_cls: type[PatchCell] = PatchCell,
-    ) -> Self:
-        """Create a layer from resolution.
-
-        Parameters:
-            model:
-                ABSESpy Model that the new module belongs.
-            name:
-                Name of the new module.
-                If None (by default), using lowercase of the '__class__.__name__'.
-                E.g., class Module -> module.
-            shape:
-                Array shape (height, width) of the new module.
-                For example, `shape=(3, 5)` means the new module stores 15 cells.
-            crs:
-                Coordinate Reference Systems.
-                If passing a string object, should be able to parsed by `pyproj`.
-                By default, we use CRS = "epsg:4326".
-            resolution:
-                Spatial Resolution when creating the coordinates.
-                By default 1, it means shape (3, 5) will generate coordinates:
-                {y: [0, 1, 2], x: [0, 1, 2, 3, 4]}.
-                Similar, when using resolution=0.1,
-                it will be {y: [.0, .1, .2], x: [.0, .1, .2, .3, .4]}.
-            cell_cls:
-                Class type of `PatchCell` to create.
-
-        Returns:
-            A new instance of self ("PatchModule").
-        """
-        height, width = shape
-        total_bounds = [0, 0, width * resolution, height * resolution]
-        return cls(
-            model,
-            name=name,
-            width=width,
-            height=height,
-            crs=crs,
-            total_bounds=total_bounds,
-            cell_cls=cell_cls,
-        )
-
-    @classmethod
-    def copy_layer(
-        cls,
-        model: MainModel[Any, Any],
-        layer: Self,
-        name: Optional[str] = None,
-        cell_cls: Type[PatchCell] = PatchCell,
-    ) -> Self:
-        """Copy an existing layer to create a new layer.
-
-        Parameters:
-            model:
-                ABSESpy Model that the new module belongs.
-            layer:
-                Another layer to copy.
-                These attributes will be copied:
-                including the coordinates, the crs, and the shape.
-            name:
-                Name of the new module.
-                If None (by default), using lowercase of the '__class__.__name__'.
-                E.g., class Module -> module.
-            cell_cls:
-                Class type of `PatchCell` to create.
-
-        Returns:
-            A new instance of self ("PatchModule").
-        """
-        if not isinstance(layer, PatchModule):
-            raise TypeError(f"{layer} is not a valid PatchModule.")
-
-        return cls(
-            model=model,
-            name=name,
-            width=layer.width,
-            height=layer.height,
-            crs=layer.crs,
-            total_bounds=layer.total_bounds,
-            cell_cls=cell_cls,
-        )
-
-    @classmethod
-    def from_file(
-        cls,
-        raster_file: str,
-        cell_cls: type[PatchCell] = PatchCell,
-        attr_name: str | None = None,
-        model: Optional[MainModel[Any, Any]] = None,
-        name: str | None = None,
-    ) -> Self:
-        """Create a raster layer module from a file.
-
-        Parameters:
-            raster_file:
-                File path of a geo-tiff dataset.
-            model:
-                ABSESpy Model that the new module belongs.
-            attr_name:
-                Assign a attribute name to the loaded raster data.
-            name:
-                Name of the new module.
-                If None (by default), using lowercase of the '__class__.__name__'.
-                E.g., class Module -> module.
-            cell_cls:
-                Class type of `PatchCell` to create.
-
-        """
-        if model is None:
-            raise ABSESpyError("No `model` module defined for module.")
-        with rio.open(raster_file, "r") as dataset:
-            values = dataset.read()
-            _, height, width = values.shape
-            total_bounds = [
-                dataset.bounds.left,
-                dataset.bounds.bottom,
-                dataset.bounds.right,
-                dataset.bounds.top,
-            ]
-        obj = cls(
-            model=model,
-            name=name,
-            width=width,
-            height=height,
-            crs=dataset.crs,
-            total_bounds=total_bounds,
-            cell_cls=cell_cls,
-        )
-        obj._transform = dataset.transform
-        obj.apply_raster(values, attr_name=attr_name)
-        return obj
-
     def to_crs(self, crs, inplace=False) -> Self | None:
         super()._to_crs_check(crs)
         layer = self if inplace else copy.copy(self)
@@ -349,9 +353,7 @@ class PatchModule(Module, RasterBase):
             layer.crs = crs
             layer.transform = transform
 
-        if not inplace:
-            return layer
-        return None
+        return None if inplace else layer
 
     def _attr_or_array(
         self, data: None | str | np.ndarray | xr.DataArray
@@ -425,7 +427,9 @@ class PatchModule(Module, RasterBase):
 
         Parameters:
             attr_name:
-                The attribute to retrieve. If None (by default), return all available attributes (3D DataArray). Otherwise, 2D DataArray of the chosen attribute.
+                The attribute to retrieve. If None (by default),
+                return all available attributes (3D DataArray).
+                Otherwise, 2D DataArray of the chosen attribute.
 
         Returns:
             Xarray.DataArray data with spatial coordinates of the chosen attribute.
@@ -598,6 +602,7 @@ class PatchModule(Module, RasterBase):
                 f"Choose from {self.attributes}, or set `attr_name` to `None` to retrieve all."
             )
         if attr_name is None:
+            assert bool(self.attributes), "No attribute available."
             attr_names = self.attributes
         else:
             attr_names = {attr_name}
@@ -683,12 +688,12 @@ class PatchModule(Module, RasterBase):
         return row < 0 or row >= self.height or col < 0 or col >= self.width
 
 
-class BaseNature(mg.GeoSpace, CompositeModule):
+class BaseNature(CompositeModule):
     """The Base Nature Module.
     Note:
         Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure.
         This is NOT a raster layer, but can be seen as a container of different raster layers.
-        Users can create new raster layer (i.e., `PatchModule`) by `create_module` method.
+        Users can create new raster layer (i.e., `PatchModule`) by `new` method.
         By default, an initialized ABSESpy model will init an instance of this `BaseNature` as `nature` module.
 
     Attributes:
@@ -702,9 +707,8 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         self, model: MainModel[Any, Any], name: str = "nature"
     ) -> None:
         CompositeModule.__init__(self, model, name=name)
-        crs = self.params.get("crs", CRS)
-        mg.GeoSpace.__init__(self, crs=crs)
         self._major_layer: Optional[PatchModule] = None
+        self._modules = _PatchModuleFactory(self)
 
         logger.info("Initializing a new Base Nature module...")
 
@@ -720,24 +724,31 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         if not isinstance(layer, PatchModule):
             raise TypeError(f"{layer} is not PatchModule.")
         self._major_layer = layer
-        self.crs = layer.crs
 
     @property
-    def total_bounds(self) -> np.ndarray | None:
+    def total_bounds(self) -> np.ndarray:
         """Total bounds. The spatial scope of the model's concern.
         If None (by default), uses the major layer of this model.
         Usually, the major layer is the first layer sub-module you created.
         """
-        if self._total_bounds is not None:
-            return self._total_bounds
-        if hasattr(self, "major_layer") and self.major_layer:
-            return self.major_layer.total_bounds
-        return None
+        if self.major_layer is None:
+            raise ValueError(f"No major layer in {self.modules}.")
+        return self.major_layer.total_bounds
+
+    @property
+    def crs(self) -> pyproj.CRS:
+        """Geo CRS."""
+        return (
+            pyproj.CRS(CRS)
+            if self.major_layer is None
+            else self.major_layer.crs
+        )
 
     def create_module(
         self,
-        module_class: Optional[Type[Module]] = None,
-        how: Optional[str] = None,
+        *args,
+        module_cls: Optional[Type[PatchModule]] = None,
+        major_layer: bool = False,
         **kwargs: Any,
     ) -> PatchModule:
         """Creates a submodule of the raster layer.
@@ -759,16 +770,11 @@ class BaseNature(mg.GeoSpace, CompositeModule):
         Returns:
             the created new module.
         """
-        if module_class is None:
-            module_class = PatchModule
-        assert issubclass(
-            module_class, PatchModule
-        ), "Must be a `PatchModule`."
-        module = cast(
-            PatchModule, super().create_module(module_class, how, **kwargs)
-        )
+        if self.modules.is_empty:
+            major_layer = True
+        module = self.modules.new(module_class=module_cls, *args, **kwargs)
         # 如果是第一个创建的模块,则将其作为主要的图层
-        if not self.layers:
+        if major_layer:
             self.major_layer = module
-        self.add_layer(module)
+        setattr(self, module.name, module)
         return module
