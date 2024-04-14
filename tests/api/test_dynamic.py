@@ -109,6 +109,7 @@ class TestDynamicData:
         module = model.nature.create_module(
             how="from_file",
             raster_file=water_quota_config.db.population,
+            apply_raster=True,
         )
         module.add_dynamic_variable(
             name="et0", data=et0_data, function=self.update_et0_function

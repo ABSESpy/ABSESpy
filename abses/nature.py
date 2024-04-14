@@ -165,10 +165,12 @@ class _PatchModuleFactory(_ModuleFactory):
         self,
         raster_file: str,
         model: MainModel[Any, Any],
-        attr_name: str | None = None,
         cell_cls: type[PatchCell] = PatchCell,
         module_cls: Optional[Type[PatchModule]] = None,
         name: str | None = None,
+        attr_name: str | None = None,
+        apply_raster: bool = False,
+        **kwargs: Any,
     ) -> PatchModule:
         """Create a raster layer module from a file.
 
@@ -197,7 +199,7 @@ class _PatchModuleFactory(_ModuleFactory):
                 dataset.bounds.right,
                 dataset.bounds.top,
             ]
-        obj = to_create(
+        obj: PatchModule = to_create(
             model=model,
             name=name,
             width=width,
@@ -207,7 +209,8 @@ class _PatchModuleFactory(_ModuleFactory):
             cell_cls=cell_cls,
         )
         # obj._transform = dataset.transform
-        obj.apply_raster(values, attr_name=attr_name)
+        if apply_raster:
+            obj.apply_raster(values, attr_name=attr_name, **kwargs)
         return obj
 
 
@@ -573,6 +576,7 @@ class PatchModule(Module, RasterBase):
         self,
         data: np.ndarray,
         attr_name: Optional[str] = None,
+        flipud: bool = False,
     ) -> None:
         data = np.squeeze(data)
         if data.shape != self.shape2d:
@@ -583,6 +587,8 @@ class PatchModule(Module, RasterBase):
         if attr_name is None:
             attr_name = f"attribute_{len(self.attributes)}"
         self._attributes.add(attr_name)
+        if flipud:
+            data = np.flipud(data)
         np.vectorize(setattr)(self.array_cells, attr_name, data)
 
     def _add_dataarray(
@@ -591,6 +597,7 @@ class PatchModule(Module, RasterBase):
         attr_name: Optional[str] = None,
         cover_crs: bool = False,
         resampling_method: str = "nearest",
+        flipud: bool = False,
     ) -> None:
         if cover_crs:
             data.rio.write_crs(self.crs, inplace=True)
@@ -598,8 +605,8 @@ class PatchModule(Module, RasterBase):
         data = data.rio.reproject_match(
             self.xda,
             resampling=resampling,
-        )
-        self._add_attribute(data.to_numpy(), attr_name)
+        ).to_numpy()
+        self._add_attribute(data, attr_name, flipud=flipud)
 
     def apply_raster(
         self, data: Raster, attr_name: str | None = None, **kwargs: Any
@@ -623,9 +630,14 @@ class PatchModule(Module, RasterBase):
                     Default is False.
                 resampling_method:
                     The [resampling method](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling) when reprojecting the input data.
+                    Default is "nearest".
+                flipud:
+                    Whether to flip the input data upside down.
+                    Set to True when the input data is not in the same direction as the raster layer.
+                    Default is False.
         """
         if isinstance(data, np.ndarray):
-            self._add_attribute(data, attr_name)
+            self._add_attribute(data, attr_name, **kwargs)
         elif isinstance(data, xr.DataArray):
             self._add_dataarray(data, attr_name, **kwargs)
         elif isinstance(data, xr.Dataset):
