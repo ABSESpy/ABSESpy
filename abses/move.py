@@ -19,9 +19,11 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 import mesa_geo as mg
+import numpy as np
 from mesa.space import Coordinate
 
 from abses.errors import ABSESpyError
+from abses.sequences import ActorsList
 
 if TYPE_CHECKING:
     from abses.actor import Actor
@@ -116,6 +118,7 @@ class _Movements:
     def __init__(self, actor: Actor) -> None:
         self.actor = actor
         self.model = actor.model
+        self.seed = actor.unique_id
         # self.direction = actor.direction
 
     @property

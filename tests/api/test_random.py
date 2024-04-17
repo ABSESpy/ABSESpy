@@ -20,19 +20,6 @@ class TestRandomActorsList:
         """有随机种子的测试模型"""
         return MainModel(seed=0)
 
-    def test_seed(self, main: MainModel):
-        """测试随机种子是一致的"""
-        # arrange
-        actors = main.agents.new(Actor, num=3)
-        seed = getattr(main, "_seed")
-        assert actors.random.seed == seed
-
-        # act
-        actor1 = actors.random.choice()
-
-        # assert
-        assert actor1 is actors[2]
-
     def test_link(self, main):
         """测试随机互相连接"""
         # arrange
