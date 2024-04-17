@@ -11,29 +11,30 @@
 
 from __future__ import annotations
 
-from numbers import Number
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
-import mesa_geo as mg
+from mesa_geo.raster_layers import RasterBase
 
 from abses import ActorsList
 from abses.container import _CellAgentsContainer
 from abses.errors import ABSESpyError
-from abses.links import TargetName, _LinkNode
+from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:
     from abses.main import H, MainModel, N
     from abses.nature import PatchModule
 
 try:
-    from typing import Self, TypeAlias
+    from typing import TypeAlias
 except ImportError:
-    from typing_extensions import Self, TypeAlias
+    from typing_extensions import TypeAlias
 
 Pos: TypeAlias = Tuple[int, int]
 
 
-def raster_attribute(func: Callable[..., Union[Number, str]]) -> property:
+def raster_attribute(
+    func: Callable[[Any], Union[str | int | float]]
+) -> property:
     """Turn the method into a property that the patch can extract.
     Examples:
         ```
@@ -66,7 +67,7 @@ def raster_attribute(func: Callable[..., Union[Number, str]]) -> property:
     return property(func)
 
 
-class PatchCell(mg.Cell, _LinkNode):
+class PatchCell(_LinkNodeCell):
     """A patch cell of a `RasterLayer`.
     Subclassing this class to create a custom cell.
     When class attribute `max_agents` is assigned,
@@ -81,16 +82,13 @@ class PatchCell(mg.Cell, _LinkNode):
 
     max_agents: Optional[int] = None
 
-    def __init__(
-        self, pos: Optional[Pos] = None, indices: Optional[Pos] = None
-    ):
-        mg.Cell.__init__(self, pos, indices)
-        _LinkNode.__init__(self)
-        self._agents: Optional[_CellAgentsContainer] = None
-        self._layer: Optional[PatchModule] = None
+    def __init__(self, layer, indices: Optional[Pos] = None):
+        _LinkNodeCell.__init__(self)
+        self.indices = indices
+        self._set_layer(layer=layer)
 
     def __repr__(self) -> str:
-        return f"<Cell at {self.layer}[{self.pos}]>"
+        return f"<Cell at {self.layer}[{self.indices}]>"
 
     @classmethod
     def __attribute_properties__(cls) -> set[str]:
@@ -116,12 +114,9 @@ class PatchCell(mg.Cell, _LinkNode):
             )
         return self._layer
 
-    @layer.setter
-    def layer(self, layer: PatchModule) -> None:
-        if not isinstance(layer, mg.RasterLayer):
+    def _set_layer(self, layer: PatchModule) -> None:
+        if not isinstance(layer, RasterBase):
             raise TypeError(f"{type(layer)} is not valid layer.")
-        if self._layer is not None:
-            raise ABSESpyError("PatchCell can only belong to one layer.")
         # set layer property
         self._layer = layer
         # set layer's model as the model
@@ -132,14 +127,9 @@ class PatchCell(mg.Cell, _LinkNode):
         )
 
     @property
-    def agents(self) -> Optional[_CellAgentsContainer]:
+    def agents(self) -> _CellAgentsContainer:
         """The agents located at here."""
         return self._agents
-
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> _CellAgentsContainer | None:
-        return self if target == "cell" else self.agents
 
     def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
         """Gets the value of an attribute or registered property.
@@ -167,15 +157,12 @@ class PatchCell(mg.Cell, _LinkNode):
         radius: int = 1,
         include_center: bool = False,
         annular: bool = False,
-        seed: Optional[int] = None,
-    ) -> ActorsList[Self]:
+    ) -> ActorsList[_LinkNodeCell]:
         """Get the grid around the patch."""
-        cells = self.layer.get_neighboring_cells(
-            self.pos, moore=moore, radius=radius, include_center=include_center
+        return self.layer.get_neighborhood(
+            self.indices,
+            moore=moore,
+            radius=radius,
+            include_center=include_center,
+            annular=annular,
         )
-        if annular:
-            interiors = self.layer.get_neighboring_cells(
-                self.pos, moore=moore, radius=radius - 1, include_center=False
-            )
-            return ActorsList(self.model, set(cells) - set(interiors))
-        return ActorsList(self.model, cells)

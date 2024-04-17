@@ -27,6 +27,8 @@ from typing import (
     cast,
 )
 
+import pandas as pd
+
 try:
     from typing import TypeAlias
 except ImportError:
@@ -293,6 +295,22 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
         logger.info(f"Ending {self.name}")
+
+    def summary(self, verbose: bool = False) -> pd.DataFrame:
+        """Report the state of the model."""
+        print(f"Using ABSESpy version: {self.version}")
+        # Basic reports
+        to_report = {
+            "name": self.name,
+            "state": self.state,
+            "tick": self.time.tick,
+        }
+        for breed in self.agents:
+            to_report[breed] = self.agents.has(breed)
+        if verbose:
+            to_report["model_vars"] = self.datacollector.model_reporters.keys()
+            to_report["agent_vars"] = self.datacollector.agent_reporters.keys()
+        return pd.Series(to_report)
 
     def initialize_data_collector(
         self,

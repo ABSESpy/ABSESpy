@@ -44,20 +44,22 @@ if TYPE_CHECKING:
     from abses import MainModel
     from abses.actor import Actor
     from abses.cells import PatchCell
+    from abses.container import _CellAgentsContainer
+    from abses.sequences import Link
 
 LinkingNode: TypeAlias = "Actor | PatchCell"
 Direction: TypeAlias = Optional[Literal["in", "out"]]
 DEFAULT_TARGETS: Tuple[str, str] = ("cell", "actor")
 TargetName: TypeAlias = Union[Literal["cell", "actor", "self"], str]
-AttrGetter: TypeAlias = Union["Actor", "PatchCell", ActorsList["Actor"]]
+AttrGetter: TypeAlias = Union["Link", ActorsList["Link"]]
 
 
 class _LinkContainer:
     """Container for links."""
 
     def __init__(self) -> None:
-        self._back_links: Dict[str, Dict[int, Set]] = {}
-        self._links: Dict[str, Dict[int, Set]] = {}
+        self._back_links: Dict[str, Dict[LinkingNode, Set]] = {}
+        self._links: Dict[str, Dict[LinkingNode, Set]] = {}
         self._cached_networks: Dict[str, object] = {}
 
     @property
@@ -458,6 +460,7 @@ class _BreedDescriptor:
 class _LinkNode:
     """节点类"""
 
+    unique_id: int = -1
     breed = _BreedDescriptor()
 
     @abstractmethod
@@ -560,3 +563,21 @@ class _LinkNode:
         else:
             new_target = self._redirect_getting(target=target)
             new_target.set(attr, value, "self")
+
+
+class _LinkNodeCell(_LinkNode):
+    def _default_redirection(
+        self, target: Optional[TargetName]
+    ) -> _CellAgentsContainer | _LinkNodeCell:
+        if target == "cell":
+            return self
+        return cast(_CellAgentsContainer, getattr(self, "agents"))
+
+
+class _LinkNodeActor(_LinkNode):
+    def _default_redirection(
+        self, target: Optional[TargetName]
+    ) -> _LinkNodeActor | Optional[_LinkNodeCell]:
+        if target == "actor":
+            return self
+        return cast(Optional[_LinkNodeCell], getattr(self, "at"))

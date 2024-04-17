@@ -82,8 +82,8 @@ class TestCompositeModule:
     def test_create_non_module_raises_error(self, com_module: CompositeModule):
         """不是模块的类添加时会报错"""
         # arrange / act / assert
-        with pytest.raises(AssertionError):
-            com_module.create_module(object)
+        with pytest.raises(TypeError):
+            com_module.modules.new(module_class=object)
 
     def test_initialization(self, com_module: CompositeModule) -> None:
         """测试初始化"""

@@ -17,6 +17,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    overload,
 )
 
 import numpy as np
@@ -94,6 +95,17 @@ class ListRandom:
         total = prob.sum()
         prob = prob / total if total else np.repeat(1 / length, length)
         return prob
+
+    @overload
+    def choice(
+        self,
+        size: int = 1,
+        prob: np.ndarray | None = None,
+        replace: bool = False,
+        as_list: bool = False,
+        when_empty: WHEN_EMPTY = "raise exception",
+    ) -> Actor | ActorsList[Actor]:
+        ...
 
     def choice(
         self,
