@@ -167,6 +167,7 @@ class PatchCell(mg.Cell, _LinkNode):
         radius: int = 1,
         include_center: bool = False,
         annular: bool = False,
+        seed: Optional[int] = None,
     ) -> ActorsList[Self]:
         """Get the grid around the patch."""
         cells = self.layer.get_neighboring_cells(
