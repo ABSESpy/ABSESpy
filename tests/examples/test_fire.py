@@ -90,7 +90,6 @@ class TestForest:
     def test_step(self, forest_fixture):
         """Test step."""
         forest = forest_fixture
-        forest.setup()
         forest.step()
         assert (
             any(

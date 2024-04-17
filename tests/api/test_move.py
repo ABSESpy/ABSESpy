@@ -51,7 +51,9 @@ class TestMovements:
         """Test raises error when move wrongly."""
         # arrange
         new_module = model.nature.create_module(
-            how="from_resolution", shape=(1, 2)
+            how="from_resolution",
+            shape=(1, 2),
+            name="temporal_testing",
         )
         actor = cell_0_0.agents.new(Actor, singleton=True)
         another_layer_cell = new_module.array_cells[0, 0]

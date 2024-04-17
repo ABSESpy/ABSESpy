@@ -265,6 +265,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         Returns:
             The value of the attribute.
         """
+        if attr in self.dynamic_variables:
+            return self.dynamic_var(attr)
         return super().get(attr=attr, target=target)
 
     @alive_required

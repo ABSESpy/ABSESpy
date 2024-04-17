@@ -117,6 +117,11 @@ class _ModuleFactory(object):
         """If the factory is empty."""
         return len(self.modules.keys()) == 0
 
+    def _check_name(self, name: str) -> None:
+        """Check if the name is valid."""
+        if name in self.modules:
+            raise ValueError(f"Name '{name}' already exists in the model.")
+
     def new(
         self,
         how: Optional[str] = None,
@@ -155,9 +160,10 @@ class _ModuleFactory(object):
                 f"{how} is not a valid method for creating module."
                 f"Choose from {self.methods} for {self.default_cls}"
             )
-        # setattr(self, module.name, module)  # register as module
+        # register as module
+        self._check_name(module.name)
+        self.modules[module.name] = module
         self.father.attach(module)
-        self.modules[module.name] = module  # register as module
         return module
 
 

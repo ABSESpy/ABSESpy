@@ -63,12 +63,16 @@ Raster: TypeAlias = Union[
     xr.DataArray,
     xr.Dataset,
 ]
+CellFilter: TypeAlias = Optional[str | np.ndarray | xr.DataArray | Geometry]
 
 
 class _PatchModuleFactory(_ModuleFactory):
     def __init__(self, father) -> None:
         super().__init__(father)
         self.default_cls = PatchModule
+
+    def __repr__(self) -> str:
+        return repr(self.father)
 
     def from_resolution(
         self,
@@ -271,6 +275,9 @@ class PatchModule(Module, RasterBase):
         """The cells stored in this layer."""
         return self._cells
 
+    def __repr__(self):
+        return f"<{self.name}{self.shape2d}: {len(self.attributes)} vars>"
+
     def __getitem__(
         self,
         index: int | Sequence[Coordinate] | tuple[int | slice, int | slice],
@@ -397,8 +404,7 @@ class PatchModule(Module, RasterBase):
         # 判断算出来的是一个符合形状的矩阵
         self._attr_or_array(array)
         # 将矩阵转换为三维，并更新空间数据
-        array_3d = array.reshape(self.shape3d)
-        self.apply_raster(array_3d, attr_name=attr_name)
+        self.apply_raster(array, attr_name=attr_name)
         return array
 
     def get_rasterio(
@@ -499,9 +505,10 @@ class PatchModule(Module, RasterBase):
 
     def select(
         self,
-        where: Optional[str | np.ndarray | xr.DataArray | Geometry] = None,
+        where: Optional[CellFilter] = None,
     ) -> ActorsList[PatchCell]:
         """Select cells from this layer.
+        Also has a shortcut alias for this method: `.sel`.
 
         Parameters:
             where:
@@ -531,6 +538,8 @@ class PatchModule(Module, RasterBase):
         mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool)
         return ActorsList(self.model, self.array_cells[mask_])
 
+    sel = select
+
     def apply(
         self, ufunc: Callable[..., Any], *args: Any, **kwargs: Any
     ) -> np.ndarray:
@@ -549,22 +558,6 @@ class PatchModule(Module, RasterBase):
         """
         func = functools.partial(ufunc, *args, **kwargs)
         return np.vectorize(func)(self.array_cells, *args, **kwargs)
-
-    def sel(self, where) -> ActorsList[PatchCell]:
-        """Select cells from this layer.
-
-        Parameters:
-            where:
-                The condition to select cells.
-                If None (by default), select all cells.
-                If a string, select cells by the attribute name.
-                If a numpy.ndarray, select cells by the mask array.
-                If a Shapely Geometry, select cells by the intersection with the geometry.
-
-        Returns:
-            An `ActorsList` with all selected cells stored.
-        """
-        return self.select(where)
 
     def coord_iter(self) -> Iterator[tuple[Coordinate, PatchCell]]:
         """
@@ -609,7 +602,7 @@ class PatchModule(Module, RasterBase):
         self._add_attribute(data, attr_name, flipud=flipud)
 
     def apply_raster(
-        self, data: Raster, attr_name: str | None = None, **kwargs: Any
+        self, data: Raster, attr_name: Optional[str], **kwargs: Any
     ) -> None:
         """Apply raster data to the cells.
 
@@ -629,7 +622,8 @@ class PatchModule(Module, RasterBase):
                     If True, it will cover the crs of the input data by the crs of this layer.
                     Default is False.
                 resampling_method:
-                    The [resampling method](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling) when reprojecting the input data.
+                    The [resampling method](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling)
+                    when re-projecting the input data.
                     Default is "nearest".
                 flipud:
                     Whether to flip the input data upside down.
@@ -651,7 +645,8 @@ class PatchModule(Module, RasterBase):
 
         Parameters:
             attr_name:
-                The attribute to retrieve. Update it if it is a dynamic variable. If None (by default), retrieve all attributes as a 3D array.
+                The attribute to retrieve.
+                If None (by default), retrieve all attributes as a 3D array.
 
         Returns:
             A 3D array of attribute.
@@ -696,7 +691,34 @@ class PatchModule(Module, RasterBase):
         annular: bool = False,
         return_mask: bool = False,
     ) -> ActorsList[PatchCell] | np.ndarray:
-        """Getting neighboring positions of the given coordinate."""
+        """Getting neighboring positions of the given coordinate.
+
+        Parameters:
+            pos:
+                The coordinate to get the neighborhood.
+            moore:
+                Whether to use Moore neighborhood.
+                If False, use Von Neumann neighborhood.
+            include_center:
+                Whether to include the center cell.
+                Default is False.
+            radius:
+                The radius of the neighborhood.
+                Default is 1.
+            annular:
+                Whether to use annular (ring) neighborhood.
+                Default is False.
+            return_mask:
+                Whether to return a mask array.
+                If True, return a mask array of the neighboring locations.
+                Otherwise, return a `ActorsList` of neighboring cells.
+                Default is False.
+
+        Returns:
+            An `ActorsList` of neighboring cells, or a mask array.
+            Where the mask array is a boolean array with the same shape as the raster layer.
+            The True value indicates the cell is in the neighborhood.
+        """
         mask_arr = np.zeros(self.shape2d, dtype=bool)
         mask_arr[pos[0], pos[1]] = True
         mask_arr = get_buffer(
@@ -710,17 +732,22 @@ class PatchModule(Module, RasterBase):
     def to_file(
         self,
         raster_file: str,
-        attr_name: str | None = None,
+        attr_name: Optional[str] = None,
         driver: str = "GTiff",
     ) -> None:
         """
         Writes a raster layer to a file.
 
-        :param str raster_file: The path to the raster file to write to.
-        :param str | None attr_name: The name of the attribute to write to the raster.
-            If None, all attributes are written. Default is None.
-        :param str driver: The GDAL driver to use for writing the raster file.
-            Default is 'GTiff'. See GDAL docs at https://gdal.org/drivers/raster/index.html.
+        Parameters:
+            raster_file:
+                The path to the raster file to write to.
+            attr_name:
+                The name of the attribute to write to the raster.
+                If None, all attributes are written. Default is None.
+            driver:
+                The GDAL driver to use for writing the raster file.
+                Default is 'GTiff'.
+                See GDAL docs at https://gdal.org/drivers/raster/index.html.
         """
 
         data = self.get_raster(attr_name)
@@ -741,9 +768,11 @@ class PatchModule(Module, RasterBase):
         """
         Determines whether position is off the grid.
 
-        :param Coordinate pos: Position to check.
-        :return: True if position is off the grid, False otherwise.
-        :rtype: bool
+        Parameters:
+            pos: Position to check.
+
+        Returns:
+            True if position is off the grid, False otherwise.
         """
 
         row, col = pos
