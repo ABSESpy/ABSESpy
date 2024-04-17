@@ -18,19 +18,13 @@ from examples.fire_spread.model import Forest, Tree
 @pytest.fixture(name="tree_fixture")
 def setup():
     """Create a forest model fully populated with trees"""
-    forest = Forest(parameters={"model": {"density": 1, "shape": (100, 100)}})
+    forest = Forest(parameters={"model": {"density": 1, "shape": (4, 4)}})
     forest.setup()
-    return forest, forest.nature.forest.array_cells[51, 51]
+    return forest, forest.nature.forest.array_cells[2, 2]
 
 
 class TestTree:
     """Test tree cell."""
-
-    def test_init(self):
-        """Test initialization."""
-        tree = Tree()
-        assert tree.state == 0
-        assert tree is not None
 
     def test_setup(self, tree_fixture):
         """Test initialization."""
@@ -39,7 +33,7 @@ class TestTree:
         assert tree.state == 1
         assert tree is not None
         assert forest is not None
-        assert (xarr == 2).mean() == 1 / 100
+        assert (xarr == 2).mean() == 1 / 4
 
     def test_states(self, tree_fixture):
         """Test grow method."""
@@ -54,7 +48,7 @@ class TestTree:
     "parameters",
     [
         {"model": {"density": 0.8, "shape": (25, 25)}},
-        {"model": {"density": 0.4, "shape": (25, 25)}},
+        {"model": {"density": 0.5, "shape": (25, 25)}},
     ],
 )
 class TestForest:
@@ -96,7 +90,6 @@ class TestForest:
     def test_step(self, forest_fixture):
         """Test step."""
         forest = forest_fixture
-        forest.setup()
         forest.step()
         assert (
             any(
@@ -106,6 +99,7 @@ class TestForest:
             )
             is True
         )
+        forest.step()
         assert (
             any(
                 ActorsList(

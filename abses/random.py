@@ -17,6 +17,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    overload,
 )
 
 import numpy as np
@@ -43,7 +44,7 @@ class ListRandom:
     def __init__(self, model: MainModel[Any, Any], actors: ActorsList) -> None:
         self.model = model
         self.actors = actors
-        self.seed = getattr(model, "_seed", 0)
+        self.seed = model.random.random() * 100
         self.generator = np.random.default_rng(seed=int(self.seed))
 
     def _to_actors_list(self, objs: Iterable) -> ActorsList:
@@ -94,6 +95,17 @@ class ListRandom:
         total = prob.sum()
         prob = prob / total if total else np.repeat(1 / length, length)
         return prob
+
+    @overload
+    def choice(
+        self,
+        size: int = 1,
+        prob: np.ndarray | None = None,
+        replace: bool = False,
+        as_list: bool = False,
+        when_empty: WHEN_EMPTY = "raise exception",
+    ) -> Actor | ActorsList[Actor]:
+        ...
 
     def choice(
         self,

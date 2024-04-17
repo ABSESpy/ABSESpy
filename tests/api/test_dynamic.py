@@ -70,9 +70,7 @@ class TestDynamicData:
         """创造可供测试的黄河灌溉用水例子"""
         model = MainModel(seed=42, parameters=water_quota_config)
         gdf = gpd.read_file(water_quota_config.db.cities)
-        agents = model.nature.create_agents_from_gdf(
-            gdf=gdf, unique_id="City_ID"
-        )
+        agents = model.agents.new_from_gdf(gdf=gdf, unique_id="City_ID")
         agents.trigger(
             func_name="add_dynamic_variable",
             name="lands",
@@ -111,6 +109,7 @@ class TestDynamicData:
         module = model.nature.create_module(
             how="from_file",
             raster_file=water_quota_config.db.population,
+            apply_raster=True,
         )
         module.add_dynamic_variable(
             name="et0", data=et0_data, function=self.update_et0_function

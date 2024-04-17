@@ -1,4 +1,23 @@
 
+<a id='changelog-0.5.8'></a>
+# 0.5.8 — 2024-04-18
+
+## Performance improvements
+
+- [x] #zap⚡️ Improved nature raster operation performance by vectorizing
+
+## Refactoring
+
+- [x] #refactor♻️ Refactor nature for more convenience and consistency
+
+## Fixed bugs
+
+- [x] #bug🐛 fixed the same seed for all `ActorsList` bugs.
+
+## Documentation changes
+
+- [x] #docs📄 update notebooks with cleaner descriptions on Nature
+
 <a id='changelog-0.5.7'></a>
 # 0.5.7 — 2024-04-10
 

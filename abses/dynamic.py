@@ -31,6 +31,8 @@ class _DynamicVariable:
         self._obj: _BaseObj = obj
         self._data: Any = data
         self._function: Callable = function
+        self._cached_data: Any = None
+        self.now()
 
     @property
     def name(self):
@@ -112,4 +114,11 @@ class _DynamicVariable:
         """
         required_attrs = self.get_required_attributes(self.function)
         args = {attr: getattr(self, attr) for attr in required_attrs}
-        return self.function(**args)
+        result = self.function(**args)
+        self._cached_data = result
+        return result
+
+    @property
+    def cache(self) -> Any:
+        """Return the dynamic variable's cache"""
+        return self._cached_data

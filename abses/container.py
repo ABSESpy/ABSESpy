@@ -29,6 +29,8 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
+import geopandas as gpd
+import mesa_geo as mg
 from loguru import logger
 
 from abses.actor import Actor, Breeds
@@ -148,6 +150,34 @@ class _AgentsContainer(dict):
             if breed in self._model.breeds:
                 raise ValueError(f"{breed} is already registered.")
             self._model.breeds = a_cls
+
+    def new_from_gdf(
+        self,
+        gdf: gpd.GeoDataFrame,
+        unique_id: str = "Index",
+        agent_cls: type[Actor] = Actor,
+    ) -> ActorsList[Actor]:
+        """Create actors from a `geopandas.GeoDataFrame` object.
+
+        Parameters:
+            gdf:
+                The `geopandas.GeoDataFrame` object to convert.
+            unique_id:
+                A column name, to be converted to unique index
+                of created geo-agents (Social-ecological system Actors).
+            agent_cls:
+                Agent class to create.
+
+        Returns:
+            An `ActorsList` with all new created actors stored.
+        """
+        creator = mg.AgentCreator(
+            model=self.model, agent_class=agent_cls, crs=self.model.nature.crs
+        )
+        agents = creator.from_GeoDataFrame(gdf=gdf, unique_id=unique_id)
+        self.register(agent_cls)
+        self.add(agents)
+        return ActorsList(model=self.model, objs=agents)
 
     def new(
         self,

@@ -29,8 +29,8 @@ class Customer(PatchCell):
         prices = stores.array("price")
         # Create a list of all distances from the customer to each shop
         distances = cdist(
-            np.array([self.pos]),
-            np.array([shop.at.pos for shop in stores]),
+            np.array([self.indices]),
+            np.array([shop.at.indices for shop in stores]),
         )[0]
         # Pair each shop to its distance & price
         _pair = dict(zip(stores, distances + prices))

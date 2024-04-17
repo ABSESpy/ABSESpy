@@ -46,13 +46,13 @@ from abses.selection import selecting
 from .tools.func import make_list
 
 if TYPE_CHECKING:
+    from abses.actor import Actor, TargetName
+    from abses.links import _LinkNode
     from abses.main import MainModel
-
-    from .actor import Actor, TargetName
 
 Selection: TypeAlias = Union[str, Iterable[bool], Dict[str, bool]]
 HOW: TypeAlias = Literal["only", "random", "item"]
-ActorType = TypeVar("ActorType", bound="Actor")
+Link = TypeVar("Link", bound="_LinkNode")
 
 
 def get_only_agent(agents: ActorsList) -> Actor:
@@ -64,11 +64,11 @@ def get_only_agent(agents: ActorsList) -> Actor:
     raise ValueError("More than one agent.")
 
 
-class ActorsList(List[ActorType], Generic[ActorType]):
+class ActorsList(List[Link], Generic[Link]):
     """A list of actors in an agent-based model."""
 
     def __init__(
-        self, model: MainModel[Any, Any], objs: Iterable[Actor] = ()
+        self, model: MainModel[Any, Any], objs: Iterable[Link] = ()
     ) -> None:
         super().__init__(objs)
         self._model = model
@@ -85,11 +85,11 @@ class ActorsList(List[ActorType], Generic[ActorType]):
         )
 
     @overload
-    def __getitem__(self, other: int) -> Actor:
+    def __getitem__(self, other: int) -> Link:
         ...
 
     @overload
-    def __getitem__(self, index: slice) -> ActorsList[Actor]:
+    def __getitem__(self, index: slice) -> ActorsList[Link]:
         ...
 
     def __getitem__(self, index):
@@ -117,13 +117,13 @@ class ActorsList(List[ActorType], Generic[ActorType]):
         """随机模块"""
         return ListRandom(actors=self, model=self._model)
 
-    def to_dict(self) -> Dict[str, ActorsList[Actor]]:
+    def to_dict(self) -> Dict[str, ActorsList[Link]]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.
 
         Returns:
             key is the breed of actors, and values are corresponding actors.
         """
-        dic: Dict[str, ActorsList[Actor]] = {}
+        dic: Dict[str, ActorsList[Link]] = {}
         for actor in iter(self):
             breed = actor.breed
             if breed not in dic:
@@ -132,7 +132,7 @@ class ActorsList(List[ActorType], Generic[ActorType]):
                 dic[breed].append(actor)
         return dic
 
-    def select(self, selection: Selection) -> ActorsList[Actor]:
+    def select(self, selection: Selection) -> ActorsList[Link]:
         """
         Returns a new :class:`ActorList` based on `selection`.
 
@@ -150,7 +150,7 @@ class ActorsList(List[ActorType], Generic[ActorType]):
         selected = [a for a, s in zip(self, bool_) if s]
         return ActorsList(self._model, selected)
 
-    def ids(self, ids: Iterable[int]) -> List[Actor]:
+    def ids(self, ids: Iterable[int]) -> ActorsList[Link]:
         """Subsets ActorsList by a `ids`.
 
         Parameters:
@@ -165,7 +165,7 @@ class ActorsList(List[ActorType], Generic[ActorType]):
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None
-    ) -> ActorsList[Actor]:
+    ) -> ActorsList[Link]:
         """
         Selects the elements of the sequence that are better than a given value or actor
         based on a specified metric.
@@ -317,7 +317,7 @@ class ActorsList(List[ActorType], Generic[ActorType]):
         for agent in iter(self):
             agent.set(attr, value, target=target)
 
-    def item(self, how: HOW = "item", index: int = 0) -> Optional[Actor]:
+    def item(self, how: HOW = "item", index: int = 0) -> Optional[Link]:
         """Retrieve one agent if possible.
 
         Parameters:

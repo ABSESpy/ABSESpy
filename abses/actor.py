@@ -33,16 +33,15 @@ import mesa_geo as mg
 
 from abses.decision import _DecisionFactory
 from abses.errors import ABSESpyError
-from abses.links import TargetName, _LinkNode
+from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
 from abses.move import _Movements
 from abses.objects import _BaseObj
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
-    from abses.human import _LinkContainer
+    from abses.cells import Pos
     from abses.main import MainModel
     from abses.nature import PatchCell, PatchModule
-    from abses.sequences import ActorsList
 
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
@@ -113,7 +112,7 @@ def perception(
     )
 
 
-class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
+class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     """
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
@@ -162,7 +161,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         mg.GeoAgent.__init__(
             self, unique_id, model=model, geometry=geometry, crs=crs
         )
-        _LinkNode.__init__(self)
+        _LinkNodeActor.__init__(self)
         self._cell: Optional[PatchCell] = None
         self._decisions: _DecisionFactory = self._setup_decisions()
         self._alive: bool = True
@@ -170,11 +169,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
 
     def __repr__(self) -> str:
         return f"<{self.breed} [{self.unique_id}]>"
-
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> Optional[PatchCell]:
-        return self if target == "actor" else self._cell
 
     def _setup_decisions(self) -> _DecisionFactory:
         """Decisions that this actor makes."""
@@ -212,14 +206,13 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
     @at.setter
     def at(self, cell: PatchCell) -> None:
         """Set the cell where the actor is located."""
-        if not isinstance(cell, mg.Cell):
+        if not isinstance(cell, _LinkNodeCell):
             raise TypeError(f"{cell} is not a cell.")
         if self not in cell.agents:
             raise ABSESpyError(
                 "Cannot set location directly because the actor is not added to the cell."
             )
         self._cell = cell
-        self.pos = cell.pos
 
     @at.deleter
     def at(self) -> None:
@@ -230,6 +223,16 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
                 "Cannot remove location directly because the actor is still on earth."
             )
         self._cell = None
+
+    @property
+    def pos(self) -> Optional[Pos]:
+        """Position of the actor."""
+        return None if self.at is None else self.at.indices
+
+    @pos.setter
+    def pos(self, value) -> None:
+        if value is not None:
+            raise TypeError("Trying to set position.")
 
     @cached_property
     def move(self) -> _Movements:
@@ -262,6 +265,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNode):
         Returns:
             The value of the attribute.
         """
+        if attr in self.dynamic_variables:
+            return self.dynamic_var(attr)
         return super().get(attr=attr, target=target)
 
     @alive_required
