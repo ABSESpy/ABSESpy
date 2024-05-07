@@ -16,6 +16,7 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    Type,
     Union,
     overload,
 )
@@ -163,6 +164,14 @@ class ListRandom:
             if size == 1 and not as_list
             else self._to_actors_list(chosen)
         )
+
+    def new(
+        self, actor_cls: Type[Actor], size: int = 1, **kwargs
+    ) -> ActorsList[Actor]:
+        """Randomly creating new agents for a given actor type."""
+        cells = self.choice(as_list=True, size=size, **kwargs)
+        objs = cells.apply(lambda c: c.agents.new(actor_cls))
+        return self._to_actors_list(objs)
 
     def link(
         self, link: str, p: float = 1.0, mutual: bool = True
