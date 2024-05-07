@@ -53,6 +53,7 @@ from abses.tools.func import get_buffer
 from ._bases.errors import ABSESpyError
 from .cells import PatchCell
 from .sequences import ActorsList
+from .viz.viz_nature import _VizNature
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -311,6 +312,11 @@ class PatchModule(Module, RasterBase):
         xda = xda.rio.set_spatial_dims("x", "y")
         xda = xda.rio.write_transform(self.transform)
         return xda.rio.write_coordinate_system()
+
+    @functools.cached_property
+    def plot(self) -> _VizNature:
+        """Plotting"""
+        return _VizNature(self)
 
     @property
     def attributes(self) -> set[str]:

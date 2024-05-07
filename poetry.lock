@@ -1120,6 +1120,17 @@ xyzservices = "*"
 testing = ["pytest"]
 
 [[package]]
+name = "fontawesome"
+version = "5.10.1.post1"
+description = "The Font Awesome icon set for python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "fontawesome-5.10.1.post1-py3-none-any.whl", hash = "sha256:642d74da5f4726bb2c8f035a2f4a98fdc4294d213a291994ee0b3d845166f9e8"},
+    {file = "fontawesome-5.10.1.post1.tar.gz", hash = "sha256:1b5e8f2ed12a74b88aef6f404ff770af425324041bc5620523a802d5406595b8"},
+]
+
+[[package]]
 name = "fonttools"
 version = "4.51.0"
 description = "Tools to manipulate font files"
@@ -5856,4 +5867,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "9bcf86784685128f94c2fcf82c4eb5e672bf76130573fd214e0cdda5255d7247"
+content-hash = "33151779c4332a2e3e4423c22209d65cc39a993ff59012c22ec02fca8d6bf695"

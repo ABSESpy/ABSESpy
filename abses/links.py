@@ -467,6 +467,17 @@ class _LinkNode:
     def _default_redirection(self, target: Optional[TargetName]) -> AttrGetter:
         """默认重定向"""
 
+    @classmethod
+    def viz_attrs(cls, **kwargs) -> Dict[str, Any]:
+        """Return the attributes for viz."""
+        viz_attrs = {
+            "marker": getattr(cls, "marker", "o"),
+            "color": getattr(cls, "color", "black"),
+            "alpha": getattr(cls, "alpha", 1.0),
+        }
+        viz_attrs.update(kwargs)
+        return viz_attrs
+
     @cached_property
     def link(self) -> _LinkProxy:
         """A proxy which can be used to manipulate the links:

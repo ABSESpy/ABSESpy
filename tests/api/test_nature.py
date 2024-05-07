@@ -52,15 +52,24 @@ class MockPatchCell(PatchCell):
 class TestPatchModulePositions:
     """测试斑块模型的位置选取"""
 
-    def test_pos_and_indices(self, module: PatchModule):
+    @pytest.mark.parametrize(
+        "row, col, expected",
+        [
+            (0, 1, (0, 1)),
+            (1, 1, (1, 1)),
+            (1, 0, (1, 0)),
+            (0, 0, (0, 0)),
+        ],
+    )
+    def test_pos_and_indices(self, module: PatchModule, row, col, expected):
         """测试位置和索引。
         pos 应该是和 cell 的位置一致
         indices 应该是和 cell 的索引一致。
         """
         # arrange
-        cell = module.array_cells[1, 1]
+        cell = module.array_cells[row, col]
         # act / assert
-        assert cell.indices == (1, 1)
+        assert cell.indices == expected
 
     @pytest.mark.parametrize(
         "index, expected_value",

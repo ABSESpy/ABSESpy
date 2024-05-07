@@ -36,6 +36,7 @@ description = "ABSESpy makes it easier to build artificial Social-ecological sys
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
 readme = "README.md"
+include = ["icons/fa-regular-400.otf"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
@@ -49,6 +50,7 @@ rioxarray = "~0.13"
 pendulum = "~2"
 geopandas = "~0"
 typing-extensions = "^4.10.0"
+fontawesome = "^5.10.1.post1"
 
 [tool.poetry.group.dev.dependencies]
 pytest-clarity = "^1.0.1"
