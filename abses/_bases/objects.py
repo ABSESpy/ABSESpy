@@ -11,11 +11,10 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import mesa
 
+from abses._bases.bases import _Observer
+from abses._bases.components import _Component
+from abses._bases.dynamic import _DynamicVariable
 from abses.time import TimeDriver
-
-from .bases import _Observer
-from .components import _Component
-from .dynamic import _DynamicVariable
 
 if TYPE_CHECKING:
     from abses.main import MainModel

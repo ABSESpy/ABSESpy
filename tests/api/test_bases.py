@@ -11,7 +11,7 @@
 
 import pytest
 
-from abses.bases import _Notice, _Observer
+from abses._bases.bases import _Notice, _Observer
 
 
 @pytest.fixture(name="objects_fixture")

@@ -42,12 +42,12 @@ from omegaconf import DictConfig, OmegaConf
 from abses import __version__
 from abses.actor import Actor
 
-from .bases import _Notice
+from ._bases.bases import _Notice
+from ._bases.states import _States
 from .container import _AgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
-from .states import _States
 from .time import TimeDriver
 
 # Logging configuration

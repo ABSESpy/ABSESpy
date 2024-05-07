@@ -5,14 +5,17 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""Dynamic variables
+"""
+
 from __future__ import annotations
 
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, List
 
 if TYPE_CHECKING:
+    from ..time import TimeDriver
     from .objects import _BaseObj
-    from .time import TimeDriver
 
 
 class _DynamicVariable:

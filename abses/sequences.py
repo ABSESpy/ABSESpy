@@ -39,7 +39,7 @@ import mesa_geo as mg
 import numpy as np
 from numpy.typing import NDArray
 
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.random import ListRandom
 from abses.selection import selecting
 

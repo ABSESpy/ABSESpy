@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 from mesa_geo.raster_layers import RasterBase
 
 from abses import ActorsList
+from abses._bases.errors import ABSESpyError
 from abses.container import _CellAgentsContainer
-from abses.errors import ABSESpyError
 from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:

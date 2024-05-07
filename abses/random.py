@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:

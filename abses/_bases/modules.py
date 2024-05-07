@@ -25,14 +25,13 @@ from typing import (
 
 from loguru import logger
 
+from abses._bases.bases import _Notice
+from abses._bases.objects import _BaseObj
+from abses._bases.states import _States
 from abses.tools.func import iter_func
 
-from .bases import _Notice
-from .objects import _BaseObj
-from .states import _States
-
 if TYPE_CHECKING:
-    from .main import MainModel
+    from ..main import MainModel
 
 
 class Module(_BaseObj):

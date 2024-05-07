@@ -9,8 +9,8 @@ from typing import Any, Dict
 
 import pytest
 
+from abses._bases.modules import CompositeModule, Module
 from abses.main import MainModel
-from abses.modules import CompositeModule, Module
 
 
 class TestModule:

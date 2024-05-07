@@ -37,7 +37,7 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.sequences import ActorsList
 
 if TYPE_CHECKING:

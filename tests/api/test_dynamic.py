@@ -17,8 +17,8 @@ import xarray as xr
 from pandas.testing import assert_series_equal
 
 from abses import MainModel
+from abses._bases.objects import _BaseObj
 from abses.nature import PatchModule
-from abses.objects import _BaseObj
 from abses.time import TimeDriver
 
 

@@ -27,7 +27,7 @@ from omegaconf import DictConfig
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
-from abses.components import _Component
+from abses._bases.components import _Component
 
 if TYPE_CHECKING:
     from .main import MainModel

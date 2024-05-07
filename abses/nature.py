@@ -46,12 +46,12 @@ from rasterio.enums import Resampling
 from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
 
-from abses.modules import CompositeModule, Module, _ModuleFactory
+from abses._bases.modules import CompositeModule, Module, _ModuleFactory
 from abses.random import ListRandom
 from abses.tools.func import get_buffer
 
+from ._bases.errors import ABSESpyError
 from .cells import PatchCell
-from .errors import ABSESpyError
 from .sequences import ActorsList
 
 if TYPE_CHECKING:
