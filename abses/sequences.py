@@ -42,8 +42,8 @@ from numpy.typing import NDArray
 from abses._bases.errors import ABSESpyError
 from abses.random import ListRandom
 from abses.selection import selecting
-
-from .tools.func import make_list
+from abses.tools.func import make_list
+from abses.viz.viz_nature import _VizNodeList
 
 if TYPE_CHECKING:
     from abses.actor import Actor, TargetName
@@ -114,8 +114,13 @@ class ActorsList(List[Link], Generic[Link]):
 
     @cached_property
     def random(self) -> ListRandom:
-        """随机模块"""
+        """Random module"""
         return ListRandom(actors=self, model=self._model)
+
+    @cached_property
+    def plot(self) -> _VizNodeList:
+        """Plotting module"""
+        return _VizNodeList(self)
 
     def to_dict(self) -> Dict[str, ActorsList[Link]]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.

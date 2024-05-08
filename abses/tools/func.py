@@ -10,14 +10,19 @@
 """
 
 import logging
-from typing import Any, Callable, List
+from functools import wraps
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, cast
 
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from scipy import ndimage
 
 from abses.tools.regex import CAMEL_NAME
 
 logger = logging.getLogger(__name__)
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def get_buffer(
@@ -114,3 +119,36 @@ def camel_to_snake(name: str) -> str:
     """
     # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
     return CAMEL_NAME.sub("_", name).lower()
+
+
+def with_axes(
+    decorated_func: Optional[F] = None, figsize: Tuple[int, int] = (6, 4)
+) -> Callable[..., Any]:
+    """装饰一个函数/方法，如果该方法接受一个参数叫'ax'并且为None，为其增加一个默认的绘图布。
+
+    Parameters:
+        decorated_func:
+            被装饰的函数，检查是否有参数传递给装饰器，若没有则返回装饰器本身。
+        figsize:
+            图片画布的大小，默认宽度为6，高度为4。
+
+    Returns:
+        被装饰的函数
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            ax = kwargs.get("ax", None)
+            if ax is None:
+                _, ax = plt.subplots(figsize=figsize)
+                kwargs["ax"] = cast(Axes, ax)
+                result = func(*args, **kwargs)
+                return result
+            else:
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    # 检查是否有参数传递给装饰器，若没有则返回装饰器本身
+    return decorator(decorated_func) if decorated_func else decorator
