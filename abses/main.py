@@ -11,6 +11,7 @@ The main modelling framework of ABSESpy.
 
 from __future__ import annotations
 
+import functools
 import sys
 from typing import (
     Any,
@@ -49,6 +50,7 @@ from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
 from .time import TimeDriver
+from .viz.viz_model import _VizModel
 
 # Logging configuration
 logger.remove(0)
@@ -253,6 +255,11 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._breeds[breed.breed] = breed
         for container in self._containers:
             container[breed.breed] = set()
+
+    @functools.cached_property
+    def plot(self) -> _VizModel:
+        """Plotting the model."""
+        return _VizModel(self)
 
     def run_model(self, steps: Optional[int] = None) -> None:
         """Start running the model.
