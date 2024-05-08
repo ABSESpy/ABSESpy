@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import importlib.resources as pkg_resources
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Type, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Type, cast
 
 import fontawesome as fa
 import matplotlib.markers as markers
@@ -121,9 +121,14 @@ class _VizNature:
         attr: Optional[str] = None,
         ax: Optional[Axes] = None,
         with_actors: bool = True,
-        **legend_kwargs,
+        scatter_kwargs: Optional[Dict[str, Any]] = None,
+        legend_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Axes:
         """Show the nature module"""
+        if scatter_kwargs is None:
+            scatter_kwargs = {}
+        if legend_kwargs is None:
+            legend_kwargs = {}
         # because of `with_axes`, it must be a valid Axes object
         ax = cast(Axes, ax)
         if attr is None:
@@ -133,7 +138,7 @@ class _VizNature:
             xda = self.module.get_xarray(attr)
             xda.plot(ax=ax, cbar_kwargs=COLOR_BAR, alpha=0.8)
         if self.model.breeds and with_actors:
-            self.scatter(ax=ax)
+            self.scatter(ax=ax, **scatter_kwargs)
         ax.axes.set_aspect("equal")
         if self.model.breeds:
             ax.legend(**legend_kwargs)

@@ -11,7 +11,7 @@ Test Hotelling Law model.
 
 import pytest
 
-from examples.hotelling_law.model import Customer, Hotelling, Shop
+from examples.hotelling_law.model import Customer, Hotelling
 
 
 @pytest.fixture(name="hotelling_fixture")
