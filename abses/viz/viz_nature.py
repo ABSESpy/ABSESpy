@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import importlib.resources as pkg_resources
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple, Type, cast
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Type, cast
 
 import fontawesome as fa
 import matplotlib.markers as markers
@@ -26,9 +26,7 @@ from abses.tools.func import with_axes
 
 if TYPE_CHECKING:
     from abses.actor import Actor
-    from abses.main import MainModel
     from abses.nature import PatchModule
-    from abses.sequences import ActorsList
 
 COLOR_BAR = {"fraction": 0.03, "pad": 0.04}
 
@@ -66,11 +64,13 @@ class _VizNature:
     def _stat_actors(self, breed: str) -> pd.DataFrame:
         matrix = self.module.apply(lambda c: c.agents.has(breed))
         rows, cols = np.where(matrix)
+        rows_coords = self.module.coords["y"][rows]
+        cols_coords = self.module.coords["x"][cols]
         numbers = matrix[rows, cols]
         return pd.DataFrame(
             {
-                "x": cols.flatten(),
-                "y": rows.flatten(),
+                "x": cols_coords,
+                "y": rows_coords,
                 "Number": numbers.flatten(),
                 "Breed": breed,
             }
@@ -83,7 +83,7 @@ class _VizNature:
         size: Optional[str] = None,
         hue: Optional[str] = None,
         ax: Optional[Axes] = None,
-        sizes: Tuple[int, int] = (20, 200),
+        # sizes: Tuple[int, int] = (20, 200),
         palette: Optional[str | Dict] = None,
         **kwargs,
     ) -> Axes:
@@ -91,15 +91,15 @@ class _VizNature:
         data = []
         if breeds is None:
             breeds = self.model.breeds
-        markers = {}
+        markers_used = {}
         colors = {}
         for breed in breeds:
             data.append(self._stat_actors(breed=breed))
             style_dict = self._retrieve_marker(breed, **kwargs)
-            markers[breed] = style_dict["marker"]
+            markers_used[breed] = style_dict["marker"]
             colors[breed] = style_dict["color"]
         df = pd.concat(data, axis=0)
-        if palette is None and hue == "breed":
+        if palette is None and hue == "Breed":
             palette = colors
         sns.scatterplot(
             df,
@@ -109,8 +109,8 @@ class _VizNature:
             size=size,
             style="Breed",
             hue=hue,
-            markers=markers,
-            sizes=sizes,
+            markers=markers_used,
+            # sizes=sizes,
             palette=palette,
         )
         return ax
@@ -128,29 +128,13 @@ class _VizNature:
         ax = cast(Axes, ax)
         if attr is None:
             xda = self.module.xda
-            xda.plot(ax=ax, add_colorbar=False, edgecolor="white", alpha=0.8)
+            xda.plot(ax=ax, add_colorbar=False, alpha=0.8)
         else:
             xda = self.module.get_xarray(attr)
-            xda.plot(
-                ax=ax, cbar_kwargs=COLOR_BAR, edgecolor="white", alpha=0.8
-            )
+            xda.plot(ax=ax, cbar_kwargs=COLOR_BAR, alpha=0.8)
         if self.model.breeds and with_actors:
             self.scatter(ax=ax)
         ax.axes.set_aspect("equal")
         if self.model.breeds:
             ax.legend(**legend_kwargs)
-        return ax
-
-
-class _VizNodeList:
-    def __init__(self, actors: ActorsList) -> None:
-        self.actors = actors
-
-    @with_axes(figsize=(6, 4))
-    def hist(self, attr: str, ax: Optional[Axes] = None):
-        """Plot hist."""
-        breed = self.actors.array("breed")
-        value = self.actors.array(attr=attr)
-        df = pd.DataFrame({"breed": breed, attr: value})
-        sns.histplot(df, x=attr, ax=ax, hue="breed")
         return ax

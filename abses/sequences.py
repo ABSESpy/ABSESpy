@@ -43,7 +43,7 @@ from abses._bases.errors import ABSESpyError
 from abses.random import ListRandom
 from abses.selection import selecting
 from abses.tools.func import make_list
-from abses.viz.viz_nature import _VizNodeList
+from abses.viz.viz_actors import _VizNodeList
 
 if TYPE_CHECKING:
     from abses.actor import Actor, TargetName

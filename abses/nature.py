@@ -175,6 +175,8 @@ class _PatchModuleFactory(_ModuleFactory):
         name: str | None = None,
         attr_name: str | None = None,
         apply_raster: bool = False,
+        band: int = 1,
+        nodata: Any = np.nan,
         **kwargs: Any,
     ) -> PatchModule:
         """Create a raster layer module from a file.
@@ -196,8 +198,10 @@ class _PatchModuleFactory(_ModuleFactory):
         """
         to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
         with rasterio.open(raster_file, "r") as dataset:
-            values = dataset.read()
-            _, height, width = values.shape
+            values = dataset.read(band)
+            nodata_mask = values == dataset.nodata
+            values[nodata_mask] = nodata
+            height, width = values.shape
             total_bounds = [
                 dataset.bounds.left,
                 dataset.bounds.bottom,
@@ -213,6 +217,7 @@ class _PatchModuleFactory(_ModuleFactory):
             total_bounds=total_bounds,
             cell_cls=cell_cls,
         )
+        obj.mask = np.squeeze(~nodata_mask)
         # obj._transform = dataset.transform
         if apply_raster:
             obj.apply_raster(values, attr_name=attr_name, **kwargs)
@@ -270,11 +275,27 @@ class PatchModule(Module, RasterBase):
             func, shape=(self.height, self.width), dtype=object
         )
         self._attributes: Set[str] = set()
+        self.mask: np.ndarray = np.ones(self.shape2d)
+
+    @functools.cached_property
+    def cells(self) -> ActorsList[PatchCell]:
+        """The cells stored in this layer."""
+        return ActorsList(self.model, self.array_cells[self.mask])
 
     @property
-    def cells(self) -> np.ndarray:
-        """The cells stored in this layer."""
-        return self._cells
+    def mask(self) -> np.ndarray:
+        """Where is not accessible."""
+        return self._mask
+
+    @mask.setter
+    def mask(self, array: np.ndarray) -> None:
+        """Setting mask."""
+        if array.shape != self.shape2d:
+            raise ABSESpyError(
+                f"Shape mismatching, setting mask {array.shape}."
+                f"but the module is expecting shape {self.shape2d}."
+            )
+        self._mask = array.astype(bool)
 
     def __repr__(self):
         return f"<{self.name}{self.shape2d}: {len(self.attributes)} vars>"
@@ -306,8 +327,7 @@ class PatchModule(Module, RasterBase):
     @functools.cached_property
     def xda(self) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates."""
-        arr = np.ones(self.shape2d)
-        xda = xr.DataArray(data=arr, coords=self.coords)
+        xda = xr.DataArray(data=self.mask, coords=self.coords)
         xda = xda.rio.write_crs(self.crs)
         xda = xda.rio.set_spatial_dims("x", "y")
         xda = xda.rio.write_transform(self.transform)
@@ -350,7 +370,7 @@ class PatchModule(Module, RasterBase):
         """
         min_x, min_y, max_x, max_y = self.total_bounds
         coords_x = np.linspace(min_x, max_x, self.width, endpoint=False)
-        coords_y = np.linspace(min_y, max_y, self.height, endpoint=False)
+        coords_y = np.linspace(max_y, min_y, self.height, endpoint=False)
         return {
             "y": coords_y,
             "x": coords_x,
@@ -541,7 +561,7 @@ class PatchModule(Module, RasterBase):
             raise TypeError(
                 f"{type(where)} is not supported for selecting cells."
             )
-        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool)
+        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool) & self.mask
         return ActorsList(self.model, self.array_cells[mask_])
 
     sel = select

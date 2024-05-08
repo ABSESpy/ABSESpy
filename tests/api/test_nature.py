@@ -167,7 +167,9 @@ class TestPatchModule:
         """测试使用地理图形选择斑块"""
         # arrange
         module = model.nature.create_module(how="from_resolution", shape=shape)
-        actor: Actor = module.cells[0][0].agents.new(Actor, singleton=True)
+        actor: Actor = module.array_cells[0, 0].agents.new(
+            Actor, singleton=True
+        )
         module.apply_raster(
             np.arange(shape[0] * shape[1]).reshape(module.shape3d),
             attr_name="test",
@@ -239,7 +241,7 @@ class TestPatchModule:
 
         # assert
         row, col = cell_pos
-        linked_agents = module.cells[row, col].link.get("link")
+        linked_agents = module.array_cells[row, col].link.get("link")
         assert (agent1 in linked_agents, agent2 in linked_agents) == linked
 
     def test_major_layer(self, model, module):
