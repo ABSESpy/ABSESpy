@@ -11,6 +11,7 @@
 from typing import Optional
 
 import hydra
+import numpy as np
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig
 
@@ -73,6 +74,7 @@ class Forest(MainModel):
             cell_cls=Tree,
             major_layer=True,
         )
+        self.grid = grid
         # random choose some patches to setup trees
         chosen_patches = grid.random.choice(self.num_trees, replace=False)
         # create trees on the selected patches.
@@ -88,6 +90,12 @@ class Forest(MainModel):
         self.plot_state()
         plt.savefig(self.outpath / "state.jpg")
         plt.close()
+
+    @property
+    def burned_rate(self) -> float:
+        """The burned trees in ratio."""
+        state = self.grid.get_raster("state")  # mypy
+        return np.squeeze(state == 3).sum() / self.num_trees
 
     @property
     def num_trees(self) -> int:

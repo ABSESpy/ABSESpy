@@ -6,6 +6,11 @@ exp:
   name: fire_spread
   repeats: 10
 
+reports:
+  final:
+    burned: "burned_rate"
+
+
 model:
   density: 0.4
   shape:

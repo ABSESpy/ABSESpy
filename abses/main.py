@@ -14,6 +14,7 @@ from __future__ import annotations
 import functools
 import os
 import sys
+import types
 from pathlib import Path
 from typing import (
     Any,
@@ -317,7 +318,21 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
+        self.final_report()
         logger.info(f"Ending {self.name}")
+
+    def final_report(self) -> Dict[str, Any]:
+        """Report at the end of this model."""
+        result = {}
+        for k, reporter in self._reports["final"].items():
+            if isinstance(reporter, str):
+                value = getattr(self, reporter)
+            elif isinstance(reporter, types.FunctionType):
+                value = reporter(self)
+            else:
+                raise TypeError(f"Invalid final reporter {type(reporter)}.")
+            result[k] = value
+        return result
 
     def summary(self, verbose: bool = False) -> pd.DataFrame:
         """Report the state of the model."""
@@ -363,17 +378,24 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         )
         reporting_model: Dict[str, Reporter] = to_reports.get("model", {})
         reporting_agents: Dict[str, Reporter] = to_reports.get("agents", {})
+        reporting_final: Dict[str, Reporter] = to_reports.get("final", {})
         if model_reporters is not None:
             reporting_model |= model_reporters
         if agent_reporters is not None:
             reporting_agents |= agent_reporters
         _convert_to_python_expression(reporting_model)
         _convert_to_python_expression(reporting_agents)
+        _convert_to_python_expression(reporting_final)
         self.datacollector = DataCollector(
             model_reporters=reporting_model,
             agent_reporters=reporting_agents,
             tables=tables,
         )
+        self._reports = {
+            "model": reporting_model,
+            "agent": reporting_agents,
+            "final": reporting_final,
+        }
 
 
 def _convert_to_python_expression(

@@ -830,10 +830,12 @@ class BaseNature(CompositeModule):
         logger.info("Initializing a new Base Nature module...")
 
     @property
-    def major_layer(self) -> PatchModule | None:
+    def major_layer(self) -> Optional[PatchModule]:
         """The major layer of nature module.
         By default, it's the first created layer.
         """
+        # if self._major_layer is None:
+        #     raise ValueError(f"{self} doesn't have major layer.")
         return self._major_layer
 
     @major_layer.setter

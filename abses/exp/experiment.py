@@ -14,6 +14,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+import pandas as pd
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 from tqdm.auto import tqdm
@@ -79,15 +80,16 @@ class Experiment:
 
     def run(
         self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
-    ) -> None:
+    ) -> Dict[str, Any]:
         """运行模型一次"""
         model = self._model(parameters=cfg, run_id=repeat_id, outpath=outpath)
         model.run_model()
+        return model.final_report()
 
-    def update(self) -> None:
+    def update(self, reports: Optional[Dict[str, Any]] = None) -> None:
         """Updating in each run."""
         self._n_runs += 1
-        self.results[self.job_id, self._n_runs] = True
+        self.results[self.job_id, self._n_runs] = reports
 
     def batch_run(
         self,
@@ -105,8 +107,8 @@ class Experiment:
         outpath = self.outpath
         if number_process == 1 or repeats == 1:
             for repeat in tqdm(range(repeats), disable=not display_progress):
-                self.update()
-                self.run(cfg, repeat_id=repeat + 1, outpath=outpath)
+                result = self.run(cfg, repeat_id=repeat + 1, outpath=outpath)
+                self.update(reports=result)
             return
         # 创建进度条
         with tqdm(total=repeats, disable=not display_progress) as pbar:
@@ -119,11 +121,11 @@ class Experiment:
                 # 使用as_completed等待任务完成
                 for future in as_completed(futures):
                     # 每完成一个任务，更新进度条和运行计数
-                    future.result()
+                    reports = future.result()
                     pbar.update()
-                    self.update()
+                    self.update(reports=reports)
 
     @classmethod
     def summary(cls) -> None:
         """Ending the experiment."""
-        print(cls.results.keys())
+        return pd.DataFrame(cls.results)
