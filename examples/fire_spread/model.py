@@ -84,6 +84,11 @@ class Forest(MainModel):
         for tree in self.nature.forest:
             tree.burning()
 
+    def end(self):
+        self.plot_state()
+        plt.savefig(self.outpath / "state.jpg")
+        plt.close()
+
     @property
     def num_trees(self) -> int:
         """Number of trees"""
@@ -103,11 +108,10 @@ class Forest(MainModel):
 @hydra.main(version_base=None, config_path="", config_name="config")
 def main(cfg: Optional[DictConfig] = None):
     """运行模型"""
-    exp = Experiment(model_cls=Forest)  # 获取实验名称的实例
-    exp.load_config(cfg=cfg)
+    exp = Experiment(model_cls=Forest)
     exp.batch_run(cfg=cfg)
 
 
 if __name__ == "__main__":
     main()
-    Experiment().end()
+    Experiment.summary()

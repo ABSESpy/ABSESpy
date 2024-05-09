@@ -8,7 +8,9 @@ exp:
 
 model:
   density: 0.4
-  shape: (100, 100)
+  shape:
+    - 100
+    - 100
 
 time:
   end: 25

@@ -36,7 +36,10 @@ class Experiment:
             cls._instance = super(Experiment, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, model_cls: Optional[Type[MainModel]] = None):
+    def __init__(
+        self,
+        model_cls: Optional[Type[MainModel]] = None,
+    ):
         self._n_runs = 0
         self._model = model_cls
 
@@ -72,19 +75,19 @@ class Experiment:
     @property
     def job_id(self) -> int:
         """Hydra job id."""
-        return self.hydra_config.job.id
+        return self.hydra_config.job.get("id", 0)
 
-    def run(self, cfg: DictConfig, repeat_id: int) -> None:
+    def run(
+        self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
+    ) -> None:
         """运行模型一次"""
-        model = self._model(parameters=cfg, run_id=repeat_id)
+        model = self._model(parameters=cfg, run_id=repeat_id, outpath=outpath)
         model.run_model()
 
     def update(self) -> None:
         """Updating in each run."""
         self._n_runs += 1
         self.results[self.job_id, self._n_runs] = True
-        with open(self.outpath / "test.txt", "w") as f:
-            f.close()
 
     def batch_run(
         self,
@@ -94,26 +97,33 @@ class Experiment:
         display_progress: bool = True,
     ) -> None:
         """Run the experiment multiple times using multi-processing if specified."""
+        self.load_config(cfg=cfg)
         if repeats is None:
             repeats = self.repeats
         if number_process is None:
             number_process = self.num_process
+        outpath = self.outpath
+        if number_process == 1 or repeats == 1:
+            for repeat in tqdm(range(repeats), disable=not display_progress):
+                self.update()
+                self.run(cfg, repeat_id=repeat + 1, outpath=outpath)
+            return
         # 创建进度条
         with tqdm(total=repeats, disable=not display_progress) as pbar:
             with ProcessPoolExecutor(max_workers=number_process) as executor:
                 # 提交所有任务
                 futures = [
-                    executor.submit(self.run, cfg, repeat_id)
+                    executor.submit(self.run, cfg, repeat_id, outpath)
                     for repeat_id in range(1, repeats + 1)
                 ]
                 # 使用as_completed等待任务完成
-                for _ in as_completed(futures):
+                for future in as_completed(futures):
                     # 每完成一个任务，更新进度条和运行计数
+                    future.result()
                     pbar.update()
                     self.update()
 
-    def end(self) -> None:
+    @classmethod
+    def summary(cls) -> None:
         """Ending the experiment."""
-        print(self.results.keys())
-        with open(self.folder / "final.txt", "w") as f:
-            f.close()
+        print(cls.results.keys())

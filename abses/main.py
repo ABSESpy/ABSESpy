@@ -12,7 +12,9 @@ The main modelling framework of ABSESpy.
 from __future__ import annotations
 
 import functools
+import os
 import sys
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -113,6 +115,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         human_class: Optional[Type[H]] = None,
         nature_class: Optional[Type[N]] = None,
         run_id: Optional[int] = None,
+        outpath: Optional[Path] = None,
         **kwargs: Optional[Any],
     ) -> None:
         Model.__init__(self, **kwargs)
@@ -129,8 +132,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             model=self, max_len=kwargs.get("max_agents")
         )
         self._time = TimeDriver(model=self)
-        self._run_id: int | None = run_id
-        self.schedule = BaseScheduler(model=self)
+        self._run_id: Optional[int] = run_id
+        self.outpath = outpath
+        self.schedule: BaseScheduler = BaseScheduler(model=self)
         self.initialize_data_collector()
         self._do_each("initialize", order=("nature", "human"))
         self._do_each("set_state", code=1)  # initial state
@@ -165,6 +169,18 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             if name not in _obj:
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
+
+    @property
+    def outpath(self) -> Optional[Path]:
+        """Output path where to deposit assets."""
+        return self._outpath
+
+    @outpath.setter
+    def outpath(self, path: Optional[Path]) -> None:
+        if path is None:
+            path = Path(os.getcwd())
+        assert path.is_dir(), f"Invalid path {path}"
+        self._outpath = path
 
     @property
     def run_id(self) -> int | None:
