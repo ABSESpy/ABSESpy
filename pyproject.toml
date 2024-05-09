@@ -36,7 +36,10 @@ description = "ABSESpy makes it easier to build artificial Social-ecological sys
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
 readme = "README.md"
-include = ["icons/fa-regular-400.otf"]
+include = ["icons/fa-regular-400.otf", "abses/conf/**/*.yaml"]
+
+[tool.poetry.plugins."hydra.searchpath"]
+abses = "hydra_plugins.abses_searchpath_plugin:ABSESpySearchPathPlugin"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"

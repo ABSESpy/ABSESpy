@@ -8,9 +8,14 @@
 """
 测试野火燃烧模型。
 """
+from typing import Optional
+
+import hydra
 from matplotlib import pyplot as plt
+from omegaconf import DictConfig
 
 from abses.cells import PatchCell, raster_attribute
+from abses.exp.experiment import Experiment
 from abses.main import MainModel
 from abses.nature import PatchModule
 from abses.sequences import ActorsList
@@ -66,6 +71,7 @@ class Forest(MainModel):
             name="forest",
             shape=self.params.shape,
             cell_cls=Tree,
+            major_layer=True,
         )
         # random choose some patches to setup trees
         chosen_patches = grid.random.choice(self.num_trees, replace=False)
@@ -89,7 +95,19 @@ class Forest(MainModel):
         cmap = plt.cm.colors.ListedColormap(
             ["black", "green", "red", "orange"]
         )
-        data = self.nature.forest.get_xarray("state")
+        data = self.nature.major_layer.get_xarray("state")
         norm = plt.cm.colors.BoundaryNorm([0, 0.5, 1, 1.5, 2], cmap.N)
         data.plot(cmap=cmap, norm=norm)
-        # ax.set_title(f"tick: {self.time.tick}")
+
+
+@hydra.main(version_base=None, config_path="", config_name="config")
+def main(cfg: Optional[DictConfig] = None):
+    """运行模型"""
+    exp = Experiment(model_cls=Forest)  # 获取实验名称的实例
+    exp.load_config(cfg=cfg)
+    exp.batch_run(cfg=cfg)
+
+
+if __name__ == "__main__":
+    main()
+    Experiment().end()

@@ -1,0 +1,13 @@
+hydra:
+  job:
+    name: default-hydra
+  run:
+    dir: '${exp.outdir}/${exp.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}'
+  sweep:
+    dir: ${exp.outdir}/${exp.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.id}_${hydra:job.override_dirname}
+
+exp:
+  outdir: out
+  name: ABSESpy
+  repeats: 1

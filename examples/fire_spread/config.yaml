@@ -1,0 +1,14 @@
+defaults:
+  - default
+  - _self_
+
+exp:
+  name: fire_spread
+  repeats: 10
+
+model:
+  density: 0.4
+  shape: (100, 100)
+
+time:
+  end: 25
