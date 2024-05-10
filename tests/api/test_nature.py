@@ -244,11 +244,6 @@ class TestPatchModule:
         linked_agents = module.array_cells[row, col].link.get("link")
         assert (agent1 in linked_agents, agent2 in linked_agents) == linked
 
-    def test_major_layer(self, model, module):
-        """测试选择主要图层"""
-        assert model.nature.major_layer is module
-        assert model.nature.total_bounds is module.total_bounds
-
     @pytest.mark.parametrize(
         "ufunc, expected",
         [
@@ -306,3 +301,30 @@ class TestPatchModule:
         )
         assert module.shape2d == layer2.shape2d
         assert layer2.name == "test2"
+
+
+class TestBaseNature:
+    """测试基本自然模块"""
+
+    def test_attributes(self, model: MainModel, module: PatchModule):
+        """测试选择主要图层"""
+        assert model.nature.major_layer is module
+        assert model.nature.total_bounds is module.total_bounds
+        assert module in model.nature.modules
+        with pytest.raises(TypeError):
+            model.nature.major_layer = "Wrong type"
+
+    def test_module_select(self, model: MainModel):
+        """测试创建模块"""
+        # arrange
+        module2 = model.nature.create_module(
+            how="from_resolution", name="test", major_layer=True
+        )
+        # act & assert
+        assert model.nature.test is module2
+        assert model.nature.major_layer is module2
+        assert model.nature.shape2d == module2.shape2d
+        assert model.nature.shape3d == module2.shape3d
+        result = model.nature.out_of_bounds((3, 3))
+        result2 = module2.out_of_bounds((3, 3))
+        assert result == result2

@@ -16,6 +16,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Generic,
     Iterator,
     List,
     Optional,
@@ -86,7 +87,7 @@ class Module(_BaseObj):
 ModuleType = TypeVar("ModuleType", bound=Module)
 
 
-class _ModuleFactory(object):
+class _ModuleFactory(Generic[ModuleType]):
     """To create a module."""
 
     methods: List[str] = []
@@ -94,10 +95,19 @@ class _ModuleFactory(object):
 
     def __init__(self, father) -> None:
         self.father: CompositeModule = father
-        self.modules: Dict[str, Module] = {}
+        self.modules: Dict[str, ModuleType] = {}
 
     def __iter__(self) -> Iterator[Module]:
         return iter(self.modules.values())
+
+    def __getitem__(self, name: str) -> Module:
+        return self.modules[name]
+
+    def __contains__(self, name: str | ModuleType) -> bool:
+        return name in self.modules or name in self.modules.values()
+
+    def __len__(self) -> int:
+        return len(self.modules)
 
     def _check_cls(
         self, module_cls: Optional[Type[ModuleType]]
@@ -171,12 +181,14 @@ class CompositeModule(Module, _States, _Notice):
     """基本的组合模块，可以创建次级模块"""
 
     def __init__(
-        self, model: MainModel[Any, Any], name: Optional[str] = None
+        self,
+        model: MainModel[Any, Any],
+        name: Optional[str] = None,
     ) -> None:
         Module.__init__(self, model, name=name)
         _States.__init__(self)
         _Notice.__init__(self)
-        self._modules = _ModuleFactory(self)
+        self._modules: _ModuleFactory = _ModuleFactory(self)
 
     @property
     def modules(self) -> _ModuleFactory:
