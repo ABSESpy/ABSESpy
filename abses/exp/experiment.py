@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Type
 
 import pandas as pd
 from hydra.core.hydra_config import HydraConfig
@@ -26,8 +26,9 @@ class Experiment:
     """Repeated Experiment."""
 
     _instance = None
-    _folder: Path = Path(os.getcwd())
-    results: Dict[Tuple[int, int], Any] = {}
+    folder: Path = Path(os.getcwd())
+    hydra_config: DictConfig = DictConfig({})
+    results: List[Dict[str, Any]] = []
     name: Optional[str] = None
     repeats: int = 1
     num_process: int = 1
@@ -48,25 +49,16 @@ class Experiment:
     def load_config(cls, cfg: DictConfig) -> None:
         """Loading the configuration of this exp."""
         exp_config: DictConfig = cfg.get("exp", DictConfig({}))
+        cls.hydra_config: DictConfig = HydraConfig.get()
         cls.name = exp_config.get("name")
         cls.repeats = exp_config.get("repeats", 1)
         cls.num_process = exp_config.get("num_process", 1)
-        cls._folder = Path(HydraConfig.get().run.dir)
-
-    @property
-    def folder(self) -> Path:
-        """Output dir path."""
-        return self._folder
+        cls.folder = Path(HydraConfig.get().run.dir)
 
     @property
     def outpath(self) -> Path:
         """Output dir path."""
         return Path(self.hydra_config.runtime.output_dir)
-
-    @property
-    def hydra_config(self) -> DictConfig:
-        """Configuration of hydra."""
-        return HydraConfig.get()
 
     @property
     def overrides(self) -> List[str]:
@@ -89,7 +81,16 @@ class Experiment:
     def update(self, reports: Optional[Dict[str, Any]] = None) -> None:
         """Updating in each run."""
         self._n_runs += 1
-        self.results[self.job_id, self._n_runs] = reports
+        if reports is None:
+            return
+        reports.update(
+            {
+                "job_id": self.job_id,
+                "repeat_id": self._n_runs,
+                "overrides": self.overrides,
+            }
+        )
+        self.results.append(reports)
 
     def batch_run(
         self,
@@ -128,4 +129,5 @@ class Experiment:
     @classmethod
     def summary(cls) -> None:
         """Ending the experiment."""
-        return pd.DataFrame(cls.results)
+        df = pd.DataFrame(cls.results)
+        df.to_csv(cls.folder / "summary.csv")

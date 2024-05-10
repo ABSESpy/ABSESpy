@@ -95,7 +95,7 @@ class Forest(MainModel):
     def burned_rate(self) -> float:
         """The burned trees in ratio."""
         state = self.grid.get_raster("state")  # mypy
-        return np.squeeze(state == 3).sum() / self.num_trees
+        return np.squeeze(state == 3).sum() / max(self.num_trees, 1)
 
     @property
     def num_trees(self) -> int:
