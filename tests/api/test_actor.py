@@ -17,9 +17,9 @@
 import pytest
 
 from abses import MainModel, alive_required
+from abses._bases.errors import ABSESpyError
 from abses.actor import Actor
 from abses.cells import PatchCell
-from abses.errors import ABSESpyError
 from abses.nature import PatchModule
 
 

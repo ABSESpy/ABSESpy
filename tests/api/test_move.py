@@ -11,9 +11,9 @@ from typing import Tuple
 
 import pytest
 
+from abses._bases.errors import ABSESpyError
 from abses.actor import Actor
 from abses.cells import PatchCell
-from abses.errors import ABSESpyError
 from abses.main import MainModel
 
 

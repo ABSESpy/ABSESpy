@@ -17,8 +17,8 @@ from typing import Dict, List
 import pytest
 
 from abses import Actor, MainModel
+from abses._bases.errors import ABSESpyError
 from abses.container import _AgentsContainer
-from abses.errors import ABSESpyError
 from abses.nature import PatchCell
 from abses.sequences import ActorsList
 

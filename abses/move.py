@@ -21,7 +21,7 @@ except ImportError:
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
 
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.links import _LinkNodeCell
 
 if TYPE_CHECKING:

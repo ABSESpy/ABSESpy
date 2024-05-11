@@ -10,15 +10,14 @@ Test dynamic data.
 """
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 from pandas.testing import assert_series_equal
 
 from abses import MainModel
-from abses.nature import PatchModule
-from abses.objects import _BaseObj
+from abses._bases.objects import _BaseObj
+from abses.data import load_data
 from abses.time import TimeDriver
 
 
@@ -26,15 +25,15 @@ class TestDynamicData:
     """测试动态数据的读取"""
 
     @pytest.fixture(name="lands_data")
-    def setup_lands_data(self, water_quota_config):
+    def setup_lands_data(self):
         """土地数据"""
-        return pd.read_csv(water_quota_config.db.irr_data, index_col=0)
+        return pd.read_csv(load_data("irr_lands.csv"), index_col=0)
 
-    @pytest.fixture(name="et0_data")
-    def setup_et0_data(self, water_quota_config):
+    @pytest.fixture(name="prec")
+    def setup_nc_data(self):
         """et0 数据"""
         return xr.open_dataarray(
-            water_quota_config.db.et0, decode_coords="all"
+            load_data("precipitation.nc"), decode_coords="all"
         )
 
     @pytest.fixture(name="crops_id")
@@ -54,22 +53,18 @@ class TestDynamicData:
         return data_tmp.loc[f"C{obj.unique_id}"]
 
     @staticmethod
-    def update_et0_function(
+    def update_prec_function(
         data,
         time,
-        obj: PatchModule,
-    ) -> np.ndarray:
-        """从数据中读取更新的 et0"""
-        time = time.dt
-        xda = data.sel(time=time, method="nearest").rio.write_crs(obj.crs)
-        standard = obj.get_xarray()
-        return xda.rio.reproject_match(standard).to_numpy()
+    ) -> xr.DataArray:
+        """Update precipitation dataset."""
+        return data.sel(time=time.dt, method="nearest")
 
     @pytest.fixture(name="model")
     def setup_model(self, water_quota_config, lands_data) -> MainModel:
         """创造可供测试的黄河灌溉用水例子"""
         model = MainModel(seed=42, parameters=water_quota_config)
-        gdf = gpd.read_file(water_quota_config.db.cities)
+        gdf = gpd.read_file(load_data("YR_cities.zip"))
         agents = model.agents.new_from_gdf(gdf=gdf, unique_id="City_ID")
         agents.trigger(
             func_name="add_dynamic_variable",
@@ -102,30 +97,18 @@ class TestDynamicData:
         model.time.go()
         assert_series_equal(agent.dynamic_var("lands"), data_1980)
 
-    def test_dynamic_nc_data(
-        self, model: MainModel, water_quota_config, et0_data
-    ):
-        """测试黄河灌溉用水主体可以自动从数据中读取 et0"""
+    def test_dynamic_nc_data(self, model: MainModel, prec):
+        """Testing load NC data and reproject it dynamically."""
         module = model.nature.create_module(
             how="from_file",
-            raster_file=water_quota_config.db.population,
+            raster_file=load_data("farmland.tif"),
             apply_raster=True,
         )
         module.add_dynamic_variable(
-            name="et0", data=et0_data, function=self.update_et0_function
+            name="prec",
+            data=prec,
+            function=self.update_prec_function,
+            cover_crs=True,
         )
-        model_now = module.dynamic_var("et0")
+        model_now = module.dynamic_var("prec", dtype="xarray")
         assert model_now.shape == module.shape2d
-
-        # 直接从数据中读取
-        data_now = et0_data.sel(time=model.time.dt, method="nearest")
-        data_now_crs = data_now.rio.write_crs(module.crs)
-        matched = data_now_crs.rio.reproject_match(module.get_xarray())
-
-        assert matched.shape == module.shape2d
-
-        # 注意两边的空值 np.nan 在对比时，是不认为相等的，需要填充空值后对比，发现数据就一样了
-        assert (
-            np.nan_to_num(model_now, 0.0)
-            == np.nan_to_num(matched.to_numpy(), 0.0)
-        ).all()

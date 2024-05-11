@@ -56,7 +56,7 @@ This showcases the use of `ABSESpy` for ABM. We divide the models into two types
 
 <!-- Heuristic models -->
   [Hotelling]: ../tutorial/beginner/hotelling_tutorial.ipynb
-  [Forest Fire]: ../tutorial/beginner/fire_tutorial.ipynb
+  [Forest Fire]: ../tutorial/completing/fire_tutorial.ipynb
   [Predator-Prey]: ../tutorial/beginner/predation_tutorial.ipynb
 
 <!-- Real-world models -->

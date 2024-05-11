@@ -16,13 +16,14 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    Type,
     Union,
     overload,
 )
 
 import numpy as np
 
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
@@ -163,6 +164,23 @@ class ListRandom:
             if size == 1 and not as_list
             else self._to_actors_list(chosen)
         )
+
+    def new(
+        self,
+        actor_cls: Type[Actor],
+        num: int = 1,
+        replace: bool = False,
+        prob: np.ndarray | None = None,
+        **kwargs,
+    ) -> ActorsList[Actor]:
+        """Randomly creating new agents for a given actor type."""
+        cells = self.choice(as_list=True, size=num, replace=replace, prob=prob)
+        objs = cells.apply(
+            lambda c: c.agents.new(
+                breed_cls=actor_cls, singleton=True, **kwargs
+            )
+        )
+        return self._to_actors_list(objs)
 
     def link(
         self, link: str, p: float = 1.0, mutual: bool = True

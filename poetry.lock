@@ -1120,6 +1120,17 @@ xyzservices = "*"
 testing = ["pytest"]
 
 [[package]]
+name = "fontawesome"
+version = "5.10.1.post1"
+description = "The Font Awesome icon set for python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "fontawesome-5.10.1.post1-py3-none-any.whl", hash = "sha256:642d74da5f4726bb2c8f035a2f4a98fdc4294d213a291994ee0b3d845166f9e8"},
+    {file = "fontawesome-5.10.1.post1.tar.gz", hash = "sha256:1b5e8f2ed12a74b88aef6f404ff770af425324041bc5620523a802d5406595b8"},
+]
+
+[[package]]
 name = "fonttools"
 version = "4.51.0"
 description = "Tools to manipulate font files"
@@ -4915,6 +4926,27 @@ toml = ["tomli"]
 yaml = ["pyyaml"]
 
 [[package]]
+name = "seaborn"
+version = "0.13.2"
+description = "Statistical data visualization"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "seaborn-0.13.2-py3-none-any.whl", hash = "sha256:636f8336facf092165e27924f223d3c62ca560b1f2bb5dff7ab7fad265361987"},
+    {file = "seaborn-0.13.2.tar.gz", hash = "sha256:93e60a40988f4d65e9f4885df477e2fdaff6b73a9ded434c1ab356dd57eefff7"},
+]
+
+[package.dependencies]
+matplotlib = ">=3.4,<3.6.1 || >3.6.1"
+numpy = ">=1.20,<1.24.0 || >1.24.0"
+pandas = ">=1.2"
+
+[package.extras]
+dev = ["flake8", "flit", "mypy", "pandas-stubs", "pre-commit", "pytest", "pytest-cov", "pytest-xdist"]
+docs = ["ipykernel", "nbconvert", "numpydoc", "pydata_sphinx_theme (==0.10.0rc2)", "pyyaml", "sphinx (<6.0.0)", "sphinx-copybutton", "sphinx-design", "sphinx-issues"]
+stats = ["scipy (>=1.7)", "statsmodels (>=0.12)"]
+
+[[package]]
 name = "send2trash"
 version = "1.8.2"
 description = "Send file to trash natively under Mac OS X, Windows and Linux"
@@ -5856,4 +5888,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "9bcf86784685128f94c2fcf82c4eb5e672bf76130573fd214e0cdda5255d7247"
+content-hash = "f5d073f5e5ce7ed71e9b22cba003e1e5c6842f0c25171e4b7f863fbdab1e90ca"

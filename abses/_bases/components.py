@@ -21,6 +21,7 @@ Components 是模型的基本组件，负责调度参数，让参数配置模块
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Set, Union
 
 from omegaconf import DictConfig
@@ -48,6 +49,11 @@ class _Component:
             name = self.__class__.__name__.lower()
         self.name = name
         self.add_args(self.__args__)
+
+    @property
+    def outpath(self) -> Optional[Path]:
+        """Where to save the outputs."""
+        return self._model.outpath
 
     @property
     def name(self) -> str:

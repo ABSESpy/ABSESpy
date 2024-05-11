@@ -11,7 +11,7 @@
 import pytest
 from omegaconf import DictConfig
 
-from abses.components import _Component
+from abses._bases.components import _Component
 from abses.main import MainModel
 
 

@@ -15,14 +15,13 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 from loguru import logger
-from omegaconf import DictConfig
 
 from abses.actor import Actor
 from abses.links import _LinkContainer
 
+from ._bases.modules import CompositeModule, Module
 from .cells import PatchCell
 from .container import _AgentsContainer
-from .modules import CompositeModule, Module
 from .sequences import ActorsList, Selection
 
 Actors: TypeAlias = Union[ActorsList[Actor], Selection, Actor]

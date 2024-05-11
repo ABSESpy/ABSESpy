@@ -31,11 +31,11 @@ except ImportError:
 
 import mesa_geo as mg
 
+from abses._bases.errors import ABSESpyError
+from abses._bases.objects import _BaseObj
 from abses.decision import _DecisionFactory
-from abses.errors import ABSESpyError
 from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
 from abses.move import _Movements
-from abses.objects import _BaseObj
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:

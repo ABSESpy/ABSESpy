@@ -11,7 +11,11 @@ The main modelling framework of ABSESpy.
 
 from __future__ import annotations
 
+import functools
+import os
 import sys
+import types
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -42,13 +46,14 @@ from omegaconf import DictConfig, OmegaConf
 from abses import __version__
 from abses.actor import Actor
 
-from .bases import _Notice
+from ._bases.bases import _Notice
+from ._bases.states import _States
 from .container import _AgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
-from .states import _States
 from .time import TimeDriver
+from .viz.viz_model import _VizModel
 
 # Logging configuration
 logger.remove(0)
@@ -111,6 +116,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         human_class: Optional[Type[H]] = None,
         nature_class: Optional[Type[N]] = None,
         run_id: Optional[int] = None,
+        outpath: Optional[Path] = None,
         **kwargs: Optional[Any],
     ) -> None:
         Model.__init__(self, **kwargs)
@@ -127,8 +133,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             model=self, max_len=kwargs.get("max_agents")
         )
         self._time = TimeDriver(model=self)
-        self._run_id: int | None = run_id
-        self.schedule = BaseScheduler(model=self)
+        self._run_id: Optional[int] = run_id
+        self.outpath = outpath
+        self.schedule: BaseScheduler = BaseScheduler(model=self)
         self.initialize_data_collector()
         self._do_each("initialize", order=("nature", "human"))
         self._do_each("set_state", code=1)  # initial state
@@ -163,6 +170,18 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             if name not in _obj:
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
+
+    @property
+    def outpath(self) -> Optional[Path]:
+        """Output path where to deposit assets."""
+        return self._outpath
+
+    @outpath.setter
+    def outpath(self, path: Optional[Path]) -> None:
+        if path is None:
+            path = Path(os.getcwd())
+        assert path.is_dir(), f"Invalid path {path}"
+        self._outpath = path
 
     @property
     def run_id(self) -> int | None:
@@ -254,6 +273,11 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         for container in self._containers:
             container[breed.breed] = set()
 
+    @functools.cached_property
+    def plot(self) -> _VizModel:
+        """Plotting the model."""
+        return _VizModel(self)
+
     def run_model(self, steps: Optional[int] = None) -> None:
         """Start running the model.
 
@@ -294,7 +318,21 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
+        self.final_report()
         logger.info(f"Ending {self.name}")
+
+    def final_report(self) -> Dict[str, Any]:
+        """Report at the end of this model."""
+        result = {}
+        for k, reporter in self._reports["final"].items():
+            if isinstance(reporter, str):
+                value = getattr(self, reporter)
+            elif isinstance(reporter, types.FunctionType):
+                value = reporter(self)
+            else:
+                raise TypeError(f"Invalid final reporter {type(reporter)}.")
+            result[k] = value
+        return result
 
     def summary(self, verbose: bool = False) -> pd.DataFrame:
         """Report the state of the model."""
@@ -340,17 +378,24 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         )
         reporting_model: Dict[str, Reporter] = to_reports.get("model", {})
         reporting_agents: Dict[str, Reporter] = to_reports.get("agents", {})
+        reporting_final: Dict[str, Reporter] = to_reports.get("final", {})
         if model_reporters is not None:
             reporting_model |= model_reporters
         if agent_reporters is not None:
             reporting_agents |= agent_reporters
         _convert_to_python_expression(reporting_model)
         _convert_to_python_expression(reporting_agents)
+        _convert_to_python_expression(reporting_final)
         self.datacollector = DataCollector(
             model_reporters=reporting_model,
             agent_reporters=reporting_agents,
             tables=tables,
         )
+        self._reports = {
+            "model": reporting_model,
+            "agent": reporting_agents,
+            "final": reporting_final,
+        }
 
 
 def _convert_to_python_expression(

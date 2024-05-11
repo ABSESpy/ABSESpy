@@ -1,4 +1,30 @@
 
+<a id='changelog-0.6.0'></a>
+# 0.6.0 — 2024-05-11
+
+## Fixed bugs
+
+- [x] #bug🐛 Fixed hotelling model's multiple preferences bug.
+- [x] #bug🐛 Fixed dataset unavailable in the tests
+
+## Performance improvements
+
+- [x] #zap⚡️ Improved speed by removing some dead codes.
+
+## Refactoring
+
+- [x] #refactor♻️ Refactored structure of `BaseNature` for better performance.
+
+## New Features
+
+- [x] #feat✨ Added an `Experiment` class for advanced model batch running.
+- [x] #feat✨ Now `BaseNature` module can manipulate the major layer directly.
+- [x] #feat✨ Added the basic model visualization methods.
+
+## Documentation changes
+
+- [x] #docs📄 Added a completed tutorial of forest fire to demonstrate multiple runs.
+
 <a id='changelog-0.5.8'></a>
 # 0.5.8 — 2024-04-18
 

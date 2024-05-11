@@ -13,7 +13,7 @@ from typing import List
 import pytest
 
 from abses import Actor
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.links import _LinkContainer, _LinkNode
 from abses.main import MainModel
 

@@ -35,8 +35,8 @@ repos:
         # - id: poetry-lock
         - id: poetry-export
           args: ["-f", "requirements.txt", "--without-hashes", "-o", "requirements.txt"]
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: 'v1.6.1'  # Use the sha / tag you want to point at
-#     hooks:
-#     -   id: mypy
-#         args: [--ignore-missing-imports]
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.6.1'  # Use the sha / tag you want to point at
+    hooks:
+    -   id: mypy
+        args: [--ignore-missing-imports]

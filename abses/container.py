@@ -33,8 +33,8 @@ import geopandas as gpd
 import mesa_geo as mg
 from loguru import logger
 
+from abses._bases.errors import ABSESpyError
 from abses.actor import Actor, Breeds
-from abses.errors import ABSESpyError
 from abses.sequences import HOW, ActorsList, Selection
 from abses.tools.func import make_list
 

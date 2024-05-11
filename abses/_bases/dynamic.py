@@ -5,14 +5,17 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""Dynamic variables
+"""
+
 from __future__ import annotations
 
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, List
 
 if TYPE_CHECKING:
+    from ..time import TimeDriver
     from .objects import _BaseObj
-    from .time import TimeDriver
 
 
 class _DynamicVariable:
@@ -25,17 +28,18 @@ class _DynamicVariable:
     """
 
     def __init__(
-        self, name: str, obj: _BaseObj, data: Any, function: Callable
+        self, name: str, obj: _BaseObj, data: Any, function: Callable, **kwargs
     ) -> None:
         self._name: str = name
         self._obj: _BaseObj = obj
         self._data: Any = data
         self._function: Callable = function
         self._cached_data: Any = None
+        self.attrs = kwargs
         self.now()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Get the name of the variable
 
         Returns
@@ -109,8 +113,7 @@ class _DynamicVariable:
         """Return the dynamic variable function's output
 
         Returns:
-            output:
-                Any
+            The dynamic data value now.
         """
         required_attrs = self.get_required_attributes(self.function)
         args = {attr: getattr(self, attr) for attr in required_attrs}

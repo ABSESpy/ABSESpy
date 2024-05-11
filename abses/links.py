@@ -37,7 +37,7 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 from abses.sequences import ActorsList
 
 if TYPE_CHECKING:
@@ -466,6 +466,15 @@ class _LinkNode:
     @abstractmethod
     def _default_redirection(self, target: Optional[TargetName]) -> AttrGetter:
         """默认重定向"""
+
+    @classmethod
+    def viz_attrs(cls, **kwargs) -> Dict[str, Any]:
+        """Return the attributes for viz."""
+        return {
+            "marker": getattr(cls, "marker", "o"),
+            "color": getattr(cls, "color", "black"),
+            "alpha": getattr(cls, "alpha", 1.0),
+        } | kwargs
 
     @cached_property
     def link(self) -> _LinkProxy:

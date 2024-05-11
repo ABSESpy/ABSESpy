@@ -8,7 +8,7 @@
 import pytest
 
 from abses import MainModel
-from abses.objects import _BaseObj
+from abses._bases.objects import _BaseObj
 from abses.time import time_condition
 from abses.tools.func import iter_func
 

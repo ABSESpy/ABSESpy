@@ -7,7 +7,7 @@
 
 import pytest
 
-from abses.states import _States
+from abses._bases.states import _States
 
 
 # Tests

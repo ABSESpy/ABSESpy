@@ -11,11 +11,10 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import mesa
 
+from abses._bases.bases import _Observer
+from abses._bases.components import _Component
+from abses._bases.dynamic import _DynamicVariable
 from abses.time import TimeDriver
-
-from .bases import _Observer
-from .components import _Component
-from .dynamic import _DynamicVariable
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -73,19 +72,17 @@ class _BaseObj(_Observer, _Component):
         self._model = model
 
     @property
-    def dynamic_variables(self) -> Dict[str, Any]:
+    def dynamic_variables(self) -> Dict[str, _DynamicVariable]:
         """Returns read-only model's dynamic variables.
 
         Returns:
             Dict[str, Any]:
                 Dictionary of model's dynamic variables.
         """
-        if not self._dynamic_variables:
-            return {}
-        return {k: v.now() for k, v in self._dynamic_variables.items()}
+        return self._dynamic_variables
 
     def add_dynamic_variable(
-        self, name: str, data: Any, function: Callable
+        self, name: str, data: Any, function: Callable, **kwargs
     ) -> None:
         """Adds new dynamic variable.
 
@@ -98,7 +95,7 @@ class _BaseObj(_Observer, _Component):
                 Function to calculate the dynamic variable.
         """
         var = _DynamicVariable(
-            obj=self, name=name, data=data, function=function
+            obj=self, name=name, data=data, function=function, **kwargs
         )
         self._dynamic_variables[name] = var
 

@@ -35,6 +35,7 @@ class Customer(PatchCell):
         # Pair each shop to its distance & price
         _pair = dict(zip(stores, distances + prices))
         prefer_store = min(_pair, key=_pair.get)
+        self.link.clean()
         self.link.by(prefer_store, link_name="prefer")
 
 

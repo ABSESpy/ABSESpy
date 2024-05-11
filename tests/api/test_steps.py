@@ -84,7 +84,6 @@ def setup_model():
 
 def test_workflow(model: MainModel):
     """测试工作流"""
-    # TODO fix this test
     assert CHECK_CODES == ["n0", "h0"]
     assert model.state == "init"
     model._setup()

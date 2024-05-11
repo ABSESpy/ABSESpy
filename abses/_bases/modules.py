@@ -16,8 +16,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Generic,
     Iterator,
     List,
+    Literal,
     Optional,
     Type,
     TypeVar,
@@ -25,14 +27,20 @@ from typing import (
 
 from loguru import logger
 
+from abses._bases.bases import _Notice
+from abses._bases.objects import _BaseObj
+from abses._bases.states import _States
 from abses.tools.func import iter_func
 
-from .bases import _Notice
-from .objects import _BaseObj
-from .states import _States
-
 if TYPE_CHECKING:
-    from .main import MainModel
+    from ..main import MainModel
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
+
+HowCreation: TypeAlias = Literal["from_resolution", "from_file", "copy_layer"]
 
 
 class Module(_BaseObj):
@@ -87,7 +95,7 @@ class Module(_BaseObj):
 ModuleType = TypeVar("ModuleType", bound=Module)
 
 
-class _ModuleFactory(object):
+class _ModuleFactory(Generic[ModuleType]):
     """To create a module."""
 
     methods: List[str] = []
@@ -95,10 +103,19 @@ class _ModuleFactory(object):
 
     def __init__(self, father) -> None:
         self.father: CompositeModule = father
-        self.modules: Dict[str, Module] = {}
+        self.modules: Dict[str, ModuleType] = {}
 
     def __iter__(self) -> Iterator[Module]:
         return iter(self.modules.values())
+
+    def __getitem__(self, name: str) -> Module:
+        return self.modules[name]
+
+    def __contains__(self, name: str | ModuleType) -> bool:
+        return name in self.modules or name in self.modules.values()
+
+    def __len__(self) -> int:
+        return len(self.modules)
 
     def _check_cls(
         self, module_cls: Optional[Type[ModuleType]]
@@ -124,7 +141,7 @@ class _ModuleFactory(object):
 
     def new(
         self,
-        how: Optional[str] = None,
+        how: Optional[HowCreation] = None,
         module_class: Optional[Type[ModuleType]] = None,
         **kwargs,
     ) -> ModuleType:
@@ -172,12 +189,14 @@ class CompositeModule(Module, _States, _Notice):
     """基本的组合模块，可以创建次级模块"""
 
     def __init__(
-        self, model: MainModel[Any, Any], name: Optional[str] = None
+        self,
+        model: MainModel[Any, Any],
+        name: Optional[str] = None,
     ) -> None:
         Module.__init__(self, model, name=name)
         _States.__init__(self)
         _Notice.__init__(self)
-        self._modules = _ModuleFactory(self)
+        self._modules: _ModuleFactory = _ModuleFactory(self)
 
     @property
     def modules(self) -> _ModuleFactory:
@@ -210,6 +229,6 @@ class CompositeModule(Module, _States, _Notice):
     def end(self):
         return super().end()
 
-    def create_module(self, module_cls, *args, **kwargs):
+    def create_module(self, module_cls, how=None, **kwargs):
         """Create a module."""
-        return self.modules.new(module_class=module_cls, *args, **kwargs)
+        return self.modules.new(how=how, module_class=module_cls, **kwargs)

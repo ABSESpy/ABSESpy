@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from abses import Actor, MainModel
-from abses.errors import ABSESpyError
+from abses._bases.errors import ABSESpyError
 
 
 class TestRandomActorsList:
