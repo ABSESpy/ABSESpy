@@ -17,6 +17,7 @@ from typing import (
     Callable,
     Dict,
     Iterator,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -416,7 +417,11 @@ class PatchModule(Module, RasterBase):
             return self.get_raster(data)
         raise TypeError("Invalid data type or shape.")
 
-    def dynamic_var(self, attr_name: str) -> np.ndarray:
+    def dynamic_var(
+        self,
+        attr_name: str,
+        dtype: Literal["numpy", "xarray", "rasterio"] = "numpy",
+    ) -> np.ndarray:
         """Update and get dynamic variable.
 
         Parameters:
@@ -426,15 +431,24 @@ class PatchModule(Module, RasterBase):
         Returns:
             2D numpy.ndarray data of the variable.
         """
+        # 获取动态变量，及其附加属性
         array = super().dynamic_var(attr_name)
-        # 判断算出来的是一个符合形状的矩阵
-        self._attr_or_array(array)
+        assert isinstance(array, (np.ndarray, xr.DataArray, xr.Dataset))
+        kwargs = super().dynamic_variables[attr_name].attrs
         # 将矩阵转换为三维，并更新空间数据
-        self.apply_raster(array, attr_name=attr_name)
-        return array
+        self.apply_raster(array, attr_name=attr_name, **kwargs)
+        if dtype == "numpy":
+            return self.get_raster(attr_name, update=False)
+        if dtype == "xarray":
+            return self.get_xarray(attr_name, update=False)
+        if dtype == "rasterio":
+            return self.get_rasterio(attr_name, update=False)
+        raise ValueError(f"Unknown expected dtype {dtype}.")
 
     def get_rasterio(
-        self, attr_name: str | None = None
+        self,
+        attr_name: Optional[str] = None,
+        update: bool = True,
     ) -> rasterio.MemoryFile:
         """Gets the Rasterio raster layer corresponding to the attribute. Save to a temporary rasterio memory file.
 
@@ -448,7 +462,7 @@ class PatchModule(Module, RasterBase):
         if attr_name is None:
             data = np.ones(self.shape2d)
         else:
-            data = self.get_raster(attr_name=attr_name)
+            data = self.get_raster(attr_name=attr_name, update=update)
         # 如果获取到的是2维，重整为3维
         if len(data.shape) != 3:
             data = data.reshape(self.shape3d)
@@ -466,7 +480,11 @@ class PatchModule(Module, RasterBase):
             # Open the dataset again for reading and return
             return mem_file.open()
 
-    def get_xarray(self, attr_name: Optional[str] = None) -> xr.DataArray:
+    def get_xarray(
+        self,
+        attr_name: Optional[str] = None,
+        update: bool = True,
+    ) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates.
 
         Parameters:
@@ -478,7 +496,7 @@ class PatchModule(Module, RasterBase):
         Returns:
             Xarray.DataArray data with spatial coordinates of the chosen attribute.
         """
-        data = self.get_raster(attr_name=attr_name)
+        data = self.get_raster(attr_name=attr_name, update=update)
         if attr_name:
             name = attr_name
             data = data.reshape(self.shape2d)
@@ -666,7 +684,11 @@ class PatchModule(Module, RasterBase):
             dataarray = data[attr_name]
             self._add_dataarray(dataarray, attr_name, **kwargs)
 
-    def get_raster(self, attr_name: Optional[str] = None) -> np.ndarray:
+    def get_raster(
+        self,
+        attr_name: Optional[str] = None,
+        update: bool = True,
+    ) -> np.ndarray:
         """Obtaining the Raster layer by attribute.
 
         Parameters:
@@ -677,7 +699,7 @@ class PatchModule(Module, RasterBase):
         Returns:
             A 3D array of attribute.
         """
-        if attr_name in self._dynamic_variables:
+        if attr_name in self.dynamic_variables and update:
             return self.dynamic_var(attr_name=attr_name).reshape(self.shape3d)
         if attr_name is not None and attr_name not in self.attributes:
             raise ValueError(

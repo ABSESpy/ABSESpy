@@ -32,7 +32,8 @@ nav:
         - Advanced Level:
           - A01: tutorial/advanced/geodata.ipynb
           - A02: tutorial/advanced/human_behavior_simulation.ipynb
-        # - Competing Level:
+        - Competing Level:
+          - C01: tutorial/competing/fire_tutorial.ipynb
     - Examples:
         - Official Examples: examples/official.md
         - Community Examples: examples/community.md

@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 
 COLOR_BAR = {"fraction": 0.03, "pad": 0.04}
 
-with pkg_resources.path("icons", "fa-regular-400.otf") as fp:
-    FONT_AWESOME = FontProperties(fname=str(fp))
+FONT = pkg_resources.files("icons") / "fa-regular-400.otf"
+FONT_AWESOME = FontProperties(fname=str(FONT))
 
 
 # https://stackoverflow.com/questions/52902086/how-to-use-font-awesome-symbol-as-marker-in-matplotlib

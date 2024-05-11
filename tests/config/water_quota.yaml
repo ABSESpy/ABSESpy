@@ -3,11 +3,8 @@ time:
   end: 2013-01-01
   months: 1
 
-root: /Users/songshgeo/Documents/VSCode/ABSESpy
-
 nature:
   crs: EPSG:4326
-
 
 hydro:
   Ks: 0.8
@@ -24,11 +21,3 @@ crops_id:
   Rice: 12
   Wheat: 16
   Maize: 14
-
-db:
-  crops: data/water_quota/crops
-  irr_data: data/water_quota/irr_lands.csv
-  cities: zip://data/water_quota/YR_cities.zip
-  population: data/water_quota/yr_pop_downscaled.tif
-  et0: data/water_quota/FAO56_PM_pet0.nc
-  prec: data/water_quota/prec_montly_01deg.nc
