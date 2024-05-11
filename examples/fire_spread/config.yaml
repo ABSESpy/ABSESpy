@@ -4,7 +4,7 @@ defaults:
 
 exp:
   name: fire_spread
-  repeats: 10
+  repeats: 11
 
 reports:
   final:

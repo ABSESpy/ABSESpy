@@ -74,7 +74,6 @@ class Forest(MainModel):
             cell_cls=Tree,
             major_layer=True,
         )
-        self.grid = grid
         # random choose some patches to setup trees
         chosen_patches = grid.random.choice(self.num_trees, replace=False)
         # create trees on the selected patches.
@@ -86,16 +85,11 @@ class Forest(MainModel):
         for tree in self.nature.forest:
             tree.burning()
 
-    def end(self):
-        self.plot_state()
-        plt.savefig(self.outpath / "state.jpg")
-        plt.close()
-
     @property
     def burned_rate(self) -> float:
         """The burned trees in ratio."""
-        state = self.grid.get_raster("state")  # mypy
-        return np.squeeze(state == 3).sum() / max(self.num_trees, 1)
+        state = self.nature.get_raster("state")
+        return np.squeeze(state == 3).sum() / self.num_trees
 
     @property
     def num_trees(self) -> int:
@@ -105,12 +99,18 @@ class Forest(MainModel):
 
     def plot_state(self):
         """Plot the state of trees."""
+        categories = {
+            0: "black",
+            1: "green",
+            2: "orange",
+            3: "red",
+        }
         cmap = plt.cm.colors.ListedColormap(
-            ["black", "green", "red", "orange"]
+            [categories[i] for i in sorted(categories)]
         )
-        data = self.nature.major_layer.get_xarray("state")
-        norm = plt.cm.colors.BoundaryNorm([0, 0.5, 1, 1.5, 2], cmap.N)
-        data.plot(cmap=cmap, norm=norm)
+        data = self.nature.get_xarray("state")
+        data.plot(cmap=cmap)
+        plt.show()
 
 
 @hydra.main(version_base=None, config_path="", config_name="config")
@@ -122,4 +122,4 @@ def main(cfg: Optional[DictConfig] = None):
 
 if __name__ == "__main__":
     main()
-    Experiment.summary()
+    Experiment.summary(save=True)
