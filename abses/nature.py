@@ -29,7 +29,7 @@ import xarray as xr
 from loguru import logger
 from mesa.space import Coordinate
 
-from abses._bases.modules import CompositeModule
+from abses._bases.modules import CompositeModule, HowCreation
 from abses.cells import PatchCell
 from abses.patch import (
     CRS,
@@ -342,7 +342,7 @@ class BaseNature(CompositeModule, _PatchModuleProtocol):
 
     def create_module(
         self,
-        *args,
+        how: Optional[HowCreation] = None,
         module_cls: Optional[Type[PatchModule]] = None,
         major_layer: bool = False,
         **kwargs: Any,
@@ -350,7 +350,7 @@ class BaseNature(CompositeModule, _PatchModuleProtocol):
         """Creates a submodule of the raster layer.
 
         Parameters:
-            module_class:
+            module_cls:
                 The custom module class.
             how:
                 Class method to call when creating the new sub-module (raster layer).
@@ -368,7 +368,7 @@ class BaseNature(CompositeModule, _PatchModuleProtocol):
         """
         if self.modules.is_empty:
             major_layer = True
-        module = self.modules.new(module_class=module_cls, *args, **kwargs)
+        module = self.modules.new(how=how, module_class=module_cls, **kwargs)
         # 如果是第一个创建的模块,则将其作为主要的图层
         if major_layer:
             self.major_layer = module

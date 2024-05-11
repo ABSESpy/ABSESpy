@@ -36,7 +36,7 @@ def raster_attribute(
     func: Callable[[Any], Union[str | int | float]]
 ) -> property:
     """Turn the method into a property that the patch can extract.
-    Examples:
+    Example:
         ```
         class TestCell(Cell):
             @raster_attribute

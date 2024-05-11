@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 from omegaconf import DictConfig
 
 from abses.cells import PatchCell, raster_attribute
-from abses.exp.experiment import Experiment
+from abses.experiment import Experiment
 from abses.main import MainModel
 from abses.nature import PatchModule
 from abses.sequences import ActorsList

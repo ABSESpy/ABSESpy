@@ -470,13 +470,11 @@ class _LinkNode:
     @classmethod
     def viz_attrs(cls, **kwargs) -> Dict[str, Any]:
         """Return the attributes for viz."""
-        viz_attrs = {
+        return {
             "marker": getattr(cls, "marker", "o"),
             "color": getattr(cls, "color", "black"),
             "alpha": getattr(cls, "alpha", 1.0),
-        }
-        viz_attrs.update(kwargs)
-        return viz_attrs
+        } | kwargs
 
     @cached_property
     def link(self) -> _LinkProxy:

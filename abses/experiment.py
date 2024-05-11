@@ -309,8 +309,37 @@ class Experiment:
             display_progress:
                 Whether to display the progress bar, default True.
             overrides:
-                The overrides for the experiment.
-                If not specified, it will use the default value None.
+                The dictionary of overrides for the experiment.
+                If specified, the experiment will sweep all the possible values for the parameter.
+                For examples:
+                override = {model.key: ["cate1", "cate2"]}
+                override = {nature.key: np.arange(10, 2)}
+                The first override will lead to two different runs:
+                - model.key = cate1
+                - model.key = cate2
+                The second override will lead to a series runs:
+                - model.nature.key = 0.0
+                - model.nature.key = 2.0
+                - model.nature.key = 4.0
+                - model.nature.key = 6.0
+                - model.nature.key = 8.0
+
+        Example:
+            ```Python
+            # initialize the experiment.
+            exp = Experiment(MainModel)
+            # Loading the configuration file `config.yaml`.
+            exp.batch_run('config.yaml')
+            ```
+
+            ```Python
+            # A different way for initializing.
+            exp = Experiment.new(MainModel)
+            cfg = {'time': {'end': 25}}
+
+            # Nine runs with different ending ticks.
+            exp.batch_run(cfg=cfg, overrides={'time.end': range(10, 100, 10)})
+            ```
         """
         # 如果配置是路径，则利用 Hydra API先清洗配置
         if self._is_config_path(cfg):

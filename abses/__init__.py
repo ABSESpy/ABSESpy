@@ -34,7 +34,7 @@ __version__ = "v0.5.8"
 from .actor import Actor, alive_required, perception
 from .container import ActorsList
 from .decision import Decision
-from .exp.experiment import Experiment
+from .experiment import Experiment
 from .human import BaseHuman
 from .main import MainModel
 from .nature import BaseNature, PatchCell, PatchModule

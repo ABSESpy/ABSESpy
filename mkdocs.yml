@@ -54,7 +54,7 @@ nav:
         - Workflow Control:
           - Time Control: api/time.md
           - Random: api/random.md
-          - Variables: api/variables.md
+          - Experiment: api/experiment.md
 
 theme:
     name: "material"

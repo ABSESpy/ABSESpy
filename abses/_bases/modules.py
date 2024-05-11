@@ -19,6 +19,7 @@ from typing import (
     Generic,
     Iterator,
     List,
+    Literal,
     Optional,
     Type,
     TypeVar,
@@ -33,6 +34,13 @@ from abses.tools.func import iter_func
 
 if TYPE_CHECKING:
     from ..main import MainModel
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
+
+HowCreation: TypeAlias = Literal["from_resolution", "from_file", "copy_layer"]
 
 
 class Module(_BaseObj):
@@ -133,7 +141,7 @@ class _ModuleFactory(Generic[ModuleType]):
 
     def new(
         self,
-        how: Optional[str] = None,
+        how: Optional[HowCreation] = None,
         module_class: Optional[Type[ModuleType]] = None,
         **kwargs,
     ) -> ModuleType:
