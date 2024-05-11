@@ -23,5 +23,5 @@ This is because `ABSESpy`'s framework structure perfectly [matches the SES struc
   [emergence]: ../wiki/concepts/emergence.md
   [matches the SES structure]: ../tutorial/beginner/organize_model_structure.ipynb
   [Hotelling]: ../tutorial/beginner/hotelling_tutorial.ipynb
-  [Fire]: ../tutorial/beginner/fire_tutorial.ipynb
+  [Fire]: ../tutorial/completing/fire_tutorial.ipynb
   [Predation]: ../tutorial/beginner/predation_tutorial.ipynb

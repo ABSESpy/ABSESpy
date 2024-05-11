@@ -28,12 +28,13 @@ nav:
           - B04: tutorial/beginner/manage_parameters.ipynb
           - B05: tutorial/beginner/actors.ipynb
           - B06: tutorial/beginner/movement.ipynb
-          - B07: tutorial/beginner/hotelling_tutorial.ipynb
+          - B07: tutorial/beginner/predation_tutorial.ipynb
+          - B08: tutorial/beginner/hotelling_tutorial.ipynb
         - Advanced Level:
           - A01: tutorial/advanced/geodata.ipynb
           - A02: tutorial/advanced/human_behavior_simulation.ipynb
         - Competing Level:
-          - C01: tutorial/competing/fire_tutorial.ipynb
+          - C01: tutorial/completing/fire_tutorial.ipynb
     - Examples:
         - Official Examples: examples/official.md
         - Community Examples: examples/community.md
