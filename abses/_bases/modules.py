@@ -229,6 +229,6 @@ class CompositeModule(Module, _States, _Notice):
     def end(self):
         return super().end()
 
-    def create_module(self, module_cls, *args, **kwargs):
+    def create_module(self, module_cls, how=None, **kwargs):
         """Create a module."""
-        return self.modules.new(module_class=module_cls, *args, **kwargs)
+        return self.modules.new(how=how, module_class=module_cls, **kwargs)

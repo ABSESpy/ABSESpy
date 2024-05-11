@@ -342,8 +342,8 @@ class BaseNature(CompositeModule, _PatchModuleProtocol):
 
     def create_module(
         self,
-        how: Optional[HowCreation] = None,
         module_cls: Optional[Type[PatchModule]] = None,
+        how: Optional[HowCreation] = None,
         major_layer: bool = False,
         **kwargs: Any,
     ) -> PatchModule:
