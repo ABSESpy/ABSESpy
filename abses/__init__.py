@@ -28,11 +28,13 @@ __all__ = [
     "alive_required",
     "time_condition",
     "Experiment",
+    "load_data",
 ]
-__version__ = "v0.5.8"
+__version__ = "v0.6.0"
 
 from .actor import Actor, alive_required, perception
 from .container import ActorsList
+from .data import load_data
 from .decision import Decision
 from .experiment import Experiment
 from .human import BaseHuman
