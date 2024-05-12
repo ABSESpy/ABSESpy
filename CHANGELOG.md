@@ -1,4 +1,15 @@
 
+<a id='changelog-0.6.1'></a>
+# 0.6.1 — 2024-05-12
+
+## New Features
+
+- [x] #feat✨ added applying mask option when apply a raster
+
+## Fixed bugs
+
+- [x] #bug🐛 include `__init__.py` for default config
+
 <a id='changelog-0.6.0'></a>
 # 0.6.0 — 2024-05-11
 

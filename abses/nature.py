@@ -47,23 +47,29 @@ if TYPE_CHECKING:
 
 
 class _PatchModuleProtocol(Protocol):
+    @property
     def cells(self) -> ActorsList[PatchCell]:
         """The cells stored in this layer."""
 
+    @property
     def mask(self) -> np.ndarray:
         """Where is not accessible."""
 
+    @property
     def cell_properties(self) -> set[str]:
         """The accessible attributes of cells stored in this layer.
         All `PatchCell` methods decorated by `raster_attribute` should be appeared here.
         """
 
+    @property
     def xda(self) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates."""
 
+    @property
     def plot(self) -> _VizNature:
         """Plotting"""
 
+    @property
     def attributes(self) -> set[str]:
         """All accessible attributes from this layer."""
 
@@ -73,14 +79,17 @@ class _PatchModuleProtocol(Protocol):
         This is useful when working with 2d `numpy.array`.
         """
 
+    @property
     def shape3d(self) -> Coordinate:
         """Raster shape in 3D (1, heigh, width).
         This is useful when working with `rasterio` band.
         """
 
+    @property
     def array_cells(self) -> np.ndarray:
         """Array type of the `PatchCell` stored in this module."""
 
+    @property
     def coords(self) -> Coordinate:
         """Coordinate system of the raster data.
         This is useful when working with `xarray.DataArray`.
@@ -131,6 +140,7 @@ class _PatchModuleProtocol(Protocol):
         This is a protocol method.
         """
 
+    @property
     def random(self) -> ListRandom:
         """Randomly"""
 

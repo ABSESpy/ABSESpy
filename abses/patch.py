@@ -50,7 +50,7 @@ from abses._bases.modules import Module, _ModuleFactory
 from abses.cells import PatchCell
 from abses.random import ListRandom
 from abses.sequences import ActorsList
-from abses.tools.func import get_buffer
+from abses.tools.func import get_buffer, set_null_values
 from abses.viz.viz_nature import _VizNature
 
 if TYPE_CHECKING:
@@ -177,7 +177,7 @@ class _PatchModuleFactory(_ModuleFactory):
         attr_name: str | None = None,
         apply_raster: bool = False,
         band: int = 1,
-        nodata: Any = np.nan,
+        apply_nodata: bool = True,
         **kwargs: Any,
     ) -> PatchModule:
         """Create a raster layer module from a file.
@@ -201,7 +201,7 @@ class _PatchModuleFactory(_ModuleFactory):
         with rasterio.open(raster_file, "r") as dataset:
             values = dataset.read(band)
             nodata_mask = values == dataset.nodata
-            values[nodata_mask] = nodata
+            set_null_values(values, nodata_mask)
             height, width = values.shape
             total_bounds = [
                 dataset.bounds.left,
@@ -218,7 +218,8 @@ class _PatchModuleFactory(_ModuleFactory):
             total_bounds=total_bounds,
             cell_cls=cell_cls,
         )
-        obj.mask = np.squeeze(~nodata_mask)
+        if apply_nodata:
+            obj.mask = np.squeeze(~nodata_mask)
         # obj._transform = dataset.transform
         if apply_raster:
             obj.apply_raster(values, attr_name=attr_name, **kwargs)
@@ -614,6 +615,7 @@ class PatchModule(Module, RasterBase):
         data: np.ndarray,
         attr_name: Optional[str] = None,
         flipud: bool = False,
+        apply_mask: bool = False,
     ) -> None:
         data = np.squeeze(data)
         if data.shape != self.shape2d:
@@ -621,6 +623,8 @@ class PatchModule(Module, RasterBase):
                 f"Data shape does not match raster shape. "
                 f"Expected {self.shape2d}, received {data.shape}."
             )
+        if apply_mask:
+            set_null_values(data, ~self.mask)
         if attr_name is None:
             attr_name = f"attribute_{len(self.attributes)}"
         self._attributes.add(attr_name)

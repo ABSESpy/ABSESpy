@@ -152,3 +152,33 @@ def with_axes(
 
     # 检查是否有参数传递给装饰器，若没有则返回装饰器本身
     return decorator(decorated_func) if decorated_func else decorator
+
+
+def set_null_values(arr: np.ndarray, mask: np.ndarray):
+    """
+    Set null values in an array based on a boolean mask and the array's data type.
+
+    Parameters:
+        arr:
+            The input array that can contain float or strings.
+        mask:
+            A boolean array where True indicates that a null value should be set.
+
+    Returns:
+        The modified array with null values set.
+    """
+    if arr.shape != mask.shape:
+        raise ValueError(f"Mismatching shape {mask.shape} and {arr.shape}.")
+    # Check if the dtype is float or integer
+    if arr.dtype.kind in {"f", "i"}:
+        null_value = np.nan
+    # Unicode string
+    elif arr.dtype.kind == "U":
+        null_value = ""
+    # # Byte string
+    elif arr.dtype.kind == "S":
+        null_value = b""
+    else:
+        raise ValueError(f"Unsupported data type {arr.dtype}")
+    arr[mask] = null_value
+    return arr
