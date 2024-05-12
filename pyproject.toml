@@ -39,7 +39,9 @@ readme = "README.md"
 include = [
   "icons/fa-regular-400.otf",
   "abses/conf/**/*.yaml",
-  "data/*"
+  "abses/conf/*.py",
+  "data/*",
+  "hydra_plugins.abses_searchpath_plugin"
 ]
 
 [tool.poetry.plugins."hydra.searchpath"]
