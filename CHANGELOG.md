@@ -1,4 +1,11 @@
 
+<a id='changelog-0.6.2'></a>
+# 0.6.2 — 2024-05-12
+
+## Refactoring
+
+- [x] #refactor♻️ update dependencies.
+
 <a id='changelog-0.6.1'></a>
 # 0.6.1 — 2024-05-12
 

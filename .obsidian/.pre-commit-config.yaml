@@ -15,7 +15,7 @@ repos:
     -   id: isort
         args: ['--profile=black']
 - repo: https://github.com/kynan/nbstripout
-  rev: 0.6.1
+  rev: 0.6.2
   hooks:
     - id: nbstripout
 -   repo: https://github.com/pycqa/pydocstyle
