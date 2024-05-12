@@ -1,4 +1,11 @@
 
+<a id='changelog-0.6.3'></a>
+# 0.6.3 — 2024-05-12
+
+## New Features
+
+- [x] #feat✨ now experiment can record model's vars
+
 <a id='changelog-0.6.2'></a>
 # 0.6.2 — 2024-05-12
 

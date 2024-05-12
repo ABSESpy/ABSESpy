@@ -94,12 +94,13 @@ class Experiment:
     _instance = None
     folder: Path = Path(os.getcwd())
     hydra_config: DictConfig = DictConfig({})
-    results: List[Dict[str, Any]] = []
     name: Optional[str] = None
+    final_vars: List[Dict[str, Any]] = []
+    model_vars: List[pd.DataFrame] = []
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(Experiment, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(
@@ -218,18 +219,23 @@ class Experiment:
 
     def run(
         self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
-    ) -> Dict[str, Any]:
+    ) -> Tuple[Dict[str, Any], pd.DataFrame]:
         """运行模型一次"""
         if not self._model or not issubclass(self._model, MainModel):
             raise TypeError(f"The model class {self._model} is not valid.")
         model = self._model(parameters=cfg, run_id=repeat_id, outpath=outpath)
         model.run_model()
-        return model.final_report()
+        if model.datacollector.model_reporters:
+            df = model.datacollector.get_model_vars_dataframe()
+        else:
+            df = pd.DataFrame()
+        return model.final_report(), df
 
     def _update_result(
         self,
         repeat_id: int,
         reports: Optional[Dict[str, Any]] = None,
+        model_df: Optional[pd.DataFrame] = None,
     ) -> None:
         """Updating in each run."""
         if reports is None:
@@ -241,7 +247,14 @@ class Experiment:
             }
         )
         reports |= self.overrides
-        self.results.append(reports)
+        self.final_vars.append(reports)
+        if model_df is None:
+            return
+        model_df = model_df.reset_index()
+        model_df = model_df.rename({"index": "tick"}, axis=1)
+        model_df.insert(0, "repeat_id", repeat_id)
+        model_df.insert(0, "job_id", self.job_id)
+        self.model_vars.append(model_df)
 
     def _batch_run_multi_processes(
         self,
@@ -261,14 +274,20 @@ class Experiment:
                 # 使用as_completed等待任务完成
                 for i, future in enumerate(as_completed(futures)):
                     # 每完成一个任务，更新进度条和运行计数
-                    result = future.result()
+                    result, model_df = future.result()
                     pbar.update()
-                    self._update_result(reports=result, repeat_id=i + 1)
+                    self._update_result(
+                        reports=result, model_df=model_df, repeat_id=i + 1
+                    )
 
     def _batch_run_repeats(self, cfg, repeats, display_progress) -> None:
         for repeat in tqdm(range(repeats), disable=not display_progress):
-            result = self.run(cfg, repeat_id=repeat + 1, outpath=self.outpath)
-            self._update_result(reports=result, repeat_id=repeat + 1)
+            result, model_df = self.run(
+                cfg, repeat_id=repeat + 1, outpath=self.outpath
+            )
+            self._update_result(
+                reports=result, model_df=model_df, repeat_id=repeat + 1
+            )
 
     def _parse_path(self, relative_path: str) -> Path:
         """Parse the path of the configuration file.
@@ -376,7 +395,7 @@ class Experiment:
     @classmethod
     def summary(cls, save: bool = False, **kwargs) -> None:
         """Ending the experiment."""
-        df = pd.DataFrame(cls.results)
+        df = pd.DataFrame(cls.final_vars)
         if save:
             df.to_csv(cls.folder / "summary.csv", index=False, **kwargs)
         return df
@@ -390,7 +409,8 @@ class Experiment:
                 Whether to create a new experiment.
                 If True, it will delete all the current settings.
         """
-        cls.results = []
+        cls.final_vars = []
+        cls.model_vars = []
         if new_exp:
             cls._instance = None
             cls.folder = Path(os.getcwd())
@@ -416,3 +436,10 @@ class Experiment:
         """
         cls.clean(new_exp=True)
         return cls(model_cls=model_cls)
+
+    @classmethod
+    def get_model_vars_dataframe(cls) -> pd.DataFrame:
+        """Aggregation of model vars dataframe."""
+        if cls.model_vars:
+            return pd.concat(cls.model_vars, axis=0)
+        raise ValueError("No model vars found.")

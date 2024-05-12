@@ -199,7 +199,7 @@ class _PatchModuleFactory(_ModuleFactory):
         """
         to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
         with rasterio.open(raster_file, "r") as dataset:
-            values = dataset.read(band)
+            values = dataset.read(band).astype(float)
             nodata_mask = values == dataset.nodata
             set_null_values(values, nodata_mask)
             height, width = values.shape
