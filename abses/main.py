@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import functools
 import os
-import sys
 import types
 from pathlib import Path
 from typing import (
@@ -38,12 +37,12 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from loguru import logger
 from mesa import DataCollector, Model
 from mesa.time import BaseScheduler
 from omegaconf import DictConfig, OmegaConf
 
 from abses import __version__
+from abses._bases.logging import logger
 from abses.actor import Actor
 
 from ._bases.bases import _Notice
@@ -54,21 +53,6 @@ from .nature import BaseNature
 from .sequences import ActorsList
 from .time import TimeDriver
 from .viz.viz_model import _VizModel
-
-# Logging configuration
-logger.remove(0)
-logger.add(
-    sys.stderr,
-    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<15}] | {message}",
-    level="WARNING",
-)
-# 'w' mode in add() method will clean the contents of the logging.log file before writing to it
-logger.add(
-    "logging.log",
-    format="[{time:YYYY-MM-DD HH:mm:ss}][{module:<15}] | {message}",
-    level="DEBUG",
-    mode="w",
-)
 
 # Dynamically load type hints from users' input type
 N = TypeVar("N", bound=BaseNature)
@@ -289,7 +273,6 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """
         self._setup()
         while self.running is True:
-            logger.debug(f"Current tick: {self.time.tick}")
             self._step()
             self.time.go()
             if self.time.tick == steps:

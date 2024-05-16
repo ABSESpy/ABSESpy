@@ -6,6 +6,7 @@
 # Website: https://cv.songshgeo.com/
 
 import pytest
+from loguru import logger
 from omegaconf import DictConfig
 
 from abses import __version__
@@ -47,3 +48,13 @@ class TestMain:
 
         model.time.go(6)
         assert model.time.year == 2007
+
+    def test_run_a_model(self, model: MainModel):
+        """测试运行模型"""
+        # arrange / act
+        model.run_model()
+
+    def test_run_a_tick_model(self):
+        """测试运行一个 tick 的模型"""
+        model = MainModel()
+        model.run_model(steps=20)

@@ -57,3 +57,12 @@ jupyter:
 diagram:
 	pyreverse -o png -p ABSESpy abses
 	mv *.png img/.
+
+show_logs:
+	find . -type f -name "*.log"
+
+clean_logs:
+	./remove-logs.sh
+
+rm_log:
+	rm runtime.log

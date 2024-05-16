@@ -23,11 +23,13 @@ from typing import (
 )
 
 import pendulum
+from loguru import logger
 from omegaconf import DictConfig
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
 from abses._bases.components import _Component
+from abses._bases.logging import log_session
 
 if TYPE_CHECKING:
     from .main import MainModel
@@ -151,6 +153,7 @@ class TimeDriver(_Component):
         self._duration: Optional[Duration] = None
         self._history: deque = deque()
         self._parse_time_settings()
+        self._logging_setup()
 
     def __repr__(self) -> str:
         if self.ticking_mode == "tick":
@@ -166,6 +169,14 @@ class TimeDriver(_Component):
         if isinstance(other, (DateTime, datetime)):
             return self.dt < other
         raise NotImplementedError(f"Cannot compare with {other}.")
+
+    @property
+    def fmt(self) -> str:
+        """String format of datetime."""
+        hms = ("hours", "minutes", "seconds")
+        if any(getattr(self.duration, item, None) for item in hms):
+            return r"%Y-%m-%d %H:%M:%S"
+        return r"%Y-%m-%d"
 
     @property
     def should_end(self) -> bool:
@@ -200,6 +211,9 @@ class TimeDriver(_Component):
             ticks:
                 How many ticks to increase.
         """
+        dt_msg = f" {self.strftime()}" if self.duration else ""
+        tick_msg = f" [tick {self.tick}] "
+        logger.info(f"{dt_msg}{tick_msg}".center(30, "-"))
         if ticks < 0:
             raise ValueError("Ticks cannot be negative.")
         if ticks == 0 and self.ticking_mode != "irregular":
@@ -224,34 +238,43 @@ class TimeDriver(_Component):
         if self.should_end:
             self._model.running = False
 
-    # def stdout(self) -> None:
-    #     """Print the current time."""
-    #     report = f"tick[{self.tick}] " + self.strftime("%Y-%m-%d %H:%M:%S")
-    #     # logger.info(report)
-    #     sys.stdout.write("\r" + report)
-    #     sys.stdout.flush()
-
     def _parse_time_settings(self) -> None:
         """Setup the time driver."""
         # Parse the start time settings
         self.start_dt = self.params.get("start", None)
-        # logger.debug(f"start_dt: {self.start_dt}")
 
         # Parse the end time settings
         self.end_dt = self.params.get("end", None)
-        # logger.debug(f"end_dt: {self.end_dt}")
 
         # Parse the duration settings
         self.parse_duration(self.params)
-        # logger.debug(f"duration: {self.duration}")
 
         # Parse the irregular settings
         self.irregular: bool = self.params.get("irregular", False)
-        # logger.debug("irregular: {}", self._irregular)
-        # logger.debug("Ticking mode: {}", self.ticking_mode)
 
         self.dt = self.start_dt
         self._history.append(self.dt)
+
+    def _logging_setup(self) -> None:
+        if self.ticking_mode == "duration":
+            end = (
+                self.end_dt.strftime(self.fmt)
+                if isinstance(self.end_dt, datetime)
+                else str(self.end_dt)
+            )
+            msg = (
+                f"Ticking mode: {self.ticking_mode}\n"
+                f"Start time: {self.start_dt.strftime(self.fmt)}\n"
+                f"End time: {end}\n"
+                f"Duration: {self.duration}\n"
+            )
+        else:
+            msg = (
+                f"Ticking mode: {self.ticking_mode}\n"
+                f"Start time: {self.start_dt.strftime(self.fmt)}\n"
+                f"End time: {self.end_dt}\n"
+            )
+        log_session(title="TimeDriver", msg=msg)
 
     @property
     def irregular(self) -> bool:
@@ -405,11 +428,15 @@ class TimeDriver(_Component):
         """Return the year this Period falls on."""
         return self.dt.year
 
-    def strftime(self, fmt: str) -> str:
+    def strftime(self, fmt: Optional[str] = None) -> str:
         """Returns a string representing the current time.
 
         Parameters:
             fmt:
                 An explicit format string of datetime.
         """
-        return self.dt.strftime(fmt)
+        return (
+            self.dt.strftime(self.fmt)
+            if fmt is None
+            else self.dt.strftime(fmt)
+        )
