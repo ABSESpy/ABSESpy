@@ -18,6 +18,7 @@ import types
 from datetime import datetime
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -60,6 +61,9 @@ from .nature import BaseNature
 from .sequences import ActorsList
 from .time import TimeDriver
 from .viz.viz_model import _VizModel
+
+if TYPE_CHECKING:
+    from abses import Experiment
 
 # Dynamically load type hints from users' input type
 N = TypeVar("N", bound=BaseNature)
@@ -108,25 +112,27 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         nature_class: Optional[Type[N]] = None,
         run_id: Optional[int] = None,
         outpath: Optional[Path] = None,
+        experiment: Optional[Experiment] = None,
         **kwargs: Optional[Any],
     ) -> None:
         Model.__init__(self, **kwargs)
         _Notice.__init__(self)
         _States.__init__(self)
+        self._exp = experiment
+        self._run_id: Optional[int] = run_id
+        self.outpath = cast(Path, outpath)
         self._setup_logger(kwargs.get("logging"))
         self.running: bool = True
         self._breeds: Dict[str, Type[Actor]] = {}
         self._containers: List[_AgentsContainer] = []
         self._settings = DictConfig(parameters)
         self._version: str = __version__
-        self.outpath = outpath
         self._logging_begin()  # logging
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
         self._agents = _AgentsContainer(
             model=self, max_len=kwargs.get("max_agents")
         )
         self._time = TimeDriver(model=self)
-        self._run_id: Optional[int] = run_id
         self.schedule: BaseScheduler = BaseScheduler(model=self)
         self.initialize_data_collector()
         self._do_each("initialize", order=("nature", "human"))
@@ -195,16 +201,21 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             return
         logging = str(logging).replace(".log", "")
         logger.add(
-            f"{logging}.log",
+            self.outpath / f"{logging}.log",
             retention="10 days",
             rotation="1 day",
             level="DEBUG",
             format=formatter,
         )
-        setup_logger_info()
+        setup_logger_info(self.exp)
 
     @property
-    def outpath(self) -> Optional[Path]:
+    def exp(self) -> Optional[Experiment]:
+        """Returns the associated experiment."""
+        return self._exp
+
+    @property
+    def outpath(self) -> Path:
         """Output path where to deposit assets."""
         return self._outpath
 

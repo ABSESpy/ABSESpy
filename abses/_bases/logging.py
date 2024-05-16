@@ -8,9 +8,15 @@
 """Logging module.
 """
 
+from __future__ import annotations
+
 import sys
+from typing import TYPE_CHECKING, Optional
 
 from loguru import logger
+
+if TYPE_CHECKING:
+    from abses import Experiment, MainModel
 
 logger.remove(0)
 FORMAT = "[{time:HH:mm:ss}][{module}] {message}\n"
@@ -40,10 +46,15 @@ def log_session(title: str, msg: str = ""):
     )
 
 
-def setup_logger_info():
+def setup_logger_info(
+    exp: Optional[Experiment] = None,
+    # model: Optional[MainModel] = None,
+):
     """Set up logger."""
     line_equal = "".center(40, "=") + "\n"
     line_star = "".center(40, "·") + "\n"
     content = "  ABSESpy Framework  ".center(40, "*") + "\n"
     msg = line_equal + line_star + content + line_star + line_equal
     logger.bind(no_format=True).info(msg)
+    is_exp_env = True if exp is not None else False
+    logger.bind(no_format=True).info(f"Exp environment: {is_exp_env}\n")

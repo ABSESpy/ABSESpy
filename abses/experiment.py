@@ -40,6 +40,7 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from tqdm.auto import tqdm
 
+from abses._bases.logging import setup_logger_info
 from abses.main import MainModel
 
 Configurations: TypeAlias = DictConfig | str | Dict[str, Any]
@@ -94,7 +95,8 @@ class Experiment:
     _instance = None
     folder: Path = Path(os.getcwd())
     hydra_config: DictConfig = DictConfig({})
-    name: Optional[str] = None
+    exp_config: DictConfig = DictConfig({})
+    name: str = "ABSESpyExp"
     final_vars: List[Dict[str, Any]] = []
     model_vars: List[pd.DataFrame] = []
 
@@ -120,7 +122,8 @@ class Experiment:
         number_process: Optional[int] = None,
     ) -> Tuple[int, int]:
         """Loading the configuration of this exp."""
-        exp_config: DictConfig = cfg.get("exp", DictConfig({}))
+        exp_config = cfg.get("exp", DictConfig({}))
+        cls.exp_config = exp_config
         if repeats is None:
             repeats = exp_config.get("repeats", 1)
         if number_process is None:
@@ -217,13 +220,34 @@ class Experiment:
             cfg = compose(config_name=cfg_path.stem, overrides=overrides)
         return cfg
 
+    def _get_logging_mode(self, repeat_id: Optional[int] = None) -> str | bool:
+        log_mode = self.exp_config.get("logging", "once")
+        if log_mode == "once":
+            if repeat_id == 1:
+                logging: bool | str = self.name
+            else:
+                return False
+        elif bool(log_mode) is True:
+            logging = f"{self.name}_{repeat_id}"
+        else:
+            logging = False
+        return logging
+
     def run(
         self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
     ) -> Tuple[Dict[str, Any], pd.DataFrame]:
         """运行模型一次"""
         if not self._model or not issubclass(self._model, MainModel):
             raise TypeError(f"The model class {self._model} is not valid.")
-        model = self._model(parameters=cfg, run_id=repeat_id, outpath=outpath)
+        # 获取日志
+        logging = self._get_logging_mode(repeat_id=repeat_id)
+        model = self._model(
+            parameters=cfg,
+            run_id=repeat_id,
+            outpath=outpath,
+            logging=logging,
+            experiment=self,
+        )
         model.run_model()
         if model.datacollector.model_reporters:
             df = model.datacollector.get_model_vars_dataframe()
@@ -415,7 +439,7 @@ class Experiment:
             cls._instance = None
             cls.folder = Path(os.getcwd())
             cls.hydra_config = DictConfig({})
-            cls.name = None
+            cls.name = "ABSESpyExp"
 
     @classmethod
     def new(cls, model_cls: Optional[Type[MainModel]] = None) -> Experiment:
