@@ -165,6 +165,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self._cell: Optional[PatchCell] = None
         self._decisions: _DecisionFactory = self._setup_decisions()
         self._alive: bool = True
+        self._birth_tick: int = self.time.tick
         self._setup()
 
     def __repr__(self) -> str:
@@ -244,6 +245,11 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         4. `move.random()`: moves the actor to a random cell.
         """
         return _Movements(self)
+
+    @alive_required
+    def age(self) -> int:
+        """Get the age of the actor."""
+        return self.time.tick - self._birth_tick
 
     @alive_required
     def get(

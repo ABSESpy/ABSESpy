@@ -46,6 +46,24 @@ class DeadMan(Actor):
 class TestActor:
     """Test the Actor class."""
 
+    @pytest.mark.parametrize(
+        "ticks, expected",
+        [
+            (1, 1),
+            (3, 3),
+        ],
+    )
+    def test_actor_age(self, model: MainModel, ticks, expected):
+        """测试主体的年龄计算"""
+        # arrange
+        actor = model.agents.new(Actor, singleton=True)
+        assert actor.age() == 0
+        model.time.go(ticks=ticks)
+        # act
+        age = actor.age()
+        # assert
+        assert age == expected
+
     def test_attributes(self, model: MainModel):
         """测试主体的属性"""
         # arrange / act
@@ -84,6 +102,7 @@ class TestActor:
         assert actor1 not in model.agents
         assert actor2 not in model.agents
         assert len(model.agents) == 0
+        assert not actor1.age()
 
     @pytest.mark.parametrize(
         "attr, target, value",
