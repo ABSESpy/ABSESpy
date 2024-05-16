@@ -20,6 +20,7 @@ from typing import (
     Optional,
     Type,
     Union,
+    cast,
 )
 
 import numpy as np
@@ -181,7 +182,7 @@ class _AgentsContainer(dict):
 
     def new(
         self,
-        breed_cls: Type[Actor],
+        breed_cls: Optional[Type[Actor]] = None,
         num: int = 1,
         singleton: bool = False,
         **kwargs: Any,
@@ -214,12 +215,14 @@ class _AgentsContainer(dict):
             >>> ActorsList
             ```
         """
+        if breed_cls is None:
+            breed_cls = Actor
         # check if the breed class is registered, if not, register it.
         if not self.check_registration(breed_cls):
             self.register(breed_cls)
         # create actors.
         objs = [breed_cls(self._model, **kwargs) for _ in range(num)]
-        logger.info(f"Created {num} actors of breed {breed_cls.__name__}")
+        logger.debug(f"{self} created {num} {breed_cls.__name__}.")
         # add actors to the container and the schedule.
         for agent in objs:
             self.add(agent)
@@ -228,9 +231,7 @@ class _AgentsContainer(dict):
         actors_list: ActorsList[Actor] = ActorsList(
             model=self.model, objs=objs
         )
-        if singleton:
-            return objs[0] if num == 1 else actors_list
-        return actors_list
+        return cast(Actor, actors_list.item()) if singleton else actors_list
 
     def get(self, breeds: Breeds = None) -> ActorsList[Actor]:
         """Get all entities of specified breeds to a list.

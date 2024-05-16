@@ -1,4 +1,21 @@
 
+<a id='changelog-0.6.4'></a>
+# 0.6.4 — 2024-05-16
+
+## Fixed bugs
+
+- [x] #bug🐛 Fixed `module_class` type incompatibility when arg `how` is assigned
+- [x] #bug🐛 Fixed `VizNodeList` with `savefig` arg
+
+## Documentation changes
+
+- [x] #docs📄 Improved logs
+
+## New Features
+
+- [x] #feat✨ Adding logs for model and experiment.
+- [x] #feat✨ counting the ages of the actors
+
 <a id='changelog-0.6.3'></a>
 # 0.6.3 — 2024-05-12
 

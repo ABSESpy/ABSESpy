@@ -1,6 +1,6 @@
 hydra:
   job:
-    name: default-hydra
+    name: ${exp.name}
   run:
     dir: '${exp.outdir}/${exp.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}'
   sweep:
@@ -11,3 +11,4 @@ exp:
   outdir: out
   name: ABSESpy
   repeats: 1
+  logging: once

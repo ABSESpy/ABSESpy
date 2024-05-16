@@ -328,3 +328,43 @@ class TestBaseNature:
         result = model.nature.out_of_bounds((3, 3))
         result2 = module2.out_of_bounds((3, 3))
         assert result == result2
+
+
+class MockModule(PatchModule):
+    """用于测试"""
+
+
+class MockCell(PatchCell):
+    """用于测试"""
+
+
+class TestCreatingNewPatch:
+    """测试创建新斑块"""
+
+    @pytest.mark.parametrize(
+        "module_cls, cell_cls",
+        [
+            (PatchModule, PatchCell),
+            (MockModule, MockCell),
+        ],
+    )
+    def test_setup_layer(
+        self,
+        model: MainModel,
+        module_cls,
+        cell_cls,
+    ) -> PatchModule:
+        """创建一个新的斑块"""
+        # arrange / act
+        layer = model.nature.create_module(
+            how="from_resolution",
+            module_cls=module_cls,
+            name="testing",
+            cell_cls=cell_cls,
+        )
+        # assert
+        assert layer.name == "testing"
+        assert issubclass(module_cls, PatchModule)
+        assert issubclass(layer.cell_cls, cell_cls)
+        assert isinstance(layer.cells.random.choice(), cell_cls)
+        assert isinstance(layer, module_cls)

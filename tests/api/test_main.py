@@ -47,3 +47,23 @@ class TestMain:
 
         model.time.go(6)
         assert model.time.year == 2007
+
+    def test_run_a_model(self, main_config):
+        """测试运行模型"""
+        # arrange
+        model = MainModel(parameters=main_config, logging="config.log")
+        # act
+        model.run_model()
+
+    def test_run_a_tick_model(self, farmer_cls):
+        """测试运行一个 tick 的模型"""
+
+        class TestModel(MainModel):
+            """用来测试，每步都创建几个主体。"""
+
+            def step(self) -> None:
+                self.agents.new(num=self.time.tick)
+                self.agents.new(farmer_cls, num=2)
+
+        model = TestModel(logging="tick")
+        model.run_model(steps=20)

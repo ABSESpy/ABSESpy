@@ -23,6 +23,7 @@ from typing import (
     Optional,
     Type,
     TypeVar,
+    cast,
 )
 
 from loguru import logger
@@ -33,7 +34,7 @@ from abses._bases.states import _States
 from abses.tools.func import iter_func
 
 if TYPE_CHECKING:
-    from ..main import MainModel
+    from abses.main import MainModel
 
 try:
     from typing import TypeAlias
@@ -99,11 +100,14 @@ class _ModuleFactory(Generic[ModuleType]):
     """To create a module."""
 
     methods: List[str] = []
-    default_cls: type[Module] = Module
+    default_cls: Type[Module] = Module
 
     def __init__(self, father) -> None:
         self.father: CompositeModule = father
         self.modules: Dict[str, ModuleType] = {}
+
+    def __str__(self) -> str:
+        return f"{self.father}: {list(self.modules.keys())}"
 
     def __iter__(self) -> Iterator[Module]:
         return iter(self.modules.values())
@@ -119,15 +123,15 @@ class _ModuleFactory(Generic[ModuleType]):
 
     def _check_cls(
         self, module_cls: Optional[Type[ModuleType]]
-    ) -> Type[Module]:
+    ) -> Type[ModuleType]:
         """Check if the provided class is a valid module class."""
         if module_cls is None:
-            return self.default_cls
+            return cast(Type[ModuleType], self.default_cls)
         if not issubclass(module_cls, self.default_cls):
             raise TypeError(
                 f"'{module_cls}' not a subclass of {self.default_cls}."
             )
-        return module_cls
+        return cast(Type[ModuleType], module_cls)
 
     @property
     def is_empty(self) -> bool:
@@ -167,11 +171,13 @@ class _ModuleFactory(Generic[ModuleType]):
         Returns:
             The created module.
         """
-        self._check_cls(module_cls=module_class)
+        module_cls = self._check_cls(module_cls=module_class)
         if not how:
-            module = module_class(model=self.father.model, **kwargs)
+            module = module_cls(model=self.father.model, **kwargs)
         elif hasattr(self, how):
-            module = getattr(self, how)(model=self.father.model, **kwargs)
+            module = getattr(self, how)(
+                module_cls=module_cls, model=self.father.model, **kwargs
+            )
         else:
             raise ValueError(
                 f"{how} is not a valid method for creating module."
@@ -181,6 +187,7 @@ class _ModuleFactory(Generic[ModuleType]):
         self._check_name(module.name)
         self.modules[module.name] = module
         self.father.attach(module)
+        logger.info(f"{str(self.father)} created module {module.name}.")
         return module
 
 

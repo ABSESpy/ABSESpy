@@ -31,7 +31,7 @@ line_length = 79
 
 [tool.poetry]
 name = "abses"
-version = "0.6.3"
+version = "0.6.4"
 description = "ABSESpy makes it easier to build artificial Social-ecological systems with real GeoSpatial datasets and fully incorporate human behaviour."
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
