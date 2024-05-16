@@ -34,7 +34,7 @@ from abses._bases.states import _States
 from abses.tools.func import iter_func
 
 if TYPE_CHECKING:
-    from ..main import MainModel
+    from abses.main import MainModel
 
 try:
     from typing import TypeAlias

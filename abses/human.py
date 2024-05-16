@@ -45,7 +45,6 @@ class HumanModule(Module):
 
     def __init__(self, model: MainModel[Any, Any], name: Optional[str] = None):
         Module.__init__(self, model, name)
-        logger.info("Initializing a new Human Module...")
         self._collections: Dict[str, Selection] = {}
 
     @property

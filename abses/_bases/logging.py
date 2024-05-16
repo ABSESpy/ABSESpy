@@ -50,4 +50,11 @@ def log_session(title: str, msg: str = ""):
 
 def setup_logger_info():
     """Set up logger."""
-    logger.info("Logger is set up.")
+    line_equal = "".center(40, "=") + "\n"
+    line_star = "".center(40, "·") + "\n"
+    content = "  ABSESpy Framework  ".center(40, "*") + "\n"
+    msg = line_equal + line_star + content + line_star + line_equal
+    logger.bind(no_format=True).info(msg)
+
+
+setup_logger_info()

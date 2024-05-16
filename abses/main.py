@@ -12,6 +12,7 @@ The main modelling framework of ABSESpy.
 from __future__ import annotations
 
 import functools
+import json
 import os
 import types
 from pathlib import Path
@@ -42,7 +43,7 @@ from mesa.time import BaseScheduler
 from omegaconf import DictConfig, OmegaConf
 
 from abses import __version__
-from abses._bases.logging import logger
+from abses._bases.logging import log_session, logger
 from abses.actor import Actor
 
 from ._bases.bases import _Notice
@@ -112,13 +113,14 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._containers: List[_AgentsContainer] = []
         self._settings = DictConfig(parameters)
         self._version: str = __version__
+        self.outpath = outpath
+        self._logging_begin()  # logging
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
         self._agents = _AgentsContainer(
             model=self, max_len=kwargs.get("max_agents")
         )
         self._time = TimeDriver(model=self)
         self._run_id: Optional[int] = run_id
-        self.outpath = outpath
         self.schedule: BaseScheduler = BaseScheduler(model=self)
         self.initialize_data_collector()
         self._do_each("initialize", order=("nature", "human"))
@@ -127,6 +129,18 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def __repr__(self) -> str:
         version = self._version
         return f"<{self.name}-{version}({self.state})>"
+
+    def _logging_begin(self) -> None:
+        """Logging the beginning of the model."""
+        # settings = OmegaConf.to_container(self._settings)
+        msg = (
+            f"Model: {self.__class__.__name__}\n"
+            f"ABSESpy version: {__version__}\n"
+            f"Outpath: {self.outpath}\n"
+            # f"Model parameters: {json.dumps(settings, indent=4)}\n"
+        )
+        # logger.bind(data=self._settings).info("Params:")
+        log_session(title="MainModel", msg=msg)
 
     def _check_subsystems(
         self, h_cls: Optional[Type[H]], n_cls: Optional[Type[N]]
@@ -141,7 +155,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         else:
             assert issubclass(n_cls, BaseNature)
         self._human = h_cls(self)
+        logger.info(f"Human subsystem: {h_cls.__name__}.")
         self._nature = n_cls(self)
+        logger.info(f"Natural subsystem: {n_cls.__name__}.")
 
     def _do_each(
         self,
@@ -301,8 +317,13 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
-        self.final_report()
-        logger.info(f"Ending {self.name}")
+        result = self.final_report()
+        msg = (
+            "The model is ended.\n"
+            f"Total ticks: {self.time.tick}\n"
+            f"Final result: {json.dumps(result, indent=4)}\n"
+        )
+        log_session(title="Ending Report", msg=msg)
 
     def final_report(self) -> Dict[str, Any]:
         """Report at the end of this model."""

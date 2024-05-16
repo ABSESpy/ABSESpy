@@ -300,8 +300,6 @@ class BaseNature(CompositeModule, _PatchModuleProtocol):
         self._major_layer: Optional[PatchModule] = None
         self._modules: _PatchModuleFactory = _PatchModuleFactory(self)
 
-        logger.info("Initializing a new Base Nature module...")
-
     def __repr__(self) -> str:
         return f"<BaseNature [{self.major_layer}]>"
 
