@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     from abses.links import _LinkNode
     from abses.main import MainModel
 
-Selection: TypeAlias = Union[str, Iterable[bool], Dict[str, bool]]
+Selection: TypeAlias = Union[str, Iterable[bool], Dict[str, Any]]
 HOW: TypeAlias = Literal["only", "random", "item"]
 Link = TypeVar("Link", bound="_LinkNode")
 

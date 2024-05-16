@@ -211,9 +211,6 @@ class TimeDriver(_Component):
             ticks:
                 How many ticks to increase.
         """
-        dt_msg = f" {self.strftime()}" if self.duration else ""
-        tick_msg = f" [tick {self.tick}] "
-        logger.info(f"{dt_msg}{tick_msg}".center(30, "-"))
         if ticks < 0:
             raise ValueError("Ticks cannot be negative.")
         if ticks == 0 and self.ticking_mode != "irregular":
@@ -225,6 +222,11 @@ class TimeDriver(_Component):
                 self.go(ticks=1, **kwargs)
             return
         # tick = 1
+        dt_msg = f" {self.strftime()}" if self.duration else ""
+        tick_msg = f" [tick {self.tick}] "
+        logger.bind(no_format=True).info(
+            "\n" + f"{dt_msg}{tick_msg}".center(30, "-")
+        )
         self._tick += ticks
         if self.ticking_mode == "duration":
             self.dt += self.duration

@@ -70,9 +70,6 @@ class _PatchModuleFactory(_ModuleFactory):
         super().__init__(father)
         self.default_cls = PatchModule
 
-    def __repr__(self) -> str:
-        return repr(self.father)
-
     def __getitem__(self, name: str) -> PatchModule:
         return self.modules[name]
 

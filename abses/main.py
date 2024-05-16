@@ -15,6 +15,7 @@ import functools
 import json
 import os
 import types
+from datetime import datetime
 from pathlib import Path
 from typing import (
     Any,
@@ -43,7 +44,12 @@ from mesa.time import BaseScheduler
 from omegaconf import DictConfig, OmegaConf
 
 from abses import __version__
-from abses._bases.logging import log_session, logger
+from abses._bases.logging import (
+    formatter,
+    log_session,
+    logger,
+    setup_logger_info,
+)
 from abses.actor import Actor
 
 from ._bases.bases import _Notice
@@ -107,7 +113,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         Model.__init__(self, **kwargs)
         _Notice.__init__(self)
         _States.__init__(self)
-
+        self._setup_logger(kwargs.get("logging"))
         self.running: bool = True
         self._breeds: Dict[str, Type[Actor]] = {}
         self._containers: List[_AgentsContainer] = []
@@ -142,6 +148,19 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         # logger.bind(data=self._settings).info("Params:")
         log_session(title="MainModel", msg=msg)
 
+    def _logging_step(self) -> None:
+        if not self.breeds:
+            return
+        agents = self.agents.select({"_birth_tick": self.time.tick})
+        agents_dict = agents.to_dict()
+        lst = [f"{len(lst)} {breed}" for breed, lst in agents_dict.items()]
+        msg = (
+            f"\nIn [tick {self.time.tick - 1}]:"
+            "\n"
+            "Created " + ", ".join(lst) + ""
+        )
+        logger.bind(no_format=True).info(msg)
+
     def _check_subsystems(
         self, h_cls: Optional[Type[H]], n_cls: Optional[Type[N]]
     ) -> None:
@@ -170,6 +189,19 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             if name not in _obj:
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
+
+    def _setup_logger(self, logging: Optional[str] = None) -> None:
+        if not logging:
+            return
+        logging = str(logging).replace(".log", "")
+        logger.add(
+            f"{logging}.log",
+            retention="10 days",
+            rotation="1 day",
+            level="DEBUG",
+            format=formatter,
+        )
+        setup_logger_info()
 
     @property
     def outpath(self) -> Optional[Path]:
@@ -289,8 +321,8 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """
         self._setup()
         while self.running is True:
-            self._step()
             self.time.go()
+            self._step()
             if self.time.tick == steps:
                 self.running = False
         self._end()
@@ -305,14 +337,19 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """Users can custom what to do when the model is end."""
 
     def _setup(self) -> None:
-        logger.info(f"Setting up {self.name}...")
         self._do_each("setup", order=("model", "nature", "human"))
         self._do_each("set_state", code=2)
+        msg = (
+            f"Nature: {str(self.nature.modules)}\n"
+            f"Human: {str(self.human.modules)}\n"
+        )
+        log_session(title="Setting-up", msg=msg)
 
     def _step(self) -> None:
         self._do_each("step", order=("model", "nature", "human"))
         self.schedule.step()
         self.datacollector.collect(self)
+        self._logging_step()
 
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
@@ -323,7 +360,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             f"Total ticks: {self.time.tick}\n"
             f"Final result: {json.dumps(result, indent=4)}\n"
         )
-        log_session(title="Ending Report", msg=msg)
+        log_session(title="Ending Run", msg=msg)
+        logger.bind(no_format=True).info(f"{datetime.now()}\n\n\n")
+        logger.remove()
 
     def final_report(self) -> Dict[str, Any]:
         """Report at the end of this model."""

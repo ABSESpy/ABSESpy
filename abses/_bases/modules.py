@@ -106,6 +106,9 @@ class _ModuleFactory(Generic[ModuleType]):
         self.father: CompositeModule = father
         self.modules: Dict[str, ModuleType] = {}
 
+    def __str__(self) -> str:
+        return f"{self.father}: {list(self.modules.keys())}"
+
     def __iter__(self) -> Iterator[Module]:
         return iter(self.modules.values())
 
@@ -184,6 +187,7 @@ class _ModuleFactory(Generic[ModuleType]):
         self._check_name(module.name)
         self.modules[module.name] = module
         self.father.attach(module)
+        logger.info(f"{str(self.father)} created module {module.name}.")
         return module
 
 

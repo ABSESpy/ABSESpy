@@ -182,7 +182,7 @@ class _AgentsContainer(dict):
 
     def new(
         self,
-        breed_cls: Type[Actor],
+        breed_cls: Optional[Type[Actor]] = None,
         num: int = 1,
         singleton: bool = False,
         **kwargs: Any,
@@ -215,6 +215,8 @@ class _AgentsContainer(dict):
             >>> ActorsList
             ```
         """
+        if breed_cls is None:
+            breed_cls = Actor
         # check if the breed class is registered, if not, register it.
         if not self.check_registration(breed_cls):
             self.register(breed_cls)

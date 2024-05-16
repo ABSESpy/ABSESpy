@@ -28,14 +28,6 @@ logger.add(
     colorize=True,
 )
 
-logger.add(
-    "runtime.log",
-    retention="10 days",
-    rotation="1 day",
-    level="DEBUG",
-    format=formatter,
-)
-
 
 def log_session(title: str, msg: str = ""):
     """logging a new module session."""
@@ -55,6 +47,3 @@ def setup_logger_info():
     content = "  ABSESpy Framework  ".center(40, "*") + "\n"
     msg = line_equal + line_star + content + line_star + line_equal
     logger.bind(no_format=True).info(msg)
-
-
-setup_logger_info()

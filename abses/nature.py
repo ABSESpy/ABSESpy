@@ -26,7 +26,6 @@ import numpy as np
 import pyproj
 import rasterio
 import xarray as xr
-from loguru import logger
 from mesa.space import Coordinate
 
 from abses._bases.modules import CompositeModule, HowCreation
@@ -301,7 +300,13 @@ class BaseNature(CompositeModule, _PatchModuleProtocol):
         self._modules: _PatchModuleFactory = _PatchModuleFactory(self)
 
     def __repr__(self) -> str:
-        return f"<BaseNature [{self.major_layer}]>"
+        major_layer = (
+            self.major_layer.name
+            if self.major_layer is not None
+            else "No major"
+        )
+        flag = "open" if self.opening else "closed"
+        return f"<nature ({major_layer}): {flag}>"
 
     def __getattribute__(self, name: str) -> PatchModule:
         """Get the submodule by name."""

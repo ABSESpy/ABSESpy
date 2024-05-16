@@ -65,4 +65,4 @@ clean_logs:
 	./remove-logs.sh
 
 rm_log:
-	rm runtime.log
+	rm *.log

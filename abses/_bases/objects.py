@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import mesa
+from loguru import logger
 
 from abses._bases.bases import _Observer
 from abses._bases.components import _Component
@@ -98,6 +99,7 @@ class _BaseObj(_Observer, _Component):
             obj=self, name=name, data=data, function=function, **kwargs
         )
         self._dynamic_variables[name] = var
+        logger.info(f"Added dynamic variable '{var}'.")
 
     def dynamic_var(self, attr_name: str) -> Any:
         """Returns output of a dynamic variable.
