@@ -17,6 +17,7 @@ from mesa_geo.raster_layers import RasterBase
 
 from abses import ActorsList
 from abses._bases.errors import ABSESpyError
+from abses._bases.objects import _BaseObj
 from abses.container import _CellAgentsContainer
 from abses.links import TargetName, _LinkNodeCell
 
@@ -67,7 +68,7 @@ def raster_attribute(
     return property(func)
 
 
-class PatchCell(_LinkNodeCell):
+class PatchCell(_LinkNodeCell, _BaseObj):
     """A patch cell of a `RasterLayer`.
     Subclassing this class to create a custom cell.
     When class attribute `max_agents` is assigned,
@@ -83,6 +84,7 @@ class PatchCell(_LinkNodeCell):
     max_agents: Optional[int] = None
 
     def __init__(self, layer, indices: Optional[Pos] = None):
+        _BaseObj.__init__(self, model=layer.model, observer=True)
         _LinkNodeCell.__init__(self)
         self.indices = indices
         self._set_layer(layer=layer)
