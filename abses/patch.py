@@ -614,12 +614,13 @@ class PatchModule(Module, RasterBase):
         flipud: bool = False,
         apply_mask: bool = False,
     ) -> None:
-        data = np.squeeze(data)
-        if data.shape != self.shape2d:
+        try:
+            data = data.reshape(self.shape2d)
+        except ValueError as e:
             raise ValueError(
                 f"Data shape does not match raster shape. "
                 f"Expected {self.shape2d}, received {data.shape}."
-            )
+            ) from e
         if apply_mask:
             set_null_values(data, ~self.mask)
         if attr_name is None:
