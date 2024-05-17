@@ -5,6 +5,9 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+"""在列表中随机操作主体
+"""
+
 from __future__ import annotations
 
 from itertools import combinations
@@ -89,7 +92,8 @@ class ListRandom:
         """
         if isinstance(prob, str):
             prob = self.actors.array(attr=prob)
-        prob = np.array(make_list(prob))
+        else:
+            prob = np.array(make_list(prob))
         length = len(prob)
         prob = np.nan_to_num(prob)
         prob[prob < 0] = 0.0
@@ -115,6 +119,7 @@ class ListRandom:
         replace: bool = False,
         as_list: bool = False,
         when_empty: WHEN_EMPTY = "raise exception",
+        double_check: bool = False,
     ) -> Optional[Actor | ActorsList[Actor]]:
         """Randomly choose one or more actors from the current self object.
 
@@ -154,8 +159,14 @@ class ListRandom:
             raise ABSESpyError(
                 f"Trying to choose {size} actors from {self.actors}."
             )
+        # 有概率的时候，先清理概率
         if prob is not None:
             prob = self.clean_p(prob=prob)
+            valid_prob = prob.astype(bool)
+            # 特别处理有概率的主体数量不足预期的情况
+            if valid_prob.sum() < size and not replace:
+                return self._when_p_not_enough(double_check, valid_prob, size)
+        # 其他情况就正常随机选择
         chosen = self.generator.choice(
             self.actors, size=size, replace=replace, p=prob
         )
@@ -164,6 +175,25 @@ class ListRandom:
             if size == 1 and not as_list
             else self._to_actors_list(chosen)
         )
+
+    def _when_p_not_enough(self, double_check, valid_prob, size):
+        if not double_check:
+            raise ABSESpyError(
+                f"Only {valid_prob.sum()} entities have possibility, "
+                f"but {size} entities are expected. "
+                "Please check the probability settings.\n"
+                "If you want to choose with replacement, set `replace=True`.\n"
+                "If you want to choose with equal probability, set `prob=None`.\n"
+                "If you want to choose the valid entities firstly, "
+                "and then choose others equally, set `double_check=True'`."
+            )
+        first_chosen = self.actors.select(valid_prob)
+        others = self.actors.select(~valid_prob)
+        remain_size = size - len(first_chosen)
+        second_chosen = self.generator.choice(
+            others, remain_size, replace=False
+        )
+        return self._to_actors_list([*first_chosen, *second_chosen])
 
     def new(
         self,

@@ -31,7 +31,7 @@ __all__ = [
     "load_data",
     "logger",
 ]
-__version__ = "v0.6.4"
+__version__ = "v0.6.5"
 
 from ._bases.logging import logger
 from .actor import Actor, alive_required, perception

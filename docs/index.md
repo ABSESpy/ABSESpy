@@ -7,7 +7,7 @@ description: "Agent-Based Social-ecological systems Modelling Framework in Pytho
 
 <!-- Language: [English Readme](#) | [简体中文](README_ch) -->
 
-**Date**: January. 11, 2024, **Version**: 0.6.4
+**Date**: January. 11, 2024, **Version**: 0.6.5
 
 **Useful links**: [Install](home/Installation.md) | [Source Repository](https://github.com/ABSESpy/ABSESpy) | [Issues & Ideas](https://github.com/ABSESpy/ABSESpy/issues) | [Q&A Support](https://github.com/ABSESpy/ABSESpy/discussions)
 

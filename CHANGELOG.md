@@ -1,4 +1,12 @@
 
+<a id='changelog-0.6.5'></a>
+# 0.6.5 — 2024-05-17
+
+## Fixed bugs
+
+- [x] #bug🐛 solving situation when entities with prob are not enough for expected size in random choose
+- [x] #bug🐛  Fixed shape `(1, x)` natural patch squeezed bug
+
 <a id='changelog-0.6.4'></a>
 # 0.6.4 — 2024-05-16
 

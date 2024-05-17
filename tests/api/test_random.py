@@ -10,6 +10,7 @@ import pytest
 
 from abses import Actor, MainModel
 from abses._bases.errors import ABSESpyError
+from abses.sequences import ActorsList
 
 
 class TestRandomActorsList:
@@ -67,6 +68,7 @@ class TestRandomActorsList:
 
         # assert
         assert np.allclose(possibilities, expected_p)
+        assert np.sum(possibilities) == 1
 
     @pytest.mark.parametrize(
         "num, size, replace",
@@ -89,21 +91,27 @@ class TestRandomActorsList:
             (2, [0.1, 0.4], False, [0, 1]),
             (2, [np.nan, 1], True, [1, 1]),
             (1, [np.nan, 1], False, [1]),
+            (2, [0, 1], False, [0, 1]),
         ],
         ids=[
             "choose all two",
             "expected two, but only one to choose",
             "only one to choose",
+            "double_check choosing",
         ],
     )
     def test_random_choose(self, main: MainModel, size, p, replace, expected):
         """测试从列表中随机抽取"""
         # arrange
-        agents = main.agents.new(Actor, num=2)
+        agents: ActorsList = main.agents.new(Actor, num=2)
 
         # act
         chosen = agents.random.choice(
-            size=size, prob=p, as_list=True, replace=replace
+            size=size,
+            prob=p,
+            as_list=True,
+            replace=replace,
+            double_check=True,
         )
 
         # assert
