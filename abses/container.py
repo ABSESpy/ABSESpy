@@ -17,7 +17,9 @@ from typing import (
     Any,
     Dict,
     Iterable,
+    List,
     Optional,
+    Tuple,
     Type,
     Union,
     cast,
@@ -45,6 +47,7 @@ if TYPE_CHECKING:
 ActorTypes: TypeAlias = Union[Type[Actor], Iterable[Type[Actor]]]
 Actors: TypeAlias = Union[Actor, ActorsList, Iterable[Actor]]
 UniqueID: TypeAlias = Union[str, int]
+UniqueIDs: TypeAlias = List[Optional[UniqueID]]
 
 
 class _ModelAgentsContainer(_AgentsContainer):
@@ -96,6 +99,21 @@ class _ModelAgentsContainer(_AgentsContainer):
         self.model.schedule.add(agent)
         return agent
 
+    def _check_ids_and_num(
+        self, num: Optional[int], unique_ids: Optional[UniqueIDs]
+    ) -> Tuple[int, UniqueIDs]:
+        # Checking unique_ids and num of actors:
+        unique_ids = make_list(unique_ids)
+        if num is None and not unique_ids:
+            unique_ids = [None]
+        elif isinstance(num, int) and not unique_ids:
+            unique_ids = [None] * num
+        elif unique_ids and num is None:
+            num = len(unique_ids)
+        elif isinstance(num, int) and len(unique_ids) != num:
+            raise ValueError("Not matching num of actors and unique_ids.")
+        return cast(int, num), cast(List, unique_ids)
+
     def register(self, actor_cls: Type[Actor]) -> None:
         """Registers a new breed of actors.
 
@@ -120,8 +138,9 @@ class _ModelAgentsContainer(_AgentsContainer):
     def new(
         self,
         breed_cls: Type[Actor] = Actor,
-        num: int = 1,
+        num: Optional[int] = None,
         singleton: bool = False,
+        unique_ids: Optional[UniqueIDs] = None,
         **kwargs: Any,
     ) -> Union[Actor, ActorsList[Actor]]:
         """Create one or more actors of the given breed class.
@@ -154,10 +173,14 @@ class _ModelAgentsContainer(_AgentsContainer):
         """
         # check if the breed class is registered, if not, register it.
         self.check_registration(breed_cls, register=True)
-        objs = []
+        num, unique_ids = self._check_ids_and_num(num, unique_ids)
+
         # create actors.
-        for _ in range(num):
-            agent = self._new_one(agent_cls=breed_cls, **kwargs)
+        objs = []
+        for unique_id in unique_ids:
+            agent = self._new_one(
+                unique_id=unique_id, agent_cls=breed_cls, **kwargs
+            )
             objs.append(agent)
         # return the created actor(s).
         actors_list: ActorsList[Actor] = ActorsList(
@@ -265,6 +288,7 @@ class _CellAgentsContainer(_AgentsContainer):
         breed_cls: Type[Actor] = Actor,
         num: int = 1,
         singleton: bool = False,
+        unique_ids: Optional[UniqueIDs] = None,
         **kwargs: Any,
     ) -> Actor | ActorsList:
         """Creates a new actor or a list of actors of the given breed class.
@@ -284,7 +308,9 @@ class _CellAgentsContainer(_AgentsContainer):
             The created actor(s).
         """
         # Using model's container to create a list of actors
-        new_actors = self.model.agents.new(breed_cls, num, singleton, **kwargs)
+        new_actors = self.model.agents.new(
+            breed_cls, num, singleton, unique_ids, **kwargs
+        )
         # move the actors to the cell
         for a in make_list(new_actors):
             a.move.to(self._cell)

@@ -313,6 +313,24 @@ class TestCellContainer:
 class TestCreateGeoAgents:
     """测试创建地理主体"""
 
+    @pytest.mark.parametrize(
+        "unique_ids, num, expected_num",
+        [
+            (["a", "b", "c"], None, 3),
+            (["a", "b", "c"], 3, 3),
+            (["abc"], None, 1),
+            ("abc", None, 1),
+        ],
+    )
+    def test_create_with_unique_ids(
+        self, model: MainModel, unique_ids, num, expected_num
+    ):
+        """测试利用唯一ID创建主体"""
+        # arrange / act
+        actors = model.agents.new(unique_ids=unique_ids, num=num)
+        # assert
+        assert len(actors) == expected_num
+
     def test_create_geo_agents(self, model: MainModel):
         """测试创建地理主体"""
         # arrange
