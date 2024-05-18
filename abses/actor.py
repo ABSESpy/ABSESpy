@@ -39,6 +39,7 @@ from abses.move import _Movements
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
+    from abses._bases.base_container import UniqueID
     from abses.cells import Pos
     from abses.main import MainModel
     from abses.nature import PatchCell, PatchModule
@@ -150,12 +151,10 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self,
         model: MainModel[Any, Any],
         observer: bool = True,
-        unique_id: Optional[int] = None,
+        unique_id: Optional[UniqueID] = None,
         **kwargs,
     ) -> None:
         _BaseObj.__init__(self, model, observer=observer)
-        if not unique_id:
-            unique_id = self.model.next_id()
         crs = kwargs.pop("crs", model.nature.crs)
         geometry = kwargs.pop("geometry", None)
         mg.GeoAgent.__init__(
@@ -197,7 +196,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @property
     def on_earth(self) -> bool:
         """Whether agent stands on a cell."""
-        return bool(self._cell)
+        return bool(self._cell) or bool(self.geometry)
 
     @property
     def at(self) -> PatchCell | None:

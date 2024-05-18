@@ -16,22 +16,14 @@ from abses.actor import Actor
 from abses.sequences import ActorsList
 
 
-class Farmer(Actor):
-    """测试用，另一个类别的主体"""
-
-    def __init__(self, model, observer: bool = True) -> None:
-        super().__init__(model, observer)
-        self.metric = 0.1
-
-
 class TestSequences:
     """Test Sequence"""
 
-    def test_sequences_attributes(self, model):
+    def test_sequences_attributes(self, model, farmer_cls):
         """测试容器的属性"""
         # arrange
         actors5 = model.agents.new(Actor, 5)
-        farmers3 = model.agents.new(Farmer, 3)
+        farmers3 = model.agents.new(farmer_cls, 3)
         actors5.test = 1
         farmers3.test = -1
         mixed_actors = ActorsList(model=model, objs=[*actors5, *farmers3])
@@ -46,11 +38,11 @@ class TestSequences:
         )
         assert repr(each_one) == "<ActorsList: (1)Actor; (1)Farmer>"
 
-    def test_sequences_better(self, model: MainModel):
+    def test_sequences_better(self, model: MainModel, farmer_cls):
         """Test that sequences"""
         # arrange
-        a_farmer = model.agents.new(Farmer, singleton=True)
-        others = model.agents.new(Farmer, 5)
+        a_farmer = model.agents.new(farmer_cls, singleton=True)
+        others = model.agents.new(farmer_cls, 5)
         for i, farmer in enumerate(
             others
         ):  # np.array([0.0, 0.1, 0.2, 0.3, 0.4])
@@ -74,10 +66,12 @@ class TestSequences:
             (lambda f: f.metric + 1, (), {}, np.array([1.1, 1.1, 1.1])),
         ],
     )
-    def test_apply(self, model: MainModel, ufunc, args, kwargs, expected):
+    def test_apply(
+        self, model: MainModel, ufunc, args, kwargs, expected, farmer_cls
+    ):
         """Test that applying a function."""
         # assert
-        farmers = model.agents.new(Farmer, 3)
+        farmers = model.agents.new(farmer_cls, 3)
         actor = model.agents.new(Actor, singleton=True)
         # act
         results = farmers.apply(ufunc, *args, **kwargs)

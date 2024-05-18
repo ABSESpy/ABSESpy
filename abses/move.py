@@ -71,7 +71,7 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
     if keep_moving is False:
         return
     # put the agent on the new cell after check.
-    cell.agents.add(agent, register=True)
+    cell.agents.add(agent)
     agent.at = cell
     # self.geometry = Point(cell.layer.transform * cell.indices)
 

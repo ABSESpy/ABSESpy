@@ -9,9 +9,19 @@
 这个模块储存一些
 """
 
-import logging
 from functools import wraps
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    cast,
+    overload,
+)
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -20,9 +30,14 @@ from scipy import ndimage
 
 from abses.tools.regex import CAMEL_NAME
 
-logger = logging.getLogger(__name__)
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+IncludeFlag: TypeAlias = str | bool | Iterable[str] | Dict[str, str]
 
 
 def get_buffer(
@@ -182,3 +197,51 @@ def set_null_values(arr: np.ndarray, mask: np.ndarray):
         raise ValueError(f"Unsupported data type {arr.dtype}")
     arr[mask] = null_value
     return arr
+
+
+@overload
+def clean_attrs(
+    all_attrs: Iterable[str],
+    include: Optional[IncludeFlag],
+    exclude: Optional[Iterable[str]] = None,
+) -> Dict[str, str]:
+    ...
+
+
+@overload
+def clean_attrs(
+    all_attrs: Iterable[str],
+    include: Dict[str, str],
+    exclude: Optional[Iterable[str]] = None,
+) -> Dict[str, str]:
+    ...
+
+
+def clean_attrs(
+    all_attrs: Iterable[str],
+    include: Optional[IncludeFlag | Dict[str, str]] = True,
+    exclude: Optional[Iterable[str]] = None,
+) -> List[str] | Dict[str, str]:
+    """
+    Clean attributes based on include and exclude lists.
+
+    Parameters:
+        all_attrs:
+            All attributes to clean.
+        include:
+            Attributes to include.
+        exclude:
+            Attributes to exclude.
+
+    Returns:
+        The cleaned attributes.
+    """
+    if isinstance(include, dict):
+        attrs = clean_attrs(all_attrs, list(include.keys()), exclude)
+        return {attr: include[attr] for attr in attrs}
+    if isinstance(include, bool):
+        include = all_attrs if include else None
+    selected = set(all_attrs) & set(make_list(include))
+    if exclude:
+        selected -= set(make_list(exclude))
+    return list(selected)

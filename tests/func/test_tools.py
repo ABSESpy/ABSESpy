@@ -10,7 +10,7 @@ import pytest
 from abses import MainModel
 from abses._bases.objects import _BaseObj
 from abses.time import time_condition
-from abses.tools.func import iter_func
+from abses.tools.func import clean_attrs, iter_func
 
 
 def test_iter_function():
@@ -83,3 +83,25 @@ def test_time_condition_error_cases():
     # Act and Assert
     with pytest.raises(TypeError):
         mock_object.my_method()
+
+
+@pytest.mark.parametrize(
+    "include, exclude, expected",
+    [
+        (["a", "b", "d"], ["b"], ["a", "d"]),
+        (["a", "b", "e"], ["b"], ["a"]),
+        (["a", "b", "e"], "b", ["a"]),
+        ({"a": "test", "b": "test_2"}, ["b"], {"a": "test"}),
+        (True, None, ["a", "b", "c", "d"]),
+        (None, None, []),
+        (False, None, []),
+    ],
+)
+def test_clean_attrs(include, exclude, expected):
+    """Test that the clean_attrs function works as expected."""
+    # Arrange
+    test = ["a", "b", "c", "d"]
+    # Act
+    attrs = clean_attrs(test, include, exclude)
+    # Assert
+    assert sorted(attrs) == sorted(expected)

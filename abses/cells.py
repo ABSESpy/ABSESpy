@@ -15,15 +15,15 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 from mesa_geo.raster_layers import RasterBase
 
-from abses import ActorsList
 from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
 from abses.container import _CellAgentsContainer
 from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:
-    from abses.main import H, MainModel, N
+    from abses.main import MainModel
     from abses.nature import PatchModule
+    from abses.sequences import ActorsList
 
 try:
     from typing import TypeAlias

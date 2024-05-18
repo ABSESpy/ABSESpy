@@ -14,11 +14,14 @@
 
 from typing import Dict, List
 
+import geopandas as gpd
 import pytest
+from shapely.geometry import Point
 
 from abses import Actor, MainModel
 from abses._bases.errors import ABSESpyError
 from abses.container import _AgentsContainer
+from abses.data import load_data
 from abses.nature import PatchCell
 from abses.sequences import ActorsList
 
@@ -72,7 +75,7 @@ class TestMainContainer:
         container = model.agents
 
         # action
-        container.register([Actor])
+        container.register(Actor)
 
         # assert
         assert all("Actor" in cell.agents.keys() for cell in module)
@@ -144,7 +147,7 @@ class TestMainContainer:
         """测试模型的初始化"""
         # arrange
         container = model.agents
-        container.register([breeds.get(k) for k in init_breeds])
+        _ = [container.register(breeds.get(k)) for k in init_breeds]
 
         # action / assert
         assert model.agents is container
@@ -256,13 +259,13 @@ class TestMainContainer:
 class TestCellContainer:
     """测试单元格容器"""
 
-    def test_register_cell(self, model, cell_0_0):
+    def test_register_cell(self, model: MainModel, cell_0_0):
         """测试注册，注册的主体类型应该在模型的所有 Container 中都自动被注册。"""
         # arrange
         cell_container = cell_0_0.agents
 
         # action
-        cell_container.register([Actor])
+        model.agents.register(Actor)
 
         # assert
         assert cell_container.check_registration(Actor)
@@ -305,3 +308,45 @@ class TestCellContainer:
         assert actor not in cell_container
         assert actor.at is None
         assert actor in model.agents
+
+
+class TestCreateGeoAgents:
+    """测试创建地理主体"""
+
+    def test_create_geo_agents(self, model: MainModel):
+        """测试创建地理主体"""
+        # arrange
+        data_path = load_data("YR_cities.zip")
+        geodf = gpd.read_file(data_path)
+
+        # action
+        agents = model.agents.new_from_gdf(
+            geodf,
+            unique_id="City_ID",
+            attrs={"area": "area", "Province_n": "province"},
+        )
+        agent: Actor = agents.item()
+        # assert
+        assert agent.geometry
+        assert agent.area
+        assert agent.province
+        assert not hasattr(agent, "Ratio")
+        assert agent.alive
+        assert agent.on_earth
+
+    def test_create_agents_from_gdf(self, model: MainModel):
+        """测试从GeoDataFrame创建主体"""
+        # Step 1: Create a sample geopandas.GeoDataFrame with some dummy data
+        data = {
+            "index": [0, 1, 2],
+            "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
+        }
+        gdf = gpd.GeoDataFrame(data, crs="epsg:4326")
+
+        # Step 2: Use the create_agents_from_gdf method
+        agents = model.agents.new_from_gdf(
+            gdf, unique_id="index", agent_cls=Actor
+        )
+
+        # Step 3: Assert number of created agents
+        assert len(agents) == len(gdf)

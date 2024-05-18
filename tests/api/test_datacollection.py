@@ -69,5 +69,5 @@ class TestDataCollector:
 
         assert "var1" in agent_vars.columns
         assert "var2" in agent_vars.columns
-        result = agent_vars.loc[(farmer.unique_id, 1), "var2"]
+        result = agent_vars.loc[(1, farmer.unique_id), "var2"]
         assert result == "I am a Farmer"

@@ -35,11 +35,11 @@ __version__ = "v0.6.5"
 
 from ._bases.logging import logger
 from .actor import Actor, alive_required, perception
-from .container import ActorsList
 from .data import load_data
 from .decision import Decision
 from .experiment import Experiment
 from .human import BaseHuman
 from .main import MainModel
 from .nature import BaseNature, PatchCell, PatchModule
+from .sequences import ActorsList
 from .time import time_condition

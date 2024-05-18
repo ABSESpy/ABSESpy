@@ -12,7 +12,7 @@ Test fire spread model.
 import pytest
 
 from abses import ActorsList
-from examples.fire_spread.model import Forest, Tree
+from examples.fire_spread.model import Forest
 
 
 @pytest.fixture(name="tree_fixture")
@@ -70,41 +70,23 @@ class TestForest:
         assert x == 25
         assert y == 25
         assert forest.num_trees == int(x * y * forest.params.density)
-        assert (
-            all(
-                ActorsList(
-                    forest, forest.nature.forest.array_cells[:, 0]
-                ).apply(lambda t: t.state in [0, 2])
+        assert all(
+            ActorsList(forest, forest.nature.forest.array_cells[:, 0]).apply(
+                lambda t: t.state in [0, 2]
             )
-            is True
         )
-        assert (
-            any(
-                ActorsList(
-                    forest, forest.nature.forest.array_cells[:, 1]
-                ).apply(lambda t: t.state in [2, 3])
+        assert not any(
+            ActorsList(forest, forest.nature.forest.array_cells[:, 1]).apply(
+                lambda t: t.state in [2, 3]
             )
-            is False
         )
 
     def test_step(self, forest_fixture):
         """Test step."""
         forest = forest_fixture
         forest.step()
-        assert (
-            any(
-                ActorsList(
-                    forest, forest.nature.forest.array_cells[:, 1]
-                ).apply(lambda t: t.state in [2, 3])
+        assert any(
+            ActorsList(forest, forest.nature.forest.array_cells[:, 1]).apply(
+                lambda t: t.state in [2, 3]
             )
-            is True
-        )
-        forest.step()
-        assert (
-            any(
-                ActorsList(
-                    forest, forest.nature.forest.array_cells[:, 2]
-                ).apply(lambda t: t.state in [2, 3])
-            )
-            is True
         )

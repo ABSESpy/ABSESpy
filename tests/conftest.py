@@ -45,8 +45,8 @@ def test_main_config():
 class Farmer(Actor):
     """测试用，另一个类别的主体"""
 
-    def __init__(self, model, observer: bool = True) -> None:
-        super().__init__(model, observer)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.metric = 0.1
 
 

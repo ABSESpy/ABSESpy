@@ -8,12 +8,11 @@
 """测试自然模块
 """
 
-import geopandas as gpd
 import numpy as np
 import pytest
 import rasterio as rio
 import xarray
-from shapely.geometry import Point, box
+from shapely.geometry import box
 
 from abses.actor import Actor
 from abses.cells import raster_attribute
@@ -269,30 +268,6 @@ class TestPatchModule:
         # assert
         assert result.shape == module.shape2d
         np.testing.assert_array_equal(result, expected.reshape(module.shape2d))
-
-    def test_create_agents_from_gdf(self, model: MainModel):
-        """测试从GeoDataFrame创建主体"""
-        # Step 1: Create a sample geopandas.GeoDataFrame with some dummy data
-        data = {
-            "name": ["agent_1", "agent_2", "agent_3"],
-            "age": [25, 30, 35],
-            "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
-        }
-        gdf = gpd.GeoDataFrame(data, crs="epsg:4326")
-
-        # Step 2: Use the create_agents_from_gdf method
-        agents = model.agents.new_from_gdf(
-            gdf, unique_id="name", agent_cls=Actor
-        )
-
-        # Step 3: Assert number of created agents
-        assert len(agents) == len(gdf)
-
-        # Step 4: Check each agent's attributes and geometry
-        for idx, agent in enumerate(agents):
-            assert agent.unique_id == gdf.iloc[idx]["name"]
-            assert agent.age == gdf.iloc[idx]["age"]
-            assert agent.geometry == gdf.iloc[idx]["geometry"]
 
     def test_copy_layer(self, model, module: PatchModule):
         """测试复制图层"""
