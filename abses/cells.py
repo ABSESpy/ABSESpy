@@ -83,7 +83,7 @@ class PatchCell(_LinkNodeCell, _BaseObj):
 
     max_agents: Optional[int] = None
 
-    def __init__(self, layer, indices: Optional[Pos] = None):
+    def __init__(self, layer, indices: Pos):
         _BaseObj.__init__(self, model=layer.model, observer=True)
         _LinkNodeCell.__init__(self)
         self.indices = indices
@@ -132,6 +132,12 @@ class PatchCell(_LinkNodeCell, _BaseObj):
     def agents(self) -> _CellAgentsContainer:
         """The agents located at here."""
         return self._agents
+
+    @property
+    def coordinate(self) -> Tuple[float, float]:
+        """The position of this cell."""
+        row, col = self.indices
+        return self.layer.transform_coord(row=row, col=col)
 
     def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
         """Gets the value of an attribute or registered property.

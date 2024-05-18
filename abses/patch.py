@@ -174,7 +174,7 @@ class _PatchModuleFactory(_ModuleFactory):
         attr_name: str | None = None,
         apply_raster: bool = False,
         band: int = 1,
-        apply_nodata: bool = True,
+        masked: bool = True,
         **kwargs: Any,
     ) -> PatchModule:
         """Create a raster layer module from a file.
@@ -195,31 +195,21 @@ class _PatchModuleFactory(_ModuleFactory):
 
         """
         to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
-        with rasterio.open(raster_file, "r") as dataset:
-            values = dataset.read(band).astype(float)
-            nodata_mask = values == dataset.nodata
-            set_null_values(values, nodata_mask)
-            height, width = values.shape
-            total_bounds = [
-                dataset.bounds.left,
-                dataset.bounds.bottom,
-                dataset.bounds.right,
-                dataset.bounds.top,
-            ]
+        xda = rioxarray.open_rasterio(raster_file, masked=masked, **kwargs)
+        xda = xda.sel(band=band)
         obj: PatchModule = to_create(
             model=model,
             name=name,
-            width=width,
-            height=height,
-            crs=dataset.crs,
-            total_bounds=total_bounds,
+            width=xda.rio.width,
+            height=xda.rio.height,
+            crs=xda.rio.crs,
+            total_bounds=xda.rio.bounds(),
             cell_cls=cell_cls,
         )
-        if apply_nodata:
-            obj.mask = np.squeeze(~nodata_mask)
-        # obj._transform = dataset.transform
+        if masked:
+            obj.mask = xda.notnull().to_numpy()
         if apply_raster:
-            obj.apply_raster(values, attr_name=attr_name, **kwargs)
+            obj.apply_raster(xda, attr_name=attr_name, **kwargs)
         return obj
 
 
@@ -361,18 +351,25 @@ class PatchModule(Module, RasterBase):
         """Array type of the `PatchCell` stored in this module."""
         return self._cells
 
-    @functools.cached_property
+    @property
     def coords(self) -> Coordinate:
         """Coordinate system of the raster data.
+
         This is useful when working with `xarray.DataArray`.
         """
-        min_x, min_y, max_x, max_y = self.total_bounds
-        coords_x = np.linspace(min_x, max_x, self.width, endpoint=False)
-        coords_y = np.linspace(max_y, min_y, self.height, endpoint=False)
+        nrows, ncols = self.shape2d
+        coords_x = np.arange(ncols) * self.transform[0] + self.transform[2]
+        coords_y = np.arange(nrows) * self.transform[4] + self.transform[5]
         return {
             "y": coords_y,
             "x": coords_x,
         }
+
+    def transform_coord(self, row: int, col: int) -> Coordinate:
+        """Transforming the row, col to the real-world coordinate."""
+        if self.out_of_bounds(pos=(row, col)):
+            raise IndexError(f"Out of bounds: {row, col}")
+        return self.transform * (col, row)
 
     def to_crs(self, crs, inplace=False) -> Optional[PatchModule]:
         """Converting the raster data to a another CRS."""

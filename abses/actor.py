@@ -30,6 +30,8 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 import mesa_geo as mg
+from shapely import Point
+from shapely.geometry.base import BaseGeometry
 
 from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
@@ -176,6 +178,17 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         return _DecisionFactory(self, decisions)
 
     @property
+    def geometry(self) -> Optional[BaseGeometry]:
+        """The geometry of the actor."""
+        return Point(self.at.coordinate) if self.at else self._geometry
+
+    @geometry.setter
+    def geometry(self, value: Optional[BaseGeometry]) -> None:
+        if not isinstance(value, BaseGeometry) and value is not None:
+            raise TypeError(f"{value} is not a valid geometry.")
+        self._geometry = value
+
+    @property
     def alive(self) -> bool:
         """Whether the actor is alive."""
         return self._alive
@@ -196,7 +209,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @property
     def on_earth(self) -> bool:
         """Whether agent stands on a cell."""
-        return bool(self._cell) or bool(self.geometry)
+        return bool(self.geometry)
 
     @property
     def at(self) -> PatchCell | None:

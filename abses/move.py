@@ -73,7 +73,6 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
     # put the agent on the new cell after check.
     cell.agents.add(agent)
     agent.at = cell
-    # self.geometry = Point(cell.layer.transform * cell.indices)
 
 
 def move_agent_to(
