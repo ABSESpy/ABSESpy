@@ -21,9 +21,9 @@ from shapely.geometry import Point
 from abses import Actor, MainModel
 from abses._bases.errors import ABSESpyError
 from abses.container import _AgentsContainer
-from abses.data import load_data
 from abses.nature import PatchCell
 from abses.sequences import ActorsList
+from abses.tools.data import load_data
 
 
 class TestMainContainer:

@@ -30,6 +30,8 @@ from typing import (
     overload,
 )
 
+import pandas as pd
+
 try:
     from typing import TypeAlias
 except ImportError:
@@ -120,7 +122,7 @@ class ActorsList(List[Link], Generic[Link]):
     @cached_property
     def plot(self) -> _VizNodeList:
         """Plotting module"""
-        return _VizNodeList(self)
+        return _VizNodeList(self._model, self)
 
     def to_dict(self) -> Dict[str, ActorsList[Link]]:
         """Convert all actors in this list to a dictionary like {breed: ActorList}.
@@ -348,3 +350,9 @@ class ActorsList(List[Link], Generic[Link]):
         if how == "item":
             return self[index] if len(self) > index else None
         raise ValueError(f"Invalid how method '{how}'.")
+
+    def summary(self, **kwargs) -> pd.DataFrame:
+        """Returns a summarized dataframe of the actors."""
+        if len(self) == 0:
+            raise ValueError("No actors to retrieve summary information.")
+        return pd.concat([actor.summary(**kwargs) for actor in self], axis=1).T

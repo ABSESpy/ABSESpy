@@ -30,6 +30,9 @@ from typing import (
     cast,
 )
 
+import geopandas as gpd
+import pandas as pd
+
 with contextlib.suppress(ImportError):
     import networkx as nx
 try:
@@ -39,6 +42,8 @@ except ImportError:
 
 from abses._bases.errors import ABSESpyError
 from abses.sequences import ActorsList
+from abses.tools.func import clean_attrs, make_list
+from abses.tools.viz import get_marker
 
 if TYPE_CHECKING:
     from abses import MainModel
@@ -468,10 +473,13 @@ class _LinkNode:
         """默认重定向"""
 
     @classmethod
-    def viz_attrs(cls, **kwargs) -> Dict[str, Any]:
+    def viz_attrs(
+        cls, render_marker: bool = False, **kwargs
+    ) -> Dict[str, Any]:
         """Return the attributes for viz."""
+        maker = getattr(cls, "marker", "o")
         return {
-            "marker": getattr(cls, "marker", "o"),
+            "marker": get_marker(maker) if render_marker else maker,
             "color": getattr(cls, "color", "black"),
             "alpha": getattr(cls, "alpha", 1.0),
         } | kwargs
@@ -572,6 +580,25 @@ class _LinkNode:
         else:
             new_target = self._redirect_getting(target=target)
             new_target.set(attr, value, "self")
+
+    def summary(
+        self,
+        coords: bool = False,
+        attrs: Optional[Iterable[str] | str] = None,
+        # geometry: bool = False,
+    ) -> pd.Series:
+        """Returns a summary of the object."""
+        a, b = self.get("coordinate" if coords else "pos")
+        result = {
+            "breed": self.breed,
+            "x" if coords else "row": a,
+            "y" if coords else "col": b,
+        }
+        result.update({attr: self.get(attr) for attr in make_list(attrs)})
+        # if geometry:
+        #     result.update({'geometry': self.get(geometry)})
+        #     return gpd.GeoSeries(result, name=)
+        return pd.Series(result, name=self.unique_id)
 
 
 class _LinkNodeCell(_LinkNode):

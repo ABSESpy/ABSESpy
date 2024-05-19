@@ -303,9 +303,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     p = params
 
     @property
-    def breeds(self) -> Tuple[str, ...]:
+    def breeds(self) -> Dict[str, Type[Actor]]:
         """All breeds in the model."""
-        return tuple(self._breeds.keys())
+        return self._breeds
 
     @breeds.setter
     def breeds(self, breed: Type[Actor]) -> None:

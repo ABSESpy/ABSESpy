@@ -19,6 +19,7 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    Literal,
     Optional,
     Union,
     cast,
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
 Breeds: TypeAlias = Optional[Union[str, Iterable[str]]]
+GeoType: TypeAlias = Literal["Point", "Shape"]
 
 
 def alive_required(method):
@@ -176,6 +178,15 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
         return _DecisionFactory(self, decisions)
+
+    @property
+    def geo_type(self) -> Optional[GeoType]:
+        """The type of the geo info."""
+        if self.geometry is None:
+            return None
+        if isinstance(self.geometry, Point):
+            return "Point"
+        return "Shape"
 
     @property
     def geometry(self) -> Optional[BaseGeometry]:
