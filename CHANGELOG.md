@@ -1,4 +1,32 @@
 
+<a id='changelog-0.6.6'></a>
+# 0.6.6 — 2024-05-19
+
+## Fixed bugs
+
+- [x] #bug🐛 Fixed `Actor`'s indices transforming bug.
+- [x] #bug🐛 Fixed `flipud` raster when loading data with different `y` coords.
+
+## Refactoring
+
+- [x] #refactor♻️ Improved the coding structure of `AgentsContainer`
+- [x] #refactor♻️ Improved the generator of `unique_id` for new Actors
+- [x] #refactor♻️ Improved coding structure of visualizations.
+
+## Documentation changes
+
+- [x] #docs📄 A new tutorial for creating actors by importing network
+- [x] #docs📄 Improved the tutorials of `geodata.ipynb` and `model_viz.ipynb`
+
+## New Features
+
+- [x] #feat✨ `PatchCell` also has the accessibility of `TimeDriver` now.
+- [x] #feat✨ Actors can be created by passing a sequence of `unique_id`  now.
+- [x] #feat✨  Normal `Actor` now has a geometry of point according to the pos
+- [x] #feat✨ A new property of `geo_type` for `Actor` and `Cell`.
+- [x] #feat✨ New `.summary`  method to check attributes of `Actor` and `ActorsList`
+- [x] #feat✨ Plotting `network` and `shapefile`
+
 <a id='changelog-0.6.5'></a>
 # 0.6.5 — 2024-05-17
 
