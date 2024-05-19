@@ -21,6 +21,7 @@ from typing import (
     Optional,
     Sequence,
     Set,
+    Tuple,
     Type,
     Union,
     cast,
@@ -32,11 +33,13 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
+import geopandas as gpd
 import numpy as np
 import pyproj
 import rasterio
 import rioxarray
 import xarray as xr
+from geocube.api.core import make_geocube
 from loguru import logger
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
@@ -164,6 +167,76 @@ class _PatchModuleFactory(_ModuleFactory):
             cell_cls=cell_cls,
         )
 
+    def from_xarray(
+        self,
+        xda: xr.DataArray,
+        model: MainModel[Any, Any],
+        module_cls: Optional[Type[PatchModule]] = None,
+        name: str | None = None,
+        attr_name: str | None = None,
+        apply_raster: bool = False,
+        masked: bool = True,
+        cell_cls: type[PatchCell] = PatchCell,
+        **kwargs,
+    ) -> PatchModule:
+        """Create a new module instance from `xarray.DataArray` data."""
+        # 如果 y 轴是从小到大的，反转它
+        if xda.y[0].item() < xda.y[-1].item():
+            xda.data = np.flipud(xda.data)
+        # 创建模块
+        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
+        module: PatchModule = to_create(
+            model=model,
+            name=name,
+            width=xda.rio.width,
+            height=xda.rio.height,
+            crs=xda.rio.crs,
+            total_bounds=xda.rio.bounds(),
+            cell_cls=cell_cls,
+        )
+        if masked:
+            module.mask = xda.notnull().to_numpy()
+        if apply_raster:
+            module.apply_raster(xda.to_numpy(), attr_name=attr_name, **kwargs)
+        return module
+
+    def from_vector(
+        self,
+        vector_file: str | gpd.GeoDataFrame,
+        resolution: Tuple[float, float] | float,
+        model: MainModel[Any, Any],
+        module_cls: Optional[Type[PatchModule]] = None,
+        name: str | None = None,
+        attr_name: Optional[str] = None,
+        apply_raster: bool = False,
+        masked: bool = True,
+        cell_cls: type[PatchCell] = PatchCell,
+    ) -> PatchModule:
+        """Create a layer module from a shape file."""
+        if isinstance(vector_file, str):
+            gdf = gpd.read_file(vector_file)
+        elif isinstance(vector_file, gpd.GeoDataFrame):
+            gdf = vector_file
+        else:
+            raise TypeError(f"Unsupported vector {type(vector_file)}.")
+        if attr_name is None:
+            gdf, attr_name = gdf.reset_index(), "index"
+        if isinstance(resolution, float):
+            resolution = (resolution, resolution)
+        xda = make_geocube(
+            gdf, measurements=[attr_name], resolution=resolution
+        )[attr_name]
+        return self.from_xarray(
+            xda=xda,
+            model=model,
+            module_cls=module_cls,
+            name=name,
+            attr_name=attr_name,
+            apply_raster=apply_raster,
+            masked=masked,
+            cell_cls=cell_cls,
+        )
+
     def from_file(
         self,
         raster_file: str,
@@ -194,23 +267,18 @@ class _PatchModuleFactory(_ModuleFactory):
                 Class type of `PatchCell` to create.
 
         """
-        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
         xda = rioxarray.open_rasterio(raster_file, masked=masked, **kwargs)
         xda = xda.sel(band=band)
-        obj: PatchModule = to_create(
+        return self.from_xarray(
+            xda=xda,
             model=model,
+            module_cls=module_cls,
             name=name,
-            width=xda.rio.width,
-            height=xda.rio.height,
-            crs=xda.rio.crs,
-            total_bounds=xda.rio.bounds(),
+            attr_name=attr_name,
+            apply_raster=apply_raster,
+            masked=masked,
             cell_cls=cell_cls,
         )
-        if masked:
-            obj.mask = xda.notnull().to_numpy()
-        if apply_raster:
-            obj.apply_raster(xda, attr_name=attr_name, **kwargs)
-        return obj
 
 
 class PatchModule(Module, RasterBase):

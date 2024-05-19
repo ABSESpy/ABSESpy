@@ -64,18 +64,26 @@ class _VizNodeList:
         return styles
 
     @with_axes
-    def show(
-        self,
-        boundary: bool = False,
-        ax: Optional[Axes] = None,
+    def show(self, ax: Optional[Axes] = None) -> Axes:
+        """Show all the actors with geometry attributes."""
+        self.display(ax=ax)
+        self.positions(ax=ax)
+        return ax
+
+    @with_axes
+    def display(
+        self, boundary: bool = False, ax: Optional[Axes] = None, **kwargs
     ) -> Axes:
         """Show the shapefile."""
+        alpha = kwargs.pop("alpha", 0.8)
         subset = self.actors.select(geo_type="Shape")
+        if not subset:
+            return ax
         data = gpd.GeoSeries(
             subset.array("geometry"), crs=self.model.nature.crs
         )
         obj = data.boundary if boundary else data
-        obj.plot(ax=ax)
+        obj.plot(ax=ax, alpha=alpha, **kwargs)
         return ax
 
     @with_axes
@@ -89,7 +97,10 @@ class _VizNodeList:
         **kwargs,
     ) -> Axes:
         """Plotting spatial distribution of the actors."""
-        data = self.actors.select(geo_type="Point").summary(coords=coords)
+        points = self.actors.select(geo_type="Point")
+        if not points:
+            return ax
+        data = points.summary(coords=coords)
         y_axis = "y" if coords else "row"
         x_axis = "x" if coords else "col"
         count_data = (

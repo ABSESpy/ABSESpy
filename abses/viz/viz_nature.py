@@ -51,7 +51,7 @@ class _VizNature:
             xda = self.module.get_xarray(attr)
             xda.plot(ax=ax, cbar_kwargs=COLOR_BAR, alpha=0.8)
         if self.model.breeds and with_actors:
-            self.model.actors.plot.positions(ax=ax, **scatter_kwargs)
+            self.model.actors.plot.show(ax=ax, **scatter_kwargs)
         ax.axes.set_aspect("equal")
         if self.model.breeds:
             ax.legend(**legend_kwargs)
