@@ -28,6 +28,7 @@ from typing import (
     Tuple,
     Union,
     cast,
+    overload,
 )
 
 import numpy as np
@@ -94,7 +95,21 @@ class _LinkContainer:
         links = {link for link, agents in data.items() if node in agents}
         return tuple(links)
 
-    def get_graph(self, link_name: str) -> "nx.Graph":  # type: ignore
+    @overload
+    def get_graph(
+        self, link_name: str, directions: bool = False
+    ) -> "nx.Graph":
+        ...
+
+    @overload
+    def get_graph(
+        self, link_name: str, directions: bool = True
+    ) -> "nx.DiGraph":
+        ...
+
+    def get_graph(
+        self, link_name: str, directions: bool = False
+    ) -> "nx.Graph | nx.DiGraph":
         """Get the networkx graph.
 
         Parameters:
@@ -109,7 +124,8 @@ class _LinkContainer:
             raise ImportError(
                 "You need to install networkx to use this function."
             )
-        graph = nx.from_dict_of_lists(self._links[link_name])
+        creating_using = nx.DiGraph if directions else nx.Graph
+        graph = nx.from_dict_of_lists(self._links[link_name], creating_using)
         self._cached_networks[link_name] = graph
         return graph
 

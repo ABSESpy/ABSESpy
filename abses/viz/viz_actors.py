@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -19,6 +20,8 @@ from matplotlib.axes import Axes
 
 from abses.tools.func import with_axes
 
+with contextlib.suppress(ImportError):
+    import networkx as nx
 try:
     from typing import TypeAlias
 except ImportError:
@@ -122,4 +125,11 @@ class _VizNodeList:
             palette=palette,
             **kwargs,
         )
+        return ax
+
+    @with_axes
+    def graph(self, link_name: str, ax: Optional[Axes] = None) -> Axes:
+        """Plotting the Graph of selected actors by `networkx`."""
+        graph = self.model.human.get_graph(link_name).subgraph(self.actors)
+        nx.draw(graph, arrows=True, with_labels=True, ax=ax)
         return ax
