@@ -11,6 +11,7 @@
 import numpy as np
 import pytest
 import rasterio as rio
+import rioxarray as rxr
 import xarray
 from shapely.geometry import box
 
@@ -303,6 +304,31 @@ class TestBaseNature:
         result = model.nature.out_of_bounds((3, 3))
         result2 = module2.out_of_bounds((3, 3))
         assert result == result2
+
+    @pytest.mark.parametrize(
+        "row, col",
+        [
+            (53, 156),
+            (97, 56),
+            (78, 115),
+            (67, 87),
+            (64, 73),
+        ],
+    )
+    def test_transform(self, model: MainModel, farmland_data, row, col):
+        """Test transform point coords."""
+        # arrange
+        module = model.nature.create_module(
+            raster_file=farmland_data, how="from_file"
+        )
+        xda = rxr.open_rasterio(farmland_data)
+        # act
+        x1, y1 = xda.rio.transform() * (col, row)
+        x = module.coords["x"][col].item()
+        y = module.coords["y"][row].item()
+        # assert
+        assert np.isclose(x, x1, rtol=1e-2), f"{x}: {x1}"
+        assert np.isclose(y, y1, rtol=1e-2), f"{y}: {y1}"
 
 
 class MockModule(PatchModule):
