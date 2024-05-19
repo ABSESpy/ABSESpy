@@ -4,6 +4,6 @@ authors: SongshGeo
 date: 2024-03-13
 ---
 
-:::abses.container._AgentsContainer
+:::abses.container._ModelAgentsContainer
 
 :::abses.container._CellAgentsContainer
