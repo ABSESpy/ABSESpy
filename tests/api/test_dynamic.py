@@ -17,8 +17,8 @@ from pandas.testing import assert_series_equal
 
 from abses import MainModel
 from abses._bases.objects import _BaseObj
-from abses.data import load_data
 from abses.time import TimeDriver
+from abses.tools.data import load_data
 
 
 class TestDynamicData:

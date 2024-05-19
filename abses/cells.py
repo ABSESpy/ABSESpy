@@ -14,15 +14,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 from mesa_geo.raster_layers import RasterBase
+from pyproj import CRS
 
-from abses import ActorsList
 from abses._bases.errors import ABSESpyError
+from abses._bases.objects import _BaseObj
 from abses.container import _CellAgentsContainer
 from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:
-    from abses.main import H, MainModel, N
+    from abses.main import MainModel
     from abses.nature import PatchModule
+    from abses.sequences import ActorsList
 
 try:
     from typing import TypeAlias
@@ -67,7 +69,7 @@ def raster_attribute(
     return property(func)
 
 
-class PatchCell(_LinkNodeCell):
+class PatchCell(_LinkNodeCell, _BaseObj):
     """A patch cell of a `RasterLayer`.
     Subclassing this class to create a custom cell.
     When class attribute `max_agents` is assigned,
@@ -82,7 +84,8 @@ class PatchCell(_LinkNodeCell):
 
     max_agents: Optional[int] = None
 
-    def __init__(self, layer, indices: Optional[Pos] = None):
+    def __init__(self, layer, indices: Pos):
+        _BaseObj.__init__(self, model=layer.model, observer=True)
         _LinkNodeCell.__init__(self)
         self.indices = indices
         self._set_layer(layer=layer)
@@ -114,6 +117,27 @@ class PatchCell(_LinkNodeCell):
             )
         return self._layer
 
+    @property
+    def agents(self) -> _CellAgentsContainer:
+        """The agents located at here."""
+        return self._agents
+
+    @property
+    def coordinate(self) -> Tuple[float, float]:
+        """The position of this cell."""
+        row, col = self.indices
+        return self.layer.transform_coord(row=row, col=col)
+
+    @property
+    def geo_type(self) -> str:
+        """Return the geo_type"""
+        return "Cell"
+
+    @property
+    def crs(self) -> Optional[CRS]:
+        """Return the crs of this cell."""
+        return self.layer.crs
+
     def _set_layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, RasterBase):
             raise TypeError(f"{type(layer)} is not valid layer.")
@@ -125,11 +149,6 @@ class PatchCell(_LinkNodeCell):
         self._agents = _CellAgentsContainer(
             layer.model, cell=self, max_len=getattr(self, "max_agents", None)
         )
-
-    @property
-    def agents(self) -> _CellAgentsContainer:
-        """The agents located at here."""
-        return self._agents
 
     def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
         """Gets the value of an attribute or registered property.

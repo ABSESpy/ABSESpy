@@ -19,6 +19,7 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    Literal,
     Optional,
     Union,
     cast,
@@ -30,6 +31,8 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 import mesa_geo as mg
+from shapely import Point
+from shapely.geometry.base import BaseGeometry
 
 from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
@@ -39,6 +42,7 @@ from abses.move import _Movements
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
+    from abses._bases.base_container import UniqueID
     from abses.cells import Pos
     from abses.main import MainModel
     from abses.nature import PatchCell, PatchModule
@@ -47,6 +51,7 @@ if TYPE_CHECKING:
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
 Breeds: TypeAlias = Optional[Union[str, Iterable[str]]]
+GeoType: TypeAlias = Literal["Point", "Shape"]
 
 
 def alive_required(method):
@@ -150,12 +155,10 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self,
         model: MainModel[Any, Any],
         observer: bool = True,
-        unique_id: Optional[int] = None,
+        unique_id: Optional[UniqueID] = None,
         **kwargs,
     ) -> None:
         _BaseObj.__init__(self, model, observer=observer)
-        if not unique_id:
-            unique_id = self.model.next_id()
         crs = kwargs.pop("crs", model.nature.crs)
         geometry = kwargs.pop("geometry", None)
         mg.GeoAgent.__init__(
@@ -175,6 +178,26 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         """Decisions that this actor makes."""
         decisions = make_list(getattr(self, "__decisions__", None))
         return _DecisionFactory(self, decisions)
+
+    @property
+    def geo_type(self) -> Optional[GeoType]:
+        """The type of the geo info."""
+        if self.geometry is None:
+            return None
+        if isinstance(self.geometry, Point):
+            return "Point"
+        return "Shape"
+
+    @property
+    def geometry(self) -> Optional[BaseGeometry]:
+        """The geometry of the actor."""
+        return Point(self.at.coordinate) if self.at else self._geometry
+
+    @geometry.setter
+    def geometry(self, value: Optional[BaseGeometry]) -> None:
+        if not isinstance(value, BaseGeometry) and value is not None:
+            raise TypeError(f"{value} is not a valid geometry.")
+        self._geometry = value
 
     @property
     def alive(self) -> bool:
@@ -197,7 +220,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @property
     def on_earth(self) -> bool:
         """Whether agent stands on a cell."""
-        return bool(self._cell)
+        return bool(self.geometry)
 
     @property
     def at(self) -> PatchCell | None:
@@ -214,6 +237,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
                 "Cannot set location directly because the actor is not added to the cell."
             )
         self._cell = cell
+        self.crs = cell.crs
 
     @at.deleter
     def at(self) -> None:

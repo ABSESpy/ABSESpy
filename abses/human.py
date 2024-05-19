@@ -14,8 +14,6 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from loguru import logger
-
 from abses.actor import Actor
 from abses.links import _LinkContainer
 

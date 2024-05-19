@@ -28,7 +28,12 @@ from typing import (
     Tuple,
     Union,
     cast,
+    overload,
 )
+
+import numpy as np
+import pandas as pd
+from loguru import logger
 
 with contextlib.suppress(ImportError):
     import networkx as nx
@@ -39,12 +44,14 @@ except ImportError:
 
 from abses._bases.errors import ABSESpyError
 from abses.sequences import ActorsList
+from abses.tools.func import make_list
+from abses.tools.viz import get_marker
 
 if TYPE_CHECKING:
     from abses import MainModel
     from abses.actor import Actor
     from abses.cells import PatchCell
-    from abses.container import _CellAgentsContainer
+    from abses.container import UniqueID, _CellAgentsContainer
     from abses.sequences import Link
 
 LinkingNode: TypeAlias = "Actor | PatchCell"
@@ -52,6 +59,16 @@ Direction: TypeAlias = Optional[Literal["in", "out"]]
 DEFAULT_TARGETS: Tuple[str, str] = ("cell", "actor")
 TargetName: TypeAlias = Union[Literal["cell", "actor", "self"], str]
 AttrGetter: TypeAlias = Union["Link", ActorsList["Link"]]
+
+
+def get_node_unique_id(node: Any) -> UniqueID:
+    """When import actors from graph, decide the unique ID."""
+    if not isinstance(node, (str, int)):
+        logger.warning(
+            f"Using repr for '{type(node)}' unique ID to create actor."
+        )
+        return repr(node)
+    return node
 
 
 class _LinkContainer:
@@ -89,7 +106,21 @@ class _LinkContainer:
         links = {link for link, agents in data.items() if node in agents}
         return tuple(links)
 
-    def get_graph(self, link_name: str) -> "nx.Graph":  # type: ignore
+    @overload
+    def get_graph(
+        self, link_name: str, directions: bool = False
+    ) -> "nx.Graph":
+        ...
+
+    @overload
+    def get_graph(
+        self, link_name: str, directions: bool = True
+    ) -> "nx.DiGraph":
+        ...
+
+    def get_graph(
+        self, link_name: str, directions: bool = False
+    ) -> "nx.Graph | nx.DiGraph":
         """Get the networkx graph.
 
         Parameters:
@@ -104,7 +135,8 @@ class _LinkContainer:
             raise ImportError(
                 "You need to install networkx to use this function."
             )
-        graph = nx.from_dict_of_lists(self._links[link_name])
+        creating_using = nx.DiGraph if directions else nx.Graph
+        graph = nx.from_dict_of_lists(self._links[link_name], creating_using)
         self._cached_networks[link_name] = graph
         return graph
 
@@ -304,6 +336,41 @@ class _LinkContainer:
             agents = agents.union(data[name].get(node, set()))
         return agents
 
+    def _check_is_node(
+        self,
+        node: UniqueID | LinkingNode,
+        mapping_dict: Optional[Dict[UniqueID, Actor]] = None,
+    ) -> LinkingNode:
+        if mapping_dict:
+            unique_id = get_node_unique_id(node)
+            node = mapping_dict[unique_id]
+        if not isinstance(node, _LinkNode):
+            raise TypeError(
+                f"Invalid node type {type(node)}, mapping: {mapping_dict}."
+            )
+        return node
+
+    def add_links_from_graph(
+        self,
+        graph: "nx.Graph",
+        link_name: str,
+        mapping_dict: Optional[Dict[UniqueID, Actor]] = None,
+        mutual: Optional[bool] = None,
+    ) -> None:
+        """Add links from graph."""
+        if mutual is None:
+            mutual = False if isinstance(graph, nx.DiGraph) else True
+        if mapping_dict is None:
+            mapping_dict = {}
+        edges = 0
+        for source, targets in nx.to_dict_of_lists(graph).items():
+            source = self._check_is_node(source, mapping_dict)
+            for target in targets:
+                target = self._check_is_node(target, mapping_dict)
+                self.add_a_link(link_name, source, target, mutual=mutual)
+                edges += 1
+        logger.info(f"Imported links {edges} links from graph {graph}.")
+
 
 class _LinkProxy:
     """Proxy for linking."""
@@ -468,10 +535,13 @@ class _LinkNode:
         """默认重定向"""
 
     @classmethod
-    def viz_attrs(cls, **kwargs) -> Dict[str, Any]:
+    def viz_attrs(
+        cls, render_marker: bool = False, **kwargs
+    ) -> Dict[str, Any]:
         """Return the attributes for viz."""
+        maker = getattr(cls, "marker", "o")
         return {
-            "marker": getattr(cls, "marker", "o"),
+            "marker": get_marker(maker) if render_marker else maker,
             "color": getattr(cls, "color", "black"),
             "alpha": getattr(cls, "alpha", 1.0),
         } | kwargs
@@ -572,6 +642,26 @@ class _LinkNode:
         else:
             new_target = self._redirect_getting(target=target)
             new_target.set(attr, value, "self")
+
+    def summary(
+        self,
+        coords: bool = False,
+        attrs: Optional[Iterable[str] | str] = None,
+    ) -> pd.Series:
+        """Returns a summary of the object."""
+        geo_type = self.get("geo_type")
+        if geo_type in ("Point", "Cell"):
+            a, b = self.get("coordinate" if coords else "pos")
+        else:
+            a, b = np.nan, np.nan
+        result = {
+            "breed": self.breed,
+            "geo_type": geo_type,
+            "x" if coords else "row": a,
+            "y" if coords else "col": b,
+        }
+        result.update({attr: self.get(attr) for attr in make_list(attrs)})
+        return pd.Series(result, name=self.unique_id)
 
 
 class _LinkNodeCell(_LinkNode):

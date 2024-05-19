@@ -35,6 +35,7 @@ nav:
           - A02: tutorial/advanced/human_behavior_simulation.ipynb
         - Competing Level:
           - C01: tutorial/completing/fire_tutorial.ipynb
+          - C02: tutorial/completing/linking_actors.ipynb
     - Examples:
         - Official Examples: examples/official.md
         - Community Examples: examples/community.md

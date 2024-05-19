@@ -21,6 +21,7 @@ from typing import (
     Optional,
     Sequence,
     Set,
+    Tuple,
     Type,
     Union,
     cast,
@@ -32,11 +33,13 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
+import geopandas as gpd
 import numpy as np
 import pyproj
 import rasterio
 import rioxarray
 import xarray as xr
+from geocube.api.core import make_geocube
 from loguru import logger
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
@@ -164,6 +167,76 @@ class _PatchModuleFactory(_ModuleFactory):
             cell_cls=cell_cls,
         )
 
+    def from_xarray(
+        self,
+        xda: xr.DataArray,
+        model: MainModel[Any, Any],
+        module_cls: Optional[Type[PatchModule]] = None,
+        name: str | None = None,
+        attr_name: str | None = None,
+        apply_raster: bool = False,
+        masked: bool = True,
+        cell_cls: type[PatchCell] = PatchCell,
+        **kwargs,
+    ) -> PatchModule:
+        """Create a new module instance from `xarray.DataArray` data."""
+        # 如果 y 轴是从小到大的，反转它
+        if xda.y[0].item() < xda.y[-1].item():
+            xda.data = np.flipud(xda.data)
+        # 创建模块
+        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
+        module: PatchModule = to_create(
+            model=model,
+            name=name,
+            width=xda.rio.width,
+            height=xda.rio.height,
+            crs=xda.rio.crs,
+            total_bounds=xda.rio.bounds(),
+            cell_cls=cell_cls,
+        )
+        if masked:
+            module.mask = xda.notnull().to_numpy()
+        if apply_raster:
+            module.apply_raster(xda.to_numpy(), attr_name=attr_name, **kwargs)
+        return module
+
+    def from_vector(
+        self,
+        vector_file: str | gpd.GeoDataFrame,
+        resolution: Tuple[float, float] | float,
+        model: MainModel[Any, Any],
+        module_cls: Optional[Type[PatchModule]] = None,
+        name: str | None = None,
+        attr_name: Optional[str] = None,
+        apply_raster: bool = False,
+        masked: bool = True,
+        cell_cls: type[PatchCell] = PatchCell,
+    ) -> PatchModule:
+        """Create a layer module from a shape file."""
+        if isinstance(vector_file, str):
+            gdf = gpd.read_file(vector_file)
+        elif isinstance(vector_file, gpd.GeoDataFrame):
+            gdf = vector_file
+        else:
+            raise TypeError(f"Unsupported vector {type(vector_file)}.")
+        if attr_name is None:
+            gdf, attr_name = gdf.reset_index(), "index"
+        if isinstance(resolution, float):
+            resolution = (resolution, resolution)
+        xda = make_geocube(
+            gdf, measurements=[attr_name], resolution=resolution
+        )[attr_name]
+        return self.from_xarray(
+            xda=xda,
+            model=model,
+            module_cls=module_cls,
+            name=name,
+            attr_name=attr_name,
+            apply_raster=apply_raster,
+            masked=masked,
+            cell_cls=cell_cls,
+        )
+
     def from_file(
         self,
         raster_file: str,
@@ -174,7 +247,7 @@ class _PatchModuleFactory(_ModuleFactory):
         attr_name: str | None = None,
         apply_raster: bool = False,
         band: int = 1,
-        apply_nodata: bool = True,
+        masked: bool = True,
         **kwargs: Any,
     ) -> PatchModule:
         """Create a raster layer module from a file.
@@ -194,33 +267,18 @@ class _PatchModuleFactory(_ModuleFactory):
                 Class type of `PatchCell` to create.
 
         """
-        to_create = cast(PatchModule, self._check_cls(module_cls=module_cls))
-        with rasterio.open(raster_file, "r") as dataset:
-            values = dataset.read(band).astype(float)
-            nodata_mask = values == dataset.nodata
-            set_null_values(values, nodata_mask)
-            height, width = values.shape
-            total_bounds = [
-                dataset.bounds.left,
-                dataset.bounds.bottom,
-                dataset.bounds.right,
-                dataset.bounds.top,
-            ]
-        obj: PatchModule = to_create(
+        xda = rioxarray.open_rasterio(raster_file, masked=masked, **kwargs)
+        xda = xda.sel(band=band)
+        return self.from_xarray(
+            xda=xda,
             model=model,
+            module_cls=module_cls,
             name=name,
-            width=width,
-            height=height,
-            crs=dataset.crs,
-            total_bounds=total_bounds,
+            attr_name=attr_name,
+            apply_raster=apply_raster,
+            masked=masked,
             cell_cls=cell_cls,
         )
-        if apply_nodata:
-            obj.mask = np.squeeze(~nodata_mask)
-        # obj._transform = dataset.transform
-        if apply_raster:
-            obj.apply_raster(values, attr_name=attr_name, **kwargs)
-        return obj
 
 
 class PatchModule(Module, RasterBase):
@@ -361,18 +419,25 @@ class PatchModule(Module, RasterBase):
         """Array type of the `PatchCell` stored in this module."""
         return self._cells
 
-    @functools.cached_property
+    @property
     def coords(self) -> Coordinate:
         """Coordinate system of the raster data.
+
         This is useful when working with `xarray.DataArray`.
         """
-        min_x, min_y, max_x, max_y = self.total_bounds
-        coords_x = np.linspace(min_x, max_x, self.width, endpoint=False)
-        coords_y = np.linspace(max_y, min_y, self.height, endpoint=False)
+        nrows, ncols = self.shape2d
+        coords_x = np.arange(ncols) * self.transform[0] + self.transform[2]
+        coords_y = np.arange(nrows) * self.transform[4] + self.transform[5]
         return {
             "y": coords_y,
             "x": coords_x,
         }
+
+    def transform_coord(self, row: int, col: int) -> Coordinate:
+        """Transforming the row, col to the real-world coordinate."""
+        if self.out_of_bounds(pos=(row, col)):
+            raise IndexError(f"Out of bounds: {row, col}")
+        return self.transform * (col, row)
 
     def to_crs(self, crs, inplace=False) -> Optional[PatchModule]:
         """Converting the raster data to a another CRS."""

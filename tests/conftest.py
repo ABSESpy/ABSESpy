@@ -15,6 +15,7 @@ from hydra import compose, initialize
 
 from abses import Actor, MainModel
 from abses.nature import PatchCell, PatchModule
+from abses.tools.data import load_data
 
 
 @pytest.fixture(name="test_config")
@@ -45,8 +46,8 @@ def test_main_config():
 class Farmer(Actor):
     """测试用，另一个类别的主体"""
 
-    def __init__(self, model, observer: bool = True) -> None:
-        super().__init__(model, observer)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.metric = 0.1
 
 
@@ -126,3 +127,9 @@ def mock_cell_1_1(module) -> PatchCell:
 def mock_cells(module: PatchModule) -> list:
     """获取模块的所有斑块"""
     return module.array_cells
+
+
+@pytest.fixture(name="farmland_data")
+def mock_farmland_data():
+    """测试用的华南农业数据集"""
+    return load_data("farmland.tif")

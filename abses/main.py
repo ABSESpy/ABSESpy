@@ -55,7 +55,7 @@ from abses.actor import Actor
 
 from ._bases.bases import _Notice
 from ._bases.states import _States
-from .container import _AgentsContainer
+from .container import _AgentsContainer, _ModelAgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
@@ -129,7 +129,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._version: str = __version__
         self._logging_begin()  # logging
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
-        self._agents = _AgentsContainer(
+        self._agents = _ModelAgentsContainer(
             model=self, max_len=kwargs.get("max_agents")
         )
         self._time = TimeDriver(model=self)
@@ -259,7 +259,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         return self._settings
 
     @property
-    def agents(self) -> _AgentsContainer:
+    def agents(self) -> _ModelAgentsContainer:
         """The container of all agents.
         One model only has one specific container where all alive agents are stored.
         Users can access, manipulate, and create agents by this container:
@@ -303,9 +303,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     p = params
 
     @property
-    def breeds(self) -> Tuple[str, ...]:
+    def breeds(self) -> Dict[str, Type[Actor]]:
         """All breeds in the model."""
-        return tuple(self._breeds.keys())
+        return self._breeds
 
     @breeds.setter
     def breeds(self, breed: Type[Actor]) -> None:

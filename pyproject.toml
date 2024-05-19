@@ -31,7 +31,7 @@ line_length = 79
 
 [tool.poetry]
 name = "abses"
-version = "0.6.5"
+version = "0.6.6"
 description = "ABSESpy makes it easier to build artificial Social-ecological systems with real GeoSpatial datasets and fully incorporate human behaviour."
 authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
@@ -48,7 +48,7 @@ include = [
 abses = "hydra_plugins.abses_searchpath_plugin:ABSESpySearchPathPlugin"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.12"
 netcdf4 = ">=1.6"
 hydra-core = "~1.3"
 mesa-geo = ">=0.6"
@@ -61,6 +61,7 @@ geopandas = "~0"
 typing-extensions = "~4"
 fontawesome = ">=5"
 seaborn = ">=0.13"
+geocube = "^0.5.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest-clarity = "^1.0.1"
