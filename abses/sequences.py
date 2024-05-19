@@ -31,12 +31,15 @@ from typing import (
 )
 
 import pandas as pd
+from loguru import logger
+from pyproj import CRS
 
 try:
     from typing import TypeAlias
 except ImportError:
     from typing_extensions import TypeAlias
 
+import geopandas as gpd
 import mesa_geo as mg
 import numpy as np
 from numpy.typing import NDArray
@@ -48,7 +51,7 @@ from abses.tools.func import make_list
 from abses.viz.viz_actors import _VizNodeList
 
 if TYPE_CHECKING:
-    from abses.actor import Actor, TargetName
+    from abses.actor import Actor, GeoType, TargetName
     from abses.links import _LinkNode
     from abses.main import MainModel
 
@@ -139,7 +142,23 @@ class ActorsList(List[Link], Generic[Link]):
                 dic[breed].append(actor)
         return dic
 
-    def select(self, selection: Selection) -> ActorsList[Link]:
+    def _subset(
+        self, geo_type: Optional[GeoType | bool] = None
+    ) -> ActorsList[Link]:
+        """Returns dataset for plotting."""
+        if geo_type is None:
+            return self
+        if isinstance(geo_type, bool):
+            selection: Dict[str, Any] = {"on_earth": geo_type}
+        elif geo_type in ("Point", "Shape"):
+            selection = {"geo_type": geo_type}
+        return self.select(selection)
+
+    def select(
+        self,
+        selection: Optional[Selection] = None,
+        geo_type: Optional[GeoType] = None,
+    ) -> ActorsList[Link]:
         """
         Returns a new :class:`ActorList` based on `selection`.
 
@@ -147,14 +166,22 @@ class ActorsList(List[Link], Generic[Link]):
             selection:
                 List with same length as the agent list.
                 Positions that return True will be selected.
+            geo_type:
+                Type of Actors' Geometry.
+
+        Returns:
+            A subset containing.
         """
+        actors = self._subset(geo_type=geo_type)
+        if selection is None:
+            return actors
         if isinstance(selection, (str, dict)):
-            bool_ = [selecting(actor, selection) for actor in self]
+            bool_ = [selecting(actor, selection) for actor in actors]
         elif isinstance(selection, (list, tuple, np.ndarray)):
             bool_ = make_list(selection)
         else:
             raise TypeError(f"Invalid selection type {type(selection)}")
-        selected = [a for a, s in zip(self, bool_) if s]
+        selected = [a for a, s in zip(actors, bool_) if s]
         return ActorsList(self._model, selected)
 
     def ids(self, ids: Iterable[int]) -> ActorsList[Link]:
@@ -351,8 +378,34 @@ class ActorsList(List[Link], Generic[Link]):
             return self[index] if len(self) > index else None
         raise ValueError(f"Invalid how method '{how}'.")
 
-    def summary(self, **kwargs) -> pd.DataFrame:
+    def _check_crs_consistent(self) -> CRS:
+        crs_set = set(self.array("crs"))
+        if None in crs_set:
+            logger.warning("Some agents don't have a crs.")
+            crs_set.remove(None)
+        if len(crs_set) > 1:
+            raise ValueError(f"More than one crs: {crs_set}.")
+        if len(crs_set) == 0:
+            logger.warning("No crs when init a GeoDataFrame.")
+        return crs_set.pop()
+
+    @overload
+    def summary(self, geometry: bool = True, **kwargs) -> gpd.GeoDataFrame:
+        ...
+
+    @overload
+    def summary(self, geometry: bool = False, **kwargs) -> pd.DataFrame:
+        ...
+
+    def summary(
+        self, geometry: bool = False, **kwargs
+    ) -> pd.DataFrame | gpd.GeoDataFrame:
         """Returns a summarized dataframe of the actors."""
         if len(self) == 0:
             raise ValueError("No actors to retrieve summary information.")
-        return pd.concat([actor.summary(**kwargs) for actor in self], axis=1).T
+        df = pd.concat([actor.summary(**kwargs) for actor in self], axis=1).T
+        if geometry:
+            crs = self._check_crs_consistent()
+            df["geometry"] = self.array("geometry")
+            return gpd.GeoDataFrame(df, geometry="geometry", crs=crs)
+        return df

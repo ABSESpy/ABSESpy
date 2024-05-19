@@ -10,10 +10,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Literal, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import geopandas as gpd
-import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -38,18 +37,6 @@ class _VizNodeList:
         self.actors = actors
         self.model = model
 
-    def _subset(
-        self, geo_type: Optional[GeoType | bool] = None
-    ) -> ActorsList[Actor]:
-        """Returns dataset for plotting."""
-        if geo_type is None:
-            return self.actors
-        if isinstance(geo_type, bool):
-            selection: Dict[str, Any] = {"on_earth": geo_type}
-        elif geo_type in ("Point", "Shape"):
-            selection = {"geo_type": geo_type}
-        return self.actors.select(selection)
-
     @with_axes(figsize=(6, 4))
     def hist(
         self,
@@ -59,7 +46,7 @@ class _VizNodeList:
         palette: Optional[str | Dict] = None,
     ):
         """Plot hist."""
-        df = self._subset().summary(attrs=attr)
+        df = self.actors.summary(attrs=attr)
         if palette is None:
             palette = self._style_dict("color", "blue")
         sns.histplot(df, x=attr, ax=ax, hue="breed", palette=palette)
@@ -83,7 +70,7 @@ class _VizNodeList:
         ax: Optional[Axes] = None,
     ) -> Axes:
         """Show the shapefile."""
-        subset = self._subset(geo_type="Shape")
+        subset = self.actors.select(geo_type="Shape")
         data = gpd.GeoSeries(
             subset.array("geometry"), crs=self.model.nature.crs
         )
@@ -102,7 +89,7 @@ class _VizNodeList:
         **kwargs,
     ) -> Axes:
         """Plotting spatial distribution of the actors."""
-        data = self._subset(geo_type="Point").summary(coords=coords)
+        data = self.actors.select(geo_type="Point").summary(coords=coords)
         y_axis = "y" if coords else "row"
         x_axis = "x" if coords else "col"
         count_data = (

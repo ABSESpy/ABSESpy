@@ -30,7 +30,7 @@ from typing import (
     cast,
 )
 
-import geopandas as gpd
+import numpy as np
 import pandas as pd
 
 with contextlib.suppress(ImportError):
@@ -42,7 +42,7 @@ except ImportError:
 
 from abses._bases.errors import ABSESpyError
 from abses.sequences import ActorsList
-from abses.tools.func import clean_attrs, make_list
+from abses.tools.func import make_list
 from abses.tools.viz import get_marker
 
 if TYPE_CHECKING:
@@ -585,19 +585,20 @@ class _LinkNode:
         self,
         coords: bool = False,
         attrs: Optional[Iterable[str] | str] = None,
-        # geometry: bool = False,
     ) -> pd.Series:
         """Returns a summary of the object."""
-        a, b = self.get("coordinate" if coords else "pos")
+        geo_type = self.get("geo_type")
+        if geo_type in ("Point", "Cell"):
+            a, b = self.get("coordinate" if coords else "pos")
+        else:
+            a, b = np.nan, np.nan
         result = {
             "breed": self.breed,
+            "geo_type": geo_type,
             "x" if coords else "row": a,
             "y" if coords else "col": b,
         }
         result.update({attr: self.get(attr) for attr in make_list(attrs)})
-        # if geometry:
-        #     result.update({'geometry': self.get(geometry)})
-        #     return gpd.GeoSeries(result, name=)
         return pd.Series(result, name=self.unique_id)
 
 

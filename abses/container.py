@@ -231,6 +231,7 @@ class _ModelAgentsContainer(_AgentsContainer):
         for index, row in gdf.iterrows():
             geometry = row[geo_col]
             new_agent = self._new_one(geometry=geometry, unique_id=index)
+            new_agent.crs = self.crs
 
             for col, name in set_attributes.items():
                 setattr(new_agent, name, row[col])

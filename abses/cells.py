@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 from mesa_geo.raster_layers import RasterBase
+from pyproj import CRS
 
 from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
@@ -116,6 +117,27 @@ class PatchCell(_LinkNodeCell, _BaseObj):
             )
         return self._layer
 
+    @property
+    def agents(self) -> _CellAgentsContainer:
+        """The agents located at here."""
+        return self._agents
+
+    @property
+    def coordinate(self) -> Tuple[float, float]:
+        """The position of this cell."""
+        row, col = self.indices
+        return self.layer.transform_coord(row=row, col=col)
+
+    @property
+    def geo_type(self) -> str:
+        """Return the geo_type"""
+        return "Cell"
+
+    @property
+    def crs(self) -> Optional[CRS]:
+        """Return the crs of this cell."""
+        return self.layer.crs
+
     def _set_layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, RasterBase):
             raise TypeError(f"{type(layer)} is not valid layer.")
@@ -127,17 +149,6 @@ class PatchCell(_LinkNodeCell, _BaseObj):
         self._agents = _CellAgentsContainer(
             layer.model, cell=self, max_len=getattr(self, "max_agents", None)
         )
-
-    @property
-    def agents(self) -> _CellAgentsContainer:
-        """The agents located at here."""
-        return self._agents
-
-    @property
-    def coordinate(self) -> Tuple[float, float]:
-        """The position of this cell."""
-        row, col = self.indices
-        return self.layer.transform_coord(row=row, col=col)
 
     def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
         """Gets the value of an attribute or registered property.
