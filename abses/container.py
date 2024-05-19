@@ -12,6 +12,7 @@ Container for actors.
 
 from __future__ import annotations
 
+import contextlib
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -25,6 +26,8 @@ from typing import (
     cast,
 )
 
+with contextlib.suppress(ImportError):
+    import networkx as nx
 try:
     from typing import TypeAlias
 except ImportError:
@@ -37,6 +40,7 @@ from shapely.geometry.base import BaseGeometry
 from abses._bases.base_container import _AgentsContainer
 from abses._bases.errors import ABSESpyError
 from abses.actor import Actor
+from abses.links import get_node_unique_id
 from abses.sequences import ActorsList
 from abses.tools.func import IncludeFlag, clean_attrs, make_list
 
@@ -188,6 +192,27 @@ class _ModelAgentsContainer(_AgentsContainer):
         )
         logger.debug(f"{self} created {num} {breed_cls.__name__}.")
         return cast(Actor, actors_list.item()) if singleton else actors_list
+
+    def new_from_graph(
+        self,
+        graph: "nx.Graph",
+        link_name: str,
+        actor_cls: Type[Actor] = Actor,
+        **kwargs,
+    ):
+        """Create a set of new agents from networkx graph."""
+        self.check_registration(actor_cls, register=True)
+        actors = []
+        mapping = {}
+        for node, attr in graph.nodes(data=True):
+            unique_id = get_node_unique_id(node=node)
+            actor = self._new_one(unique_id, agent_cls=actor_cls, **attr)
+            actors.append(actor)
+            mapping[unique_id] = actor
+        self.model.human.add_links_from_graph(
+            graph, link_name=link_name, mapping_dict=mapping, **kwargs
+        )
+        return ActorsList(model=self.model, objs=actors)
 
     def new_from_gdf(
         self,
