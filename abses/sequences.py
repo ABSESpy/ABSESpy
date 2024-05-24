@@ -253,7 +253,7 @@ class ActorsList(List[Link], Generic[Link]):
         for agent, val in zip(self, values):
             setattr(agent, attr, val)
 
-    def split(self, where: NDArray[Any]) -> List[NDArray[np.object_]]:
+    def split(self, where: NDArray[Any]) -> List[ActorsList[Link]]:
         """Split agents into N+1 groups.
 
         Parameters:
@@ -263,7 +263,8 @@ class ActorsList(List[Link], Generic[Link]):
         Returns:
             np.ndarray: N+1 groups: agents array
         """
-        return np.hsplit(np.array(self), where)
+        split = np.hsplit(np.array(self), where)
+        return [ActorsList(self._model, group) for group in split]
 
     def array(self, attr: str) -> np.ndarray:
         """Convert the specified attribute of all actors to a numpy array.
