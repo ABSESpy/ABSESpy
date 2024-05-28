@@ -303,6 +303,14 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     p = params
 
     @property
+    def datasets(self) -> DictConfig:
+        """All datasets in the model."""
+        return self.settings.get("ds", DictConfig({}))
+
+    # alias for model's datasets
+    ds = datasets
+
+    @property
     def breeds(self) -> Dict[str, Type[Actor]]:
         """All breeds in the model."""
         return self._breeds
