@@ -51,6 +51,7 @@ from abses.tools.func import make_list
 from abses.viz.viz_actors import _VizNodeList
 
 if TYPE_CHECKING:
+    from abses._bases.base_container import UniqueID
     from abses.actor import Actor, GeoType, TargetName
     from abses.links import _LinkNode
     from abses.main import MainModel
@@ -184,7 +185,7 @@ class ActorsList(List[Link], Generic[Link]):
         selected = [a for a, s in zip(actors, bool_) if s]
         return ActorsList(self._model, selected)
 
-    def ids(self, ids: Iterable[int]) -> ActorsList[Link]:
+    def ids(self, ids: Iterable[UniqueID] | UniqueID) -> ActorsList[Link]:
         """Subsets ActorsList by a `ids`.
 
         Parameters:
