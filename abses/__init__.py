@@ -29,11 +29,9 @@ __all__ = [
     "time_condition",
     "Experiment",
     "load_data",
-    "logger",
 ]
-__version__ = "v0.6.6"
+__version__ = "v0.6.7"
 
-from ._bases.logging import logger
 from .actor import Actor, alive_required, perception
 from .decision import Decision
 from .experiment import Experiment
