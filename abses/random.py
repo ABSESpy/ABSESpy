@@ -14,6 +14,7 @@ from itertools import combinations
 from typing import (
     TYPE_CHECKING,
     Any,
+    Dict,
     Iterable,
     List,
     Literal,
@@ -198,16 +199,16 @@ class ListRandom:
     def new(
         self,
         actor_cls: Type[Actor],
-        num: int = 1,
-        replace: bool = False,
-        prob: np.ndarray | None = None,
+        actor_attrs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> ActorsList[Actor]:
         """Randomly creating new agents for a given actor type."""
-        cells = self.choice(as_list=True, size=num, replace=replace, prob=prob)
+        if actor_attrs is None:
+            actor_attrs = {}
+        cells = self.choice(as_list=True, **kwargs)
         objs = cells.apply(
             lambda c: c.agents.new(
-                breed_cls=actor_cls, singleton=True, **kwargs
+                breed_cls=actor_cls, singleton=True, **actor_attrs
             )
         )
         return self._to_actors_list(objs)

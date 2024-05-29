@@ -387,7 +387,7 @@ class ActorsList(List[Link], Generic[Link]):
             crs_set.remove(None)
         if len(crs_set) > 1:
             raise ValueError(f"More than one crs: {crs_set}.")
-        if len(crs_set) == 0:
+        if not crs_set:
             logger.warning("No crs when init a GeoDataFrame.")
         return crs_set.pop()
 
