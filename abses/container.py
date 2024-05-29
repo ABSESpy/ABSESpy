@@ -71,7 +71,7 @@ class _ModelAgentsContainer(_AgentsContainer):
             raise ABSESpyError(
                 f"Unique ID should be an integer or string, got {type(unique_id)}."
             )
-        if unique_id in self.get().array("unique_id"):
+        if unique_id in set(self.get().array("unique_id")):
             raise ABSESpyError(f"Unique ID {unique_id} already exists.")
         return unique_id
 
