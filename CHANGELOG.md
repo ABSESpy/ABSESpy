@@ -1,4 +1,18 @@
 
+<a id='changelog-0.6.7'></a>
+# 0.6.7 — 2024-05-29
+
+## New Features
+
+- [x] #feat✨ Access datasets configurations by `.ds` or `.datasets` globally
+
+## Fixed bugs
+
+- [x] #bug🐛 Aligned behaves of `random.new` and `random.choice`
+- [x] #bug🐛  fixed future warning when check `unique_id`
+- [x] #bug🐛  now `Path` object is acceptable when using vector data to create `patch`
+- [x] #bug🐛  The arg `agent_cls` passed to `_new_one` method now
+
 <a id='changelog-0.6.6'></a>
 # 0.6.6 — 2024-05-19
 

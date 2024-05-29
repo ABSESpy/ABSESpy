@@ -71,7 +71,7 @@ class _ModelAgentsContainer(_AgentsContainer):
             raise ABSESpyError(
                 f"Unique ID should be an integer or string, got {type(unique_id)}."
             )
-        if unique_id in self.get().array("unique_id"):
+        if unique_id in set(self.get().array("unique_id")):
             raise ABSESpyError(f"Unique ID {unique_id} already exists.")
         return unique_id
 
@@ -220,6 +220,7 @@ class _ModelAgentsContainer(_AgentsContainer):
         unique_id: Optional[str] = None,
         agent_cls: type[Actor] = Actor,
         attrs: IncludeFlag = False,
+        **kwargs,
     ) -> ActorsList[Actor]:
         """Create actors from a `geopandas.GeoDataFrame` object.
 
@@ -255,7 +256,12 @@ class _ModelAgentsContainer(_AgentsContainer):
         agents = []
         for index, row in gdf.iterrows():
             geometry = row[geo_col]
-            new_agent = self._new_one(geometry=geometry, unique_id=index)
+            new_agent = self._new_one(
+                geometry=geometry,
+                unique_id=index,
+                agent_cls=agent_cls,
+                **kwargs,
+            )
             new_agent.crs = self.crs
 
             for col, name in set_attributes.items():

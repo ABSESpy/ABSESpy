@@ -51,6 +51,7 @@ from abses.tools.func import make_list
 from abses.viz.viz_actors import _VizNodeList
 
 if TYPE_CHECKING:
+    from abses._bases.base_container import UniqueID
     from abses.actor import Actor, GeoType, TargetName
     from abses.links import _LinkNode
     from abses.main import MainModel
@@ -184,7 +185,7 @@ class ActorsList(List[Link], Generic[Link]):
         selected = [a for a, s in zip(actors, bool_) if s]
         return ActorsList(self._model, selected)
 
-    def ids(self, ids: Iterable[int]) -> ActorsList[Link]:
+    def ids(self, ids: Iterable[UniqueID] | UniqueID) -> ActorsList[Link]:
         """Subsets ActorsList by a `ids`.
 
         Parameters:
@@ -253,7 +254,7 @@ class ActorsList(List[Link], Generic[Link]):
         for agent, val in zip(self, values):
             setattr(agent, attr, val)
 
-    def split(self, where: NDArray[Any]) -> List[NDArray[np.object_]]:
+    def split(self, where: NDArray[Any]) -> List[ActorsList[Link]]:
         """Split agents into N+1 groups.
 
         Parameters:
@@ -263,7 +264,8 @@ class ActorsList(List[Link], Generic[Link]):
         Returns:
             np.ndarray: N+1 groups: agents array
         """
-        return np.hsplit(np.array(self), where)
+        split = np.hsplit(np.array(self), where)
+        return [ActorsList(self._model, group) for group in split]
 
     def array(self, attr: str) -> np.ndarray:
         """Convert the specified attribute of all actors to a numpy array.
@@ -385,7 +387,7 @@ class ActorsList(List[Link], Generic[Link]):
             crs_set.remove(None)
         if len(crs_set) > 1:
             raise ValueError(f"More than one crs: {crs_set}.")
-        if len(crs_set) == 0:
+        if not crs_set:
             logger.warning("No crs when init a GeoDataFrame.")
         return crs_set.pop()
 

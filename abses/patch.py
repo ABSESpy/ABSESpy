@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import functools
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -202,7 +203,7 @@ class _PatchModuleFactory(_ModuleFactory):
 
     def from_vector(
         self,
-        vector_file: str | gpd.GeoDataFrame,
+        vector_file: str | Path | gpd.GeoDataFrame,
         resolution: Tuple[float, float] | float,
         model: MainModel[Any, Any],
         module_cls: Optional[Type[PatchModule]] = None,
@@ -213,7 +214,7 @@ class _PatchModuleFactory(_ModuleFactory):
         cell_cls: type[PatchCell] = PatchCell,
     ) -> PatchModule:
         """Create a layer module from a shape file."""
-        if isinstance(vector_file, str):
+        if isinstance(vector_file, (str, Path)):
             gdf = gpd.read_file(vector_file)
         elif isinstance(vector_file, gpd.GeoDataFrame):
             gdf = vector_file

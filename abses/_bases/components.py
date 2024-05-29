@@ -104,3 +104,10 @@ class _Component:
             if arg not in self.params:
                 raise KeyError(f"Argument {arg} not found.")
             self._args.add(arg)
+
+    @property
+    def datasets(self) -> DictConfig:
+        """Get the data source configurations."""
+        return self._model.datasets
+
+    ds = datasets
