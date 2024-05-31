@@ -7,6 +7,7 @@
 
 import numpy as np
 import pytest
+from numpy import isclose
 
 from abses import Actor, MainModel
 from abses._bases.errors import ABSESpyError
@@ -139,3 +140,26 @@ class TestRandomActorsList:
         # assert
         assert isinstance(chosen, Actor)
         assert chosen is agents[expected]
+
+    @pytest.mark.parametrize(
+        "value, num",
+        [
+            (4, 1),
+            (4, 2),
+            (4, 3),
+        ],
+    )
+    def test_random_assign(self, main: MainModel, num, value):
+        """测试随机分配"""
+        # arrange
+        agents = main.agents.new(Actor, num=num)
+        agents.apply(lambda a: setattr(a, "test", 0))
+
+        # act
+        values = agents.random.assign(
+            value=value, attr="test", when_empty="raise exception"
+        )
+
+        # assert
+        assert isclose(agents.array("test").sum(), value)
+        assert isclose(values.sum(), value)

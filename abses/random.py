@@ -57,14 +57,16 @@ class ListRandom:
 
         return ActorsList(self.model, objs=objs)
 
-    def _when_empty(self, when_empty: WHEN_EMPTY) -> None:
+    def _when_empty(
+        self, when_empty: WHEN_EMPTY, operation: str = "choice"
+    ) -> None:
         if when_empty not in ("raise exception", "return None"):
             raise ValueError(
                 f"Unknown value for `when_empty` parameter: {when_empty}"
             )
         if when_empty == "raise exception":
             raise ABSESpyError(
-                "Trying to choose an actor from an empty `ActorsList`."
+                f"Random operating '{operation}' on an empty `ActorsList`."
             )
 
     def clean_p(self, prob: Union[np.ndarray, str]) -> np.ndarray:
@@ -245,3 +247,27 @@ class ListRandom:
                 source.link.to(target, link_name=link, mutual=mutual)
                 linked_combs.append((source, target))
         return linked_combs
+
+    def assign(
+        self,
+        value: float | int,
+        attr: str,
+        when_empty: WHEN_EMPTY = "raise exception",
+    ) -> np.ndarray:
+        """Randomly assign a value to each actor."""
+        num = len(self.actors)
+        if num == 0:
+            self._when_empty(when_empty=when_empty, operation="assign")
+            return np.array([])
+        if num == 1:
+            values = np.array([value])
+        else:
+            # 生成 n-1 个随机切割点
+            cuts = np.sort(self.generator.uniform(0, value, num - 1))
+            # 将 0 和总面积 X 添加到切割点数组中，方便计算每段区间长度
+            full_range = np.append(np.append(0, cuts), value)
+            # 计算每个区间的长度，即为每个对象的分配面积
+            values = np.diff(full_range)
+        # 将分配的值赋予每个对象
+        self.actors.update(attr, values)
+        return values
