@@ -40,7 +40,7 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from tqdm.auto import tqdm
 
-from abses.main import MainModel
+from abses.main import BaseHuman, BaseNature, MainModel, SubSystemType
 
 Configurations: TypeAlias = DictConfig | str | Dict[str, Any]
 
@@ -106,10 +106,16 @@ class Experiment:
 
     def __init__(
         self,
-        model_cls: Optional[Type[MainModel]] = None,
+        model_cls: Type[MainModel],
+        nature_cls: Optional[Type[BaseNature]] = None,
+        human_cls: Optional[Type[BaseHuman]] = None,
     ):
         self._n_runs = 0
-        self._model = model_cls
+        self._types: Dict[SubSystemType, Type] = {
+            "model": model_cls,
+            "nature": nature_cls or BaseNature,
+            "human": human_cls or BaseHuman,
+        }
         self._overrides: Dict[str, Any] = {}
         self._job_id: int = 0
 
@@ -137,7 +143,10 @@ class Experiment:
     @property
     def model(self) -> Optional[Type[MainModel]]:
         """Model class."""
-        return self._model
+        model = self._types["model"]
+        if not issubclass(model, MainModel):
+            raise TypeError(f"Type {type(model)} is invalid.")
+        return model
 
     @property
     def outpath(self) -> Path:
@@ -236,18 +245,18 @@ class Experiment:
         self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
     ) -> Tuple[Dict[str, Any], pd.DataFrame]:
         """运行模型一次"""
-        if not self._model or not issubclass(self._model, MainModel):
-            raise TypeError(f"The model class {self._model} is not valid.")
         # 获取日志
         log_name = self._get_logging_mode(repeat_id=repeat_id)
         OmegaConf.set_struct(cfg, False)
         logging_cfg = OmegaConf.create({"log": {"name": log_name}})
         cfg = OmegaConf.merge(cfg, logging_cfg)
-        model = self._model(
+        model = self.model(
             parameters=cfg,
             run_id=repeat_id,
             outpath=outpath,
             experiment=self,
+            nature_class=self._types["nature"],
+            human_class=self._types["human"],
         )
         model.run_model()
         if model.datacollector.model_reporters:
@@ -443,7 +452,7 @@ class Experiment:
             cls.name = "ABSESpyExp"
 
     @classmethod
-    def new(cls, model_cls: Optional[Type[MainModel]] = None) -> Experiment:
+    def new(cls, model_cls: Type[MainModel]) -> Experiment:
         """Create a new experiment for the singleton class `Experiment`.
         This method will delete all currently available exp results and settings.
         Then, it initialize a new instance of experiment.
