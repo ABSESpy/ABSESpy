@@ -121,16 +121,15 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._exp = experiment
         self._run_id: Optional[int] = run_id
         self.outpath = cast(Path, outpath)
-        self._setup_logger(kwargs.get("logging"))
+        self._settings = DictConfig(parameters)
+        self._setup_logger(**parameters.get("log", {}))
         self.running: bool = True
         self._breeds: Dict[str, Type[Actor]] = {}
         self._containers: List[_AgentsContainer] = []
-        self._settings = DictConfig(parameters)
         self._version: str = __version__
-        self._logging_begin()  # logging
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
         self._agents = _ModelAgentsContainer(
-            model=self, max_len=kwargs.get("max_agents")
+            model=self, max_len=kwargs.get("max_agents", None)
         )
         self._time = TimeDriver(model=self)
         self.schedule: BaseScheduler = BaseScheduler(model=self)
@@ -196,18 +195,22 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
 
-    def _setup_logger(self, logging: Optional[str] = None) -> None:
-        if not logging:
+    def _setup_logger(self, name: Optional[str] = None, **kwargs) -> None:
+        if not name:
             return
-        logging = str(logging).replace(".log", "")
+        rotation = kwargs.get("rotation", "1 day")
+        retention = kwargs.get("retention", "10 days")
+        level = kwargs.get("level", "INFO")
+        name = str(name).replace(".log", "")
         logger.add(
-            self.outpath / f"{logging}.log",
-            retention="10 days",
-            rotation="1 day",
-            level="DEBUG",
+            self.outpath / f"{name}.log",
+            retention=retention,
+            rotation=rotation,
+            level=level,
             format=formatter,
         )
         setup_logger_info(self.exp)
+        self._logging_begin()  # logging
 
     @property
     def exp(self) -> Optional[Experiment]:

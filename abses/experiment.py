@@ -40,7 +40,6 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from tqdm.auto import tqdm
 
-from abses._bases.logging import setup_logger_info
 from abses.main import MainModel
 
 Configurations: TypeAlias = DictConfig | str | Dict[str, Any]
@@ -227,7 +226,7 @@ class Experiment:
                 logging: bool | str = self.name
             else:
                 return False
-        elif bool(log_mode) is True:
+        elif bool(log_mode):
             logging = f"{self.name}_{repeat_id}"
         else:
             logging = False
@@ -240,12 +239,14 @@ class Experiment:
         if not self._model or not issubclass(self._model, MainModel):
             raise TypeError(f"The model class {self._model} is not valid.")
         # 获取日志
-        logging = self._get_logging_mode(repeat_id=repeat_id)
+        log_name = self._get_logging_mode(repeat_id=repeat_id)
+        OmegaConf.set_struct(cfg, False)
+        logging_cfg = OmegaConf.create({"log": {"name": log_name}})
+        cfg = OmegaConf.merge(cfg, logging_cfg)
         model = self._model(
             parameters=cfg,
             run_id=repeat_id,
             outpath=outpath,
-            logging=logging,
             experiment=self,
         )
         model.run_model()

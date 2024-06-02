@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from abses import Experiment, MainModel
 
 logger.remove(0)
-FORMAT = "[{time:HH:mm:ss}][{module}] {message}\n"
+FORMAT = "[{time:HH:mm:ss}][{level}][{module}] {message}\n"
 
 
 def formatter(record) -> str:
@@ -56,5 +56,5 @@ def setup_logger_info(
     content = "  ABSESpy Framework  ".center(40, "*") + "\n"
     msg = line_equal + line_star + content + line_star + line_equal
     logger.bind(no_format=True).info(msg)
-    is_exp_env = True if exp is not None else False
+    is_exp_env = exp is not None
     logger.bind(no_format=True).info(f"Exp environment: {is_exp_env}\n")
