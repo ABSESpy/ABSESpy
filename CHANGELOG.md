@@ -1,4 +1,19 @@
 
+<a id='changelog-0.6.8'></a>
+# 0.6.8 — 2024-06-04
+
+## Refactoring
+
+- [x] #refactor♻️ Use a new `datacollector` instead of mesa's `datacollector`
+
+## New Features
+
+- [x] #feat✨ Separate different agents when collecting data on agents
+- [x] #feat✨ Setup subsystem class when init an experiment
+- [x] #feat✨ now can set-up logging configs in yaml
+- [x] #feat✨ Reproject a `DataArray` by patch
+- [x] #feat✨ Random assign a value to `ActorsList`
+
 <a id='changelog-0.6.7'></a>
 # 0.6.7 — 2024-05-29
 
