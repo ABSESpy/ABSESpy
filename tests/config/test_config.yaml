@@ -11,3 +11,5 @@ reports:
 
         Farmer:
             var2: 'test'
+    final:
+        var1: 'test'

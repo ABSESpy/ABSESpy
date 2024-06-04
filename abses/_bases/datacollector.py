@@ -23,8 +23,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-
-from abses._bases.errors import ABSESpyError
+from loguru import logger
 
 if TYPE_CHECKING:
     from abses.actor import Actor
@@ -88,7 +87,6 @@ class ABSESpyDataCollector:
 
         self._agent_records: Dict[str, List[pd.DataFrame]] = {}
         self.model_vars: Dict[str, List[Any]] = {}
-        self.final_vars: Dict[str, List[Any]] = {}
 
         self.add_reporters("model", reports.get("model", {}))
         self.add_reporters("agents", reports.get("agents", {}))
@@ -109,7 +107,7 @@ class ABSESpyDataCollector:
             return
         if item == "final":
             for name, reporter in reporters.items():
-                self._new_final_reporter(name, reporter)
+                self.final_reporters[name] = clean_to_reporter(reporter)
             return
         if item == "agents":
             for breed, tmp_reporters in reporters.items():
@@ -132,10 +130,6 @@ class ABSESpyDataCollector:
         """
         self.model_reporters[name] = clean_to_reporter(reporter)
         self.model_vars[name] = []
-
-    def _new_final_reporter(self, name: str, reporter: Reporter) -> None:
-        self.final_reporters[name] = clean_to_reporter(reporter)
-        self.final_vars[name] = []
 
     def _record_a_breed_of_agents(
         self, time: TimeDriver, breed: str, agents: ActorsList[Actor]
@@ -178,8 +172,9 @@ class ABSESpyDataCollector:
         """
         # Check if self.model_reporters dictionary is empty, if so raise warning
         if not self.model_reporters:
-            raise UserWarning(
-                "No model reporters have been defined in the DataCollector, returning empty DataFrame."
+            logger.warning(
+                "No model reporters have been defined"
+                "returning empty DataFrame."
             )
 
         return pd.DataFrame(self.model_vars)
@@ -194,12 +189,21 @@ class ABSESpyDataCollector:
                 for breed in self.agent_reporters
             }
         if not self.agent_reporters:
-            raise ABSESpyError(
+            logger.warning(
                 "No agent reporters have been defined in the DataCollector."
             )
         if results := self._agent_records.get(breed):
             return pd.concat([pd.DataFrame(res) for res in results])
         return pd.DataFrame()
+
+    def get_final_vars_report(self, model: MainModel) -> pd.DataFrame:
+        """Report at the end of this model."""
+        if not self.final_reporters:
+            logger.warning(
+                "No final reporters have been defined"
+                "returning empty DataFrame."
+            )
+        return {var: func(model) for var, func in self.final_reporters.items()}
 
     def collect(self, model: MainModel):
         """Collect all the data for the given model object."""
@@ -207,10 +211,6 @@ class ABSESpyDataCollector:
         if self.model_reporters:
             for var, func in self.model_reporters.items():
                 self.model_vars[var].append(func(model))
-
-        if self.final_reporters:
-            for var, func in self.model_reporters.items():
-                self.final_vars[var].append(func(model))
 
         if self.agent_reporters:
             self._record_agents(model)

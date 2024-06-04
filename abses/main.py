@@ -14,7 +14,6 @@ from __future__ import annotations
 import functools
 import json
 import os
-import types
 from datetime import datetime
 from pathlib import Path
 from typing import (
@@ -41,7 +40,7 @@ except ImportError:
 
 from mesa import Model
 from mesa.time import BaseScheduler
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from abses import __version__
 from abses._bases.logging import (
@@ -378,28 +377,15 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
-        # result = self.final_report()
-        # msg = (
-        #     "The model is ended.\n"
-        #     f"Total ticks: {self.time.tick}\n"
-        #     f"Final result: {json.dumps(result, indent=4)}\n"
-        # )
-        # log_session(title="Ending Run", msg=msg)
+        result = self.datacollector.get_final_vars_report(self)
+        msg = (
+            "The model is ended.\n"
+            f"Total ticks: {self.time.tick}\n"
+            f"Final result: {json.dumps(result, indent=4)}\n"
+        )
+        log_session(title="Ending Run", msg=msg)
         logger.bind(no_format=True).info(f"{datetime.now()}\n\n\n")
         logger.remove()
-
-    # def final_report(self) -> Dict[str, Any]:
-    #     """Report at the end of this model."""
-    #     result = {}
-    #     for k, reporter in self._reports["final"].items():
-    #         if isinstance(reporter, str):
-    #             value = getattr(self, reporter)
-    #         elif isinstance(reporter, types.FunctionType):
-    #             value = reporter(self)
-    #         else:
-    #             raise TypeError(f"Invalid final reporter {type(reporter)}.")
-    #         result[k] = value
-    #     return result
 
     def summary(self, verbose: bool = False) -> pd.DataFrame:
         """Report the state of the model."""

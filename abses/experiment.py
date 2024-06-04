@@ -241,15 +241,22 @@ class Experiment:
             logging = False
         return logging
 
+    def _update_log_config(self, config, repeat_id: Optional[int] = None):
+        """Update the log configuration."""
+        if isinstance(config, dict):
+            config = DictConfig(config)
+        log_name = self._get_logging_mode(repeat_id=repeat_id)
+        OmegaConf.set_struct(config, False)
+        logging_cfg = OmegaConf.create({"log": {"name": log_name}})
+        config = OmegaConf.merge(config, logging_cfg)
+        return config
+
     def run(
         self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
     ) -> Tuple[Dict[str, Any], pd.DataFrame]:
         """运行模型一次"""
+        self._update_log_config(cfg, repeat_id)
         # 获取日志
-        log_name = self._get_logging_mode(repeat_id=repeat_id)
-        OmegaConf.set_struct(cfg, False)
-        logging_cfg = OmegaConf.create({"log": {"name": log_name}})
-        cfg = OmegaConf.merge(cfg, logging_cfg)
         model = self.model(
             parameters=cfg,
             run_id=repeat_id,
@@ -263,7 +270,8 @@ class Experiment:
             df = model.datacollector.get_model_vars_dataframe()
         else:
             df = pd.DataFrame()
-        return model.final_report(), df
+        final_report = model.datacollector.get_final_vars_report(model)
+        return final_report, df
 
     def _update_result(
         self,
