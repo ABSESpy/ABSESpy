@@ -3,8 +3,13 @@ time:
     end: 3
 reports:
     model:
-        var1: ":lambda m: m.test * 2"
-        var2: "test"
+        var1: 'test'
+        var2: 'var2'
     agents:
-        var1: test
-        var2: ":lambda a: 'I am a ' + a.breed"
+        Actor:
+            var1: 'test'
+
+        Farmer:
+            var2: 'test'
+    final:
+        var1: 'test'

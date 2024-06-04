@@ -14,13 +14,11 @@ from __future__ import annotations
 import functools
 import json
 import os
-import types
 from datetime import datetime
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Dict,
     Generic,
     List,
@@ -40,9 +38,9 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from mesa import DataCollector, Model
+from mesa import Model
 from mesa.time import BaseScheduler
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from abses import __version__
 from abses._bases.logging import (
@@ -54,6 +52,7 @@ from abses._bases.logging import (
 from abses.actor import Actor
 
 from ._bases.bases import _Notice
+from ._bases.datacollector import ABSESpyDataCollector
 from ._bases.states import _States
 from .container import _AgentsContainer, _ModelAgentsContainer
 from .human import BaseHuman
@@ -68,7 +67,7 @@ if TYPE_CHECKING:
 # Dynamically load type hints from users' input type
 N = TypeVar("N", bound=BaseNature)
 H = TypeVar("H", bound=BaseHuman)
-Reporter: TypeAlias = Union[str, Callable[..., Any]]
+
 SubSystemType: TypeAlias = Literal["model", "nature", "human"]
 SubSystem = Union[
     SubSystemType,
@@ -121,20 +120,21 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._exp = experiment
         self._run_id: Optional[int] = run_id
         self.outpath = cast(Path, outpath)
-        self._setup_logger(kwargs.get("logging"))
+        self._settings = DictConfig(parameters)
+        self._setup_logger(**parameters.get("log", {}))
         self.running: bool = True
         self._breeds: Dict[str, Type[Actor]] = {}
         self._containers: List[_AgentsContainer] = []
-        self._settings = DictConfig(parameters)
         self._version: str = __version__
-        self._logging_begin()  # logging
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
         self._agents = _ModelAgentsContainer(
-            model=self, max_len=kwargs.get("max_agents")
+            model=self, max_len=kwargs.get("max_agents", None)
         )
         self._time = TimeDriver(model=self)
         self.schedule: BaseScheduler = BaseScheduler(model=self)
-        self.initialize_data_collector()
+        self.datacollector: ABSESpyDataCollector = ABSESpyDataCollector(
+            parameters.get("reports", {})
+        )
         self._do_each("initialize", order=("nature", "human"))
         self._do_each("set_state", code=1)  # initial state
 
@@ -196,18 +196,22 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
 
-    def _setup_logger(self, logging: Optional[str] = None) -> None:
-        if not logging:
+    def _setup_logger(self, name: Optional[str] = None, **kwargs) -> None:
+        if not name:
             return
-        logging = str(logging).replace(".log", "")
+        rotation = kwargs.get("rotation", "1 day")
+        retention = kwargs.get("retention", "10 days")
+        level = kwargs.get("level", "INFO")
+        name = str(name).replace(".log", "")
         logger.add(
-            self.outpath / f"{logging}.log",
-            retention="10 days",
-            rotation="1 day",
-            level="DEBUG",
+            self.outpath / f"{name}.log",
+            retention=retention,
+            rotation=rotation,
+            level=level,
             format=formatter,
         )
         setup_logger_info(self.exp)
+        self._logging_begin()  # logging
 
     @property
     def exp(self) -> Optional[Experiment]:
@@ -373,7 +377,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
-        result = self.final_report()
+        result = self.datacollector.get_final_vars_report(self)
         msg = (
             "The model is ended.\n"
             f"Total ticks: {self.time.tick}\n"
@@ -382,19 +386,6 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         log_session(title="Ending Run", msg=msg)
         logger.bind(no_format=True).info(f"{datetime.now()}\n\n\n")
         logger.remove()
-
-    def final_report(self) -> Dict[str, Any]:
-        """Report at the end of this model."""
-        result = {}
-        for k, reporter in self._reports["final"].items():
-            if isinstance(reporter, str):
-                value = getattr(self, reporter)
-            elif isinstance(reporter, types.FunctionType):
-                value = reporter(self)
-            else:
-                raise TypeError(f"Invalid final reporter {type(reporter)}.")
-            result[k] = value
-        return result
 
     def summary(self, verbose: bool = False) -> pd.DataFrame:
         """Report the state of the model."""
@@ -411,63 +402,3 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             to_report["model_vars"] = self.datacollector.model_reporters.keys()
             to_report["agent_vars"] = self.datacollector.agent_reporters.keys()
         return pd.Series(to_report)
-
-    def initialize_data_collector(
-        self,
-        model_reporters: Optional[Dict[str, Reporter]] = None,
-        agent_reporters: Optional[Dict[str, Reporter]] = None,
-        tables: Optional[Reporter] = None,
-    ) -> None:
-        """Initialize data collector for this ABSESpy Model.
-        This method overrides the default `DataCollector` of `mesa.Model`.
-        When initializing, users can set the model-level reporters, agent-level reporters,
-        and tables not only by parameters but also by config file.
-
-        Parameters:
-            model_reporters:
-                A dictionary of model-level reporters.
-            agent_reporters:
-                A dictionary of agent-level reporters.
-            tables:
-                A list of tables to collect data.
-
-        Example:
-        """
-        cfg: DictConfig = self.settings.get("reports", OmegaConf.create({}))
-        to_reports = cast(
-            Dict[str, Dict[str, Reporter]],
-            OmegaConf.to_container(cfg, resolve=True),
-        )
-        reporting_model: Dict[str, Reporter] = to_reports.get("model", {})
-        reporting_agents: Dict[str, Reporter] = to_reports.get("agents", {})
-        reporting_final: Dict[str, Reporter] = to_reports.get("final", {})
-        if model_reporters is not None:
-            reporting_model |= model_reporters
-        if agent_reporters is not None:
-            reporting_agents |= agent_reporters
-        _convert_to_python_expression(reporting_model)
-        _convert_to_python_expression(reporting_agents)
-        _convert_to_python_expression(reporting_final)
-        self.datacollector = DataCollector(
-            model_reporters=reporting_model,
-            agent_reporters=reporting_agents,
-            tables=tables,
-        )
-        self._reports = {
-            "model": reporting_model,
-            "agent": reporting_agents,
-            "final": reporting_final,
-        }
-
-
-def _convert_to_python_expression(
-    expression_dict: Dict[str, Reporter]
-) -> None:
-    """Convert a Python expression string to a Python expression."""
-    for key, value in expression_dict.items():
-        if not isinstance(value, str):
-            continue
-        if value.startswith(":"):
-            func = eval(value[1:])  # pylint: disable=eval-used
-            assert callable(func), f"{value} is not a callable function."
-            expression_dict[key] = func

@@ -40,8 +40,7 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 from tqdm.auto import tqdm
 
-from abses._bases.logging import setup_logger_info
-from abses.main import MainModel
+from abses.main import BaseHuman, BaseNature, MainModel, SubSystemType
 
 Configurations: TypeAlias = DictConfig | str | Dict[str, Any]
 
@@ -107,10 +106,16 @@ class Experiment:
 
     def __init__(
         self,
-        model_cls: Optional[Type[MainModel]] = None,
+        model_cls: Type[MainModel],
+        nature_cls: Optional[Type[BaseNature]] = None,
+        human_cls: Optional[Type[BaseHuman]] = None,
     ):
         self._n_runs = 0
-        self._model = model_cls
+        self._types: Dict[SubSystemType, Type] = {
+            "model": model_cls,
+            "nature": nature_cls or BaseNature,
+            "human": human_cls or BaseHuman,
+        }
         self._overrides: Dict[str, Any] = {}
         self._job_id: int = 0
 
@@ -138,7 +143,10 @@ class Experiment:
     @property
     def model(self) -> Optional[Type[MainModel]]:
         """Model class."""
-        return self._model
+        model = self._types["model"]
+        if not issubclass(model, MainModel):
+            raise TypeError(f"Type {type(model)} is invalid.")
+        return model
 
     @property
     def outpath(self) -> Path:
@@ -227,33 +235,43 @@ class Experiment:
                 logging: bool | str = self.name
             else:
                 return False
-        elif bool(log_mode) is True:
+        elif bool(log_mode):
             logging = f"{self.name}_{repeat_id}"
         else:
             logging = False
         return logging
 
+    def _update_log_config(self, config, repeat_id: Optional[int] = None):
+        """Update the log configuration."""
+        if isinstance(config, dict):
+            config = DictConfig(config)
+        log_name = self._get_logging_mode(repeat_id=repeat_id)
+        OmegaConf.set_struct(config, False)
+        logging_cfg = OmegaConf.create({"log": {"name": log_name}})
+        config = OmegaConf.merge(config, logging_cfg)
+        return config
+
     def run(
         self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
     ) -> Tuple[Dict[str, Any], pd.DataFrame]:
         """运行模型一次"""
-        if not self._model or not issubclass(self._model, MainModel):
-            raise TypeError(f"The model class {self._model} is not valid.")
+        self._update_log_config(cfg, repeat_id)
         # 获取日志
-        logging = self._get_logging_mode(repeat_id=repeat_id)
-        model = self._model(
+        model = self.model(
             parameters=cfg,
             run_id=repeat_id,
             outpath=outpath,
-            logging=logging,
             experiment=self,
+            nature_class=self._types["nature"],
+            human_class=self._types["human"],
         )
         model.run_model()
         if model.datacollector.model_reporters:
             df = model.datacollector.get_model_vars_dataframe()
         else:
             df = pd.DataFrame()
-        return model.final_report(), df
+        final_report = model.datacollector.get_final_vars_report(model)
+        return final_report, df
 
     def _update_result(
         self,
@@ -442,7 +460,7 @@ class Experiment:
             cls.name = "ABSESpyExp"
 
     @classmethod
-    def new(cls, model_cls: Optional[Type[MainModel]] = None) -> Experiment:
+    def new(cls, model_cls: Type[MainModel]) -> Experiment:
         """Create a new experiment for the singleton class `Experiment`.
         This method will delete all currently available exp results and settings.
         Then, it initialize a new instance of experiment.

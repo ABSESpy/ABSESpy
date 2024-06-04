@@ -19,3 +19,6 @@ model:
 
 time:
   end: 25
+
+log:
+  level: INFO

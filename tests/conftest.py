@@ -66,6 +66,7 @@ def testing_breeds() -> dict:
         "Farmer": Farmer,
         "Admin": Admin,
         "City": City,
+        "Actor": Actor,
     }
 
 

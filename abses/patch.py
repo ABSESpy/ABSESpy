@@ -785,6 +785,19 @@ class PatchModule(Module, RasterBase):
             data.append(array)
         return np.stack(data)
 
+    def reproject(
+        self,
+        xda: xr.DataArray,
+        resampling: Resampling | str = "nearest",
+        **kwargs,
+    ) -> xr.DataArray:
+        """Reproject the xarray data to the same CRS as this layer."""
+        if isinstance(resampling, str):
+            resampling = getattr(Resampling, resampling)
+        return xda.rio.reproject_match(
+            self.xda, resampling=resampling, **kwargs
+        )
+
     @overload
     def get_neighborhood(
         self,
