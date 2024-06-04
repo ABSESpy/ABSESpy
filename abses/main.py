@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Dict,
     Generic,
     List,
@@ -40,7 +39,7 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from mesa import DataCollector, Model
+from mesa import Model
 from mesa.time import BaseScheduler
 from omegaconf import DictConfig, OmegaConf
 
@@ -54,6 +53,7 @@ from abses._bases.logging import (
 from abses.actor import Actor
 
 from ._bases.bases import _Notice
+from ._bases.datacollector import ABSESpyDataCollector
 from ._bases.states import _States
 from .container import _AgentsContainer, _ModelAgentsContainer
 from .human import BaseHuman
@@ -68,7 +68,7 @@ if TYPE_CHECKING:
 # Dynamically load type hints from users' input type
 N = TypeVar("N", bound=BaseNature)
 H = TypeVar("H", bound=BaseHuman)
-Reporter: TypeAlias = Union[str, Callable[..., Any]]
+
 SubSystemType: TypeAlias = Literal["model", "nature", "human"]
 SubSystem = Union[
     SubSystemType,
@@ -133,7 +133,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         )
         self._time = TimeDriver(model=self)
         self.schedule: BaseScheduler = BaseScheduler(model=self)
-        self.initialize_data_collector()
+        self.datacollector: ABSESpyDataCollector = ABSESpyDataCollector(
+            parameters.get("reports", {})
+        )
         self._do_each("initialize", order=("nature", "human"))
         self._do_each("set_state", code=1)  # initial state
 
@@ -376,28 +378,28 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
-        result = self.final_report()
-        msg = (
-            "The model is ended.\n"
-            f"Total ticks: {self.time.tick}\n"
-            f"Final result: {json.dumps(result, indent=4)}\n"
-        )
-        log_session(title="Ending Run", msg=msg)
+        # result = self.final_report()
+        # msg = (
+        #     "The model is ended.\n"
+        #     f"Total ticks: {self.time.tick}\n"
+        #     f"Final result: {json.dumps(result, indent=4)}\n"
+        # )
+        # log_session(title="Ending Run", msg=msg)
         logger.bind(no_format=True).info(f"{datetime.now()}\n\n\n")
         logger.remove()
 
-    def final_report(self) -> Dict[str, Any]:
-        """Report at the end of this model."""
-        result = {}
-        for k, reporter in self._reports["final"].items():
-            if isinstance(reporter, str):
-                value = getattr(self, reporter)
-            elif isinstance(reporter, types.FunctionType):
-                value = reporter(self)
-            else:
-                raise TypeError(f"Invalid final reporter {type(reporter)}.")
-            result[k] = value
-        return result
+    # def final_report(self) -> Dict[str, Any]:
+    #     """Report at the end of this model."""
+    #     result = {}
+    #     for k, reporter in self._reports["final"].items():
+    #         if isinstance(reporter, str):
+    #             value = getattr(self, reporter)
+    #         elif isinstance(reporter, types.FunctionType):
+    #             value = reporter(self)
+    #         else:
+    #             raise TypeError(f"Invalid final reporter {type(reporter)}.")
+    #         result[k] = value
+    #     return result
 
     def summary(self, verbose: bool = False) -> pd.DataFrame:
         """Report the state of the model."""
@@ -414,63 +416,3 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
             to_report["model_vars"] = self.datacollector.model_reporters.keys()
             to_report["agent_vars"] = self.datacollector.agent_reporters.keys()
         return pd.Series(to_report)
-
-    def initialize_data_collector(
-        self,
-        model_reporters: Optional[Dict[str, Reporter]] = None,
-        agent_reporters: Optional[Dict[str, Reporter]] = None,
-        tables: Optional[Reporter] = None,
-    ) -> None:
-        """Initialize data collector for this ABSESpy Model.
-        This method overrides the default `DataCollector` of `mesa.Model`.
-        When initializing, users can set the model-level reporters, agent-level reporters,
-        and tables not only by parameters but also by config file.
-
-        Parameters:
-            model_reporters:
-                A dictionary of model-level reporters.
-            agent_reporters:
-                A dictionary of agent-level reporters.
-            tables:
-                A list of tables to collect data.
-
-        Example:
-        """
-        cfg: DictConfig = self.settings.get("reports", OmegaConf.create({}))
-        to_reports = cast(
-            Dict[str, Dict[str, Reporter]],
-            OmegaConf.to_container(cfg, resolve=True),
-        )
-        reporting_model: Dict[str, Reporter] = to_reports.get("model", {})
-        reporting_agents: Dict[str, Reporter] = to_reports.get("agents", {})
-        reporting_final: Dict[str, Reporter] = to_reports.get("final", {})
-        if model_reporters is not None:
-            reporting_model |= model_reporters
-        if agent_reporters is not None:
-            reporting_agents |= agent_reporters
-        _convert_to_python_expression(reporting_model)
-        _convert_to_python_expression(reporting_agents)
-        _convert_to_python_expression(reporting_final)
-        self.datacollector = DataCollector(
-            model_reporters=reporting_model,
-            agent_reporters=reporting_agents,
-            tables=tables,
-        )
-        self._reports = {
-            "model": reporting_model,
-            "agent": reporting_agents,
-            "final": reporting_final,
-        }
-
-
-def _convert_to_python_expression(
-    expression_dict: Dict[str, Reporter]
-) -> None:
-    """Convert a Python expression string to a Python expression."""
-    for key, value in expression_dict.items():
-        if not isinstance(value, str):
-            continue
-        if value.startswith(":"):
-            func = eval(value[1:])  # pylint: disable=eval-used
-            assert callable(func), f"{value} is not a callable function."
-            expression_dict[key] = func

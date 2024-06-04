@@ -8,9 +8,12 @@
 """测试数据收集器。
 """
 
+from typing import Dict, Type
+
 import pytest
 
-from abses import MainModel, actor
+from abses import MainModel
+from abses.actor import Actor
 
 
 class TestDataCollector:
@@ -24,50 +27,67 @@ class TestDataCollector:
         """
         return MainModel(parameters=test_config, seed=42)
 
-    def test_parse_reporters(self, model_cfg: MainModel):
+    @pytest.mark.parametrize(
+        "name, breed",
+        [
+            ("var1", "Actor"),
+            ("var2", "Farmer"),
+        ],
+    )
+    def test_parse_reporters(self, model_cfg: MainModel, name, breed):
         """Test model variables."""
         # arrange / act
         datacollector = model_cfg.datacollector
         # assert
-        assert "var1" in datacollector.model_vars
-        assert "var2" in datacollector.model_vars
-        assert "var1" in datacollector.agent_reporters
-        assert "var2" in datacollector.agent_reporters
+        assert name in datacollector.model_vars
+        assert name in datacollector.agent_reporters[breed]
 
     @pytest.mark.parametrize(
-        "test, expected_var1",
+        "attr, name, value",
         [
-            ("x", "xx"),
-            (1, 2),
-            (0.5, 1),
+            ("test", "var1", "x"),
+            ("var2", "var2", 1),
         ],
     )
-    def test_model_reporter(self, model_cfg: MainModel, test, expected_var1):
+    def test_model_reporter(self, model_cfg: MainModel, value, name, attr):
         """Test model reporter."""
         # arrange
-        model_cfg.test = test
+        setattr(model_cfg, attr, value)
         datacollector = model_cfg.datacollector
         # act
         model_cfg.run_model()
         model_vars = datacollector.get_model_vars_dataframe()
         # assert
-        assert "var1" in model_vars.columns
-        assert "var2" in model_vars.columns
+        assert name in model_vars.columns
         assert model_vars.shape == (model_cfg.time.tick, 2)
-        assert model_vars["var1"].mode().item() == expected_var1
-        assert model_vars["var2"].mode().item() == test
+        assert model_vars[name].mode().item() == value
 
-    def test_agent_records(self, model_cfg: MainModel, farmer_cls: actor):
+    @pytest.mark.parametrize(
+        "breed, attr, name, ticks",
+        [
+            ("Actor", "test", "var1", 2),
+            ("Farmer", "test", "var2", 3),
+        ],
+    )
+    def test_agent_records(
+        self,
+        model_cfg: MainModel,
+        breeds: Dict[str, Type[Actor]],
+        breed,
+        attr,
+        name,
+        ticks,
+    ):
         """test agent data collector"""
         # arrange
-        datacollector = model_cfg.datacollector
-        farmer = model_cfg.agents.new(farmer_cls, singleton=True)
-        model_cfg.test = 1  # not important
+        actor = model_cfg.agents.new(breeds[breed], singleton=True)
+        setattr(actor, attr, 1)
         # act
-        model_cfg.run_model()
-        agent_vars = datacollector.get_agent_vars_dataframe()
+        model_cfg.run_model(steps=ticks)
+        agent_vars = model_cfg.datacollector.get_agent_vars_dataframe(breed)
 
-        assert "var1" in agent_vars.columns
-        assert "var2" in agent_vars.columns
-        result = agent_vars.loc[(1, farmer.unique_id), "var2"]
-        assert result == "I am a Farmer"
+        # assert
+        assert name in agent_vars.columns
+        result = agent_vars[name]
+        assert len(result) == ticks
+        assert result.mode().item() == 1
