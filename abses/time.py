@@ -179,6 +179,19 @@ class TimeDriver(_Component):
         return r"%Y-%m-%d"
 
     @property
+    def expected_ticks(self) -> Optional[int]:
+        """Returns the expected ticks."""
+        if not self.end_dt:
+            return None
+        if isinstance(self.end_dt, datetime):
+            if self.duration is None:
+                raise RuntimeError("No duration settings.")
+            duration = self.dt.diff(self.end_dt)
+            steps = duration.total_seconds() / self.duration.total_seconds()
+            return int(steps)
+        return self.end_dt
+
+    @property
     def should_end(self) -> bool:
         """Should the model end or not."""
         if not self.end_dt:
