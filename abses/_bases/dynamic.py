@@ -38,6 +38,12 @@ class _DynamicVariable:
         self.attrs = kwargs
         self.now()
 
+    def __str__(self) -> str:
+        return f"<{self.name}: {type(self.now())}>"
+
+    def __repr__(self) -> str:
+        return str(self)
+
     @property
     def name(self) -> str:
         """Get the name of the variable
