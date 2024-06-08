@@ -121,7 +121,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._run_id: Optional[int] = run_id
         self.outpath = cast(Path, outpath)
         self._settings = DictConfig(parameters)
-        self._setup_logger(**parameters.get("log", {}))
+        self._setup_logger(parameters.get("log", {}))
         self.running: bool = True
         self._breeds: Dict[str, Type[Actor]] = {}
         self._containers: List[_AgentsContainer] = []
@@ -196,12 +196,13 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
                 raise ValueError(f"{name} is not a valid component.")
             getattr(_obj[name], _func)(**kwargs)
 
-    def _setup_logger(self, name: Optional[str] = None, **kwargs) -> None:
-        if not name:
+    def _setup_logger(self, log_cfg: Dict[str, Any]) -> None:
+        if not log_cfg:
             return
-        rotation = kwargs.get("rotation", "1 day")
-        retention = kwargs.get("retention", "10 days")
-        level = kwargs.get("level", "INFO")
+        name = log_cfg.get("name", "logging")
+        rotation = log_cfg.get("rotation", "1 day")
+        retention = log_cfg.get("retention", "10 days")
+        level = log_cfg.get("level", "INFO")
         name = str(name).replace(".log", "")
         logger.add(
             self.outpath / f"{name}.log",

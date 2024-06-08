@@ -113,6 +113,7 @@ def test_time_end_automatically():
     }
     model = MainModel(parameters=parameters)
     time = model.time
+    assert time.expected_ticks == 20
     model.run_model()
     assert time.tick == 20
     assert time.year == 2020

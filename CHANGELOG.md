@@ -1,4 +1,15 @@
 
+<a id='changelog-0.6.9'></a>
+# 0.6.9 — 2024-06-08
+
+## Refactoring
+
+- [x] #refactor♻️ Improved code structure.
+
+## New Features
+
+- [x] #feat✨ `TimeDrive` included a new `expected_ticks` property
+
 <a id='changelog-0.6.8'></a>
 # 0.6.8 — 2024-06-04
 

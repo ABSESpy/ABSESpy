@@ -68,23 +68,6 @@ def test_time_condition_happy_path(mock_object):
     assert not mock_object.my_method()
 
 
-# Error cases
-def test_time_condition_error_cases():
-    class MockObj:
-        def __init__(self) -> None:
-            self.time = None
-
-        def my_method():
-            return "should not be called"
-
-    # Arrange
-    mock_object = MockObj()
-
-    # Act and Assert
-    with pytest.raises(TypeError):
-        mock_object.my_method()
-
-
 @pytest.mark.parametrize(
     "include, exclude, expected",
     [
