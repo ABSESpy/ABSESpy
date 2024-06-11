@@ -359,7 +359,7 @@ class _LinkContainer:
     ) -> None:
         """Add links from graph."""
         if mutual is None:
-            mutual = False if isinstance(graph, nx.DiGraph) else True
+            mutual = not isinstance(graph, nx.DiGraph)
         if mapping_dict is None:
             mapping_dict = {}
         edges = 0

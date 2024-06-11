@@ -328,7 +328,8 @@ class Experiment:
                     )
 
     def _batch_run_repeats(self, cfg, repeats, display_progress) -> None:
-        for repeat in tqdm(range(repeats), disable=not display_progress):
+        disable = repeats == 1 or not display_progress
+        for repeat in tqdm(range(repeats), disable=disable):
             result, model_df = self.run(
                 cfg, repeat_id=repeat + 1, outpath=self.outpath
             )
