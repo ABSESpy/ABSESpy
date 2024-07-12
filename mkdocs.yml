@@ -101,11 +101,10 @@ plugins:
               merge_init_into_class: true
               extensions:
                 - docs/plugins/griffe_doclinks.py
-    # - exclude:
-    #     glob:
-    #       - theme/announce.html
-    #       - plugins/*
-    #       - __pycache__/*
+    - exclude:
+        glob:
+          - plugins/*
+          - __pycache__/*
     - bibtex:
         bib_file: "docs/refs.bib"
     - mkdocs-simple-hooks:
@@ -114,8 +113,8 @@ plugins:
     - macros
     - mkdocs-jupyter:
         include_source: True
-      # execute: true
-      # - allow_errors: false
+        execute: true
+        allow_errors: false
     - callouts
     - glightbox
     # https://squidfunk.github.io/mkdocs-material/setup/setting-up-tags/

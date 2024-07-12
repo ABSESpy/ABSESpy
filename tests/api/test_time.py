@@ -121,3 +121,26 @@ def test_time_end_automatically():
     model = MainModel({"time": {"end": 20}})
     model.run_model()
     assert time.tick == 20
+
+
+def test_time_to():
+    """测试可以手动指定当前时间"""
+    parameters = {
+        "time": {
+            "years": 1,
+            "start": "2000",
+            "end": "2020",
+        }
+    }
+    model = MainModel(parameters=parameters)
+    time = model.time
+    assert time.expected_ticks == 20
+    time.to("2019")
+    assert time.expected_ticks == 1
+    model.run_model()
+    assert time.tick == 1
+    assert time.year == 2020
+
+    model = MainModel({"time": {"end": 20}})
+    model.run_model()
+    assert time.tick == 1

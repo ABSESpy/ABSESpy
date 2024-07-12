@@ -34,11 +34,6 @@ from abses._bases.logging import log_session
 if TYPE_CHECKING:
     from .main import MainModel
 
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
-
 VALID_DT_ATTRS = (
     "years",
     "months",
@@ -48,6 +43,15 @@ VALID_DT_ATTRS = (
     "minutes",
     "seconds",
 )
+
+
+def parse_datetime(dt) -> DateTime:
+    """Parse a string into date time."""
+    if isinstance(dt, datetime):
+        return pendulum.instance(dt, tz=None)
+    if isinstance(dt, str):
+        return cast(DateTime, pendulum.parse(dt, tz=None))
+    raise TypeError("Start time must be a datetime object or a string.")
 
 
 def time_condition(condition: dict, when_run: bool = True) -> Callable:
@@ -132,7 +136,7 @@ class TimeDriver(_Component):
     See tutorial to see more.
     """
 
-    _instances: Dict[MainModel[Any, Any], Self] = {}
+    _instances: Dict[MainModel[Any, Any], TimeDriver] = {}
     _lock = threading.Lock()
 
     def __new__(cls, model: MainModel):
@@ -216,6 +220,10 @@ class TimeDriver(_Component):
     def history(self) -> List[datetime]:
         """Returns the history of the time driver."""
         return list(self._history)
+
+    def to(self, time: str | datetime | DateTime) -> None:
+        """Specific the current time."""
+        self.dt = parse_datetime(time)
 
     def go(self, ticks: int = 1, **kwargs) -> None:
         """Increments the tick.
@@ -330,16 +338,10 @@ class TimeDriver(_Component):
     @start_dt.setter
     def start_dt(self, dt: Optional[Union[datetime, DateTime, str]]) -> None:
         """Set the starting time."""
-        if isinstance(dt, datetime):
-            self._start_dt = pendulum.instance(dt, tz=None)
-        elif dt is None:
+        if dt is None:
             self._start_dt = pendulum.instance(datetime.now(), tz=None)
-        elif isinstance(dt, str):
-            self._start_dt = cast(DateTime, pendulum.parse(dt, tz=None))
         else:
-            raise TypeError(
-                "Start time must be a datetime object or a string."
-            )
+            self._start_dt = parse_datetime(dt)
 
     @property
     def end_dt(self) -> Optional[Union[datetime, int]]:
