@@ -1,4 +1,19 @@
 
+<a id='changelog-0.6.10'></a>
+# 0.6.10 — 2024-07-12
+
+## Documentation changes
+
+- [x] #docs📄 Update geodata document with excluded mkdocs config
+
+## New Features
+
+- [x] #feat✨ Specific current datetime for TimeDriver
+
+## Refactoring
+
+- [x] #refactor♻️ when single run in exp, no progress bar anymore
+
 <a id='changelog-0.6.9'></a>
 # 0.6.9 — 2024-06-08
 
