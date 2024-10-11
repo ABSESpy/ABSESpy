@@ -67,9 +67,9 @@ class _VizNodeList:
         return styles
 
     @with_axes
-    def show(self, ax: Optional[Axes] = None) -> Axes:
+    def show(self, ax: Optional[Axes] = None, **kwargs) -> Axes:
         """Show all the actors with geometry attributes."""
-        self.display(ax=ax)
+        self.display(ax=ax, **kwargs)
         self.positions(ax=ax)
         return ax
 
