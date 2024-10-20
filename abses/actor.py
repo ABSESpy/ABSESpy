@@ -300,9 +300,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         return super().get(attr=attr, target=target)
 
     @alive_required
-    def set(
-        self, attr: str, value: Any, target: Optional[TargetName] = None
-    ) -> None:
+    def set(self, *args, **kwargs) -> None:
         """Sets the value of an attribute.
 
         Parameters:
@@ -321,7 +319,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
             ABSESpyError:
                 If the attribute is protected.
         """
-        super().set(attr=attr, value=value, target=target)
+        super().set(*args, **kwargs)
 
     @alive_required
     def die(self) -> None:

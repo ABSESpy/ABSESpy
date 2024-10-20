@@ -340,7 +340,11 @@ class ActorsList(List[Link], Generic[Link]):
         raise ValueError("No agent found or default value.")
 
     def set(
-        self, attr: str, value: Any, target: Optional[TargetName] = None
+        self,
+        attr: str,
+        value: Any,
+        target: Optional[TargetName] = None,
+        new: bool = False,
     ) -> None:
         """Set the attribute of all agents in the sequence to the specified value.
 
@@ -351,7 +355,7 @@ class ActorsList(List[Link], Generic[Link]):
                 The value to set the attribute to.
         """
         for agent in iter(self):
-            agent.set(attr, value, target=target)
+            agent.set(attr, value, target=target, new=new)
 
     def item(self, how: HOW = "item", index: int = 0) -> Optional[Link]:
         """Retrieve one agent if possible.

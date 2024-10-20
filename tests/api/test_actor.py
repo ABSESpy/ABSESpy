@@ -104,23 +104,6 @@ class TestActor:
         assert len(model.agents) == 0
         assert not actor1.age()
 
-    @pytest.mark.parametrize(
-        "attr, target, value",
-        [
-            ("test1", "cell", 1),
-            ("test1", None, 1),
-        ],
-    )
-    def test_set_cell(self, cell_0_0: PatchCell, attr, value, target):
-        """Test setting values."""
-        # arrange
-        cell_0_0.test1 = 0
-        actor = cell_0_0.agents.new(Actor, singleton=True)
-        # act
-        actor.set(attr=attr, value=value, target=target)
-        # assert
-        assert getattr(cell_0_0, attr) == value
-
 
 class TestCustomizedActor:
     """Test the customized Actor class."""
@@ -149,104 +132,131 @@ class TestCustomizedActor:
 
 
 class TestGettingValues:
-    """Test getting values."""
+    """测试获取值。"""
 
     @pytest.mark.parametrize(
-        "attr, target, expected",
+        "target, expected",
         [
-            ("test2", None, 3),
-            ("test2", "actor", 3),
-            ("test2", "cell", 2),
+            ("actor", 3),  # 直接指定 target
+            (None, 3),  # 未指定 target,属性存在
+            ("cell", 2),  # 直接指定 target
         ],
     )
-    def test_get_happy_path(self, cell_0_0: PatchCell, attr, target, expected):
-        """Test getting values."""
-        # arrange
+    def test_get_happy_path(self, cell_0_0: PatchCell, target, expected):
+        """测试正常获取值的情况。"""
+        # 准备
         actor = cell_0_0.agents.new(Actor, singleton=True)
-        cell_0_0.test2 = 2
-        actor.test2 = 3
-        # act
-        value = actor.get(attr=attr, target=target)
-        # assert
+        cell_0_0.test = 2
+        actor.test = 3
+        # 执行
+        value = actor.get("test", target=target)
+        # 断言
         assert value == expected
 
     @pytest.mark.parametrize(
-        "attr, target, error, msg",
+        "target, error, msg",
         [
-            ("test2", None, AttributeError, "no attribute 'test2'"),
-            ("test2", "cell", AttributeError, "no attribute 'test2'"),
-            ("test2", "actor", AttributeError, "no attribute 'test2'"),
+            ("actor", AttributeError, "nonexistent"),  # target_is_me
             (
-                "test",
-                "not_a_target",
-                AssertionError,
-                "already has attr 'test'",
-            ),
-            ("test2", "not_a_target", ABSESpyError, "Unknown target"),
-            ("test2", "linking", AttributeError, "no attribute 'test2'"),
+                "cell",
+                AttributeError,
+                "no attribute 'nonexistent'",
+            ),  # 明确指定 target
+            ("not_a_target", ABSESpyError, "Unknown target"),  # 未知 target
+            (
+                None,
+                AttributeError,
+                "Neither.*nor.*has attribute",
+            ),  # 未指定 target,属性不存在
         ],
     )
-    def test_get_wrong(self, cell_0_0: PatchCell, attr, target, error, msg):
-        """Testing getting values in batch.
-        When the target is None, the agent itself is the target.
-        """
-        # arrange
-        actor1 = cell_0_0.agents.new(Actor, singleton=True)
-        actor1.link.to(cell_0_0, "linking")
-        actor1.test = 1
+    def test_get_wrong(self, cell_0_0: PatchCell, target, error, msg):
+        """测试获取值时的错误情况。"""
+        # 准备
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        actor.test = 1
         cell_0_0.test = 2
-        # act / assert
+        # 执行和断言
         with pytest.raises(error, match=msg):
-            actor1.get(attr, target=target)
+            actor.get("nonexistent", target=target)
 
 
 class TestSettingValues:
-    """Test setting values."""
+    """测试设置值。"""
 
     @pytest.mark.parametrize(
-        "attr, target, value",
+        "target, value, new",
         [
-            ("test", "actor", 1),
-            ("test", None, "testing text"),
-            ("test", "actor", ["test", "test1", "test2"]),
+            ("actor", 1, False),
+            (None, "testing text", False),
+            ("actor", ["test", "test1", "test2"], False),
+            ("actor", 100, True),
         ],
     )
-    def test_set_happy_path(self, cell_0_0: PatchCell, attr, value, target):
-        """Test setting values."""
-        # arrange
+    def test_set_happy_path(self, cell_0_0: PatchCell, value, target, new):
+        """测试正常设置值的情况。"""
+        # 准备
         actor = cell_0_0.agents.new(Actor, singleton=True)
-        actor.test = 0
-        # act
-        actor.set(attr=attr, value=value, target=target)
-        # assert
-        assert getattr(actor, attr) == value
+        if not new:
+            actor.test = 0
+        # 执行
+        actor.set(attr="test", value=value, target=target, new=new)
+        # 断言
+        assert actor.get(attr="test", target=target) == value
 
     @pytest.mark.parametrize(
-        "attr, target, error, msg",
+        "attr, target, value, new, error, msg",
         [
-            ("test2", None, AttributeError, "no attribute 'test2'"),
-            ("test2", "cell", AttributeError, "no attribute 'test2'"),
-            ("test2", "actor", AttributeError, "no attribute 'test2'"),
             (
-                "test",
-                "not_a_target",
-                AssertionError,
-                "already has attr 'test'",
+                "test2",
+                None,
+                1,
+                False,
+                AttributeError,
+                "Neither.*nor.*has attribute 'test2'",
             ),
-            ("test2", "not_a_target", ABSESpyError, "Unknown target"),
-            ("test2", "linking", AttributeError, "no attribute 'test2'"),
-            ("_test", "linking", ABSESpyError, "is protected"),
+            ("test2", "cell", 1, False, AttributeError, "not found"),
+            ("test2", "actor", 1, False, AttributeError, "not found"),
+            ("test", "not_a_target", 1, False, ABSESpyError, "Unknown target"),
+            ("_test", "actor", 1, True, AttributeError, "protected"),
         ],
     )
-    def test_set_wrong(self, cell_0_0: PatchCell, attr, target, error, msg):
-        """Testing getting values in batch.
-        When the target is None, the agent itself is the target.
-        """
-        # arrange
-        actor1 = cell_0_0.agents.new(Actor, singleton=True)
-        actor1.link.to(cell_0_0, "linking")
-        actor1.test = 1
+    def test_set_wrong(
+        self, cell_0_0: PatchCell, attr, target, value, new, error, msg
+    ):
+        """测试设置值时的错误情况。"""
+        # 准备
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        actor.test = 1
         cell_0_0.test = 2
-        # act / assert
+        # 执行和断言
         with pytest.raises(error, match=msg):
-            actor1.set(attr, 3, target=target)
+            actor.set(attr=attr, value=value, target=target, new=new)
+
+    def test_set_new_attribute(self, cell_0_0: PatchCell):
+        """测试设置新属性。"""
+        # 准备
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        # 执行
+        actor.set(attr="new_attr", value=100, new=True)
+        # 断言
+        assert actor.get("new_attr") == 100
+
+    def test_set_existing_attribute_without_new(self, cell_0_0: PatchCell):
+        """测试在不使用new参数的情况下设置已存在的属性。"""
+        # 准备
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        actor.existing_attr = 50
+        # 执行
+        actor.set(attr="existing_attr", value=100)
+        # 断言
+        assert actor.get("existing_attr") == 100
+
+    def test_set_on_cell(self, cell_0_0: PatchCell):
+        """测试在cell上设置属性。"""
+        # 准备
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        # 执行
+        actor.set(attr="cell_attr", value=200, target="cell", new=True)
+        # 断言
+        assert cell_0_0.get("cell_attr") == 200

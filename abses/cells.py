@@ -150,25 +150,29 @@ class PatchCell(_LinkNodeCell, _BaseObj):
             layer.model, cell=self, max_len=getattr(self, "max_agents", None)
         )
 
-    def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
+    def get(
+        self,
+        attr: str,
+        target: Optional[TargetName] = None,
+        default: Any = None,
+    ) -> Any:
         """Gets the value of an attribute or registered property.
         Automatically update the value if it is the dynamic variable of the layer.
 
         Parameters:
-            attr:
-                The name of attribute to get.
+            attr: The name of attribute to get.
+            target: Optional target name.
+            default: Default value if attribute is not found.
 
         Returns:
-            Any:
-                The value of the attribute.
+            Any: The value of the attribute.
 
         Raises:
-            AttributeError:
-                Attribute value of the associated patch cell.
+            AttributeError: Attribute value of the associated patch cell.
         """
         if attr in self.layer.dynamic_variables:
             self.layer.dynamic_var(attr_name=attr)
-        return super().get(attr=attr, target=target)
+        return super().get(attr=attr, target=target, default=default)
 
     def neighboring(
         self,

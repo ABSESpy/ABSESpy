@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 
 LinkingNode: TypeAlias = "Actor | PatchCell"
 Direction: TypeAlias = Optional[Literal["in", "out"]]
-DEFAULT_TARGETS: Tuple[str, str] = ("cell", "actor")
+__built_in_targets__: Tuple[str, str] = ("cell", "actor")
 TargetName: TypeAlias = Union[Literal["cell", "actor", "self"], str]
 AttrGetter: TypeAlias = Union["Link", ActorsList["Link"]]
 
@@ -298,7 +298,7 @@ class _LinkContainer:
         node: LinkingNode,
         link_name: Optional[str] = None,
         direction: Direction = None,
-        default: bool = False,
+        default: Any = ...,
     ) -> Set[LinkingNode]:
         """Get the linked nodes.
 
@@ -331,7 +331,7 @@ class _LinkContainer:
             raise ValueError(f"Invalid direction {direction}")
         agents: Set[LinkingNode] = set()
         for name in link_names:
-            if name not in data and default:
+            if name not in data and default is not ...:
                 continue
             agents = agents.union(data[name].get(node, set()))
         return agents
@@ -410,7 +410,7 @@ class _LinkProxy:
         self,
         link_name: Optional[str] = None,
         direction: Direction = "out",
-        default: bool = False,
+        default: Any = ...,
     ) -> ActorsList[LinkingNode]:
         """Get the linked nodes."""
         agents = self.human.linked(
@@ -531,8 +531,8 @@ class _LinkNode:
     breed = _BreedDescriptor()
 
     @abstractmethod
-    def _default_redirection(self, target: Optional[TargetName]) -> AttrGetter:
-        """默认重定向"""
+    def _target_is_me(self, target: Optional[TargetName]) -> bool:
+        """Check if the target is me."""
 
     @classmethod
     def viz_attrs(
@@ -559,49 +559,113 @@ class _LinkNode:
         """
         return _LinkProxy(cast(LinkingNode, self), getattr(self, "model"))
 
-    def _redirect_getting(self, target: Optional[TargetName]) -> AttrGetter:
-        """Which targets should be used when getting or setting."""
-        # If the target is not None, get the default target.
-        if target is None or target in DEFAULT_TARGETS:
-            return self._default_redirection(target)
-        if target in self.link:
-            return self.link.get(link_name=target)
+    def has(self, attr: str, raise_error: bool = False) -> bool:
+        """Check if the attribute exists in the current node.
+
+        Args:
+            attr:
+                The name of the attribute to check.
+            raise_error:
+                If True, raise an error if the attribute does not exist.
+
+        Returns:
+            bool:
+                True if the attribute exists, False otherwise.
+        """
+        # If the attribute is not a string, raise an error.
+        if not isinstance(attr, str):
+            raise TypeError(f"The attribute to check {attr} is not string.")
+        if attr.startswith("_"):
+            # protected attribute
+            flag = False
+        else:
+            flag = hasattr(self, attr)
+        if flag:
+            return True
+        if raise_error:
+            raise AttributeError(f"'{self}' doesn't have attribute '{attr}'.")
+        return False
+
+    def _redirect(self, target: TargetName) -> _LinkNode:
+        """Redirect the target.
+
+        Args:
+            target:
+                The target to redirect to.
+
+        Returns:
+            The redirected target.
+        """
+        if self._target_is_me(target):
+            return self
+        if any(self.link.has(link_name=target)):
+            return cast(LinkingNode, self.link.get(link_name=target))
         raise ABSESpyError(f"Unknown target {target}.")
+
+    def _setattr(
+        self,
+        attr: str,
+        value: Any,
+        target: Optional[TargetName],
+        new: bool = False,
+    ) -> None:
+        """Set the attribute on the current node."""
+        if attr.startswith("_"):
+            raise AttributeError(f"Attribute '{attr}' is protected.")
+        if new:
+            setattr(self, attr, value)
+            return
+        if not self.has(attr):
+            raise AttributeError(
+                f"Attribute '{attr}' not found in {self}, please set 'new=True' to create a new attribute."
+            )
+        if self._target_is_me(target):
+            setattr(self, attr, value)
+            return
+        raise ABSESpyError(
+            f"The target '{target}' is not 'self' set when '{self}' already has attr '{attr}'."
+        )
 
     def get(
         self,
         attr: str,
         target: Optional[TargetName] = None,
+        default: Any = ...,
     ) -> Any:
-        """Gets attribute value from target.
-
-        Parameters:
-            attr:
-                The name of the attribute to get.
-            target:
-                The target to get the attribute from.
-                If None, the agent itself is the target.
-                If the target is an agent, get the attribute from the agent.
-                If the target is a cell, get the attribute from the cell.
-
-        Returns:
-            The value of the attribute.
-        """
-        if target in DEFAULT_TARGETS:
-            return self._default_redirection(target).get(attr, "self")
-        if target == "self":
+        """Gets attribute value from target."""
+        if self._target_is_me(target):
+            if default is ...:
+                return getattr(self, attr)
+            return getattr(self, attr, default)
+        if target is not None:
+            target_obj = self._redirect(target=target)
+            return target_obj.get(attr, target="self", default=default)
+        if self.has(attr, raise_error=False):
             return getattr(self, attr)
-        if hasattr(self, attr):
-            assert (
-                target is None
-            ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
-            return getattr(self, attr)
-        return self._redirect_getting(target=target).get(attr, "self")
+        if default is not ...:
+            return default
+        target_obj = self._redirect(target="self")
+        try:
+            return target_obj.get(attr=attr, target="self")
+        except AttributeError as exc:
+            raise AttributeError(
+                f"Neither {self} nor {target_obj} has attribute {attr}."
+            ) from exc
 
     def set(
-        self, attr: str, value: Any, target: Optional[TargetName] = None
+        self,
+        attr: str,
+        value: Any,
+        target: Optional[TargetName] = None,
+        new: bool = False,
     ) -> None:
         """Sets the value of an attribute.
+
+        If set `new` to True, the attribute will be directly set on the current node.
+        Otherwise, the attribute will be set on the target in the following order:
+        1. If there is a specified target, set the attribute on the target.
+        2. Otherwise, if the attribute exists on the current node, set the attribute on the current node.
+        3. Otherwise, set the attribute on the default redirected target.
 
         Parameters:
             attr:
@@ -619,29 +683,27 @@ class _LinkNode:
             ABSESpyError:
                 If the attribute is protected.
         """
-        # If the attribute is not a string, raise an error.
-        if not isinstance(attr, str):
-            raise TypeError("The attribute must be a string.")
-        # If the attribute is protected, raise an error
-        if attr.startswith("_"):
-            raise ABSESpyError(f"Attribute '{attr}' is protected.")
-        if target in DEFAULT_TARGETS:
-            self._default_redirection(target).set(attr, value, "self")
+        if self._target_is_me(target):
+            self._setattr(attr, value, target="self", new=new)
             return
-        if target == "self":
-            if not hasattr(self, attr):
-                raise AttributeError(f"{self} has no attribute '{attr}'.")
-            setattr(self, attr, value)
+        if target is None and new:
+            self._setattr(attr, value, target="self", new=new)
             return
-        # Set the attribute on the target.
-        if hasattr(self, attr):
-            assert (
-                target is None
-            ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
-            setattr(self, attr, value)
-        else:
-            new_target = self._redirect_getting(target=target)
-            new_target.set(attr, value, "self")
+        if target is not None:
+            self._redirect(target=target).set(
+                attr, value, target="self", new=new
+            )
+            return
+        if self.has(attr):
+            self._setattr(attr, value, target="self")
+            return
+        target_obj = self._redirect(target="self")
+        if hasattr(target_obj, attr):
+            target_obj.set(attr, value, target="self", new=new)
+            return
+        raise AttributeError(
+            f"Neither {self} nor {target_obj} has attribute '{attr}'."
+        )
 
     def summary(
         self,
@@ -665,18 +727,38 @@ class _LinkNode:
 
 
 class _LinkNodeCell(_LinkNode):
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> _CellAgentsContainer | _LinkNodeCell:
-        if target == "cell":
-            return self
-        return cast(_CellAgentsContainer, getattr(self, "agents"))
+    """PatchCell"""
+
+    _default_redirect_target = "actor"
+
+    def _target_is_me(self, target: Optional[TargetName]) -> bool:
+        """Check if the target is me."""
+        return target in ("self", "cell")
+
+    def _redirect(self, target: Optional[TargetName]) -> _LinkNode:
+        """By default, redirect to the agents list of this cell."""
+        if target == self._default_redirect_target or target is None:
+            return self.get("agents", target="self")
+        return super()._redirect(target)
 
 
 class _LinkNodeActor(_LinkNode):
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> _LinkNodeActor | Optional[_LinkNodeCell]:
-        if target == "actor":
-            return self
-        return cast(Optional[_LinkNodeCell], getattr(self, "at"))
+    _default_redirect_target = "cell"
+
+    def _target_is_me(self, target: Optional[TargetName]) -> bool:
+        """Check if the target is me."""
+        return target in ("self", "actor")
+
+    def _redirect(self, target: Optional[TargetName]) -> _LinkNode:
+        """Redirect the target.
+
+        Args:
+            target:
+                The target to redirect to.
+
+        Returns:
+            The redirected target.
+        """
+        if target == self._default_redirect_target or target is None:
+            return self.get("at", target="self")
+        return super()._redirect(target)
