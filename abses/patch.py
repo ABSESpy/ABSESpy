@@ -44,7 +44,6 @@ from geocube.api.core import make_geocube
 from loguru import logger
 from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterBase
-from rasterio import mask
 from rasterio.enums import Resampling
 from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
@@ -326,14 +325,13 @@ class PatchModule(Module, RasterBase):
         RasterBase.__init__(self, **kwargs)
         self.cell_cls = cell_cls
         logger.info("Initializing a new Model Layer...")
-        logger.info(f"Using rioxarray version: {rioxarray.__version__}")
 
         func = np.vectorize(lambda row, col: cell_cls(self, (row, col)))
         self._cells: np.ndarray = np.fromfunction(
             func, shape=(self.height, self.width), dtype=object
         )
         self._attributes: Set[str] = set()
-        self.mask: np.ndarray = np.ones(self.shape2d)
+        self._mask: np.ndarray = np.ones(self.shape2d).astype(bool)
 
     @functools.cached_property
     def cells(self) -> ActorsList[PatchCell]:
@@ -382,7 +380,7 @@ class PatchModule(Module, RasterBase):
         """
         return self.cell_cls.__attribute_properties__()
 
-    @functools.cached_property
+    @property
     def xda(self) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates."""
         xda = xr.DataArray(data=self.mask, coords=self.coords)
@@ -426,12 +424,16 @@ class PatchModule(Module, RasterBase):
 
         This is useful when working with `xarray.DataArray`.
         """
-        nrows, ncols = self.shape2d
-        coords_x = np.arange(ncols) * self.transform[0] + self.transform[2]
-        coords_y = np.arange(nrows) * self.transform[4] + self.transform[5]
+        transform = self.transform
+        # 注意 y 方向的分辨率通常是负值
+        res_x, res_y = transform.a, -transform.e
+        minx, miny, maxx, maxy = self.total_bounds
+        x_coord = np.arange(minx, maxx, res_x)
+        # 注意 y 坐标是从上到下递减的
+        y_coord = np.flip(np.arange(miny, maxy, res_y))
         return {
-            "y": coords_y,
-            "x": coords_x,
+            "y": y_coord,
+            "x": x_coord,
         }
 
     def transform_coord(self, row: int, col: int) -> Coordinate:
@@ -484,7 +486,7 @@ class PatchModule(Module, RasterBase):
     def dynamic_var(
         self,
         attr_name: str,
-        dtype: Literal["numpy", "xarray", "rasterio"] = "numpy",
+        dtype: Literal["numpy", "xarray"] = "numpy",
     ) -> np.ndarray:
         """Update and get dynamic variable.
 
@@ -505,44 +507,7 @@ class PatchModule(Module, RasterBase):
             return self.get_raster(attr_name, update=False)
         if dtype == "xarray":
             return self.get_xarray(attr_name, update=False)
-        if dtype == "rasterio":
-            return self.get_rasterio(attr_name, update=False)
         raise ValueError(f"Unknown expected dtype {dtype}.")
-
-    def get_rasterio(
-        self,
-        attr_name: Optional[str] = None,
-        update: bool = True,
-    ) -> rasterio.MemoryFile:
-        """Gets the Rasterio raster layer corresponding to the attribute. Save to a temporary rasterio memory file.
-
-        Parameters:
-            attr_name:
-                The attribute name for creating the rasterio file.
-
-        Returns:
-            The rasterio tmp memory file of raster.
-        """
-        if attr_name is None:
-            data = np.ones(self.shape2d)
-        else:
-            data = self.get_raster(attr_name=attr_name, update=update)
-        # 如果获取到的是2维，重整为3维
-        if len(data.shape) != 3:
-            data = data.reshape(self.shape3d)
-        with rasterio.MemoryFile() as mem_file:
-            with mem_file.open(
-                driver="GTiff",
-                height=data.shape[1],
-                width=data.shape[2],
-                count=data.shape[0],  # number of bands
-                dtype=str(data.dtype),
-                crs=self.crs,
-                transform=self.transform,
-            ) as dataset:
-                dataset.write(data)
-            # Open the dataset again for reading and return
-            return mem_file.open()
 
     def get_xarray(
         self,
@@ -583,7 +548,6 @@ class PatchModule(Module, RasterBase):
     def _select_by_geometry(
         self,
         geometry: Geometry,
-        refer_layer: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> np.ndarray:
         """Gets all the cells that intersect the given geometry.
@@ -591,8 +555,6 @@ class PatchModule(Module, RasterBase):
         Parameters:
             geometry:
                 Shapely Geometry to search intersected cells.
-            refer_layer:
-                The attribute name to refer when filtering cells.
             **kwargs:
                 Args pass to the function `rasterasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterasterio.readthedocs.io/en/latest/api/rasterasterio.mask.html) for details.
 
@@ -601,15 +563,12 @@ class PatchModule(Module, RasterBase):
                 If no available attribute exists, or the assigned refer layer is not available in the attributes.
 
         Returns:
-            A list of PatchCell.
+            A numpy array of clipped cells.
         """
-        if refer_layer is not None and refer_layer not in self.attributes:
-            raise ABSESpyError(
-                f"The refer layer {refer_layer} is not available in the attributes"
-            )
-        data = self.get_rasterio(attr_name=refer_layer)
-        out_image, _ = mask.mask(data, [geometry], **kwargs)
-        return out_image.reshape(self.shape2d)
+        # Return the clipped data, ensuring correct shape
+        return self.xda.astype(int).rio.clip(
+            [geometry], all_touched=False, drop=False, **kwargs
+        )
 
     def select(
         self,
@@ -643,7 +602,7 @@ class PatchModule(Module, RasterBase):
             raise TypeError(
                 f"{type(where)} is not supported for selecting cells."
             )
-        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool) & self.mask
+        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool)
         return ActorsList(self.model, self.array_cells[mask_])
 
     sel = select

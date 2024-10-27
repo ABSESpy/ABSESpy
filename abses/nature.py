@@ -108,19 +108,6 @@ class _PatchModuleProtocol(Protocol):
             2D numpy.ndarray data of the variable.
         """
 
-    def get_rasterio(
-        self, attr_name: str | None = None
-    ) -> rasterio.MemoryFile:
-        """Gets the Rasterio raster layer corresponding to the attribute. Save to a temporary rasterio memory file.
-
-        Parameters:
-            attr_name:
-                The attribute name for creating the rasterio file.
-
-        Returns:
-            The rasterio tmp memory file of raster.
-        """
-
     def get_xarray(self, attr_name: Optional[str] = None) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates.
 
