@@ -39,7 +39,6 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 from mesa import Model
-from mesa.time import BaseScheduler
 from omegaconf import DictConfig
 
 from abses import __version__
@@ -53,8 +52,9 @@ from abses.actor import Actor
 
 from ._bases.bases import _Notice
 from ._bases.datacollector import ABSESpyDataCollector
+from ._bases.errors import ABSESpyError
 from ._bases.states import _States
-from .container import _AgentsContainer, _ModelAgentsContainer
+from .container import _ModelAgentsContainer
 from .human import BaseHuman
 from .nature import BaseNature
 from .sequences import ActorsList
@@ -114,7 +114,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         experiment: Optional[Experiment] = None,
         **kwargs: Optional[Any],
     ) -> None:
-        Model.__init__(self, **kwargs)
+        Model.__init__(self)
         _Notice.__init__(self)
         _States.__init__(self)
         self._exp = experiment
@@ -123,15 +123,13 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._settings = DictConfig(parameters)
         self._setup_logger(parameters.get("log", {}))
         self.running: bool = True
-        self._breeds: Dict[str, Type[Actor]] = {}
-        self._containers: List[_AgentsContainer] = []
         self._version: str = __version__
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
-        self._agents = _ModelAgentsContainer(
+        self._setup_agent_registration()
+        self._agents_handler = _ModelAgentsContainer(
             model=self, max_len=kwargs.get("max_agents", None)
         )
         self._time = TimeDriver(model=self)
-        self.schedule: BaseScheduler = BaseScheduler(model=self)
         self.datacollector: ABSESpyDataCollector = ABSESpyDataCollector(
             parameters.get("reports", {})
         )
@@ -155,9 +153,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         log_session(title="MainModel", msg=msg)
 
     def _logging_step(self) -> None:
-        if not self.breeds:
+        if not self.agent_types:
             return
-        agents = self.agents.select({"_birth_tick": self.time.tick})
+        agents = self._agents_handler.select({"_birth_tick": self.time.tick})
         agents_dict = agents.to_dict()
         lst = [f"{len(lst)} {breed}" for breed, lst in agents_dict.items()]
         msg = (
@@ -275,7 +273,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         3. `model.agents.register(Actor)` to register a new breed of agents to the whole model.
         4. `model.agents.trigger()` to trigger a specific event to all agents.
         """
-        return self._agents
+        return self._agents_handler
 
     @property
     def actors(self) -> ActorsList[Actor]:
@@ -314,20 +312,6 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
     # alias for model's datasets
     ds = datasets
-
-    @property
-    def breeds(self) -> Dict[str, Type[Actor]]:
-        """All breeds in the model."""
-        return self._breeds
-
-    @breeds.setter
-    def breeds(self, breed: Type[Actor]) -> None:
-        """Register a new breed of agents in the model."""
-        if not issubclass(breed, Actor):
-            raise TypeError(f"{breed} is not a subclass of Actor.")
-        self._breeds[breed.breed] = breed
-        for container in self._containers:
-            container[breed.breed] = set()
 
     @functools.cached_property
     def plot(self) -> _VizModel:
@@ -371,7 +355,6 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
     def _step(self) -> None:
         self._do_each("step", order=("model", "nature", "human"))
-        self.schedule.step()
         self.datacollector.collect(self)
         self._logging_step()
 

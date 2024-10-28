@@ -19,8 +19,10 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    List,
     Literal,
     Optional,
+    Tuple,
     Union,
     cast,
 )
@@ -42,7 +44,6 @@ from abses.move import _Movements
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
-    from abses._bases.base_container import UniqueID
     from abses.cells import Pos
     from abses.main import MainModel
     from abses.nature import PatchCell, PatchModule
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
-Breeds: TypeAlias = Optional[Union[str, Iterable[str]]]
+Breeds: TypeAlias = Union[str, List[str], Tuple[str]]
 GeoType: TypeAlias = Literal["Point", "Shape"]
 
 
@@ -155,15 +156,12 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self,
         model: MainModel[Any, Any],
         observer: bool = True,
-        unique_id: Optional[UniqueID] = None,
         **kwargs,
     ) -> None:
         _BaseObj.__init__(self, model, observer=observer)
         crs = kwargs.pop("crs", model.nature.crs)
         geometry = kwargs.pop("geometry", None)
-        mg.GeoAgent.__init__(
-            self, unique_id, model=model, geometry=geometry, crs=crs
-        )
+        mg.GeoAgent.__init__(self, model=model, geometry=geometry, crs=crs)
         _LinkNodeActor.__init__(self)
         self._cell: Optional[PatchCell] = None
         self._decisions: _DecisionFactory = self._setup_decisions()

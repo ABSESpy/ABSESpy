@@ -9,9 +9,11 @@
 PyTest fixtures.
 """
 
+import geopandas as gpd
 import numpy as np
 import pytest
 from hydra import compose, initialize
+from shapely.geometry import Point
 
 from abses import Actor, MainModel
 from abses.nature import PatchCell, PatchModule
@@ -59,7 +61,7 @@ class City(Actor):
     """测试用，每个城市的主体"""
 
 
-@pytest.fixture(name="breeds")
+@pytest.fixture(name="testing_breeds")
 def testing_breeds() -> dict:
     """一系列用于测试的主体类型。"""
     return {
@@ -85,7 +87,13 @@ def admin_cls(breeds):
 @pytest.fixture(name="model", scope="function")
 def mock_model() -> MainModel:
     """创建一个模型"""
-    return MainModel()
+
+    class TestModel(MainModel):
+        """测试用模型"""
+
+        name = "Test"
+
+    return TestModel()
 
 
 @pytest.fixture(name="module", scope="function")
@@ -130,7 +138,27 @@ def mock_cells(module: PatchModule) -> list:
     return module.array_cells
 
 
+@pytest.fixture(name="ternary_m", scope="function")
+def mock_ternary_model(module: PatchModule) -> MainModel:
+    """创建一个包含三个主体的模型"""
+    model = module.model
+    model.agents.new(Actor, num=1, singleton=True)
+    model.agents.new(City, num=1, singleton=True)
+    model.agents.new(Farmer, num=1, singleton=True)
+    return model
+
+
 @pytest.fixture(name="farmland_data")
 def mock_farmland_data():
     """测试用的华南农业数据集"""
     return load_data("farmland.tif")
+
+
+@pytest.fixture(name="points_gdf")
+def mock_points_gdf():
+    """测试用的点数据集"""
+    data = {
+        "index": [0, 1, 2],
+        "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
+    }
+    return gpd.GeoDataFrame(data, crs="epsg:4326")
