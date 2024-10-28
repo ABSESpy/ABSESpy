@@ -46,9 +46,11 @@ WHEN_EMPTY: TypeAlias = Literal["raise exception", "return None"]
 class ListRandom:
     """Create a random generator from an `ActorsList`"""
 
-    def __init__(self, model: MainModel[Any, Any], actors: ActorsList) -> None:
+    def __init__(
+        self, model: MainModel[Any, Any], actors: Iterable[Any]
+    ) -> None:
         self.model = model
-        self.actors = actors
+        self.actors = self._to_actors_list(actors)
         self.seed = model.random.random() * 100
         self.generator = np.random.default_rng(seed=int(self.seed))
 

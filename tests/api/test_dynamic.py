@@ -50,7 +50,7 @@ class TestDynamicData:
         """从数据中读取主体的土地情况"""
         index = data["Year"] == time.year
         data_tmp = data.loc[index].set_index("City_ID")
-        return data_tmp.loc[f"C{obj.unique_id}"]
+        return data_tmp.loc[f"C{obj.City_ID}"]
 
     @staticmethod
     def update_prec_function(
@@ -65,7 +65,7 @@ class TestDynamicData:
         """创造可供测试的黄河灌溉用水例子"""
         model = MainModel(seed=42, parameters=water_quota_config)
         gdf = gpd.read_file(load_data("YR_cities.zip"))
-        agents = model.agents.new_from_gdf(gdf=gdf, unique_id="City_ID")
+        agents = model.agents.new_from_gdf(gdf=gdf, attrs="City_ID")
         agents.trigger(
             func_name="add_dynamic_variable",
             name="lands",
@@ -81,10 +81,10 @@ class TestDynamicData:
             data_now = lands_data[lands_data["Year"] == year].set_index(
                 "City_ID"
             )
-            return data_now.loc[f"C{agent.unique_id}"]
+            return data_now.loc[f"C{agent.City_ID}"]
 
         # 随机选择一个主体
-        agent = model.agents.get().random.choice()
+        agent = model.agents.random.choice()
         data_1979 = get_test_data(agent, 1979)
         assert_series_equal(agent.dynamic_var("lands"), data_1979)
 

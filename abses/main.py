@@ -280,7 +280,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """All agents on the earth as an `ActorList`.
         A model can create multiple lists referring different actors.
         """
-        return self.agents.get().select({"on_earth": True})
+        return self.agents.select("on_earth")
 
     @property
     def human(self) -> Union[H, BaseHuman]:

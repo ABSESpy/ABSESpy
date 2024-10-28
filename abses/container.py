@@ -45,6 +45,7 @@ from shapely.geometry.base import BaseGeometry
 from abses._bases.errors import ABSESpyError
 from abses.actor import Actor, Breeds
 from abses.links import get_node_unique_id
+from abses.random import ListRandom
 from abses.sequences import ActorsList
 from abses.tools.func import IncludeFlag, clean_attrs
 
@@ -84,7 +85,7 @@ class _AgentsContainer:
     def __iter__(self) -> Iterator[Actor]:
         return iter(self._agents)
 
-    def __getitem__(self, breeds: Optional[Breeds]) -> AgentSet:
+    def __getitem__(self, breeds: Optional[Breeds]) -> ActorsList[Actor]:
         """Get agents by breed(s).
 
         Args:
@@ -105,13 +106,15 @@ class _AgentsContainer:
             for breed in breeds:
                 breed_type = self._get_breed_type(breed)
                 agents.extend(self._model.agents_by_type[breed_type])
-            return AgentSet(agents, random=self._model.random)
+            return ActorsList(model=self.model, objs=agents)
 
         # 单个 breed 的情况
         if not isinstance(breeds, (str, type)):
             raise TypeError(f"{breeds} is not a string or a type.")
         breed_type = self._get_breed_type(breeds)
-        return self._model.agents_by_type[breed_type]
+        return ActorsList(
+            model=self.model, objs=self._model.agents_by_type[breed_type]
+        )
 
     def __getattr__(self, name: str) -> Any:
         """Get an attribute from the container."""
@@ -130,6 +133,11 @@ class _AgentsContainer:
     def model(self) -> MainModel[Any, Any]:
         """The ABSESpy model where the container belongs to."""
         return self._model
+
+    @property
+    def random(self) -> ListRandom:
+        """The random number generator."""
+        return ListRandom(actors=self, model=self.model)
 
     @property
     def is_full(self) -> bool:
@@ -229,10 +237,13 @@ class _AgentsContainer:
             num = 1
             if singleton is None:
                 singleton = True
-        if not isinstance(num, int) or num <= 0:
+        if not isinstance(num, int) or num < 0:
             raise ValueError(
-                f"Number of actors to create must be a positive integer. Got {num}."
+                f"Number of actors to create must be a non-negative integer. Got {num}."
             )
+        if num == 0:
+            return ActorsList(model=self.model, objs=[])
+        # 创建主体
         objs = []
         for _ in range(num):
             agent = self._new_one(agent_cls=breed_cls, **kwargs)
@@ -290,11 +301,14 @@ class _AgentsContainer:
             >>> 5
             ```
         """
+        if breeds is None:
+            return len(self)
         return len(self[breeds])
 
     def select(
         self,
         selection: Callable | str | Dict[str, Any] | None = None,
+        agent_type: Optional[Type[Actor] | str] = None,
         **kwargs: Any,
     ) -> ActorsList:
         """Select actors that match the given selection criteria.
@@ -312,6 +326,8 @@ class _AgentsContainer:
                 - agent_type (type[Agent], optional): The class type of the agents to select. Defaults to None, meaning no type filtering is applied.
                 - n (int): deprecated, use at_most instead
         """
+        if isinstance(agent_type, (str, type)):
+            kwargs["agent_type"] = self._get_breed_type(agent_type)
 
         def check_attr(agent, attr, value=True):
             return getattr(agent, attr) == value
@@ -366,7 +382,6 @@ class _ModelAgentsContainer(_AgentsContainer):
     def new_from_gdf(
         self,
         gdf: gpd.GeoDataFrame,
-        unique_id: Optional[str] = None,
         agent_cls: type[Actor] = Actor,
         attrs: IncludeFlag = False,
         **kwargs,
@@ -390,9 +405,6 @@ class _ModelAgentsContainer(_AgentsContainer):
         Returns:
             An `ActorsList` with all new created actors stored.
         """
-        # 检查创建主体的数据标识是否唯一，若唯一则设置为索引
-        if unique_id:
-            gdf = gdf.set_index(unique_id, verify_integrity=True)
         # 检查坐标参考系是否一致
         self._check_crs(gdf)
         # 看一下哪些属性是需要加入到主体的
@@ -402,11 +414,10 @@ class _ModelAgentsContainer(_AgentsContainer):
             set_attributes = {col: col for col in set_attributes}
         # 创建主体
         agents = []
-        for index, row in gdf.iterrows():
+        for _, row in gdf.iterrows():
             geometry = row[geo_col]
             new_agent = self._new_one(
                 geometry=geometry,
-                unique_id=index,
                 agent_cls=agent_cls,
                 **kwargs,
             )

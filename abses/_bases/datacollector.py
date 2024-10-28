@@ -146,12 +146,13 @@ class ABSESpyDataCollector:
 
     def _record_agents(self, model: MainModel) -> None:
         """记录所有的Agents"""
-        for breed in model.breeds:
+        for breed in model.agent_types:
+            breed = breed.__name__
             if breed not in self.agent_reporters:
                 continue
             if breed not in self._agent_records:
                 self._agent_records[breed] = []
-            agents = model.agents.get(breed)
+            agents = model.agents[breed]
             self._record_a_breed_of_agents(model.time, breed, agents)
 
     def _new_agent_reporter(

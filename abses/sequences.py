@@ -51,7 +51,6 @@ from abses.tools.func import make_list
 from abses.viz.viz_actors import _VizNodeList
 
 if TYPE_CHECKING:
-    from abses._bases.base_container import UniqueID
     from abses.actor import Actor, GeoType, TargetName
     from abses.links import _LinkNode
     from abses.main import MainModel
@@ -184,19 +183,6 @@ class ActorsList(List[Link], Generic[Link]):
             raise TypeError(f"Invalid selection type {type(selection)}")
         selected = [a for a, s in zip(actors, bool_) if s]
         return ActorsList(self._model, selected)
-
-    def ids(self, ids: Iterable[UniqueID] | UniqueID) -> ActorsList[Link]:
-        """Subsets ActorsList by a `ids`.
-
-        Parameters:
-            ids:
-                an iterable id list. List[id], ID is an attr of agent obj.
-
-        Returns:
-            ActorList: A subset of origin agents list.
-        """
-        ids = make_list(ids)
-        return self.select([agent.unique_id in ids for agent in self])
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None

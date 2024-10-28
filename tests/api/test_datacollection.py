@@ -72,7 +72,7 @@ class TestDataCollector:
     def test_agent_records(
         self,
         model_cfg: MainModel,
-        breeds: Dict[str, Type[Actor]],
+        testing_breeds: Dict[str, Type[Actor]],
         breed,
         attr,
         name,
@@ -80,7 +80,7 @@ class TestDataCollector:
     ):
         """test agent data collector"""
         # arrange
-        actor = model_cfg.agents.new(breeds[breed], singleton=True)
+        actor = model_cfg.agents.new(testing_breeds[breed], singleton=True)
         setattr(actor, attr, 1)
         # act
         model_cfg.run_model(steps=ticks)

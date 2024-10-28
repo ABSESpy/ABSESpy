@@ -73,15 +73,15 @@ def testing_breeds() -> dict:
 
 
 @pytest.fixture
-def farmer_cls(breeds):
+def farmer_cls(testing_breeds):
     """用于测试的农民类型"""
-    return breeds.get("Farmer")
+    return testing_breeds.get("Farmer")
 
 
 @pytest.fixture
-def admin_cls(breeds):
+def admin_cls(testing_breeds):
     """用于测试的管理者类型"""
-    return breeds.get("Admin")
+    return testing_breeds.get("Admin")
 
 
 @pytest.fixture(name="model", scope="function")

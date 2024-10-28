@@ -85,7 +85,7 @@ class TestBasicContainer:
         ],
     )
     def test_new_agents_bad_path(self, model, agent_num, error_type):
-        """测试创建的主体数量不是正整数时创建主体失败"""
+        """测试创建的主体数量不是非负整数时创建主体失败"""
         # arrange
         container: _AgentsContainer = model.agents
         # action / assert

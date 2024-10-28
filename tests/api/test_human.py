@@ -36,7 +36,8 @@ def test_human_define(farmer_cls, admin_cls):
     farmers.update("test", np.arange(5))
     admins.update("test", np.arange(5))
 
-    human.define("test", "Farmer")
+    human.define("test", agent_type="Farmer")
     assert human.actors("test") == farmers
+    # 删除一个Agent，actors还会自动更新
     human.agents.remove(farmers[0])
     assert human.actors("test") == farmers[1:]
