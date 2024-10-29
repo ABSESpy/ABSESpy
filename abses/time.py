@@ -174,6 +174,9 @@ class TimeDriver(_Component):
             return self.dt < other
         raise NotImplementedError(f"Cannot compare with {other}.")
 
+    def __deepcopy__(self, memo):
+        return self
+
     @property
     def fmt(self) -> str:
         """String format of datetime."""

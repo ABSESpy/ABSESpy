@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Optional, Type
 
 import numpy as np
 import pyproj
+from mesa_geo import GeoSpace
 
 from abses._bases.modules import CompositeModule, HowCreation
 from abses.patch import CRS, PatchModule, _PatchModuleFactory
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from abses.main import MainModel
 
 
-class BaseNature(CompositeModule):
+class BaseNature(CompositeModule, GeoSpace):
     """The Base Nature Module.
     Note:
         Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure.
@@ -42,6 +43,7 @@ class BaseNature(CompositeModule):
         self, model: MainModel[Any, Any], name: str = "nature"
     ) -> None:
         CompositeModule.__init__(self, model, name=name)
+        GeoSpace.__init__(self)
         self._major_layer: Optional[PatchModule] = None
         self._modules: _PatchModuleFactory = _PatchModuleFactory(self)
 
@@ -73,26 +75,8 @@ class BaseNature(CompositeModule):
     def major_layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, PatchModule):
             raise TypeError(f"{layer} is not PatchModule.")
+        self.crs = layer.crs
         self._major_layer = layer
-
-    @property
-    def total_bounds(self) -> np.ndarray:
-        """Total bounds. The spatial scope of the model's concern.
-        If None (by default), uses the major layer of this model.
-        Usually, the major layer is the first layer sub-module you created.
-        """
-        if self.major_layer is None:
-            raise ValueError(f"No major layer in {self.modules}.")
-        return self.major_layer.total_bounds
-
-    @property
-    def crs(self) -> pyproj.CRS:
-        """Geo CRS."""
-        return (
-            pyproj.CRS(CRS)
-            if self.major_layer is None
-            else self.major_layer.crs
-        )
 
     def create_module(
         self,
@@ -127,4 +111,5 @@ class BaseNature(CompositeModule):
         if major_layer:
             self.major_layer = module
         setattr(self, module.name, module)
+        self.add_layer(module)
         return module

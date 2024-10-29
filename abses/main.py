@@ -21,7 +21,6 @@ from typing import (
     Any,
     Dict,
     Generic,
-    List,
     Literal,
     Optional,
     Tuple,
@@ -39,7 +38,7 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 from mesa import Model
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from abses import __version__
 from abses._bases.logging import (
@@ -52,7 +51,6 @@ from abses.actor import Actor
 
 from ._bases.bases import _Notice
 from ._bases.datacollector import ABSESpyDataCollector
-from ._bases.errors import ABSESpyError
 from ._bases.states import _States
 from .container import _ModelAgentsContainer
 from .human import BaseHuman
@@ -74,6 +72,7 @@ SubSystem = Union[
     Tuple[SubSystemType, SubSystemType],
     Tuple[SubSystemType, SubSystemType, SubSystemType],
 ]
+BASIC_CONFIG = DictConfig({"model": {}})  # 基础配置结构
 
 
 class MainModel(Generic[H, N], Model, _Notice, _States):
@@ -120,7 +119,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._exp = experiment
         self._run_id: Optional[int] = run_id
         self.outpath = cast(Path, outpath)
-        self._settings = DictConfig(parameters)
+        self._settings = OmegaConf.merge(
+            BASIC_CONFIG, {"model": kwargs}, parameters
+        )
         self._setup_logger(parameters.get("log", {}))
         self.running: bool = True
         self._version: str = __version__
