@@ -44,9 +44,9 @@ from abses.move import _Movements
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
-    from abses.cells import Pos
+    from abses.cells import PatchCell, Pos
     from abses.main import MainModel
-    from abses.nature import PatchCell, PatchModule
+    from abses.nature import PatchModule
 
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
@@ -278,6 +278,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self,
         attr: str,
         target: Optional[TargetName] = None,
+        default: Any = ...,
     ) -> Any:
         """Gets attribute value from target.
 
@@ -295,7 +296,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         """
         if attr in self.dynamic_variables:
             return self.dynamic_var(attr)
-        return super().get(attr=attr, target=target)
+        return super().get(attr=attr, target=target, default=default)
 
     @alive_required
     def set(self, *args, **kwargs) -> None:

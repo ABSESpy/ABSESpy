@@ -17,8 +17,8 @@ import pytest
 
 from abses import Actor, MainModel
 from abses._bases.errors import ABSESpyError
+from abses.cells import PatchCell
 from abses.container import _AgentsContainer, _ModelAgentsContainer
-from abses.nature import PatchCell
 from abses.tools.data import load_data
 
 

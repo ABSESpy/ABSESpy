@@ -16,7 +16,8 @@ from hydra import compose, initialize
 from shapely.geometry import Point
 
 from abses import Actor, MainModel
-from abses.nature import PatchCell, PatchModule
+from abses.cells import PatchCell
+from abses.nature import PatchModule
 from abses.tools.data import load_data
 
 

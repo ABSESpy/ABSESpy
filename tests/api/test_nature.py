@@ -10,15 +10,14 @@
 
 import numpy as np
 import pytest
-import rasterio as rio
 import rioxarray as rxr
 import xarray
 from shapely.geometry import box
 
 from abses.actor import Actor
-from abses.cells import raster_attribute
+from abses.cells import PatchCell, raster_attribute
 from abses.main import MainModel
-from abses.nature import PatchCell, PatchModule
+from abses.nature import PatchModule
 from abses.sequences import ActorsList
 
 

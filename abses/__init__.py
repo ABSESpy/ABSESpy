@@ -37,7 +37,8 @@ from .decision import Decision
 from .experiment import Experiment
 from .human import BaseHuman
 from .main import MainModel
-from .nature import BaseNature, PatchCell, PatchModule
+from .nature import BaseNature, PatchModule
+from .patch import PatchCell
 from .sequences import ActorsList
 from .time import time_condition
 from .tools.data import load_data
