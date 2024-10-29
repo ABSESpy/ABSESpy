@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Type
 
-import numpy as np
-import pyproj
 from mesa_geo import GeoSpace
 
 from abses._bases.modules import CompositeModule, HowCreation
@@ -43,7 +41,7 @@ class BaseNature(CompositeModule, GeoSpace):
         self, model: MainModel[Any, Any], name: str = "nature"
     ) -> None:
         CompositeModule.__init__(self, model, name=name)
-        GeoSpace.__init__(self)
+        GeoSpace.__init__(self, crs=CRS)
         self._major_layer: Optional[PatchModule] = None
         self._modules: _PatchModuleFactory = _PatchModuleFactory(self)
 
@@ -75,8 +73,8 @@ class BaseNature(CompositeModule, GeoSpace):
     def major_layer(self, layer: PatchModule) -> None:
         if not isinstance(layer, PatchModule):
             raise TypeError(f"{layer} is not PatchModule.")
-        self.crs = layer.crs
         self._major_layer = layer
+        self.to_crs(layer.crs)
 
     def create_module(
         self,

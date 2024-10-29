@@ -461,7 +461,7 @@ class PatchModule(Module, RasterBase):
                 *transform_bounds(src_crs, dst_crs, *layer.total_bounds)
             ]
             layer.crs = crs
-            layer.transform = transform
+            setattr(layer, "_transform", transform)
 
         return None if inplace else layer
 
