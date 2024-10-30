@@ -32,6 +32,7 @@ from abses.tools.func import make_list
 
 if TYPE_CHECKING:
     from abses.actor import Actor
+    from abses.links import LinkingNode
     from abses.main import MainModel
     from abses.sequences import ActorsList
 
@@ -112,9 +113,20 @@ class ListRandom:
         size: int = 1,
         prob: np.ndarray | None = None,
         replace: bool = False,
+        as_list: bool = True,
+        when_empty: WHEN_EMPTY = "raise exception",
+    ) -> ActorsList[LinkingNode]:
+        ...
+
+    @overload
+    def choice(
+        self,
+        size: int = 1,
+        prob: np.ndarray | None = None,
+        replace: bool = False,
         as_list: bool = False,
         when_empty: WHEN_EMPTY = "raise exception",
-    ) -> Actor | ActorsList[Actor]:
+    ) -> LinkingNode | ActorsList[LinkingNode]:
         ...
 
     def choice(
@@ -125,7 +137,7 @@ class ListRandom:
         as_list: bool = False,
         when_empty: WHEN_EMPTY = "raise exception",
         double_check: bool = False,
-    ) -> Optional[Actor | ActorsList[Actor]]:
+    ) -> Optional[LinkingNode | ActorsList[LinkingNode]]:
         """Randomly choose one or more actors from the current self object.
 
         Parameters:

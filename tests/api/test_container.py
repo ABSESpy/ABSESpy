@@ -210,7 +210,7 @@ class TestMaxLength:
         module = model_4_agents.nature.create_module(
             how="from_resolution", shape=(2, 2), cell_cls=MaxCell
         )
-        return module.cells.random.choice()
+        return module.cells_lst.random.choice()
 
     def test_create_bad_path(self, model_4_agents: MainModel):
         """测试创建超过最大长度的主体失败"""

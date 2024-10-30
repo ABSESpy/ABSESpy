@@ -40,10 +40,10 @@ class TestMovements:
         # arrange
         actor = model.agents.new(Actor, singleton=True)
         # action
-        actor.move.to(cell_0_1.indices, cell_0_1.layer)
+        actor.move.to(cell_0_1.pos, cell_0_1.layer)
         # assert
         assert actor.at is cell_0_1
-        actor.move.to((0, 0))
+        actor.move.to((0, 0), indices=True)
         assert actor.at is cell_0_0
         assert actor not in cell_0_1.agents
 

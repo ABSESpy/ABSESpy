@@ -52,23 +52,35 @@ class TestPatchModulePositions:
     """测试斑块模型的位置选取"""
 
     @pytest.mark.parametrize(
-        "row, col, expected",
+        "row, col, pos, indices",
         [
-            (0, 1, (0, 1)),
-            (1, 1, (1, 1)),
-            (1, 0, (1, 0)),
-            (0, 0, (0, 0)),
+            (0, 1, (1, 1), (0, 1)),
+            (1, 1, (1, 0), (1, 1)),
+            (1, 0, (0, 0), (1, 0)),
+            (0, 0, (0, 1), (0, 0)),
         ],
     )
-    def test_pos_and_indices(self, module: PatchModule, row, col, expected):
+    def test_pos_and_indices(
+        self, module: PatchModule, row, col, pos, indices
+    ):
         """测试位置和索引。
         pos 应该是和 cell 的位置一致
         indices 应该是和 cell 的索引一致。
+
+        Pos [0, 0] -> idx[1, 0]: 0
+        Pos [0, 1] -> idx[0, 0]: 1
+        Pos [1, 0] -> idx[1, 1]: 2
+        Pos [1, 1] -> idx[0, 1]: 3
+
+        >>> module.array_cells
+        [[1, 3],
+        [0, 2]]
         """
         # arrange
         cell = module.array_cells[row, col]
         # act / assert
-        assert cell.indices == expected
+        assert cell.pos == pos
+        assert cell.indices == indices
 
     @pytest.mark.parametrize(
         "index, expected_value",
@@ -297,8 +309,8 @@ class TestBaseNature:
         assert model.nature.major_layer is module2
         assert model.nature.shape2d == module2.shape2d
         assert model.nature.shape3d == module2.shape3d
-        result = model.nature.out_of_bounds((3, 3))
-        result2 = module2.out_of_bounds((3, 3))
+        result = model.nature.indices_out_of_bounds((3, 3))
+        result2 = module2.indices_out_of_bounds((3, 3))
         assert result == result2
 
     @pytest.mark.parametrize(
@@ -363,5 +375,5 @@ class TestCreatingNewPatch:
         assert layer.name == "testing"
         assert issubclass(module_cls, PatchModule)
         assert issubclass(layer.cell_cls, cell_cls)
-        assert isinstance(layer.cells.random.choice(), cell_cls)
+        assert isinstance(layer.cells_lst.random.choice(), cell_cls)
         assert isinstance(layer, module_cls)

@@ -40,12 +40,12 @@ from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
 from abses.decision import _DecisionFactory
 from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
-from abses.move import _Movements
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
     from abses.cells import PatchCell, Pos
     from abses.main import MainModel
+    from abses.move import _Movements
     from abses.nature import PatchModule
 
 
@@ -189,7 +189,9 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @property
     def geometry(self) -> Optional[BaseGeometry]:
         """The geometry of the actor."""
-        return Point(self.at.coordinate) if self.at else self._geometry
+        if self._cell is not None:
+            return Point(self._cell.coordinate)
+        return self._geometry
 
     @geometry.setter
     def geometry(self, value: Optional[BaseGeometry]) -> None:
@@ -240,22 +242,25 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @at.deleter
     def at(self) -> None:
         """Remove the agent from the located cell."""
-        cell = cast("PatchCell", self.at)
-        if self.on_earth and cell.agents is not None and self in cell.agents:
-            raise ABSESpyError(
-                "Cannot remove location directly because the actor is still on earth."
-            )
         self._cell = None
 
     @property
     def pos(self) -> Optional[Pos]:
         """Position of the actor."""
-        return None if self.at is None else self.at.indices
+        return None if self.at is None else self.at.pos
 
     @pos.setter
     def pos(self, value) -> None:
         if value is not None:
-            raise TypeError("Trying to set position.")
+            raise ABSESpyError(
+                "Set position is not allowed."
+                "Please use `move.to()` to move the actor to a cell."
+            )
+
+    @property
+    def indices(self) -> Optional[Pos]:
+        """Indices of the actor."""
+        return None if self.at is None else self.at.indices
 
     @cached_property
     def move(self) -> _Movements:
@@ -266,6 +271,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         3. `move.by()`: moves the actor by a distance.
         4. `move.random()`: moves the actor to a random cell.
         """
+        from abses.move import _Movements
+
         return _Movements(self)
 
     @alive_required
@@ -320,13 +327,17 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         """
         super().set(*args, **kwargs)
 
+    def remove(self) -> None:
+        """Remove the actor from the model."""
+        self.die()
+
     @alive_required
     def die(self) -> None:
         """Kills the agent (self)"""
         self.link.clean()  # 从链接中移除
         if self.on_earth:  # 如果在地上，那么从地块上移除
             self.move.off()
-        self.model.agents.remove(self)  # 从总模型里移除
+        super().remove()  # 从总模型里移除
         self._alive = False  # 设置为死亡状态
         del self
 

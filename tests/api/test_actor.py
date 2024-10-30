@@ -81,8 +81,8 @@ class TestActor:
         # arrange
         actor = model.agents.new(Actor, singleton=True)
         # act
-        pos = (0, 0)
-        actor.move.to(layer=module, pos=pos)
+        indices = (0, 0)
+        actor.move.to(layer=module, to=indices, indices=True)
         # assert
         assert actor.on_earth is True
         assert len(actor.at.agents) == 1

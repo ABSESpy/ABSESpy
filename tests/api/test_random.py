@@ -131,6 +131,7 @@ class TestRandomActorsList:
     )
     def test_random_choose_one(self, main: MainModel, p, expected):
         """测试从列表中随机抽取"""
+        # TODO 为什么之前从不报错，随机种子有问题？
         # arrange
         agents = main.agents.new(Actor, num=2)
 

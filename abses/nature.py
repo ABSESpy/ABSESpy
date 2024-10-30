@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Type
 
+from loguru import logger
 from mesa_geo import GeoSpace
 
 from abses._bases.modules import CompositeModule, HowCreation
@@ -74,13 +75,20 @@ class BaseNature(CompositeModule, GeoSpace):
         if not isinstance(layer, PatchModule):
             raise TypeError(f"{layer} is not PatchModule.")
         self._major_layer = layer
-        self.to_crs(layer.crs)
+        if layer.crs is None:
+            logger.warning("Setting major layer's CRS is None.")
+        elif not self.layers:
+            self.to_crs(layer.crs)
+            logger.warning(
+                f"the nature's CRS has been changed to {layer.crs}."
+            )
 
     def create_module(
         self,
         module_cls: Optional[Type[PatchModule]] = None,
         how: Optional[HowCreation] = None,
         major_layer: bool = False,
+        write_crs: bool = True,
         **kwargs: Any,
     ) -> PatchModule:
         """Creates a submodule of the raster layer.
@@ -108,6 +116,12 @@ class BaseNature(CompositeModule, GeoSpace):
         # 如果是第一个创建的模块,则将其作为主要的图层
         if major_layer:
             self.major_layer = module
+        if write_crs and module.crs is None:
+            logger.warning(
+                f"{module.name}'s default CRS is None."
+                f"Setting it to nature's CRS {self.crs}.",
+            )
+            module.crs = self.crs
         setattr(self, module.name, module)
         self.add_layer(module)
         return module

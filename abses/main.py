@@ -294,6 +294,11 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         return self._nature
 
     @property
+    def space(self) -> BaseNature:
+        """The space of the model."""
+        return self.nature
+
+    @property
     def time(self) -> TimeDriver:
         """The time driver & controller"""
         return self._time
@@ -362,6 +367,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
     def _end(self) -> None:
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
+        if not hasattr(self.datacollector, "final_reporters"):
+            logger.warning("No final reporters have been defined.")
+            return
         result = self.datacollector.get_final_vars_report(self)
         msg = (
             "The model is ended.\n"

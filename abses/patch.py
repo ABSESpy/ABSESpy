@@ -18,6 +18,7 @@ from typing import (
     Callable,
     Dict,
     Iterator,
+    List,
     Literal,
     Optional,
     Sequence,
@@ -26,13 +27,14 @@ from typing import (
     Type,
     Union,
     cast,
-    overload,
 )
 
 try:
     from typing import TypeAlias
 except ImportError:
     from typing_extensions import TypeAlias
+
+from typing import TypeVar
 
 import geopandas as gpd
 import numpy as np
@@ -43,7 +45,8 @@ import xarray as xr
 from geocube.api.core import make_geocube
 from loguru import logger
 from mesa.space import Coordinate
-from mesa_geo.raster_layers import RasterBase
+from mesa_geo.raster_layers import RasterLayer
+from numpy.typing import NDArray
 from rasterio.enums import Resampling
 from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
@@ -55,6 +58,8 @@ from abses.random import ListRandom
 from abses.sequences import ActorsList
 from abses.tools.func import get_buffer, set_null_values
 from abses.viz.viz_nature import _VizNature
+
+T = TypeVar("T", bound=PatchCell)
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -281,7 +286,7 @@ class _PatchModuleFactory(_ModuleFactory):
         )
 
 
-class PatchModule(Module, RasterBase):
+class PatchModule(Module, RasterLayer):
     """
     The spatial sub-module base class.
     Inherit from this class to create a submodule.
@@ -322,19 +327,29 @@ class PatchModule(Module, RasterBase):
     ):
         """This method copied some of the `mesa-geo.RasterLayer`'s methods."""
         Module.__init__(self, model, name=name)
-        RasterBase.__init__(self, **kwargs)
-        self.cell_cls = cell_cls
+        RasterLayer.__init__(self, model=model, cell_cls=cell_cls, **kwargs)
         logger.info("Initializing a new Model Layer...")
-
-        func = np.vectorize(lambda row, col: cell_cls(self, (row, col)))
-        self._cells: np.ndarray = np.fromfunction(
-            func, shape=(self.height, self.width), dtype=object
-        )
+        self._setup_cells()
         self._attributes: Set[str] = set()
         self._mask: np.ndarray = np.ones(self.shape2d).astype(bool)
 
+    def _setup_cells(self) -> None:
+        self._cells = []
+        for x in range(self.width):
+            col: List = []
+            for y in range(self.height):
+                row_idx, col_idx = self.height - y - 1, x
+                col.append(
+                    self.cell_cls(
+                        self,
+                        pos=(x, y),
+                        indices=(row_idx, col_idx),
+                    )
+                )
+            self._cells.append(col)
+
     @functools.cached_property
-    def cells(self) -> ActorsList[PatchCell]:
+    def cells_lst(self) -> ActorsList[PatchCell]:
         """The cells stored in this layer."""
         return ActorsList(self.model, self.array_cells[self.mask])
 
@@ -355,23 +370,6 @@ class PatchModule(Module, RasterBase):
 
     def __repr__(self):
         return f"<{self.name}{self.shape2d}: {len(self.attributes)} vars>"
-
-    def __getitem__(
-        self,
-        index: int | Sequence[Coordinate] | tuple[int | slice, int | slice],
-    ) -> PatchCell | list[PatchCell]:
-        """
-        Access contents from the grid.
-        """
-        return self.array_cells.__getitem__(index)
-
-    def __iter__(self) -> Iterator[PatchCell]:
-        """
-        Create an iterator that chains the rows of the cells together
-        as if it is one list
-        """
-        for row in self.array_cells:
-            yield from row
 
     @property
     def cell_properties(self) -> set[str]:
@@ -414,9 +412,14 @@ class PatchModule(Module, RasterBase):
         return 1, self.height, self.width
 
     @functools.cached_property
-    def array_cells(self) -> np.ndarray:
-        """Array type of the `PatchCell` stored in this module."""
+    def cells(self) -> List[List[PatchCell]]:
+        """The cells stored in this layer."""
         return self._cells
+
+    @functools.cached_property
+    def array_cells(self) -> NDArray[T]:
+        """Array type of the `PatchCell` stored in this module."""
+        return np.flipud(np.array(self._cells, dtype=object).T)
 
     @property
     def coords(self) -> Coordinate:
@@ -438,7 +441,7 @@ class PatchModule(Module, RasterBase):
 
     def transform_coord(self, row: int, col: int) -> Coordinate:
         """Transforming the row, col to the real-world coordinate."""
-        if self.out_of_bounds(pos=(row, col)):
+        if self.indices_out_of_bounds(pos=(row, col)):
             raise IndexError(f"Out of bounds: {row, col}")
         return self.transform * (col, row)
 
@@ -543,7 +546,7 @@ class PatchModule(Module, RasterBase):
     @property
     def random(self) -> ListRandom:
         """Randomly"""
-        return self.cells.random
+        return self.cells_lst.random
 
     def _select_by_geometry(
         self,
@@ -673,7 +676,7 @@ class PatchModule(Module, RasterBase):
         self._add_attribute(data, attr_name, flipud=flipud)
 
     def apply_raster(
-        self, data: Raster, attr_name: Optional[str], **kwargs: Any
+        self, data: Raster, attr_name: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Apply raster data to the cells.
 
@@ -757,33 +760,32 @@ class PatchModule(Module, RasterBase):
             self.xda, resampling=resampling, **kwargs
         )
 
-    @overload
-    def get_neighborhood(
+    def get_neighboring_cells(
         self,
         pos: Coordinate,
         moore: bool,
         include_center: bool = False,
         radius: int = 1,
-        annular: bool = False,
-        return_mask: bool = True,
-    ) -> np.ndarray:
-        ...
+    ) -> ActorsList[PatchCell]:
+        cells = super().get_neighboring_cells(
+            pos, moore, include_center, radius
+        )
+        return ActorsList(self.model, cells)
 
     @functools.lru_cache(maxsize=1000)
-    def get_neighborhood(
+    def get_neighboring_by_indices(
         self,
-        pos: Coordinate,
+        indices: Coordinate,
         moore: bool,
         include_center: bool = False,
         radius: int = 1,
         annular: bool = False,
-        return_mask: bool = False,
-    ) -> ActorsList[PatchCell] | np.ndarray:
+    ) -> ActorsList[PatchCell]:
         """Getting neighboring positions of the given coordinate.
 
         Parameters:
-            pos:
-                The coordinate to get the neighborhood.
+            indices:
+                The indices to get the neighborhood.
             moore:
                 Whether to use Moore neighborhood.
                 If False, use Von Neumann neighborhood.
@@ -796,63 +798,20 @@ class PatchModule(Module, RasterBase):
             annular:
                 Whether to use annular (ring) neighborhood.
                 Default is False.
-            return_mask:
-                Whether to return a mask array.
-                If True, return a mask array of the neighboring locations.
-                Otherwise, return a `ActorsList` of neighboring cells.
-                Default is False.
 
         Returns:
-            An `ActorsList` of neighboring cells, or a mask array.
-            Where the mask array is a boolean array with the same shape as the raster layer.
-            The True value indicates the cell is in the neighborhood.
+            An `ActorsList` of neighboring cells.
         """
+        row, col = indices
         mask_arr = np.zeros(self.shape2d, dtype=bool)
-        mask_arr[pos[0], pos[1]] = True
+        mask_arr[row, col] = True
         mask_arr = get_buffer(
             mask_arr, radius=radius, moor=moore, annular=annular
         )
-        mask_arr[pos[0], pos[1]] = include_center
-        if return_mask:
-            return mask_arr
+        mask_arr[row, col] = include_center
         return ActorsList(self.model, self.array_cells[mask_arr])
 
-    def to_file(
-        self,
-        raster_file: str,
-        attr_name: Optional[str] = None,
-        driver: str = "GTiff",
-    ) -> None:
-        """
-        Writes a raster layer to a file.
-
-        Parameters:
-            raster_file:
-                The path to the raster file to write to.
-            attr_name:
-                The name of the attribute to write to the raster.
-                If None, all attributes are written. Default is None.
-            driver:
-                The GDAL driver to use for writing the raster file.
-                Default is 'GTiff'.
-                See GDAL docs at https://gdal.org/drivers/raster/index.html.
-        """
-
-        data = self.get_raster(attr_name)
-        with rasterio.open(
-            raster_file,
-            "w",
-            driver=driver,
-            width=self.width,
-            height=self.height,
-            count=data.shape[0],
-            dtype=data.dtype,
-            crs=self.crs,
-            transform=self.transform,
-        ) as dataset:
-            dataset.write(data)
-
-    def out_of_bounds(self, pos: Coordinate) -> bool:
+    def indices_out_of_bounds(self, pos: Coordinate) -> bool:
         """
         Determines whether position is off the grid.
 

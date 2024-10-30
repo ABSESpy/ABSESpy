@@ -84,10 +84,16 @@ class PatchCell(_LinkNodeCell, _BaseObj):
 
     max_agents: Optional[int] = None
 
-    def __init__(self, layer, indices: Pos):
+    def __init__(
+        self,
+        layer: PatchModule,
+        indices: Pos,
+        pos: Optional[Pos] = None,
+    ):
         _BaseObj.__init__(self, model=layer.model, observer=True)
         _LinkNodeCell.__init__(self)
         self.indices = indices
+        self.pos = pos
         self._set_layer(layer=layer)
 
     def __repr__(self) -> str:
@@ -143,8 +149,6 @@ class PatchCell(_LinkNodeCell, _BaseObj):
             raise TypeError(f"{type(layer)} is not valid layer.")
         # set layer property
         self._layer = layer
-        # set layer's model as the model
-        self.model: MainModel[Any, Any] = layer.model
         # set agents container
         self._agents = _CellAgentsContainer(
             layer.model, cell=self, max_len=getattr(self, "max_agents", None)
@@ -180,9 +184,9 @@ class PatchCell(_LinkNodeCell, _BaseObj):
         radius: int = 1,
         include_center: bool = False,
         annular: bool = False,
-    ) -> ActorsList[_LinkNodeCell]:
+    ) -> ActorsList[PatchCell]:
         """Get the grid around the patch."""
-        return self.layer.get_neighborhood(
+        return self.layer.get_neighboring_by_indices(
             self.indices,
             moore=moore,
             radius=radius,
