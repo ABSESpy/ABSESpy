@@ -111,9 +111,12 @@ class _AgentsContainer:
         if not isinstance(breeds, (str, type)):
             raise TypeError(f"{breeds} is not a string or a type.")
         breed_type = self._get_breed_type(breeds)
-        return ActorsList(
-            model=self.model, objs=self._model.agents_by_type[breed_type]
-        )
+        try:
+            return ActorsList(
+                model=self.model, objs=self._model.agents_by_type[breed_type]
+            )
+        except KeyError:
+            return ActorsList(model=self.model, objs=[])
 
     def __getattr__(self, name: str) -> Any:
         """Get an attribute from the container."""
@@ -309,7 +312,11 @@ class _AgentsContainer:
         """
         if breeds is None:
             return len(self)
-        return len(self[breeds])
+        if isinstance(breeds, (str, type)):
+            return len(self.select(agent_type=breeds))
+        if isinstance(breeds, (list, tuple)):
+            return sum(len(self.select(agent_type=breed)) for breed in breeds)
+        raise TypeError(f"{breeds} is not a valid breed.")
 
     def select(
         self,
