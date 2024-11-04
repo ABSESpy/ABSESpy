@@ -152,6 +152,16 @@ class TestGettingValues:
         # 断言
         assert value == expected
 
+    def test_get_on_cell(self, cell_0_0: PatchCell):
+        """测试在斑块上获取值。"""
+        # 准备
+        actor = cell_0_0.agents.new(Actor, singleton=True)
+        cell_0_0.test = 2
+        # 执行
+        value = actor.get("test")
+        # 断言
+        assert value == 2
+
     @pytest.mark.parametrize(
         "target, error, msg",
         [

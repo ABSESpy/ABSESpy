@@ -78,9 +78,19 @@ class BaseNature(CompositeModule, GeoSpace):
         """
         if name.startswith("_"):
             return super().__getattribute__(name)
-        if self._major_layer is None:
-            raise AttributeError(f"No major layer set and {name} not found")
-        return getattr(self._major_layer, name)
+        try:
+            return super().__getattribute__(name)
+        except AttributeError as e:
+            if self._major_layer is None:
+                raise AttributeError(
+                    f"Attribute '{name}' not found in BaseNature and no major layer is set"
+                ) from e
+            try:
+                return getattr(self._major_layer, name)
+            except AttributeError as e2:
+                raise AttributeError(
+                    f"Attribute '{name}' not found in either BaseNature or major layer ({self._major_layer.name})"
+                ) from e2
 
     @property
     def major_layer(self) -> Optional[PatchModule]:

@@ -629,7 +629,7 @@ class _LinkNode:
             raise AttributeError(f"'{self}' doesn't have attribute '{attr}'.")
         return False
 
-    def _redirect(self, target: TargetName) -> _LinkNode:
+    def _redirect(self, target: Optional[TargetName]) -> _LinkNode:
         """Redirect the target.
 
         Args:
@@ -641,7 +641,7 @@ class _LinkNode:
         """
         if self._target_is_me(target):
             return self
-        if any(self.link.has(link_name=target)):
+        if isinstance(target, str) and any(self.link.has(link_name=target)):
             return cast(LinkingNode, self.link.get(link_name=target))
         raise ABSESpyError(f"Unknown target {target}.")
 
@@ -702,9 +702,9 @@ class _LinkNode:
             return getattr(self, attr)
         if default is not ...:
             return default
-        target_obj = self._redirect(target="self")
+        target_obj = self._redirect(target=target)
         try:
-            return target_obj.get(attr=attr, target="self")
+            return target_obj.get(attr=attr, target="self", default=default)
         except AttributeError as exc:
             raise AttributeError(
                 f"Neither {self} nor {target_obj} has attribute {attr}."
