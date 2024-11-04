@@ -21,7 +21,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Type,
@@ -287,35 +286,26 @@ class _PatchModuleFactory(_ModuleFactory):
 
 
 class PatchModule(Module, RasterLayer):
-    """
-    The spatial sub-module base class.
-    Inherit from this class to create a submodule.
-    [This tutorial](../tutorial/beginner/organize_model_structure.ipynb) shows the model structure.
-    This is also a raster layer, inherited from the 'mesa-geo.RasterLayer' class.
-    ABSESpy extends this class, so it can:
-    1. place agents (by `_CellAgentsContainer` class.)
-    2. work with `xarray`, `rasterio` packages for better data I/O workflow.
+    """Base class for managing raster-based spatial modules in ABSESpy.
+
+    Inherits from both Module and RasterLayer to provide comprehensive spatial data management.
+    Extends mesa-geo's RasterLayer with additional capabilities for:
+    - Agent placement and management
+    - Integration with xarray/rasterio for data I/O
+    - Dynamic attribute handling
+    - Spatial operations and analysis
 
     Attributes:
-        cell_properties:
-            The accessible attributes of cells stored in this layer.
-            When a `PatchCell`'s method is decorated by `raster_attribute`,
-            it should be appeared here as a property attribute.
-        attributes:
-            All accessible attributes from this layer,
-            including cell_properties.
-        shape2d:
-            Raster shape in 2D (heigh, width).
-        shape3d:
-            Raster shape in 3D (1, heigh, width),
-            this is for compatibility with `mg.RasterLayer` and `rasterio`.
-        array_cells:
-            Array type of the `PatchCell` stored in this module.
-        coords:
-            Coordinate system of the raster data.
-            This is useful when working with `xarray.DataArray`.
-        random:
-            A random proxy by calling the cells as an `ActorsList`.
+        cell_properties: Set of accessible cell attributes (decorated by @raster_attribute).
+        attributes: All accessible attributes including cell_properties.
+        shape2d: Raster dimensions as (height, width).
+        shape3d: Raster dimensions as (1, height, width) for rasterio compatibility.
+        array_cells: NumPy array of PatchCell objects.
+        coords: Coordinate system dictionary with 'x' and 'y' arrays.
+        random: Random selection proxy for cells.
+        mask: Boolean array indicating accessible cells.
+        cells_lst: ActorsList containing all cells.
+        plot: Visualization interface for the module.
     """
 
     def __init__(
@@ -325,7 +315,14 @@ class PatchModule(Module, RasterLayer):
         cell_cls: Type[PatchCell] = PatchCell,
         **kwargs: Any,
     ):
-        """This method copied some of the `mesa-geo.RasterLayer`'s methods."""
+        """Initializes a new PatchModule instance.
+
+        Args:
+            model: Parent model instance.
+            name: Module identifier. Defaults to lowercase class name.
+            cell_cls: Class to use for creating cells. Defaults to PatchCell.
+            **kwargs: Additional arguments passed to RasterLayer initialization.
+        """
         Module.__init__(self, model, name=name)
         RasterLayer.__init__(self, model=model, cell_cls=cell_cls, **kwargs)
         logger.info("Initializing a new Model Layer...")
@@ -440,13 +437,32 @@ class PatchModule(Module, RasterLayer):
         }
 
     def transform_coord(self, row: int, col: int) -> Coordinate:
-        """Transforming the row, col to the real-world coordinate."""
+        """Converts grid indices to real-world coordinates.
+
+        Args:
+            row: Grid row index.
+            col: Grid column index.
+
+        Returns:
+            Tuple of (x, y) real-world coordinates.
+
+        Raises:
+            IndexError: If indices are out of bounds.
+        """
         if self.indices_out_of_bounds(pos=(row, col)):
             raise IndexError(f"Out of bounds: {row, col}")
         return self.transform * (col, row)
 
     def to_crs(self, crs, inplace=False) -> Optional[PatchModule]:
-        """Converting the raster data to a another CRS."""
+        """Reprojects the raster data to a new Coordinate Reference System.
+
+        Args:
+            crs: Target CRS to reproject to.
+            inplace: If True, modifies this module. If False, returns new instance.
+
+        Returns:
+            None if inplace=True, new PatchModule instance if inplace=False.
+        """
         super()._to_crs_check(crs)
         layer = self if inplace else copy.copy(self)
 
@@ -517,16 +533,14 @@ class PatchModule(Module, RasterLayer):
         attr_name: Optional[str] = None,
         update: bool = True,
     ) -> xr.DataArray:
-        """Get the xarray raster layer with spatial coordinates.
+        """Creates an xarray DataArray representation with spatial coordinates.
 
-        Parameters:
-            attr_name:
-                The attribute to retrieve. If None (by default),
-                return all available attributes (3D DataArray).
-                Otherwise, 2D DataArray of the chosen attribute.
+        Args:
+            attr_name: Attribute to retrieve. If None, returns all attributes.
+            update: If True, updates dynamic variables before retrieval.
 
         Returns:
-            Xarray.DataArray data with spatial coordinates of the chosen attribute.
+            xarray.DataArray with spatial coordinates and CRS information.
         """
         data = self.get_raster(attr_name=attr_name, update=update)
         if attr_name:
@@ -577,23 +591,26 @@ class PatchModule(Module, RasterLayer):
         self,
         where: Optional[CellFilter] = None,
     ) -> ActorsList[PatchCell]:
-        """Select cells from this layer.
-        Also has a shortcut alias for this method: `.sel`.
+        """Selects cells based on specified criteria.
 
-        Parameters:
-            where:
-                The condition to select cells.
-                If None (by default), select all cells.
-                If a string, select cells by the attribute name.
-                If a numpy.ndarray, select cells by the mask array.
-                If a Shapely Geometry, select cells by the intersection with the geometry.
-
-        Raises:
-            TypeError:
-                If the input type is not supported.
+        Args:
+            where: Selection filter. Can be:
+                - None: Select all cells
+                - str: Select by attribute name
+                - numpy.ndarray: Boolean mask array
+                - Shapely.Geometry: Select cells intersecting geometry
 
         Returns:
-            An `ActorsList` with all selected cells stored.
+            ActorsList containing selected cells.
+
+        Raises:
+            TypeError: If where parameter is of unsupported type.
+
+        Example:
+            >>> # Select cells with elevation > 100
+            >>> high_cells = module.select(module.get_raster("elevation") > 100)
+            >>> # Select cells within polygon
+            >>> cells = module.select(polygon)
         """
         if isinstance(where, Geometry):
             mask_ = self._select_by_geometry(geometry=where)
@@ -678,31 +695,28 @@ class PatchModule(Module, RasterLayer):
     def apply_raster(
         self, data: Raster, attr_name: Optional[str] = None, **kwargs: Any
     ) -> None:
-        """Apply raster data to the cells.
+        """Applies raster data to cells as attributes.
 
-        Parameters:
-            data:
-                np.ndarray data: 2D numpy array with shape (1, height, width).
-                xr.DataArray data: xarray DataArray with spatial coordinates.
-                xr.Dataset data: xarray Dataset with spatial coordinates.
-            attr_name:
-                Name of the attribute to be added to the cells.
-                If None, a random name will be generated.
-                Default is None.
-            **kwargs:
-                cover_crs:
-                    Whether to cover the crs of the input data.
-                    If False, it assumes the input data has crs info.
-                    If True, it will cover the crs of the input data by the crs of this layer.
-                    Default is False.
-                resampling_method:
-                    The [resampling method](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling)
-                    when re-projecting the input data.
-                    Default is "nearest".
-                flipud:
-                    Whether to flip the input data upside down.
-                    Set to True when the input data is not in the same direction as the raster layer.
-                    Default is False.
+        Args:
+            data: Input raster data. Can be:
+                - numpy.ndarray: 2D array matching module shape
+                - xarray.DataArray: With spatial coordinates
+                - xarray.Dataset: With named variables
+            attr_name: Name for the new attribute. Required for xarray.Dataset.
+            **kwargs: Additional options:
+                cover_crs: Whether to override input data CRS
+                resampling_method: Method for resampling ("nearest", etc.)
+                flipud: Whether to flip data vertically
+
+        Raises:
+            ValueError: If attr_name not provided for Dataset input.
+            ValueError: If data shape doesn't match module shape.
+
+        Example:
+            >>> # Apply elevation data
+            >>> module.apply_raster(elevation_array, attr_name="elevation")
+            >>> # Apply data from xarray
+            >>> module.apply_raster(xda, resampling_method="bilinear")
         """
         if isinstance(data, np.ndarray):
             self._add_attribute(data, attr_name, **kwargs)
@@ -767,6 +781,22 @@ class PatchModule(Module, RasterLayer):
         include_center: bool = False,
         radius: int = 1,
     ) -> ActorsList[PatchCell]:
+        """Gets neighboring cells around a position.
+
+        Args:
+            pos: Center position (x, y).
+            moore: If True, uses Moore neighborhood (8 neighbors).
+                  If False, uses von Neumann neighborhood (4 neighbors).
+            include_center: Whether to include the center cell.
+            radius: Neighborhood radius in cells.
+
+        Returns:
+            ActorsList containing neighboring cells.
+
+        Example:
+            >>> # Get Moore neighborhood with radius 2
+            >>> neighbors = module.get_neighboring_cells((5,5), moore=True, radius=2)
+        """
         cells = super().get_neighboring_cells(
             pos, moore, include_center, radius
         )

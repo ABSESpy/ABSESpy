@@ -137,11 +137,12 @@ class PatchCell(_LinkNodeCell, _BaseObj):
     @property
     def geo_type(self) -> str:
         """Return the geo_type"""
+        # TODO: 返回地理类型，可以是 Geometry 或 Raster
         return "Cell"
 
     @property
     def crs(self) -> Optional[CRS]:
-        """Return the crs of this cell."""
+        """The crs of this cell, the same as the layer."""
         return self.layer.crs
 
     def _set_layer(self, layer: PatchModule) -> None:
@@ -185,7 +186,17 @@ class PatchCell(_LinkNodeCell, _BaseObj):
         include_center: bool = False,
         annular: bool = False,
     ) -> ActorsList[PatchCell]:
-        """Get the grid around the patch."""
+        """Get the grid around the patch.
+
+        Parameters:
+            moore: Whether to include the Moore neighborhood.
+            radius: The radius of the neighborhood.
+            include_center: Whether to include the center cell.
+            annular: Whether to use an annular neighborhood.
+
+        Returns:
+            ActorsList[PatchCell]: The neighboring cells.
+        """
         return self.layer.get_neighboring_by_indices(
             self.indices,
             moore=moore,

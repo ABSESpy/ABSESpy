@@ -76,31 +76,26 @@ BASIC_CONFIG = DictConfig({"model": {}})  # 基础配置结构
 
 
 class MainModel(Generic[H, N], Model, _Notice, _States):
-    """
-    Base class of a main ABSESpy model.
+    """Base class of a main ABSESpy model.
+
+    A MainModel instance represents the core simulation environment that coordinates
+    human and natural subsystems.
 
     Attributes:
-        name:
-            name of the model. By default, it's the lowercase of class name. E.g.: TestModel -> testmodel.
-        settings:
-            Structured parameters of the model. Other module or submodules can search the configurations here structurally.
-            For an example, if the settings is a nested DictConfig like {'nature': {'test': 3}}, users can access the parameter 'test = 3' by `model.nature.params.test`.
-        human:
-            The Human module.
-        nature:
-            The nature module.
-        time:
-            Time driver.
-        params:
-            Parameters of the model, having another alias `.p`.
-        run_id:
-            The run id of the current model. It's useful in batch run.
-        agents:
-            The container of all agents.
-            One model only has one specific container where all alive agents are stored.
-        actors:
-            All agents on the earth (added to a specific PatchCell) as a list.
-            A model can create multiple lists referring different actors.
+        name: Name of the model (defaults to lowercase class name).
+        settings: Structured parameters for all model components. Allows nested access
+            like model.nature.params.parameter_name.
+        human: The Human subsystem module.
+        nature: The Nature subsystem module.
+        time: Time driver controlling simulation progression.
+        params: Model parameters (alias: .p).
+        run_id: Identifier for current model run (useful in batch runs).
+        agents: Container for all active agents. Provides methods for agent management.
+        actors: List of all agents currently on the earth (in a PatchCell).
+        outpath: Directory path for model outputs.
+        version: Current version of the model.
+        datasets: Available datasets (alias: .ds).
+        plot: Visualization interface for the model.
     """
 
     def __init__(
@@ -113,6 +108,20 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         experiment: Optional[Experiment] = None,
         **kwargs: Optional[Any],
     ) -> None:
+        """Initializes a new MainModel instance.
+
+        Args:
+            parameters: Configuration dictionary for model parameters.
+            human_class: Class to use for human subsystem (defaults to BaseHuman).
+            nature_class: Class to use for nature subsystem (defaults to BaseNature).
+            run_id: Identifier for this model run.
+            outpath: Directory path for model outputs.
+            experiment: Associated experiment instance.
+            **kwargs: Additional model parameters.
+
+        Raises:
+            AssertionError: If human_class or nature_class are not valid subclasses.
+        """
         Model.__init__(self)
         _Notice.__init__(self)
         _States.__init__(self)
@@ -252,34 +261,40 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
     @property
     def settings(self) -> DictConfig:
-        """Structured parameters of the model.
-        Other module or submodules can search the configurations here structurally.
+        """Structured configuration for all model components.
 
-        For an example, if the settings is a nested DictConfig like {'nature': {'test': 3}},
-        users can access the parameter 'test' by both ways:
-            1. `model.nature.params.test`.
-            2. `model.nature.p.test`.
+        Allows nested parameter access. Example:
+        If settings = {'nature': {'test': 3}},
+        Access via:
+        - model.nature.params.test
+        - model.nature.p.test
+
+        Returns:
+            DictConfig containing all model settings.
         """
         return self._settings
 
     @property
     def agents(self) -> _ModelAgentsContainer:
-        """The container of all agents.
-        One model only has one specific container where all alive agents are stored.
-        Users can access, manipulate, and create agents by this container:
+        """Container managing all agents in the model.
 
-        For instances:
-        1. `model.agents.get()` to access all agents.
-        2. `model.agents.new(Actor, num=3)` to create 3 agents of Actor.
-        3. `model.agents.register(Actor)` to register a new breed of agents to the whole model.
-        4. `model.agents.trigger()` to trigger a specific event to all agents.
+        Provides methods for:
+        - Accessing agents: agents.get()
+        - Creating agents: agents.new(Actor, num=3)
+        - Registering agent types: agents.register(Actor)
+        - Triggering events: agents.trigger()
+
+        Returns:
+            The model's agent container instance.
         """
         return self._agents_handler
 
     @property
     def actors(self) -> ActorsList[Actor]:
-        """All agents on the earth as an `ActorList`.
-        A model can create multiple lists referring different actors.
+        """List of all agents currently on the earth.
+
+        Returns:
+            ActorsList containing all agents in PatchCells.
         """
         return self.agents.select("on_earth")
 
@@ -313,7 +328,11 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
     @property
     def datasets(self) -> DictConfig:
-        """All datasets in the model."""
+        """Available datasets for the model.
+
+        Returns:
+            DictConfig containing dataset configurations.
+        """
         return self.settings.get("ds", DictConfig({}))
 
     # alias for model's datasets
@@ -321,17 +340,23 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
 
     @functools.cached_property
     def plot(self) -> _VizModel:
-        """Plotting the model."""
+        """Visualization interface for the model.
+
+        Returns:
+            _VizModel instance for creating model visualizations.
+        """
         return _VizModel(self)
 
     def run_model(self, steps: Optional[int] = None) -> None:
-        """Start running the model.
+        """Executes the model simulation.
 
-        In order, the model will go through the following steps:
-        1. Call `model.setup()` method.
-        2. Call `model.step()` method.
-        3. Repeating steps, until the end situation is triggered
-        4. Call `model.end()` method.
+        Runs through the following phases:
+        1. Setup phase (model.setup())
+        2. Step phase (model.step()) - repeated
+        3. End phase (model.end())
+
+        Args:
+            steps: Number of steps to run. If None, runs until self.running is False.
         """
         self._setup()
         while self.running is True:
@@ -351,6 +376,11 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """Users can custom what to do when the model is end."""
 
     def _setup(self) -> None:
+        """Custom setup actions before model execution.
+
+        Override this method to define initialization logic.
+        Executed once at the start of run_model().
+        """
         self._do_each("setup", order=("model", "nature", "human"))
         self._do_each("set_state", code=2)
         msg = (
@@ -360,11 +390,21 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         log_session(title="Setting-up", msg=msg)
 
     def _step(self) -> None:
+        """Single step of model execution.
+
+        Override this method to define the core simulation logic.
+        Executed repeatedly during run_model().
+        """
         self._do_each("step", order=("model", "nature", "human"))
         self.datacollector.collect(self)
         self._logging_step()
 
     def _end(self) -> None:
+        """Custom cleanup actions after model execution.
+
+        Override this method to define finalization logic.
+        Executed once at the end of run_model().
+        """
         self._do_each("end", order=("nature", "human", "model"))
         self._do_each("set_state", code=3)
         if not hasattr(self.datacollector, "final_reporters"):
@@ -381,7 +421,14 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         logger.remove()
 
     def summary(self, verbose: bool = False) -> pd.DataFrame:
-        """Report the state of the model."""
+        """Generates a summary report of the model's current state.
+
+        Args:
+            verbose: If True, includes additional details about model and agent variables.
+
+        Returns:
+            DataFrame containing model statistics and state information.
+        """
         print(f"Using ABSESpy version: {self.version}")
         # Basic reports
         to_report = {

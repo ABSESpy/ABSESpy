@@ -77,8 +77,16 @@ def _put_agent_on_cell(agent: Actor, cell: PatchCell) -> None:
 
 
 class _Movements:
-    """
-    This class is used to manipulate actors' movements.
+    """A class that handles actor movement in the simulation.
+
+    This class provides methods for moving actors between cells in the simulation grid.
+    It handles basic movement operations like moving to specific coordinates, moving
+    in directions, and random movement.
+
+    Attributes:
+        actor: The actor instance this movement handler belongs to.
+        model: The model instance this movement handler operates in.
+        seed: Unique identifier for the actor, used for random number generation.
     """
 
     def __init__(self, actor: Actor) -> None:
@@ -127,7 +135,7 @@ class _Movements:
         Move the actor to a specific location.
 
         Parameters:
-            pos:
+            to:
                 The position to move to.
                 If position is a Coordinate -a tuple of (row, col),
                 it will be moved to the same layer.
@@ -136,6 +144,11 @@ class _Movements:
                 The indices to move to.
             layer:
                 The layer where the actor is located.
+                If layer is None, the actor will be moved to the same layer as the actor's current layer.
+            indices:
+                Whether the position is indices.
+                If indices is True, the position is indices.
+                If indices is False, the position is position.
 
         Raises:
             ABSESpyError:
@@ -166,7 +179,12 @@ class _Movements:
         raise TypeError(f"Invalid position type {to}.")
 
     def off(self) -> None:
-        """Remove the actor from the world."""
+        """Remove the actor from the world.
+
+        Raises:
+            ABSESpyError:
+                If the actor is not located on a cell, thus cannot move.
+        """
         if self.actor.at is None:
             return
         if hasattr(self.actor.at, "agents"):

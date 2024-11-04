@@ -58,6 +58,12 @@ GeoType: TypeAlias = Literal["Point", "Shape"]
 def alive_required(method):
     """
     A decorator that only executes the method when the object's alive attribute is True.
+
+    Args:
+        method: The method to decorate.
+
+    Returns:
+        The decorated method that only executes when alive is True.
     """
 
     @wraps(method)
@@ -68,15 +74,19 @@ def alive_required(method):
 
 
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
-    """clean the result of a perception.
+    """
+    Clean the result of a perception.
 
-    Parameters:
-        name:
-            The name of the perception.
-        result:
-            The result of the perception.
-        nodata:
-            The value to return if the result is None.
+    Args:
+        name: The name of the perception.
+        result: The result of the perception.
+        nodata: The value to return if the result is None.
+
+    Returns:
+        The cleaned perception result.
+
+    Raises:
+        ValueError: If the result is iterable.
     """
     if hasattr(result, "__iter__"):
         raise ValueError(
@@ -90,13 +100,12 @@ def perception(
     *,
     nodata: Optional[Any] = None,
 ) -> Callable[..., Any]:
-    """Change the decorated function into a perception attribute.
+    """
+    Change the decorated function into a perception attribute.
 
-    Parameters:
-        decorated_func:
-            The decorated function.
-        nodata:
-            The value to return if the result is None.
+    Args:
+        decorated_func: The decorated function.
+        nodata: The value to return if the result is None.
 
     Returns:
         The decorated perception attribute or a decorator.
@@ -123,22 +132,14 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
     Attributes:
-        breed:
-            The breed of this actor (by default, class name).
-        layer:
-            The layer where the actor is located.
-        indices:
-            The indices of the cell where the actor is located.
-        pos:
-            The position of the cell where the actor is located.
-        on_earth:
-            Whether the actor is standing on a cell.
-        at:
-            The cell where the actor is located.
-        link:
-            The link manipulating proxy.
-        move:
-            The movement manipulating proxy.
+        breed: The breed of this actor (by default, class name).
+        layer: The layer where the actor is located.
+        indices: The indices of the cell where the actor is located.
+        pos: The position of the cell where the actor is located.
+        on_earth: Whether the actor is standing on a cell.
+        at: The cell where the actor is located.
+        link: The link manipulating proxy.
+        move: The movement manipulating proxy.
 
     Methods:
         get:
@@ -287,16 +288,16 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         target: Optional[TargetName] = None,
         default: Any = ...,
     ) -> Any:
-        """Gets attribute value from target.
+        """
+        Gets attribute value from target.
 
-        Parameters:
-            attr:
-                The name of the attribute to get.
-            target:
-                The target to get the attribute from.
+        Args:
+            attr: The name of the attribute to get.
+            target: The target to get the attribute from.
                 If None, the agent itself is the target.
                 If the target is an agent, get the attribute from the agent.
                 If the target is a cell, get the attribute from the cell.
+            default: Default value if attribute not found.
 
         Returns:
             The value of the attribute.
@@ -307,23 +308,19 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
 
     @alive_required
     def set(self, *args, **kwargs) -> None:
-        """Sets the value of an attribute.
+        """
+        Sets the value of an attribute.
 
-        Parameters:
-            attr:
-                The name of the attribute to set.
-            value:
-                The value to set the attribute to.
-            target:
-                The target to set the attribute on. If None, the agent itself is the target.
+        Args:
+            attr: The name of the attribute to set.
+            value: The value to set the attribute to.
+            target: The target to set the attribute on. If None, the agent itself is the target.
                 1. If the target is an agent, set the attribute on the agent.
                 2. If the target is a cell, set the attribute on the cell.
 
         Raises:
-            TypeError:
-                If the attribute is not a string.
-            ABSESpyError:
-                If the attribute is protected.
+            TypeError: If the attribute is not a string.
+            ABSESpyError: If the attribute is protected.
         """
         super().set(*args, **kwargs)
 
@@ -351,7 +348,13 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         """
 
     def moving(self, cell: PatchCell) -> Optional[bool]:
-        """Overwrite this method.
-        It should be called when the actor is moved.
-        The return value is whether the actor can move to the cell.
+        """
+        Called when the actor is about to move.
+
+        Args:
+            cell: The target cell to move to.
+
+        Returns:
+            Optional boolean indicating whether the actor can move to the cell.
+            If None, the move is allowed by default.
         """

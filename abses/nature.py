@@ -24,23 +24,32 @@ if TYPE_CHECKING:
 
 
 class BaseNature(CompositeModule, GeoSpace):
-    """The Base Nature Module.
-    Note:
-        Look at [this tutorial](../tutorial/beginner/organize_model_structure.ipynb) to understand the model structure.
-        This is NOT a raster layer, but can be seen as a container of different raster layers.
-        Users can create new raster layer (i.e., `PatchModule`) by `new` method.
-        By default, an initialized ABSESpy model will init an instance of this `BaseNature` as `nature` module.
+    """Base class for managing spatial components in an ABSESpy model.
+
+    This class serves as a container for different raster layers (PatchModules).
+    It is not a raster layer itself, but manages multiple PatchModule instances.
 
     Attributes:
-        major_layer:
-            The major layer of nature module. By default, it's the first layer that user created.
-        total_bounds:
-            The spatial scope of the model's concern. By default, uses the major layer of this model.
+        major_layer: Primary raster layer of the model. Defaults to first created layer.
+        total_bounds: Spatial extent of the model's area of interest.
+        crs: Coordinate Reference System used by the nature module.
+        layers: Collection of all managed raster layers.
+        modules: Factory for creating and managing PatchModules.
+
+    Note:
+        By default, an initialized ABSESpy model will create an instance of BaseNature
+        as its 'nature' module.
     """
 
     def __init__(
         self, model: MainModel[Any, Any], name: str = "nature"
     ) -> None:
+        """Initializes a new BaseNature instance.
+
+        Args:
+            model: Parent model instance this nature module belongs to.
+            name: Name identifier for this module (defaults to "nature").
+        """
         CompositeModule.__init__(self, model, name=name)
         GeoSpace.__init__(self, crs=CRS)
         self._major_layer: Optional[PatchModule] = None
@@ -56,7 +65,17 @@ class BaseNature(CompositeModule, GeoSpace):
         return f"<nature ({major_layer}): {flag}>"
 
     def __getattr__(self, name: str) -> Any:
-        """委托给 major_layer 处理未找到的属性"""
+        """Delegates attribute access to major_layer when not found in BaseNature.
+
+        Args:
+            name: Name of the attribute being accessed.
+
+        Returns:
+            Value of the attribute from major_layer.
+
+        Raises:
+            AttributeError: If no major layer is set or attribute not found.
+        """
         if name.startswith("_"):
             return super().__getattribute__(name)
         if self._major_layer is None:
@@ -65,13 +84,27 @@ class BaseNature(CompositeModule, GeoSpace):
 
     @property
     def major_layer(self) -> Optional[PatchModule]:
-        """The major layer of nature module.
-        By default, it's the first created layer.
+        """Primary raster layer of the nature module.
+
+        Returns:
+            The current major layer, or None if not set.
         """
         return self._major_layer
 
     @major_layer.setter
     def major_layer(self, layer: PatchModule) -> None:
+        """Sets the major layer for this nature module.
+
+        Args:
+            layer: PatchModule instance to set as major layer.
+
+        Raises:
+            TypeError: If layer is not a PatchModule instance.
+
+        Note:
+            If the layer has a CRS different from nature's current CRS,
+            nature's CRS will be updated to match.
+        """
         if not isinstance(layer, PatchModule):
             raise TypeError(f"{layer} is not PatchModule.")
         self._major_layer = layer
@@ -91,24 +124,25 @@ class BaseNature(CompositeModule, GeoSpace):
         write_crs: bool = True,
         **kwargs: Any,
     ) -> PatchModule:
-        """Creates a submodule of the raster layer.
+        """Creates a new raster layer (PatchModule) in this nature module.
 
-        Parameters:
-            module_cls:
-                The custom module class.
-            how:
-                Class method to call when creating the new sub-module (raster layer).
-                So far, there are three options:
-                    `from_resolution`: by selecting shape and resolution.
-                    `from_file`: by input of a geo-tiff dataset.
-                    `copy_layer`: by copying shape, resolution, bounds, crs, and coordinates of an existing submodule.
-                if None (by default), just simply create a sub-module without any custom methods (i.e., use the base class `PatchModule`).
-            **kwargs:
-                Any other arg passed to the creation method.
-                See corresponding method of your how option from `PatchModule` class methods.
+        Args:
+            module_cls: Custom PatchModule subclass to instantiate. If None, uses base PatchModule.
+            how: Method to use for creating the layer. Options:
+                - "from_resolution": Create by specifying shape and resolution
+                - "from_file": Create from a geo-tiff dataset
+                - "copy_layer": Copy properties from existing layer
+                If None, creates basic module without special initialization.
+            major_layer: If True, sets created module as the major layer.
+            write_crs: If True, assigns nature's CRS to module if module's CRS is None.
+            **kwargs: Additional arguments passed to the creation method.
 
         Returns:
-            the created new module.
+            Newly created PatchModule instance.
+
+        Note:
+            The first created module automatically becomes the major layer.
+            The module is automatically added to nature's layers collection.
         """
         if self.modules.is_empty:
             major_layer = True

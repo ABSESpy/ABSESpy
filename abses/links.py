@@ -5,9 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""主体、斑块之间可以产生连接。
-
-Actor, PatchCell can be used to create links.
+"""Actor, PatchCell can be used to create links.
 """
 
 
@@ -62,7 +60,17 @@ AttrGetter: TypeAlias = Union["Link", ActorsList["Link"]]
 
 
 def get_node_unique_id(node: Any) -> UniqueID:
-    """When import actors from graph, decide the unique ID."""
+    """Gets a unique ID for a node when importing actors from graph.
+
+    Args:
+        node: The node to get unique ID for.
+
+    Returns:
+        str or int: The unique ID for the node.
+
+    Raises:
+        Warning: If using repr() for non-string/int node types.
+    """
     if not isinstance(node, (str, int)):
         logger.warning(
             f"Using repr for '{type(node)}' unique ID to create actor."
@@ -72,7 +80,13 @@ def get_node_unique_id(node: Any) -> UniqueID:
 
 
 class _LinkContainer:
-    """Container for links."""
+    """Container for managing links between nodes.
+
+    Attributes:
+        _back_links: Dictionary storing incoming links.
+        _links: Dictionary storing outgoing links.
+        _cached_networks: Dictionary storing cached network graphs.
+    """
 
     def __init__(self) -> None:
         self._back_links: Dict[str, Dict[LinkingNode, Set]] = {}
@@ -92,7 +106,21 @@ class _LinkContainer:
     def owns_links(
         self, node: LinkingNode, direction: Direction = "out"
     ) -> Tuple[str, ...]:
-        """The links a specific node owns."""
+        """Gets all link types that a specific node participates in.
+
+        Args:
+            node: The node to check links for.
+            direction: Direction of links to check:
+                - "out": outgoing links
+                - "in": incoming links
+                - None: both directions
+
+        Returns:
+            Tuple of link type names.
+
+        Raises:
+            ValueError: If direction is invalid.
+        """
         if direction == "out":
             data = self._links
         elif direction == "in":
@@ -121,15 +149,17 @@ class _LinkContainer:
     def get_graph(
         self, link_name: str, directions: bool = False
     ) -> "nx.Graph | nx.DiGraph":
-        """Get the networkx graph.
+        """Converts links of specified type to a networkx graph.
 
-        Parameters:
-            link_name:
-                The link name for converting into a graph.
+        Args:
+            link_name: The link type to convert.
+            directions: If True, returns directed graph. If False, returns undirected.
+
+        Returns:
+            A networkx Graph or DiGraph object.
 
         Raises:
-            ImportError:
-                If networkx is not installed.
+            ImportError: If networkx is not installed.
         """
         if "nx" not in globals():
             raise ImportError(
@@ -154,25 +184,20 @@ class _LinkContainer:
     def has_link(
         self, link_name: str, source: LinkingNode, target: LinkingNode
     ) -> Tuple[bool, bool]:
-        """If any link exists between source and target.
+        """Checks if links exist between source and target nodes.
 
-        Parameters:
-            link_name:
-                The name of the link.
-            source:
-                The source node.
-            target:
-                The target node.
-
-        Raises:
-            KeyError:
-                If the link name does not exist.
+        Args:
+            link_name: The link type to check.
+            source: The source node.
+            target: The target node.
 
         Returns:
-            tuple:
-                A tuple of two booleans.
-                The first element is True if the link exists from source to target.
-                The second element is True if the link exists from target to source.
+            Tuple of (has_outgoing, has_incoming) booleans where:
+                - has_outgoing: True if link exists from source to target
+                - has_incoming: True if link exists from target to source
+
+        Raises:
+            KeyError: If link_name does not exist.
         """
         if link_name not in self.links:
             raise KeyError("No link named {link_name}.")
@@ -188,17 +213,13 @@ class _LinkContainer:
         target: LinkingNode,
         mutual: bool = False,
     ) -> None:
-        """Add a link from source to target.
+        """Creates a new link between nodes.
 
-        Parameters:
-            link_name:
-                The name of the link.
-            source:
-                The source node.
-            target:
-                The target node.
-            mutual:
-                If the link is mutual.
+        Args:
+            link_name: The type of link to create.
+            source: The source node.
+            target: The target node.
+            mutual: If True, creates links in both directions.
         """
         self._register_link(link_name, source, target)
         self._links[link_name][source].add(target)
@@ -258,21 +279,18 @@ class _LinkContainer:
         link_name: Optional[str] = None,
         direction: Direction = None,
     ) -> None:
-        """Clean the links of a node.
+        """Removes all links associated with a node.
 
-        Parameters:
-            node:
-                The node to clean the links.
-            link_name:
-                The name of the link to clean.
-                If None, clean all related links for the node.
-            direction:
-                The direction of the link ('in' or 'out').
-                If None, clean both directions (both out links and in links).
+        Args:
+            node: The node to clean links for.
+            link_name: The type of links to clean. If None, cleans all types.
+            direction: Direction of links to clean:
+                - "in": incoming links
+                - "out": outgoing links
+                - None: both directions
 
         Raises:
-            ValueError:
-                If the direction is not 'in' or 'out'.
+            ValueError: If direction is invalid.
         """
         if direction == "in":
             data = self._back_links
@@ -373,7 +391,15 @@ class _LinkContainer:
 
 
 class _LinkProxy:
-    """Proxy for linking."""
+    """Proxy class for managing links on a node.
+
+    Provides convenient methods for creating, checking and removing links.
+
+    Attributes:
+        node: The node this proxy manages links for.
+        model: The main model instance.
+        human: The link container instance.
+    """
 
     def __init__(self, node: LinkingNode, model: MainModel) -> None:
         self.node: LinkingNode = node
@@ -412,7 +438,19 @@ class _LinkProxy:
         direction: Direction = "out",
         default: Any = ...,
     ) -> ActorsList[LinkingNode]:
-        """Get the linked nodes."""
+        """Gets nodes linked to this node.
+
+        Args:
+            link_name: Type of links to get. If None, gets all types.
+            direction: Direction of links to get:
+                - "out": outgoing links
+                - "in": incoming links
+                - None: both directions
+            default: Value to return if link type not found.
+
+        Returns:
+            List of linked nodes.
+        """
         agents = self.human.linked(
             self.node, link_name, direction=direction, default=default
         )
@@ -445,15 +483,12 @@ class _LinkProxy:
     def to(
         self, node: LinkingNode, link_name: str, mutual: bool = False
     ) -> None:
-        """Link to another node.
+        """Creates an outgoing link to another node.
 
-        Parameters:
-            node:
-                The node to link to.
-            link_name:
-                The name of the link.
-            mutual:
-                If the link is mutual. Defaults to False.
+        Args:
+            node: The target node to link to.
+            link_name: The type of link to create.
+            mutual: If True, creates links in both directions.
         """
         self.human.add_a_link(
             link_name=link_name, source=self.node, target=node, mutual=mutual
@@ -525,7 +560,15 @@ class _BreedDescriptor:
 
 
 class _LinkNode:
-    """节点类"""
+    """Base class for nodes that can be linked.
+
+    Provides core functionality for managing attributes and links between nodes.
+
+    Attributes:
+        unique_id: Unique identifier for the node.
+        breed: The breed/type of the node.
+        link: Proxy for managing links.
+    """
 
     unique_id: int = -1
     breed = _BreedDescriptor()
@@ -632,7 +675,22 @@ class _LinkNode:
         target: Optional[TargetName] = None,
         default: Any = ...,
     ) -> Any:
-        """Gets attribute value from target."""
+        """Gets an attribute value from this node or a target.
+
+        Args:
+            attr: Name of attribute to get.
+            target: Where to get the attribute from:
+                - None: try self first, then default target
+                - "self": get from this node only
+                - other targets: get from linked target
+            default: Value to return if attribute not found.
+
+        Returns:
+            The attribute value.
+
+        Raises:
+            AttributeError: If attribute not found and no default provided.
+        """
         if self._target_is_me(target):
             if default is ...:
                 return getattr(self, attr)
@@ -659,29 +717,21 @@ class _LinkNode:
         target: Optional[TargetName] = None,
         new: bool = False,
     ) -> None:
-        """Sets the value of an attribute.
+        """Sets an attribute value on this node or a target.
 
-        If set `new` to True, the attribute will be directly set on the current node.
-        Otherwise, the attribute will be set on the target in the following order:
-        1. If there is a specified target, set the attribute on the target.
-        2. Otherwise, if the attribute exists on the current node, set the attribute on the current node.
-        3. Otherwise, set the attribute on the default redirected target.
-
-        Parameters:
-            attr:
-                The name of the attribute to set.
-            value:
-                The value to set the attribute to.
-            target:
-                The target to set the attribute on. If None, the agent itself is the target.
-                1. If the target is an agent, set the attribute on the agent.
-                2. If the target is a cell, set the attribute on the cell.
+        Args:
+            attr: Name of attribute to set.
+            value: Value to set.
+            target: Where to set the attribute:
+                - None: try self first, then default target
+                - "self": set on this node only
+                - other targets: set on linked target
+            new: If True, allows creating new attributes.
 
         Raises:
-            TypeError:
-                If the attribute is not a string.
-            ABSESpyError:
-                If the attribute is protected.
+            AttributeError: If attribute doesn't exist and new=False.
+            TypeError: If attr is not a string.
+            ABSESpyError: If target is invalid or attribute is protected.
         """
         if self._target_is_me(target):
             self._setattr(attr, value, target="self", new=new)
