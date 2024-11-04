@@ -6,7 +6,6 @@
 # Website: https://cv.songshgeo.com/
 
 """
-行动者容器，集中保存行动者。
 Container for actors.
 """
 
@@ -164,12 +163,18 @@ class _AgentsContainer:
         return breed
 
     def _add_one(self, agent: Actor) -> None:
+        pass
+
+    def _check_full(self) -> None:
         """Add one agent to the container."""
-        if self.is_full or self.model.agents.is_full:
+        if self.is_full:
             raise ABSESpyError(f"{self} is full.")
+        if self.model.agents.is_full:
+            raise ABSESpyError(f"{self.model.agents} is full.")
 
     def add(self, agent: Actor) -> None:
         """Add one agent to the container."""
+        self._check_full()
         self._add_one(agent)
         self._agents.add(agent)
 
@@ -183,6 +188,7 @@ class _AgentsContainer:
             raise TypeError("Geometry must be a Shapely Geometry")
         if not isinstance(agent_cls, type) or not issubclass(agent_cls, Actor):
             raise TypeError(f"{agent_cls} is not a subclass of Actor.")
+        self._check_full()
         agent = agent_cls(
             model=self.model,
             geometry=geometry,
