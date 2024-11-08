@@ -9,7 +9,6 @@
 """
 from __future__ import annotations
 
-import copy
 import functools
 from pathlib import Path
 from typing import (
@@ -21,7 +20,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Set,
     Tuple,
     Type,
     Union,
@@ -38,7 +36,6 @@ from typing import TypeVar
 import geopandas as gpd
 import numpy as np
 import pyproj
-import rasterio
 import rioxarray
 import xarray as xr
 from geocube.api.core import make_geocube
@@ -47,7 +44,6 @@ from mesa.space import Coordinate
 from mesa_geo.raster_layers import RasterLayer
 from numpy.typing import NDArray
 from rasterio.enums import Resampling
-from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
 
 from abses._bases.errors import ABSESpyError
@@ -326,8 +322,6 @@ class PatchModule(Module, RasterLayer):
         Module.__init__(self, model, name=name)
         RasterLayer.__init__(self, model=model, cell_cls=cell_cls, **kwargs)
         logger.info("Initializing a new Model Layer...")
-        self._setup_cells()
-        self._attributes: Set[str] = set()
         self._mask: np.ndarray = np.ones(self.shape2d).astype(bool)
 
     def _setup_cells(self) -> None:
@@ -452,37 +446,6 @@ class PatchModule(Module, RasterLayer):
         if self.indices_out_of_bounds(pos=(row, col)):
             raise IndexError(f"Out of bounds: {row, col}")
         return self.transform * (col, row)
-
-    def to_crs(self, crs, inplace=False) -> Optional[PatchModule]:
-        """Reprojects the raster data to a new Coordinate Reference System.
-
-        Args:
-            crs: Target CRS to reproject to.
-            inplace: If True, modifies this module. If False, returns new instance.
-
-        Returns:
-            None if inplace=True, new PatchModule instance if inplace=False.
-        """
-        super()._to_crs_check(crs)
-        layer = self if inplace else copy.copy(self)
-
-        src_crs = rasterio.crs.CRS.from_user_input(layer.crs)
-        dst_crs = rasterio.crs.CRS.from_user_input(crs)
-        if not layer.crs.is_exact_same(crs):
-            transform, _, _ = calculate_default_transform(
-                src_crs,
-                dst_crs,
-                self.width,
-                self.height,
-                *layer.total_bounds,
-            )
-            layer.total_bounds = [
-                *transform_bounds(src_crs, dst_crs, *layer.total_bounds)
-            ]
-            layer.crs = crs
-            setattr(layer, "_transform", transform)
-
-        return None if inplace else layer
 
     def _attr_or_array(
         self, data: None | str | np.ndarray | xr.DataArray

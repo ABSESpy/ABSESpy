@@ -7,8 +7,6 @@
 
 """
 In `ABSESpy`, agents are also known as 'Actors'.
-
-在 abses 中，主体也叫做 Actor（行动者）。
 """
 
 from __future__ import annotations

@@ -22,7 +22,6 @@ from abses.container import _CellAgentsContainer
 from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:
-    from abses.main import MainModel
     from abses.nature import PatchModule
     from abses.sequences import ActorsList
 

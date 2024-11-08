@@ -121,7 +121,7 @@ class TestRandomActorsList:
     @pytest.mark.parametrize(
         "p, expected",
         [
-            ([0.5, 0.1], 0),
+            ([0.99, -1], 0),
             ([np.nan, 1], 1),
         ],
         ids=[
