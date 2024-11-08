@@ -7,8 +7,6 @@
 
 """
 In `ABSESpy`, agents are also known as 'Actors'.
-
-在 abses 中，主体也叫做 Actor（行动者）。
 """
 
 from __future__ import annotations
@@ -19,8 +17,10 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    List,
     Literal,
     Optional,
+    Tuple,
     Union,
     cast,
 )
@@ -38,25 +38,30 @@ from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
 from abses.decision import _DecisionFactory
 from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
-from abses.move import _Movements
 from abses.tools.func import make_list
 
 if TYPE_CHECKING:
-    from abses._bases.base_container import UniqueID
-    from abses.cells import Pos
+    from abses.cells import PatchCell, Pos
     from abses.main import MainModel
-    from abses.nature import PatchCell, PatchModule
+    from abses.move import _Movements
+    from abses.nature import PatchModule
 
 
 Selection: TypeAlias = Union[str, Iterable[bool]]
 Trigger: TypeAlias = Union[Callable, str]
-Breeds: TypeAlias = Optional[Union[str, Iterable[str]]]
+Breeds: TypeAlias = Union[str, List[str], Tuple[str]]
 GeoType: TypeAlias = Literal["Point", "Shape"]
 
 
 def alive_required(method):
     """
     A decorator that only executes the method when the object's alive attribute is True.
+
+    Args:
+        method: The method to decorate.
+
+    Returns:
+        The decorated method that only executes when alive is True.
     """
 
     @wraps(method)
@@ -67,15 +72,19 @@ def alive_required(method):
 
 
 def perception_result(name, result, nodata: Any = 0.0) -> Any:
-    """clean the result of a perception.
+    """
+    Clean the result of a perception.
 
-    Parameters:
-        name:
-            The name of the perception.
-        result:
-            The result of the perception.
-        nodata:
-            The value to return if the result is None.
+    Args:
+        name: The name of the perception.
+        result: The result of the perception.
+        nodata: The value to return if the result is None.
+
+    Returns:
+        The cleaned perception result.
+
+    Raises:
+        ValueError: If the result is iterable.
     """
     if hasattr(result, "__iter__"):
         raise ValueError(
@@ -89,13 +98,12 @@ def perception(
     *,
     nodata: Optional[Any] = None,
 ) -> Callable[..., Any]:
-    """Change the decorated function into a perception attribute.
+    """
+    Change the decorated function into a perception attribute.
 
-    Parameters:
-        decorated_func:
-            The decorated function.
-        nodata:
-            The value to return if the result is None.
+    Args:
+        decorated_func: The decorated function.
+        nodata: The value to return if the result is None.
 
     Returns:
         The decorated perception attribute or a decorator.
@@ -122,22 +130,14 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     An actor in a social-ecological system (or "Agent" in an agent-based model.)
 
     Attributes:
-        breed:
-            The breed of this actor (by default, class name).
-        layer:
-            The layer where the actor is located.
-        indices:
-            The indices of the cell where the actor is located.
-        pos:
-            The position of the cell where the actor is located.
-        on_earth:
-            Whether the actor is standing on a cell.
-        at:
-            The cell where the actor is located.
-        link:
-            The link manipulating proxy.
-        move:
-            The movement manipulating proxy.
+        breed: The breed of this actor (by default, class name).
+        layer: The layer where the actor is located.
+        indices: The indices of the cell where the actor is located.
+        pos: The position of the cell where the actor is located.
+        on_earth: Whether the actor is standing on a cell.
+        at: The cell where the actor is located.
+        link: The link manipulating proxy.
+        move: The movement manipulating proxy.
 
     Methods:
         get:
@@ -155,15 +155,12 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self,
         model: MainModel[Any, Any],
         observer: bool = True,
-        unique_id: Optional[UniqueID] = None,
         **kwargs,
     ) -> None:
         _BaseObj.__init__(self, model, observer=observer)
         crs = kwargs.pop("crs", model.nature.crs)
         geometry = kwargs.pop("geometry", None)
-        mg.GeoAgent.__init__(
-            self, unique_id, model=model, geometry=geometry, crs=crs
-        )
+        mg.GeoAgent.__init__(self, model=model, geometry=geometry, crs=crs)
         _LinkNodeActor.__init__(self)
         self._cell: Optional[PatchCell] = None
         self._decisions: _DecisionFactory = self._setup_decisions()
@@ -191,7 +188,9 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @property
     def geometry(self) -> Optional[BaseGeometry]:
         """The geometry of the actor."""
-        return Point(self.at.coordinate) if self.at else self._geometry
+        if self._cell is not None:
+            return Point(self._cell.coordinate)
+        return self._geometry
 
     @geometry.setter
     def geometry(self, value: Optional[BaseGeometry]) -> None:
@@ -242,22 +241,25 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @at.deleter
     def at(self) -> None:
         """Remove the agent from the located cell."""
-        cell = cast("PatchCell", self.at)
-        if self.on_earth and cell.agents is not None and self in cell.agents:
-            raise ABSESpyError(
-                "Cannot remove location directly because the actor is still on earth."
-            )
         self._cell = None
 
     @property
     def pos(self) -> Optional[Pos]:
         """Position of the actor."""
-        return None if self.at is None else self.at.indices
+        return None if self.at is None else self.at.pos
 
     @pos.setter
     def pos(self, value) -> None:
         if value is not None:
-            raise TypeError("Trying to set position.")
+            raise ABSESpyError(
+                "Set position is not allowed."
+                "Please use `move.to()` to move the actor to a cell."
+            )
+
+    @property
+    def indices(self) -> Optional[Pos]:
+        """Indices of the actor."""
+        return None if self.at is None else self.at.indices
 
     @cached_property
     def move(self) -> _Movements:
@@ -268,6 +270,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         3. `move.by()`: moves the actor by a distance.
         4. `move.random()`: moves the actor to a random cell.
         """
+        from abses.move import _Movements
+
         return _Movements(self)
 
     @alive_required
@@ -280,48 +284,47 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self,
         attr: str,
         target: Optional[TargetName] = None,
+        default: Any = ...,
     ) -> Any:
-        """Gets attribute value from target.
+        """
+        Gets attribute value from target.
 
-        Parameters:
-            attr:
-                The name of the attribute to get.
-            target:
-                The target to get the attribute from.
+        Args:
+            attr: The name of the attribute to get.
+            target: The target to get the attribute from.
                 If None, the agent itself is the target.
                 If the target is an agent, get the attribute from the agent.
                 If the target is a cell, get the attribute from the cell.
+            default: Default value if attribute not found.
 
         Returns:
             The value of the attribute.
         """
         if attr in self.dynamic_variables:
             return self.dynamic_var(attr)
-        return super().get(attr=attr, target=target)
+        return super().get(attr=attr, target=target, default=default)
 
     @alive_required
-    def set(
-        self, attr: str, value: Any, target: Optional[TargetName] = None
-    ) -> None:
-        """Sets the value of an attribute.
+    def set(self, *args, **kwargs) -> None:
+        """
+        Sets the value of an attribute.
 
-        Parameters:
-            attr:
-                The name of the attribute to set.
-            value:
-                The value to set the attribute to.
-            target:
-                The target to set the attribute on. If None, the agent itself is the target.
+        Args:
+            attr: The name of the attribute to set.
+            value: The value to set the attribute to.
+            target: The target to set the attribute on. If None, the agent itself is the target.
                 1. If the target is an agent, set the attribute on the agent.
                 2. If the target is a cell, set the attribute on the cell.
 
         Raises:
-            TypeError:
-                If the attribute is not a string.
-            ABSESpyError:
-                If the attribute is protected.
+            TypeError: If the attribute is not a string.
+            ABSESpyError: If the attribute is protected.
         """
-        super().set(attr=attr, value=value, target=target)
+        super().set(*args, **kwargs)
+
+    def remove(self) -> None:
+        """Remove the actor from the model."""
+        self.die()
 
     @alive_required
     def die(self) -> None:
@@ -329,7 +332,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         self.link.clean()  # 从链接中移除
         if self.on_earth:  # 如果在地上，那么从地块上移除
             self.move.off()
-        self.model.agents.remove(self)  # 从总模型里移除
+        super().remove()  # 从总模型里移除
         self._alive = False  # 设置为死亡状态
         del self
 
@@ -343,7 +346,13 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         """
 
     def moving(self, cell: PatchCell) -> Optional[bool]:
-        """Overwrite this method.
-        It should be called when the actor is moved.
-        The return value is whether the actor can move to the cell.
+        """
+        Called when the actor is about to move.
+
+        Args:
+            cell: The target cell to move to.
+
+        Returns:
+            Optional boolean indicating whether the actor can move to the cell.
+            If None, the move is allowed by default.
         """

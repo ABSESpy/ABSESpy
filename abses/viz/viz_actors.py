@@ -61,15 +61,16 @@ class _VizNodeList:
     def _style_dict(self, request: str, default: Any, **kwargs) -> StyleDict:
         styles = {}
         for breed in self.actors.to_dict().keys():
+            # TODO: 这里需要改成 agent_types
             breed_cls = self.model.breeds[breed]
             style_dict = breed_cls.viz_attrs(render_marker=True, **kwargs)
             styles[breed] = style_dict.get(request, default)
         return styles
 
     @with_axes
-    def show(self, ax: Optional[Axes] = None) -> Axes:
+    def show(self, ax: Optional[Axes] = None, **kwargs) -> Axes:
         """Show all the actors with geometry attributes."""
-        self.display(ax=ax)
+        self.display(ax=ax, **kwargs)
         self.positions(ax=ax)
         return ax
 

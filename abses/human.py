@@ -7,7 +7,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Set,
+    Type,
+    Union,
+)
 
 try:
     from typing import TypeAlias
@@ -43,7 +52,7 @@ class HumanModule(Module):
 
     def __init__(self, model: MainModel[Any, Any], name: Optional[str] = None):
         Module.__init__(self, model, name)
-        self._collections: Dict[str, Selection] = {}
+        self._refers: Dict[str, Dict[str, Any]] = {}
 
     @property
     def agents(self) -> _AgentsContainer:
@@ -53,30 +62,22 @@ class HumanModule(Module):
     @property
     def collections(self) -> Set[str]:
         """Actor collections defined."""
-        return set(self._collections.keys())
+        return set(self._refers.keys())
 
     def actors(self, name: Optional[str] = None) -> ActorsList[Actor]:
         """Different selections of agents"""
         if name is None:
-            return self.agents.get()
-        if name not in self._collections:
+            return ActorsList(model=self.model, objs=self.agents)
+        if name not in self._refers:
             raise KeyError(f"{name} is not defined.")
-        selection = self._collections[name]
-        return self.actors().select(selection)
+        selection = self._refers[name]
+        return self.agents.select(**selection)
 
-    def _must_be_actor(self, actor: Actor) -> None:
-        if not isinstance(actor, Actor):
-            raise TypeError(
-                f"Actor must be a subclass of Actor, instead of {type(actor)}."
-            )
-
-    def _must_be_cell(self, cell: PatchCell) -> None:
-        if not isinstance(cell, PatchCell):
-            raise TypeError(
-                f"Cell must be a subclass of Cell, instead of {type(cell)}."
-            )
-
-    def define(self, name: str, selection: Selection) -> ActorsList[Actor]:
+    def define(
+        self,
+        refer_name: str,
+        **kwargs,
+    ) -> ActorsList[Actor]:
         """Define a query of actors and save it into collections.
 
         Parameters:
@@ -107,10 +108,10 @@ class HumanModule(Module):
             >>> True
             ```
         """
-        if name in self._collections:
-            raise KeyError(f"{name} is already defined.")
-        selected = self.actors().select(selection)
-        self._collections[name] = selection
+        if refer_name in self._refers:
+            raise KeyError(f"{refer_name} is already defined.")
+        selected = self.agents.select(**kwargs)
+        self._refers[refer_name] = kwargs.copy()
         return selected
 
 

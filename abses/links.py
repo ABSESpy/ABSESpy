@@ -5,9 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""主体、斑块之间可以产生连接。
-
-Actor, PatchCell can be used to create links.
+"""Actor, PatchCell can be used to create links.
 """
 
 
@@ -56,13 +54,23 @@ if TYPE_CHECKING:
 
 LinkingNode: TypeAlias = "Actor | PatchCell"
 Direction: TypeAlias = Optional[Literal["in", "out"]]
-DEFAULT_TARGETS: Tuple[str, str] = ("cell", "actor")
+__built_in_targets__: Tuple[str, str] = ("cell", "actor")
 TargetName: TypeAlias = Union[Literal["cell", "actor", "self"], str]
 AttrGetter: TypeAlias = Union["Link", ActorsList["Link"]]
 
 
 def get_node_unique_id(node: Any) -> UniqueID:
-    """When import actors from graph, decide the unique ID."""
+    """Gets a unique ID for a node when importing actors from graph.
+
+    Args:
+        node: The node to get unique ID for.
+
+    Returns:
+        str or int: The unique ID for the node.
+
+    Raises:
+        Warning: If using repr() for non-string/int node types.
+    """
     if not isinstance(node, (str, int)):
         logger.warning(
             f"Using repr for '{type(node)}' unique ID to create actor."
@@ -72,7 +80,13 @@ def get_node_unique_id(node: Any) -> UniqueID:
 
 
 class _LinkContainer:
-    """Container for links."""
+    """Container for managing links between nodes.
+
+    Attributes:
+        _back_links: Dictionary storing incoming links.
+        _links: Dictionary storing outgoing links.
+        _cached_networks: Dictionary storing cached network graphs.
+    """
 
     def __init__(self) -> None:
         self._back_links: Dict[str, Dict[LinkingNode, Set]] = {}
@@ -92,7 +106,21 @@ class _LinkContainer:
     def owns_links(
         self, node: LinkingNode, direction: Direction = "out"
     ) -> Tuple[str, ...]:
-        """The links a specific node owns."""
+        """Gets all link types that a specific node participates in.
+
+        Args:
+            node: The node to check links for.
+            direction: Direction of links to check:
+                - "out": outgoing links
+                - "in": incoming links
+                - None: both directions
+
+        Returns:
+            Tuple of link type names.
+
+        Raises:
+            ValueError: If direction is invalid.
+        """
         if direction == "out":
             data = self._links
         elif direction == "in":
@@ -121,15 +149,17 @@ class _LinkContainer:
     def get_graph(
         self, link_name: str, directions: bool = False
     ) -> "nx.Graph | nx.DiGraph":
-        """Get the networkx graph.
+        """Converts links of specified type to a networkx graph.
 
-        Parameters:
-            link_name:
-                The link name for converting into a graph.
+        Args:
+            link_name: The link type to convert.
+            directions: If True, returns directed graph. If False, returns undirected.
+
+        Returns:
+            A networkx Graph or DiGraph object.
 
         Raises:
-            ImportError:
-                If networkx is not installed.
+            ImportError: If networkx is not installed.
         """
         if "nx" not in globals():
             raise ImportError(
@@ -154,25 +184,20 @@ class _LinkContainer:
     def has_link(
         self, link_name: str, source: LinkingNode, target: LinkingNode
     ) -> Tuple[bool, bool]:
-        """If any link exists between source and target.
+        """Checks if links exist between source and target nodes.
 
-        Parameters:
-            link_name:
-                The name of the link.
-            source:
-                The source node.
-            target:
-                The target node.
-
-        Raises:
-            KeyError:
-                If the link name does not exist.
+        Args:
+            link_name: The link type to check.
+            source: The source node.
+            target: The target node.
 
         Returns:
-            tuple:
-                A tuple of two booleans.
-                The first element is True if the link exists from source to target.
-                The second element is True if the link exists from target to source.
+            Tuple of (has_outgoing, has_incoming) booleans where:
+                - has_outgoing: True if link exists from source to target
+                - has_incoming: True if link exists from target to source
+
+        Raises:
+            KeyError: If link_name does not exist.
         """
         if link_name not in self.links:
             raise KeyError("No link named {link_name}.")
@@ -188,17 +213,13 @@ class _LinkContainer:
         target: LinkingNode,
         mutual: bool = False,
     ) -> None:
-        """Add a link from source to target.
+        """Creates a new link between nodes.
 
-        Parameters:
-            link_name:
-                The name of the link.
-            source:
-                The source node.
-            target:
-                The target node.
-            mutual:
-                If the link is mutual.
+        Args:
+            link_name: The type of link to create.
+            source: The source node.
+            target: The target node.
+            mutual: If True, creates links in both directions.
         """
         self._register_link(link_name, source, target)
         self._links[link_name][source].add(target)
@@ -258,21 +279,18 @@ class _LinkContainer:
         link_name: Optional[str] = None,
         direction: Direction = None,
     ) -> None:
-        """Clean the links of a node.
+        """Removes all links associated with a node.
 
-        Parameters:
-            node:
-                The node to clean the links.
-            link_name:
-                The name of the link to clean.
-                If None, clean all related links for the node.
-            direction:
-                The direction of the link ('in' or 'out').
-                If None, clean both directions (both out links and in links).
+        Args:
+            node: The node to clean links for.
+            link_name: The type of links to clean. If None, cleans all types.
+            direction: Direction of links to clean:
+                - "in": incoming links
+                - "out": outgoing links
+                - None: both directions
 
         Raises:
-            ValueError:
-                If the direction is not 'in' or 'out'.
+            ValueError: If direction is invalid.
         """
         if direction == "in":
             data = self._back_links
@@ -298,7 +316,7 @@ class _LinkContainer:
         node: LinkingNode,
         link_name: Optional[str] = None,
         direction: Direction = None,
-        default: bool = False,
+        default: Any = ...,
     ) -> Set[LinkingNode]:
         """Get the linked nodes.
 
@@ -331,7 +349,7 @@ class _LinkContainer:
             raise ValueError(f"Invalid direction {direction}")
         agents: Set[LinkingNode] = set()
         for name in link_names:
-            if name not in data and default:
+            if name not in data and default is not ...:
                 continue
             agents = agents.union(data[name].get(node, set()))
         return agents
@@ -373,7 +391,15 @@ class _LinkContainer:
 
 
 class _LinkProxy:
-    """Proxy for linking."""
+    """Proxy class for managing links on a node.
+
+    Provides convenient methods for creating, checking and removing links.
+
+    Attributes:
+        node: The node this proxy manages links for.
+        model: The main model instance.
+        human: The link container instance.
+    """
 
     def __init__(self, node: LinkingNode, model: MainModel) -> None:
         self.node: LinkingNode = node
@@ -410,9 +436,21 @@ class _LinkProxy:
         self,
         link_name: Optional[str] = None,
         direction: Direction = "out",
-        default: bool = False,
+        default: Any = ...,
     ) -> ActorsList[LinkingNode]:
-        """Get the linked nodes."""
+        """Gets nodes linked to this node.
+
+        Args:
+            link_name: Type of links to get. If None, gets all types.
+            direction: Direction of links to get:
+                - "out": outgoing links
+                - "in": incoming links
+                - None: both directions
+            default: Value to return if link type not found.
+
+        Returns:
+            List of linked nodes.
+        """
         agents = self.human.linked(
             self.node, link_name, direction=direction, default=default
         )
@@ -445,15 +483,12 @@ class _LinkProxy:
     def to(
         self, node: LinkingNode, link_name: str, mutual: bool = False
     ) -> None:
-        """Link to another node.
+        """Creates an outgoing link to another node.
 
-        Parameters:
-            node:
-                The node to link to.
-            link_name:
-                The name of the link.
-            mutual:
-                If the link is mutual. Defaults to False.
+        Args:
+            node: The target node to link to.
+            link_name: The type of link to create.
+            mutual: If True, creates links in both directions.
         """
         self.human.add_a_link(
             link_name=link_name, source=self.node, target=node, mutual=mutual
@@ -525,14 +560,22 @@ class _BreedDescriptor:
 
 
 class _LinkNode:
-    """节点类"""
+    """Base class for nodes that can be linked.
+
+    Provides core functionality for managing attributes and links between nodes.
+
+    Attributes:
+        unique_id: Unique identifier for the node.
+        breed: The breed/type of the node.
+        link: Proxy for managing links.
+    """
 
     unique_id: int = -1
     breed = _BreedDescriptor()
 
     @abstractmethod
-    def _default_redirection(self, target: Optional[TargetName]) -> AttrGetter:
-        """默认重定向"""
+    def _target_is_me(self, target: Optional[TargetName]) -> bool:
+        """Check if the target is me."""
 
     @classmethod
     def viz_attrs(
@@ -559,89 +602,158 @@ class _LinkNode:
         """
         return _LinkProxy(cast(LinkingNode, self), getattr(self, "model"))
 
-    def _redirect_getting(self, target: Optional[TargetName]) -> AttrGetter:
-        """Which targets should be used when getting or setting."""
-        # If the target is not None, get the default target.
-        if target is None or target in DEFAULT_TARGETS:
-            return self._default_redirection(target)
-        if target in self.link:
-            return self.link.get(link_name=target)
+    def has(self, attr: str, raise_error: bool = False) -> bool:
+        """Check if the attribute exists in the current node.
+
+        Args:
+            attr:
+                The name of the attribute to check.
+            raise_error:
+                If True, raise an error if the attribute does not exist.
+
+        Returns:
+            bool:
+                True if the attribute exists, False otherwise.
+        """
+        # If the attribute is not a string, raise an error.
+        if not isinstance(attr, str):
+            raise TypeError(f"The attribute to check {attr} is not string.")
+        if attr.startswith("_"):
+            # protected attribute
+            flag = False
+        else:
+            flag = hasattr(self, attr)
+        if flag:
+            return True
+        if raise_error:
+            raise AttributeError(f"'{self}' doesn't have attribute '{attr}'.")
+        return False
+
+    def _redirect(self, target: Optional[TargetName]) -> _LinkNode:
+        """Redirect the target.
+
+        Args:
+            target:
+                The target to redirect to.
+
+        Returns:
+            The redirected target.
+        """
+        if self._target_is_me(target):
+            return self
+        if isinstance(target, str) and any(self.link.has(link_name=target)):
+            return cast(LinkingNode, self.link.get(link_name=target))
         raise ABSESpyError(f"Unknown target {target}.")
+
+    def _setattr(
+        self,
+        attr: str,
+        value: Any,
+        target: Optional[TargetName],
+        new: bool = False,
+    ) -> None:
+        """Set the attribute on the current node."""
+        if attr.startswith("_"):
+            raise AttributeError(f"Attribute '{attr}' is protected.")
+        if new:
+            setattr(self, attr, value)
+            return
+        if not self.has(attr):
+            raise AttributeError(
+                f"Attribute '{attr}' not found in {self}, please set 'new=True' to create a new attribute."
+            )
+        if self._target_is_me(target):
+            setattr(self, attr, value)
+            return
+        raise ABSESpyError(
+            f"The target '{target}' is not 'self' set when '{self}' already has attr '{attr}'."
+        )
 
     def get(
         self,
         attr: str,
         target: Optional[TargetName] = None,
+        default: Any = ...,
     ) -> Any:
-        """Gets attribute value from target.
+        """Gets an attribute value from this node or a target.
 
-        Parameters:
-            attr:
-                The name of the attribute to get.
-            target:
-                The target to get the attribute from.
-                If None, the agent itself is the target.
-                If the target is an agent, get the attribute from the agent.
-                If the target is a cell, get the attribute from the cell.
+        Args:
+            attr: Name of attribute to get.
+            target: Where to get the attribute from:
+                - None: try self first, then default target
+                - "self": get from this node only
+                - other targets: get from linked target
+            default: Value to return if attribute not found.
 
         Returns:
-            The value of the attribute.
-        """
-        if target in DEFAULT_TARGETS:
-            return self._default_redirection(target).get(attr, "self")
-        if target == "self":
-            return getattr(self, attr)
-        if hasattr(self, attr):
-            assert (
-                target is None
-            ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
-            return getattr(self, attr)
-        return self._redirect_getting(target=target).get(attr, "self")
-
-    def set(
-        self, attr: str, value: Any, target: Optional[TargetName] = None
-    ) -> None:
-        """Sets the value of an attribute.
-
-        Parameters:
-            attr:
-                The name of the attribute to set.
-            value:
-                The value to set the attribute to.
-            target:
-                The target to set the attribute on. If None, the agent itself is the target.
-                1. If the target is an agent, set the attribute on the agent.
-                2. If the target is a cell, set the attribute on the cell.
+            The attribute value.
 
         Raises:
-            TypeError:
-                If the attribute is not a string.
-            ABSESpyError:
-                If the attribute is protected.
+            AttributeError: If attribute not found and no default provided.
         """
-        # If the attribute is not a string, raise an error.
-        if not isinstance(attr, str):
-            raise TypeError("The attribute must be a string.")
-        # If the attribute is protected, raise an error
-        if attr.startswith("_"):
-            raise ABSESpyError(f"Attribute '{attr}' is protected.")
-        if target in DEFAULT_TARGETS:
-            self._default_redirection(target).set(attr, value, "self")
+        if self._target_is_me(target):
+            if default is ...:
+                return getattr(self, attr)
+            return getattr(self, attr, default)
+        if target is not None:
+            target_obj = self._redirect(target=target)
+            return target_obj.get(attr, target="self", default=default)
+        if self.has(attr, raise_error=False):
+            return getattr(self, attr)
+        if default is not ...:
+            return default
+        target_obj = self._redirect(target=target)
+        try:
+            return target_obj.get(attr=attr, target="self", default=default)
+        except AttributeError as exc:
+            raise AttributeError(
+                f"Neither {self} nor {target_obj} has attribute {attr}."
+            ) from exc
+
+    def set(
+        self,
+        attr: str,
+        value: Any,
+        target: Optional[TargetName] = None,
+        new: bool = False,
+    ) -> None:
+        """Sets an attribute value on this node or a target.
+
+        Args:
+            attr: Name of attribute to set.
+            value: Value to set.
+            target: Where to set the attribute:
+                - None: try self first, then default target
+                - "self": set on this node only
+                - other targets: set on linked target
+            new: If True, allows creating new attributes.
+
+        Raises:
+            AttributeError: If attribute doesn't exist and new=False.
+            TypeError: If attr is not a string.
+            ABSESpyError: If target is invalid or attribute is protected.
+        """
+        if self._target_is_me(target):
+            self._setattr(attr, value, target="self", new=new)
             return
-        if target == "self":
-            if not hasattr(self, attr):
-                raise AttributeError(f"{self} has no attribute '{attr}'.")
-            setattr(self, attr, value)
+        if target is None and new:
+            self._setattr(attr, value, target="self", new=new)
             return
-        # Set the attribute on the target.
-        if hasattr(self, attr):
-            assert (
-                target is None
-            ), f"The target '{target}' is set when '{self}' already has attr '{attr}'."
-            setattr(self, attr, value)
-        else:
-            new_target = self._redirect_getting(target=target)
-            new_target.set(attr, value, "self")
+        if target is not None:
+            self._redirect(target=target).set(
+                attr, value, target="self", new=new
+            )
+            return
+        if self.has(attr):
+            self._setattr(attr, value, target="self")
+            return
+        target_obj = self._redirect(target="self")
+        if hasattr(target_obj, attr):
+            target_obj.set(attr, value, target="self", new=new)
+            return
+        raise AttributeError(
+            f"Neither {self} nor {target_obj} has attribute '{attr}'."
+        )
 
     def summary(
         self,
@@ -665,18 +777,38 @@ class _LinkNode:
 
 
 class _LinkNodeCell(_LinkNode):
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> _CellAgentsContainer | _LinkNodeCell:
-        if target == "cell":
-            return self
-        return cast(_CellAgentsContainer, getattr(self, "agents"))
+    """PatchCell"""
+
+    _default_redirect_target = "actor"
+
+    def _target_is_me(self, target: Optional[TargetName]) -> bool:
+        """Check if the target is me."""
+        return target in ("self", "cell")
+
+    def _redirect(self, target: Optional[TargetName]) -> _LinkNode:
+        """By default, redirect to the agents list of this cell."""
+        if target == self._default_redirect_target or target is None:
+            return self.get("agents", target="self")
+        return super()._redirect(target)
 
 
 class _LinkNodeActor(_LinkNode):
-    def _default_redirection(
-        self, target: Optional[TargetName]
-    ) -> _LinkNodeActor | Optional[_LinkNodeCell]:
-        if target == "actor":
-            return self
-        return cast(Optional[_LinkNodeCell], getattr(self, "at"))
+    _default_redirect_target = "cell"
+
+    def _target_is_me(self, target: Optional[TargetName]) -> bool:
+        """Check if the target is me."""
+        return target in ("self", "actor")
+
+    def _redirect(self, target: Optional[TargetName]) -> _LinkNode:
+        """Redirect the target.
+
+        Args:
+            target:
+                The target to redirect to.
+
+        Returns:
+            The redirected target.
+        """
+        if target == self._default_redirect_target or target is None:
+            return self.get("at", target="self")
+        return super()._redirect(target)

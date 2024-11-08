@@ -22,7 +22,6 @@ from abses.container import _CellAgentsContainer
 from abses.links import TargetName, _LinkNodeCell
 
 if TYPE_CHECKING:
-    from abses.main import MainModel
     from abses.nature import PatchModule
     from abses.sequences import ActorsList
 
@@ -84,10 +83,16 @@ class PatchCell(_LinkNodeCell, _BaseObj):
 
     max_agents: Optional[int] = None
 
-    def __init__(self, layer, indices: Pos):
+    def __init__(
+        self,
+        layer: PatchModule,
+        indices: Pos,
+        pos: Optional[Pos] = None,
+    ):
         _BaseObj.__init__(self, model=layer.model, observer=True)
         _LinkNodeCell.__init__(self)
         self.indices = indices
+        self.pos = pos
         self._set_layer(layer=layer)
 
     def __repr__(self) -> str:
@@ -131,11 +136,12 @@ class PatchCell(_LinkNodeCell, _BaseObj):
     @property
     def geo_type(self) -> str:
         """Return the geo_type"""
+        # TODO: 返回地理类型，可以是 Geometry 或 Raster
         return "Cell"
 
     @property
     def crs(self) -> Optional[CRS]:
-        """Return the crs of this cell."""
+        """The crs of this cell, the same as the layer."""
         return self.layer.crs
 
     def _set_layer(self, layer: PatchModule) -> None:
@@ -143,32 +149,34 @@ class PatchCell(_LinkNodeCell, _BaseObj):
             raise TypeError(f"{type(layer)} is not valid layer.")
         # set layer property
         self._layer = layer
-        # set layer's model as the model
-        self.model: MainModel[Any, Any] = layer.model
         # set agents container
         self._agents = _CellAgentsContainer(
             layer.model, cell=self, max_len=getattr(self, "max_agents", None)
         )
 
-    def get(self, attr: str, target: Optional[TargetName] = None) -> Any:
+    def get(
+        self,
+        attr: str,
+        target: Optional[TargetName] = None,
+        default: Any = None,
+    ) -> Any:
         """Gets the value of an attribute or registered property.
         Automatically update the value if it is the dynamic variable of the layer.
 
         Parameters:
-            attr:
-                The name of attribute to get.
+            attr: The name of attribute to get.
+            target: Optional target name.
+            default: Default value if attribute is not found.
 
         Returns:
-            Any:
-                The value of the attribute.
+            Any: The value of the attribute.
 
         Raises:
-            AttributeError:
-                Attribute value of the associated patch cell.
+            AttributeError: Attribute value of the associated patch cell.
         """
         if attr in self.layer.dynamic_variables:
             self.layer.dynamic_var(attr_name=attr)
-        return super().get(attr=attr, target=target)
+        return super().get(attr=attr, target=target, default=default)
 
     def neighboring(
         self,
@@ -176,9 +184,19 @@ class PatchCell(_LinkNodeCell, _BaseObj):
         radius: int = 1,
         include_center: bool = False,
         annular: bool = False,
-    ) -> ActorsList[_LinkNodeCell]:
-        """Get the grid around the patch."""
-        return self.layer.get_neighborhood(
+    ) -> ActorsList[PatchCell]:
+        """Get the grid around the patch.
+
+        Parameters:
+            moore: Whether to include the Moore neighborhood.
+            radius: The radius of the neighborhood.
+            include_center: Whether to include the center cell.
+            annular: Whether to use an annular neighborhood.
+
+        Returns:
+            ActorsList[PatchCell]: The neighboring cells.
+        """
+        return self.layer.get_neighboring_by_indices(
             self.indices,
             moore=moore,
             radius=radius,

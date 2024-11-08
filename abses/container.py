@@ -6,21 +6,22 @@
 # Website: https://cv.songshgeo.com/
 
 """
-行动者容器，集中保存行动者。
 Container for actors.
 """
 
 from __future__ import annotations
 
 import contextlib
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     Iterable,
+    Iterator,
     List,
     Optional,
-    Tuple,
     Type,
     Union,
     cast,
@@ -34,15 +35,18 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 import geopandas as gpd
+import pyproj
 from loguru import logger
+from mesa import Model
+from mesa.agent import AgentSet
 from shapely.geometry.base import BaseGeometry
 
-from abses._bases.base_container import _AgentsContainer
 from abses._bases.errors import ABSESpyError
-from abses.actor import Actor
+from abses.actor import Actor, Breeds
 from abses.links import get_node_unique_id
+from abses.random import ListRandom
 from abses.sequences import ActorsList
-from abses.tools.func import IncludeFlag, clean_attrs, make_list
+from abses.tools.func import IncludeFlag, clean_attrs
 
 if TYPE_CHECKING:
     from abses.cells import PatchCell
@@ -54,108 +58,170 @@ UniqueID: TypeAlias = Union[str, int]
 UniqueIDs: TypeAlias = List[Optional[UniqueID]]
 
 
-class _ModelAgentsContainer(_AgentsContainer):
-    """AgentsContainer for the MainModel."""
+class _AgentsContainer:
+    """AgentsContainer for the main model."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._unique_ids: Dict[str, int] = {}
+    def __init__(
+        self,
+        model: MainModel[Any, Any],
+        max_len: None | int = None,
+    ):
+        if not isinstance(model, Model):
+            raise TypeError(f"{model} is not a Mesa Model.")
+        self._model: MainModel = model
+        self._agents = model._all_agents
+        self._max_length = max_len
 
-    def _check_unique_id(
-        self, unique_id: Optional[UniqueID], breed: str
-    ) -> UniqueID:
-        if unique_id is None:
-            unique_id = f"{breed}[{self._unique_ids[breed]}]"
-            self._unique_ids[breed] += 1
-        if not isinstance(unique_id, (int, str)):
-            raise ABSESpyError(
-                f"Unique ID should be an integer or string, got {type(unique_id)}."
+    def __len__(self) -> int:
+        return len(self._agents)
+
+    def __str__(self) -> str:
+        return f"<Handling [{len(self)}]Agents for {self.model.name}>"
+
+    def __contains__(self, actor: object) -> bool:
+        return actor in self._agents
+
+    def __iter__(self) -> Iterator[Actor]:
+        return iter(self._agents)
+
+    def __getitem__(self, breeds: Optional[Breeds]) -> ActorsList[Actor]:
+        """Get agents by breed(s).
+
+        Args:
+            breeds: Single breed (str or Type) or list of breeds to retrieve
+
+        Returns:
+            AgentSet containing all agents of the specified breed(s)
+
+        Example:
+            container['Breed1']  # by string name
+            container[Breed1]    # by class type
+            container[['Breed1', 'Breed2']]  # multiple breeds by name
+            container[[Breed1, Breed2]]      # multiple breeds by type
+        """
+        if isinstance(breeds, (list, tuple)):
+            # 对多个 breeds 进行合并
+            agents = []
+            for breed in breeds:
+                breed_type = self._get_breed_type(breed)
+                agents.extend(self._model.agents_by_type[breed_type])
+            return ActorsList(model=self.model, objs=agents)
+
+        # 单个 breed 的情况
+        if not isinstance(breeds, (str, type)):
+            raise TypeError(f"{breeds} is not a string or a type.")
+        breed_type = self._get_breed_type(breeds)
+        try:
+            return ActorsList(
+                model=self.model, objs=self._model.agents_by_type[breed_type]
             )
-        if unique_id in set(self.get().array("unique_id")):
-            raise ABSESpyError(f"Unique ID {unique_id} already exists.")
-        return unique_id
+        except KeyError:
+            return ActorsList(model=self.model, objs=[])
 
-    def _check_crs(self, gdf: gpd.GeoDataFrame) -> bool:
-        if gdf.crs:
-            gdf.to_crs(self.crs, inplace=True)
-        else:
-            gdf.set_crs(self.crs, inplace=True)
-        return self.crs == gdf.crs
+    def __getattr__(self, name: str) -> Any:
+        """Get an attribute from the container."""
+        if not name.startswith("_") and hasattr(self._agents, name):
+            return getattr(self._agents, name)
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
+
+    @property
+    def crs(self) -> pyproj.CRS:
+        """Returns the current CRS."""
+        return self._model.nature.crs
+
+    @property
+    def model(self) -> MainModel[Any, Any]:
+        """The ABSESpy model where the container belongs to."""
+        return self._model
+
+    @property
+    def random(self) -> ListRandom:
+        """The random number generator."""
+        return ListRandom(actors=self, model=self.model)
+
+    @property
+    def is_full(self) -> bool:
+        """Whether the container is full."""
+        return (
+            False
+            if self._max_length is None
+            else len(self) >= self._max_length
+        )
+
+    @property
+    def is_empty(self) -> bool:
+        """Check whether the container is empty."""
+        return len(self) == 0
+
+    def _get_breed_type(self, breed: str | Type[Actor]) -> Type[Actor]:
+        """Convert breed name to breed type if necessary."""
+        if isinstance(breed, str):
+            # 如果是字符串，在已注册的类型中查找对应名称的类
+            for breed_type in self._model.agents_by_type.keys():
+                if breed_type.__name__ == breed:
+                    return breed_type
+            raise ABSESpyError(f"Breed '{breed}' not found")
+        return breed
+
+    def _add_one(self, agent: Actor) -> None:
+        pass
+
+    def _check_full(self) -> None:
+        """Add one agent to the container."""
+        if self.is_full:
+            raise ABSESpyError(f"{self} is full.")
+        if self.model.agents.is_full:
+            raise ABSESpyError(f"{self.model.agents} is full.")
+
+    def add(self, agent: Actor) -> None:
+        """Add one agent to the container."""
+        self._check_full()
+        self._add_one(agent)
+        self._agents.add(agent)
 
     def _new_one(
         self,
-        unique_id: Optional[UniqueID] = None,
         geometry: Optional[BaseGeometry] = None,
         agent_cls: type[Actor] = Actor,
         **kwargs,
     ) -> Actor:
         if geometry and not isinstance(geometry, BaseGeometry):
             raise TypeError("Geometry must be a Shapely Geometry")
-        unique_id = self._check_unique_id(unique_id, breed=agent_cls.breed)
+        if not isinstance(agent_cls, type) or not issubclass(agent_cls, Actor):
+            raise TypeError(f"{agent_cls} is not a subclass of Actor.")
+        self._check_full()
         agent = agent_cls(
-            unique_id=unique_id,
             model=self.model,
             geometry=geometry,
             crs=self.model.nature.crs,
             **kwargs,
         )
-        self.add(agent)
-        self.model.schedule.add(agent)
+        self._add_one(agent)
         return agent
-
-    def _check_ids_and_num(
-        self, num: Optional[int], unique_ids: Optional[UniqueIDs]
-    ) -> Tuple[int, UniqueIDs]:
-        # Checking unique_ids and num of actors:
-        unique_ids = make_list(unique_ids)
-        if num is None and not unique_ids:
-            unique_ids = [None]
-        elif isinstance(num, int) and not unique_ids:
-            unique_ids = [None] * num
-        elif unique_ids and num is None:
-            num = len(unique_ids)
-        elif isinstance(num, int) and len(unique_ids) != num:
-            raise ValueError("Not matching num of actors and unique_ids.")
-        return cast(int, num), cast(List, unique_ids)
-
-    def register(self, actor_cls: Type[Actor]) -> None:
-        """Registers a new breed of actors.
-
-        Parameters:
-            actor_cls:
-                The class of the actor to register.
-                It can be a single class, or an iterable of classes.
-                Once a breed is registered,
-                it will be added to all the containers of the model globally.
-                It means, it's not necessary to register the same breed again.
-
-        Raises:
-            ValueError:
-                If the breed is already registered.
-        """
-        breed = actor_cls.breed
-        if breed in self._model.breeds:
-            raise ValueError(f"{breed} is already registered.")
-        setattr(self._model, "breeds", actor_cls)
-        self._unique_ids[breed] = 0
 
     def new(
         self,
         breed_cls: Type[Actor] = Actor,
         num: Optional[int] = None,
-        singleton: bool = False,
-        unique_ids: Optional[UniqueIDs] = None,
+        singleton: Optional[bool] = None,
         **kwargs: Any,
     ) -> Union[Actor, ActorsList[Actor]]:
         """Create one or more actors of the given breed class.
 
         Parameters:
             breed_cls:
-                The breed class of the actor(s) to create.
+                The breed class of the actor(s) to create. Defaults to `Actor`.
             num:
-                The number of actors to create. Defaults to 1.
+                The number of actors to create. Only positive integer is allowed.
+                Defaults to None, which will be set to 1 and singleton to True.
             singleton (bool, optional):
-                Whether to create a singleton actor. Defaults to False.
+                Whether to create a singleton actor.
+                If singleton is True, the return value will be an actor instance.
+                Otherwise, it will be an `AgentSet` instance.
+                Defaults to False.
+                If `num` is None, this parameter will be ignored.
             **kwargs:
                 Additional keyword arguments to pass to the actor constructor.
 
@@ -175,23 +241,136 @@ class _ModelAgentsContainer(_AgentsContainer):
             >>> ActorsList
             ```
         """
-        # check if the breed class is registered, if not, register it.
-        self.check_registration(breed_cls, register=True)
-        num, unique_ids = self._check_ids_and_num(num, unique_ids)
-
         # create actors.
-        objs = []
-        for unique_id in unique_ids:
-            agent = self._new_one(
-                unique_id=unique_id, agent_cls=breed_cls, **kwargs
+        if num is None:
+            num = 1
+            if singleton is None:
+                singleton = True
+        if not isinstance(num, int) or num < 0:
+            raise ValueError(
+                f"Number of actors to create must be a non-negative integer. Got {num}."
             )
+        if num == 0:
+            return ActorsList(model=self.model, objs=[])
+        # 创建主体
+        objs = []
+        for _ in range(num):
+            agent = self._new_one(agent_cls=breed_cls, **kwargs)
             objs.append(agent)
         # return the created actor(s).
         actors_list: ActorsList[Actor] = ActorsList(
             model=self.model, objs=objs
         )
         logger.debug(f"{self} created {num} {breed_cls.__name__}.")
-        return cast(Actor, actors_list.item()) if singleton else actors_list
+        return (
+            cast(Actor, actors_list.item())
+            if singleton is True
+            else actors_list
+        )
+
+    def remove(self, agent: Actor) -> None:
+        """Remove the given agent from the container."""
+        if agent.on_earth:
+            raise ABSESpyError(
+                f"{agent} is still on the earth. Use `agent.remove()` instead."
+            )
+        self._model.deregister_agent(agent)
+
+    def has(self, breeds: Optional[Breeds] = None) -> int:
+        """Whether the container has the breed of agents.
+
+        Parameters:
+            breeds:
+                The breed(s) of agents to search.
+
+        Returns:
+            int:
+                The number of agents of the specified breed(s).
+
+        Example:
+            ```python
+            from abses import Actor, MainModel
+
+            class Actor1(Actor):
+                # breed 1
+                pass
+
+            class Actor2(Actor):
+                # breed 2
+                pass
+
+            model = MainModel()
+            model.agents.new(Actor, singleton=True)
+            model.agents.new(Actor1, num=2)
+            model.agents.new(Actor2, num=3)
+
+            model.agents.has('Actor1')
+            >>> 2
+            model.agents.has(['Actor1', 'Actor2'])
+            >>> 5
+            ```
+        """
+        if breeds is None:
+            return len(self)
+        if isinstance(breeds, (str, type)):
+            return len(self.select(agent_type=breeds))
+        if isinstance(breeds, (list, tuple)):
+            return sum(len(self.select(agent_type=breed)) for breed in breeds)
+        raise TypeError(f"{breeds} is not a valid breed.")
+
+    def select(
+        self,
+        selection: Callable | str | Dict[str, Any] | None = None,
+        agent_type: Optional[Type[Actor] | str] = None,
+        **kwargs: Any,
+    ) -> ActorsList:
+        """Select actors that match the given selection criteria.
+
+        Parameters:
+            selection:
+                The selection criteria.
+                It can be a string, a callable, or a dictionary.
+            **kwargs:
+                Additional arguments to pass to the `AgentSet.select()` method, in addition to `filter_func`.
+                - at_most (int | float, optional): The maximum amount of agents to select. Defaults to infinity.
+                  - If an integer, at most the first number of matching agents are selected.
+                  - If a float between 0 and 1, at most that fraction of original the agents are selected.
+                - inplace (bool, optional): If True, modifies the current AgentSet; otherwise, returns a new AgentSet. Defaults to False.
+                - agent_type (type[Agent], optional): The class type of the agents to select. Defaults to None, meaning no type filtering is applied.
+                - n (int): deprecated, use at_most instead
+        """
+        if isinstance(agent_type, (str, type)):
+            kwargs["agent_type"] = self._get_breed_type(agent_type)
+
+        def check_attr(agent, attr, value=True):
+            return getattr(agent, attr) == value
+
+        if isinstance(selection, str):
+            filter_func = partial(check_attr, attr=selection, value=True)
+            agents_set = self._agents.select(filter_func=filter_func, **kwargs)
+        elif any([callable(selection), selection is None]):
+            agents_set = self._agents.select(filter_func=selection, **kwargs)
+        elif isinstance(selection, dict):
+            agents_set = self._agents
+            for attr, value in selection.items():
+                filter_func = partial(check_attr, attr=attr, value=value)
+                agents_set = agents_set.select(
+                    filter_func=filter_func, **kwargs
+                )
+        else:
+            raise TypeError(f"{selection} is not valid selection criteria.")
+        return ActorsList(model=self.model, objs=agents_set)
+
+
+class _ModelAgentsContainer(_AgentsContainer):
+    """AgentsContainer for the MainModel."""
+
+    def _check_crs(self, gdf: gpd.GeoDataFrame) -> bool:
+        if gdf.crs:
+            gdf.to_crs(self.crs, inplace=True)
+        else:
+            gdf.set_crs(self.crs, inplace=True)
+        return self.crs == gdf.crs
 
     def new_from_graph(
         self,
@@ -201,7 +380,6 @@ class _ModelAgentsContainer(_AgentsContainer):
         **kwargs,
     ):
         """Create a set of new agents from networkx graph."""
-        self.check_registration(actor_cls, register=True)
         actors = []
         mapping = {}
         for node, attr in graph.nodes(data=True):
@@ -217,11 +395,11 @@ class _ModelAgentsContainer(_AgentsContainer):
     def new_from_gdf(
         self,
         gdf: gpd.GeoDataFrame,
-        unique_id: Optional[str] = None,
         agent_cls: type[Actor] = Actor,
         attrs: IncludeFlag = False,
         **kwargs,
     ) -> ActorsList[Actor]:
+        # TODO: 这个方法需要适配到最新的 Mesa 版本
         """Create actors from a `geopandas.GeoDataFrame` object.
 
         Parameters:
@@ -240,11 +418,6 @@ class _ModelAgentsContainer(_AgentsContainer):
         Returns:
             An `ActorsList` with all new created actors stored.
         """
-        # 检查创建主体的数据标识是否唯一，若唯一则设置为索引
-        if unique_id:
-            gdf = gdf.set_index(unique_id, verify_integrity=True)
-        # 如果还没有注册这种主体，那么注册一下
-        self.check_registration(agent_cls, register=True)
         # 检查坐标参考系是否一致
         self._check_crs(gdf)
         # 看一下哪些属性是需要加入到主体的
@@ -254,11 +427,10 @@ class _ModelAgentsContainer(_AgentsContainer):
             set_attributes = {col: col for col in set_attributes}
         # 创建主体
         agents = []
-        for index, row in gdf.iterrows():
+        for _, row in gdf.iterrows():
             geometry = row[geo_col]
             new_agent = self._new_one(
                 geometry=geometry,
-                unique_id=index,
                 agent_cls=agent_cls,
                 **kwargs,
             )
@@ -268,7 +440,6 @@ class _ModelAgentsContainer(_AgentsContainer):
                 setattr(new_agent, name, row[col])
             agents.append(new_agent)
         # 添加主体到模型容器里
-        self.add(agents)
         return ActorsList(model=self.model, objs=agents)
 
 
@@ -282,21 +453,20 @@ class _CellAgentsContainer(_AgentsContainer):
         max_len: int | None = None,
     ):
         super().__init__(model, max_len)
+        self._agents = AgentSet([], random=model.random)
         self._cell = cell
 
-    def __str__(self) -> str:
-        return "CellAgents"
-
     def _add_one(self, agent: Actor) -> None:
+        super()._add_one(agent)
         if agent.on_earth and agent not in self:
-            e1 = f"{agent} is on another cell thus cannot be added."
+            e1 = f"{agent} is on {agent.at} thus cannot be added."
             e2 = "You may use 'actor.move.to()' to change its location."
             e3 = "Or you may use 'actor.move.off()' before adding it."
             raise ABSESpyError(e1 + e2 + e3)
-        super()._add_one(agent)
+        self._agents.add(agent)
         agent.at = self._cell
 
-    def remove(self, agent: Actor) -> None:
+    def remove(self, agent: Optional[Actor] = None) -> None:
         """Remove the given agent from the cell.
         Generally, it stores all the agents on this cell.
         Therefore, it is not recommended to use this method directly.
@@ -310,40 +480,11 @@ class _CellAgentsContainer(_AgentsContainer):
             ABSESpyError:
                 If the agent is not on this cell.
         """
+        if agent is None:
+            self._agents.clear()
+            return
+        assert isinstance(agent, Actor), f"{agent} is not an Actor."
         if agent.at is not self._cell:
             raise ABSESpyError(f"{agent} is not on this cell.")
-        self[agent.breed].remove(agent)
+        self._agents.remove(agent)
         del agent.at
-
-    def new(
-        self,
-        breed_cls: Type[Actor] = Actor,
-        num: int = 1,
-        singleton: bool = False,
-        unique_ids: Optional[UniqueIDs] = None,
-        **kwargs: Any,
-    ) -> Actor | ActorsList:
-        """Creates a new actor or a list of actors of the given breed class.
-        The created actors are added to both the cell and the model's global container.
-
-        Parameters:
-            breed_cls:
-                The breed class of the actor(s) to create.
-            num:
-                The number of actors to create. Defaults to 1.
-            singleton:
-                Whether to create a singleton actor. Defaults to False.
-            **kwargs:
-                Additional keyword arguments to pass to the actor constructor.
-
-        Returns:
-            The created actor(s).
-        """
-        # Using model's container to create a list of actors
-        new_actors = self.model.agents.new(
-            breed_cls, num, singleton, unique_ids, **kwargs
-        )
-        # move the actors to the cell
-        for a in make_list(new_actors):
-            a.move.to(self._cell)
-        return new_actors

@@ -51,7 +51,6 @@ from abses.tools.func import make_list
 from abses.viz.viz_actors import _VizNodeList
 
 if TYPE_CHECKING:
-    from abses._bases.base_container import UniqueID
     from abses.actor import Actor, GeoType, TargetName
     from abses.links import _LinkNode
     from abses.main import MainModel
@@ -184,19 +183,6 @@ class ActorsList(List[Link], Generic[Link]):
             raise TypeError(f"Invalid selection type {type(selection)}")
         selected = [a for a, s in zip(actors, bool_) if s]
         return ActorsList(self._model, selected)
-
-    def ids(self, ids: Iterable[UniqueID] | UniqueID) -> ActorsList[Link]:
-        """Subsets ActorsList by a `ids`.
-
-        Parameters:
-            ids:
-                an iterable id list. List[id], ID is an attr of agent obj.
-
-        Returns:
-            ActorList: A subset of origin agents list.
-        """
-        ids = make_list(ids)
-        return self.select([agent.unique_id in ids for agent in self])
 
     def better(
         self, metric: str, than: Optional[Union[Number, Actor]] = None
@@ -340,7 +326,11 @@ class ActorsList(List[Link], Generic[Link]):
         raise ValueError("No agent found or default value.")
 
     def set(
-        self, attr: str, value: Any, target: Optional[TargetName] = None
+        self,
+        attr: str,
+        value: Any,
+        target: Optional[TargetName] = None,
+        new: bool = False,
     ) -> None:
         """Set the attribute of all agents in the sequence to the specified value.
 
@@ -351,7 +341,7 @@ class ActorsList(List[Link], Generic[Link]):
                 The value to set the attribute to.
         """
         for agent in iter(self):
-            agent.set(attr, value, target=target)
+            agent.set(attr, value, target=target, new=new)
 
     def item(self, how: HOW = "item", index: int = 0) -> Optional[Link]:
         """Retrieve one agent if possible.

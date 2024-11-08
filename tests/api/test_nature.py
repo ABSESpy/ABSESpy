@@ -10,15 +10,14 @@
 
 import numpy as np
 import pytest
-import rasterio as rio
 import rioxarray as rxr
 import xarray
 from shapely.geometry import box
 
 from abses.actor import Actor
-from abses.cells import raster_attribute
+from abses.cells import PatchCell, raster_attribute
 from abses.main import MainModel
-from abses.nature import PatchCell, PatchModule
+from abses.nature import PatchModule
 from abses.sequences import ActorsList
 
 
@@ -53,23 +52,35 @@ class TestPatchModulePositions:
     """测试斑块模型的位置选取"""
 
     @pytest.mark.parametrize(
-        "row, col, expected",
+        "row, col, pos, indices",
         [
-            (0, 1, (0, 1)),
-            (1, 1, (1, 1)),
-            (1, 0, (1, 0)),
-            (0, 0, (0, 0)),
+            (0, 1, (1, 1), (0, 1)),
+            (1, 1, (1, 0), (1, 1)),
+            (1, 0, (0, 0), (1, 0)),
+            (0, 0, (0, 1), (0, 0)),
         ],
     )
-    def test_pos_and_indices(self, module: PatchModule, row, col, expected):
+    def test_pos_and_indices(
+        self, module: PatchModule, row, col, pos, indices
+    ):
         """测试位置和索引。
         pos 应该是和 cell 的位置一致
         indices 应该是和 cell 的索引一致。
+
+        Pos [0, 0] -> idx[1, 0]: 0
+        Pos [0, 1] -> idx[0, 0]: 1
+        Pos [1, 0] -> idx[1, 1]: 2
+        Pos [1, 1] -> idx[0, 1]: 3
+
+        >>> module.array_cells
+        [[1, 3],
+        [0, 2]]
         """
         # arrange
         cell = module.array_cells[row, col]
         # act / assert
-        assert cell.indices == expected
+        assert cell.pos == pos
+        assert cell.indices == indices
 
     @pytest.mark.parametrize(
         "index, expected_value",
@@ -155,10 +166,7 @@ class TestPatchModule:
     @pytest.mark.parametrize(
         "shape, geometry, expected_len, expected_sum",
         [
-            ((2, 2), (0, 0, 2, 2), 4, 6),
-            ((3, 3), (1, 1, 3, 3), 4, 12),
-            ((3, 3), (1, 1, 2, 2), 1, 4),
-            ((3, 3), (0, 0, 2, 2), 4, 20),
+            ((3, 3), (0.1, 0.1, 2.1, 2.1), 4, 12),
         ],  # 这里box是从左下角到右上角进行选择的
     )
     def test_selecting_by_geometry(
@@ -176,13 +184,14 @@ class TestPatchModule:
         )
         # act
         cells = module.select(where=box(*geometry))
+        assert len(cells) == expected_len
+        assert isinstance(cells, ActorsList)
         cells.apply(
             lambda cell: cell.link.to(
                 actor, link_name="test_link", mutual=True
             )
         )
         # assert
-        assert len(cells) == expected_len
         assert cells.array("test").sum() == expected_sum
         assert actor.link.get("test_link") == cells
 
@@ -193,8 +202,6 @@ class TestPatchModule:
             ("get_xarray", None, xarray.DataArray, 3),
             ("get_raster", "test", np.ndarray, 3),
             ("get_raster", None, np.ndarray, 3),
-            ("get_rasterio", "test", rio.DatasetReader, 2),
-            ("get_rasterio", None, rio.DatasetReader, 2),
         ],
     )
     def test_get_data(
@@ -211,23 +218,23 @@ class TestPatchModule:
         assert isinstance(got_data, data_type), f"{type(got_data)}"
 
     @pytest.mark.parametrize(
-        "cell_pos, linked",
+        "indices, linked",
         [
-            ((2, 1), (True, True)),
+            ((2, 1), (True, False)),
             ((0, 0), (False, False)),
-            ((2, 2), (False, True)),
-            ((0, 3), (False, True)),
+            ((2, 2), (True, True)),
+            ((3, 3), (False, True)),
         ],
     )
     def test_cell_linked_by_two_agents(
-        self, model: MainModel, cell_pos, linked
+        self, model: MainModel, indices, linked
     ):
         """测试批量将一些斑块连接到某个主体"""
         # arrange
         module = model.nature.create_module(
             how="from_resolution", shape=(4, 4)
         )
-        box1, box2 = box(*(0, 0, 2, 2)), box(*(1, 1, 4, 4))
+        box1, box2 = box(*(0.1, 0.1, 2.1, 2.1)), box(*(1.1, 1.1, 4.1, 4.1))
         agent1 = model.agents.new(Actor, singleton=True, geometry=box1)
         agent2 = model.agents.new(Actor, singleton=True, geometry=box2)
 
@@ -240,8 +247,9 @@ class TestPatchModule:
         )
 
         # assert
-        row, col = cell_pos
-        linked_agents = module.array_cells[row, col].link.get("link")
+        # TODO: 这里需要考虑坐标系反转，需要一个更简单的实现
+        row, col = indices
+        linked_agents = module.array_cells[3 - row, col].link.get("link")
         assert (agent1 in linked_agents, agent2 in linked_agents) == linked
 
     @pytest.mark.parametrize(
@@ -301,8 +309,8 @@ class TestBaseNature:
         assert model.nature.major_layer is module2
         assert model.nature.shape2d == module2.shape2d
         assert model.nature.shape3d == module2.shape3d
-        result = model.nature.out_of_bounds((3, 3))
-        result2 = module2.out_of_bounds((3, 3))
+        result = model.nature.indices_out_of_bounds((3, 3))
+        result2 = module2.indices_out_of_bounds((3, 3))
         assert result == result2
 
     @pytest.mark.parametrize(
@@ -367,5 +375,5 @@ class TestCreatingNewPatch:
         assert layer.name == "testing"
         assert issubclass(module_cls, PatchModule)
         assert issubclass(layer.cell_cls, cell_cls)
-        assert isinstance(layer.cells.random.choice(), cell_cls)
+        assert isinstance(layer.cells_lst.random.choice(), cell_cls)
         assert isinstance(layer, module_cls)

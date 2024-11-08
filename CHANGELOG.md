@@ -1,4 +1,15 @@
 
+<a id='changelog-0.7.0.alpha'></a>
+# 0.7.0.alpha — 2024-11-08
+
+## Refactoring
+
+- [x] #refactor♻️ API compatible with Mesa 3.x version.
+
+## New Features
+
+- [x] #feat✨ Improve compatibility for visualisation with Mesa 3.x version
+
 <a id='changelog-0.6.10'></a>
 # 0.6.10 — 2024-07-12
 

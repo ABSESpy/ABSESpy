@@ -9,7 +9,6 @@
 """
 from __future__ import annotations
 
-import copy
 import functools
 from pathlib import Path
 from typing import (
@@ -18,15 +17,13 @@ from typing import (
     Callable,
     Dict,
     Iterator,
+    List,
     Literal,
     Optional,
-    Sequence,
-    Set,
     Tuple,
     Type,
     Union,
     cast,
-    overload,
 )
 
 try:
@@ -34,19 +31,19 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
+from typing import TypeVar
+
 import geopandas as gpd
 import numpy as np
 import pyproj
-import rasterio
 import rioxarray
 import xarray as xr
 from geocube.api.core import make_geocube
 from loguru import logger
 from mesa.space import Coordinate
-from mesa_geo.raster_layers import RasterBase
-from rasterio import mask
+from mesa_geo.raster_layers import RasterLayer
+from numpy.typing import NDArray
 from rasterio.enums import Resampling
-from rasterio.warp import calculate_default_transform, transform_bounds
 from shapely import Geometry
 
 from abses._bases.errors import ABSESpyError
@@ -56,6 +53,8 @@ from abses.random import ListRandom
 from abses.sequences import ActorsList
 from abses.tools.func import get_buffer, set_null_values
 from abses.viz.viz_nature import _VizNature
+
+T = TypeVar("T", bound=PatchCell)
 
 if TYPE_CHECKING:
     from abses.main import MainModel
@@ -282,36 +281,27 @@ class _PatchModuleFactory(_ModuleFactory):
         )
 
 
-class PatchModule(Module, RasterBase):
-    """
-    The spatial sub-module base class.
-    Inherit from this class to create a submodule.
-    [This tutorial](../tutorial/beginner/organize_model_structure.ipynb) shows the model structure.
-    This is also a raster layer, inherited from the 'mesa-geo.RasterLayer' class.
-    ABSESpy extends this class, so it can:
-    1. place agents (by `_CellAgentsContainer` class.)
-    2. work with `xarray`, `rasterio` packages for better data I/O workflow.
+class PatchModule(Module, RasterLayer):
+    """Base class for managing raster-based spatial modules in ABSESpy.
+
+    Inherits from both Module and RasterLayer to provide comprehensive spatial data management.
+    Extends mesa-geo's RasterLayer with additional capabilities for:
+    - Agent placement and management
+    - Integration with xarray/rasterio for data I/O
+    - Dynamic attribute handling
+    - Spatial operations and analysis
 
     Attributes:
-        cell_properties:
-            The accessible attributes of cells stored in this layer.
-            When a `PatchCell`'s method is decorated by `raster_attribute`,
-            it should be appeared here as a property attribute.
-        attributes:
-            All accessible attributes from this layer,
-            including cell_properties.
-        shape2d:
-            Raster shape in 2D (heigh, width).
-        shape3d:
-            Raster shape in 3D (1, heigh, width),
-            this is for compatibility with `mg.RasterLayer` and `rasterio`.
-        array_cells:
-            Array type of the `PatchCell` stored in this module.
-        coords:
-            Coordinate system of the raster data.
-            This is useful when working with `xarray.DataArray`.
-        random:
-            A random proxy by calling the cells as an `ActorsList`.
+        cell_properties: Set of accessible cell attributes (decorated by @raster_attribute).
+        attributes: All accessible attributes including cell_properties.
+        shape2d: Raster dimensions as (height, width).
+        shape3d: Raster dimensions as (1, height, width) for rasterio compatibility.
+        array_cells: NumPy array of PatchCell objects.
+        coords: Coordinate system dictionary with 'x' and 'y' arrays.
+        random: Random selection proxy for cells.
+        mask: Boolean array indicating accessible cells.
+        cells_lst: ActorsList containing all cells.
+        plot: Visualization interface for the module.
     """
 
     def __init__(
@@ -321,22 +311,36 @@ class PatchModule(Module, RasterBase):
         cell_cls: Type[PatchCell] = PatchCell,
         **kwargs: Any,
     ):
-        """This method copied some of the `mesa-geo.RasterLayer`'s methods."""
-        Module.__init__(self, model, name=name)
-        RasterBase.__init__(self, **kwargs)
-        self.cell_cls = cell_cls
-        logger.info("Initializing a new Model Layer...")
-        logger.info(f"Using rioxarray version: {rioxarray.__version__}")
+        """Initializes a new PatchModule instance.
 
-        func = np.vectorize(lambda row, col: cell_cls(self, (row, col)))
-        self._cells: np.ndarray = np.fromfunction(
-            func, shape=(self.height, self.width), dtype=object
-        )
-        self._attributes: Set[str] = set()
-        self.mask: np.ndarray = np.ones(self.shape2d)
+        Args:
+            model: Parent model instance.
+            name: Module identifier. Defaults to lowercase class name.
+            cell_cls: Class to use for creating cells. Defaults to PatchCell.
+            **kwargs: Additional arguments passed to RasterLayer initialization.
+        """
+        Module.__init__(self, model, name=name)
+        RasterLayer.__init__(self, model=model, cell_cls=cell_cls, **kwargs)
+        logger.info("Initializing a new Model Layer...")
+        self._mask: np.ndarray = np.ones(self.shape2d).astype(bool)
+
+    def _setup_cells(self) -> None:
+        self._cells = []
+        for x in range(self.width):
+            col: List = []
+            for y in range(self.height):
+                row_idx, col_idx = self.height - y - 1, x
+                col.append(
+                    self.cell_cls(
+                        self,
+                        pos=(x, y),
+                        indices=(row_idx, col_idx),
+                    )
+                )
+            self._cells.append(col)
 
     @functools.cached_property
-    def cells(self) -> ActorsList[PatchCell]:
+    def cells_lst(self) -> ActorsList[PatchCell]:
         """The cells stored in this layer."""
         return ActorsList(self.model, self.array_cells[self.mask])
 
@@ -358,23 +362,6 @@ class PatchModule(Module, RasterBase):
     def __repr__(self):
         return f"<{self.name}{self.shape2d}: {len(self.attributes)} vars>"
 
-    def __getitem__(
-        self,
-        index: int | Sequence[Coordinate] | tuple[int | slice, int | slice],
-    ) -> PatchCell | list[PatchCell]:
-        """
-        Access contents from the grid.
-        """
-        return self.array_cells.__getitem__(index)
-
-    def __iter__(self) -> Iterator[PatchCell]:
-        """
-        Create an iterator that chains the rows of the cells together
-        as if it is one list
-        """
-        for row in self.array_cells:
-            yield from row
-
     @property
     def cell_properties(self) -> set[str]:
         """The accessible attributes of cells stored in this layer.
@@ -382,7 +369,7 @@ class PatchModule(Module, RasterBase):
         """
         return self.cell_cls.__attribute_properties__()
 
-    @functools.cached_property
+    @property
     def xda(self) -> xr.DataArray:
         """Get the xarray raster layer with spatial coordinates."""
         xda = xr.DataArray(data=self.mask, coords=self.coords)
@@ -416,9 +403,14 @@ class PatchModule(Module, RasterBase):
         return 1, self.height, self.width
 
     @functools.cached_property
-    def array_cells(self) -> np.ndarray:
-        """Array type of the `PatchCell` stored in this module."""
+    def cells(self) -> List[List[PatchCell]]:
+        """The cells stored in this layer."""
         return self._cells
+
+    @functools.cached_property
+    def array_cells(self) -> NDArray[T]:
+        """Array type of the `PatchCell` stored in this module."""
+        return np.flipud(np.array(self._cells, dtype=object).T)
 
     @property
     def coords(self) -> Coordinate:
@@ -426,42 +418,34 @@ class PatchModule(Module, RasterBase):
 
         This is useful when working with `xarray.DataArray`.
         """
-        nrows, ncols = self.shape2d
-        coords_x = np.arange(ncols) * self.transform[0] + self.transform[2]
-        coords_y = np.arange(nrows) * self.transform[4] + self.transform[5]
+        transform = self.transform
+        # 注意 y 方向的分辨率通常是负值
+        res_x, res_y = transform.a, -transform.e
+        minx, miny, maxx, maxy = self.total_bounds
+        x_coord = np.arange(minx, maxx, res_x)
+        # 注意 y 坐标是从上到下递减的
+        y_coord = np.flip(np.arange(miny, maxy, res_y))
         return {
-            "y": coords_y,
-            "x": coords_x,
+            "y": y_coord,
+            "x": x_coord,
         }
 
     def transform_coord(self, row: int, col: int) -> Coordinate:
-        """Transforming the row, col to the real-world coordinate."""
-        if self.out_of_bounds(pos=(row, col)):
+        """Converts grid indices to real-world coordinates.
+
+        Args:
+            row: Grid row index.
+            col: Grid column index.
+
+        Returns:
+            Tuple of (x, y) real-world coordinates.
+
+        Raises:
+            IndexError: If indices are out of bounds.
+        """
+        if self.indices_out_of_bounds(pos=(row, col)):
             raise IndexError(f"Out of bounds: {row, col}")
         return self.transform * (col, row)
-
-    def to_crs(self, crs, inplace=False) -> Optional[PatchModule]:
-        """Converting the raster data to a another CRS."""
-        super()._to_crs_check(crs)
-        layer = self if inplace else copy.copy(self)
-
-        src_crs = rasterio.crs.CRS.from_user_input(layer.crs)
-        dst_crs = rasterio.crs.CRS.from_user_input(crs)
-        if not layer.crs.is_exact_same(crs):
-            transform, _, _ = calculate_default_transform(
-                src_crs,
-                dst_crs,
-                self.width,
-                self.height,
-                *layer.total_bounds,
-            )
-            layer.total_bounds = [
-                *transform_bounds(src_crs, dst_crs, *layer.total_bounds)
-            ]
-            layer.crs = crs
-            layer.transform = transform
-
-        return None if inplace else layer
 
     def _attr_or_array(
         self, data: None | str | np.ndarray | xr.DataArray
@@ -484,7 +468,7 @@ class PatchModule(Module, RasterBase):
     def dynamic_var(
         self,
         attr_name: str,
-        dtype: Literal["numpy", "xarray", "rasterio"] = "numpy",
+        dtype: Literal["numpy", "xarray"] = "numpy",
     ) -> np.ndarray:
         """Update and get dynamic variable.
 
@@ -505,60 +489,21 @@ class PatchModule(Module, RasterBase):
             return self.get_raster(attr_name, update=False)
         if dtype == "xarray":
             return self.get_xarray(attr_name, update=False)
-        if dtype == "rasterio":
-            return self.get_rasterio(attr_name, update=False)
         raise ValueError(f"Unknown expected dtype {dtype}.")
-
-    def get_rasterio(
-        self,
-        attr_name: Optional[str] = None,
-        update: bool = True,
-    ) -> rasterio.MemoryFile:
-        """Gets the Rasterio raster layer corresponding to the attribute. Save to a temporary rasterio memory file.
-
-        Parameters:
-            attr_name:
-                The attribute name for creating the rasterio file.
-
-        Returns:
-            The rasterio tmp memory file of raster.
-        """
-        if attr_name is None:
-            data = np.ones(self.shape2d)
-        else:
-            data = self.get_raster(attr_name=attr_name, update=update)
-        # 如果获取到的是2维，重整为3维
-        if len(data.shape) != 3:
-            data = data.reshape(self.shape3d)
-        with rasterio.MemoryFile() as mem_file:
-            with mem_file.open(
-                driver="GTiff",
-                height=data.shape[1],
-                width=data.shape[2],
-                count=data.shape[0],  # number of bands
-                dtype=str(data.dtype),
-                crs=self.crs,
-                transform=self.transform,
-            ) as dataset:
-                dataset.write(data)
-            # Open the dataset again for reading and return
-            return mem_file.open()
 
     def get_xarray(
         self,
         attr_name: Optional[str] = None,
         update: bool = True,
     ) -> xr.DataArray:
-        """Get the xarray raster layer with spatial coordinates.
+        """Creates an xarray DataArray representation with spatial coordinates.
 
-        Parameters:
-            attr_name:
-                The attribute to retrieve. If None (by default),
-                return all available attributes (3D DataArray).
-                Otherwise, 2D DataArray of the chosen attribute.
+        Args:
+            attr_name: Attribute to retrieve. If None, returns all attributes.
+            update: If True, updates dynamic variables before retrieval.
 
         Returns:
-            Xarray.DataArray data with spatial coordinates of the chosen attribute.
+            xarray.DataArray with spatial coordinates and CRS information.
         """
         data = self.get_raster(attr_name=attr_name, update=update)
         if attr_name:
@@ -578,12 +523,11 @@ class PatchModule(Module, RasterBase):
     @property
     def random(self) -> ListRandom:
         """Randomly"""
-        return self.cells.random
+        return self.cells_lst.random
 
     def _select_by_geometry(
         self,
         geometry: Geometry,
-        refer_layer: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> np.ndarray:
         """Gets all the cells that intersect the given geometry.
@@ -591,8 +535,6 @@ class PatchModule(Module, RasterBase):
         Parameters:
             geometry:
                 Shapely Geometry to search intersected cells.
-            refer_layer:
-                The attribute name to refer when filtering cells.
             **kwargs:
                 Args pass to the function `rasterasterio.mask.mask`. It influence how to build the mask for filtering cells. Please refer [this doc](https://rasterasterio.readthedocs.io/en/latest/api/rasterasterio.mask.html) for details.
 
@@ -601,37 +543,37 @@ class PatchModule(Module, RasterBase):
                 If no available attribute exists, or the assigned refer layer is not available in the attributes.
 
         Returns:
-            A list of PatchCell.
+            A numpy array of clipped cells.
         """
-        if refer_layer is not None and refer_layer not in self.attributes:
-            raise ABSESpyError(
-                f"The refer layer {refer_layer} is not available in the attributes"
-            )
-        data = self.get_rasterio(attr_name=refer_layer)
-        out_image, _ = mask.mask(data, [geometry], **kwargs)
-        return out_image.reshape(self.shape2d)
+        # Return the clipped data, ensuring correct shape
+        return self.xda.astype(int).rio.clip(
+            [geometry], all_touched=False, drop=False, **kwargs
+        )
 
     def select(
         self,
         where: Optional[CellFilter] = None,
     ) -> ActorsList[PatchCell]:
-        """Select cells from this layer.
-        Also has a shortcut alias for this method: `.sel`.
+        """Selects cells based on specified criteria.
 
-        Parameters:
-            where:
-                The condition to select cells.
-                If None (by default), select all cells.
-                If a string, select cells by the attribute name.
-                If a numpy.ndarray, select cells by the mask array.
-                If a Shapely Geometry, select cells by the intersection with the geometry.
-
-        Raises:
-            TypeError:
-                If the input type is not supported.
+        Args:
+            where: Selection filter. Can be:
+                - None: Select all cells
+                - str: Select by attribute name
+                - numpy.ndarray: Boolean mask array
+                - Shapely.Geometry: Select cells intersecting geometry
 
         Returns:
-            An `ActorsList` with all selected cells stored.
+            ActorsList containing selected cells.
+
+        Raises:
+            TypeError: If where parameter is of unsupported type.
+
+        Example:
+            >>> # Select cells with elevation > 100
+            >>> high_cells = module.select(module.get_raster("elevation") > 100)
+            >>> # Select cells within polygon
+            >>> cells = module.select(polygon)
         """
         if isinstance(where, Geometry):
             mask_ = self._select_by_geometry(geometry=where)
@@ -643,7 +585,7 @@ class PatchModule(Module, RasterBase):
             raise TypeError(
                 f"{type(where)} is not supported for selecting cells."
             )
-        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool) & self.mask
+        mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool)
         return ActorsList(self.model, self.array_cells[mask_])
 
     sel = select
@@ -714,33 +656,30 @@ class PatchModule(Module, RasterBase):
         self._add_attribute(data, attr_name, flipud=flipud)
 
     def apply_raster(
-        self, data: Raster, attr_name: Optional[str], **kwargs: Any
+        self, data: Raster, attr_name: Optional[str] = None, **kwargs: Any
     ) -> None:
-        """Apply raster data to the cells.
+        """Applies raster data to cells as attributes.
 
-        Parameters:
-            data:
-                np.ndarray data: 2D numpy array with shape (1, height, width).
-                xr.DataArray data: xarray DataArray with spatial coordinates.
-                xr.Dataset data: xarray Dataset with spatial coordinates.
-            attr_name:
-                Name of the attribute to be added to the cells.
-                If None, a random name will be generated.
-                Default is None.
-            **kwargs:
-                cover_crs:
-                    Whether to cover the crs of the input data.
-                    If False, it assumes the input data has crs info.
-                    If True, it will cover the crs of the input data by the crs of this layer.
-                    Default is False.
-                resampling_method:
-                    The [resampling method](https://rasterio.readthedocs.io/en/stable/api/rasterio.enums.html#rasterio.enums.Resampling)
-                    when re-projecting the input data.
-                    Default is "nearest".
-                flipud:
-                    Whether to flip the input data upside down.
-                    Set to True when the input data is not in the same direction as the raster layer.
-                    Default is False.
+        Args:
+            data: Input raster data. Can be:
+                - numpy.ndarray: 2D array matching module shape
+                - xarray.DataArray: With spatial coordinates
+                - xarray.Dataset: With named variables
+            attr_name: Name for the new attribute. Required for xarray.Dataset.
+            **kwargs: Additional options:
+                cover_crs: Whether to override input data CRS
+                resampling_method: Method for resampling ("nearest", etc.)
+                flipud: Whether to flip data vertically
+
+        Raises:
+            ValueError: If attr_name not provided for Dataset input.
+            ValueError: If data shape doesn't match module shape.
+
+        Example:
+            >>> # Apply elevation data
+            >>> module.apply_raster(elevation_array, attr_name="elevation")
+            >>> # Apply data from xarray
+            >>> module.apply_raster(xda, resampling_method="bilinear")
         """
         if isinstance(data, np.ndarray):
             self._add_attribute(data, attr_name, **kwargs)
@@ -798,33 +737,48 @@ class PatchModule(Module, RasterBase):
             self.xda, resampling=resampling, **kwargs
         )
 
-    @overload
-    def get_neighborhood(
+    def get_neighboring_cells(
         self,
         pos: Coordinate,
         moore: bool,
         include_center: bool = False,
         radius: int = 1,
-        annular: bool = False,
-        return_mask: bool = True,
-    ) -> np.ndarray:
-        ...
+    ) -> ActorsList[PatchCell]:
+        """Gets neighboring cells around a position.
+
+        Args:
+            pos: Center position (x, y).
+            moore: If True, uses Moore neighborhood (8 neighbors).
+                  If False, uses von Neumann neighborhood (4 neighbors).
+            include_center: Whether to include the center cell.
+            radius: Neighborhood radius in cells.
+
+        Returns:
+            ActorsList containing neighboring cells.
+
+        Example:
+            >>> # Get Moore neighborhood with radius 2
+            >>> neighbors = module.get_neighboring_cells((5,5), moore=True, radius=2)
+        """
+        cells = super().get_neighboring_cells(
+            pos, moore, include_center, radius
+        )
+        return ActorsList(self.model, cells)
 
     @functools.lru_cache(maxsize=1000)
-    def get_neighborhood(
+    def get_neighboring_by_indices(
         self,
-        pos: Coordinate,
+        indices: Coordinate,
         moore: bool,
         include_center: bool = False,
         radius: int = 1,
         annular: bool = False,
-        return_mask: bool = False,
-    ) -> ActorsList[PatchCell] | np.ndarray:
+    ) -> ActorsList[PatchCell]:
         """Getting neighboring positions of the given coordinate.
 
         Parameters:
-            pos:
-                The coordinate to get the neighborhood.
+            indices:
+                The indices to get the neighborhood.
             moore:
                 Whether to use Moore neighborhood.
                 If False, use Von Neumann neighborhood.
@@ -837,63 +791,20 @@ class PatchModule(Module, RasterBase):
             annular:
                 Whether to use annular (ring) neighborhood.
                 Default is False.
-            return_mask:
-                Whether to return a mask array.
-                If True, return a mask array of the neighboring locations.
-                Otherwise, return a `ActorsList` of neighboring cells.
-                Default is False.
 
         Returns:
-            An `ActorsList` of neighboring cells, or a mask array.
-            Where the mask array is a boolean array with the same shape as the raster layer.
-            The True value indicates the cell is in the neighborhood.
+            An `ActorsList` of neighboring cells.
         """
+        row, col = indices
         mask_arr = np.zeros(self.shape2d, dtype=bool)
-        mask_arr[pos[0], pos[1]] = True
+        mask_arr[row, col] = True
         mask_arr = get_buffer(
             mask_arr, radius=radius, moor=moore, annular=annular
         )
-        mask_arr[pos[0], pos[1]] = include_center
-        if return_mask:
-            return mask_arr
+        mask_arr[row, col] = include_center
         return ActorsList(self.model, self.array_cells[mask_arr])
 
-    def to_file(
-        self,
-        raster_file: str,
-        attr_name: Optional[str] = None,
-        driver: str = "GTiff",
-    ) -> None:
-        """
-        Writes a raster layer to a file.
-
-        Parameters:
-            raster_file:
-                The path to the raster file to write to.
-            attr_name:
-                The name of the attribute to write to the raster.
-                If None, all attributes are written. Default is None.
-            driver:
-                The GDAL driver to use for writing the raster file.
-                Default is 'GTiff'.
-                See GDAL docs at https://gdal.org/drivers/raster/index.html.
-        """
-
-        data = self.get_raster(attr_name)
-        with rasterio.open(
-            raster_file,
-            "w",
-            driver=driver,
-            width=self.width,
-            height=self.height,
-            count=data.shape[0],
-            dtype=data.dtype,
-            crs=self.crs,
-            transform=self.transform,
-        ) as dataset:
-            dataset.write(data)
-
-    def out_of_bounds(self, pos: Coordinate) -> bool:
+    def indices_out_of_bounds(self, pos: Coordinate) -> bool:
         """
         Determines whether position is off the grid.
 

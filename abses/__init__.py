@@ -30,14 +30,15 @@ __all__ = [
     "Experiment",
     "load_data",
 ]
-__version__ = "v0.6.10"
+__version__ = "v0.7.0.alpha"
 
 from .actor import Actor, alive_required, perception
 from .decision import Decision
 from .experiment import Experiment
 from .human import BaseHuman
 from .main import MainModel
-from .nature import BaseNature, PatchCell, PatchModule
+from .nature import BaseNature, PatchModule
+from .patch import PatchCell
 from .sequences import ActorsList
 from .time import time_condition
 from .tools.data import load_data

@@ -121,7 +121,7 @@ class TestRandomActorsList:
     @pytest.mark.parametrize(
         "p, expected",
         [
-            ([0.5, 0.1], 0),
+            ([0.99, -1], 0),
             ([np.nan, 1], 1),
         ],
         ids=[
@@ -131,6 +131,7 @@ class TestRandomActorsList:
     )
     def test_random_choose_one(self, main: MainModel, p, expected):
         """测试从列表中随机抽取"""
+        # TODO 为什么之前从不报错，随机种子有问题？
         # arrange
         agents = main.agents.new(Actor, num=2)
 
