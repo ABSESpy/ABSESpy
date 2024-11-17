@@ -48,6 +48,7 @@ from shapely import Geometry
 
 from abses._bases.errors import ABSESpyError
 from abses._bases.modules import Module, _ModuleFactory
+from abses.actor import Actor
 from abses.cells import PatchCell
 from abses.random import ListRandom
 from abses.sequences import ActorsList
@@ -429,6 +430,14 @@ class PatchModule(Module, RasterLayer):
             "y": y_coord,
             "x": x_coord,
         }
+
+    @property
+    def agents(self) -> ActorsList[Actor]:
+        """Return a list of all agents in the module."""
+        agents = []
+        for c in self.cells_lst:
+            agents.extend(list(c.agents))
+        return ActorsList(self.model, agents)
 
     def transform_coord(self, row: int, col: int) -> Coordinate:
         """Converts grid indices to real-world coordinates.

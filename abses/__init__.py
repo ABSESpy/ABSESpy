@@ -30,7 +30,7 @@ __all__ = [
     "Experiment",
     "load_data",
 ]
-__version__ = "v0.7.0.alpha"
+__version__ = "v0.7.0"
 
 from .actor import Actor, alive_required, perception
 from .decision import Decision
