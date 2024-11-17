@@ -104,6 +104,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         human_class: Optional[Type[H]] = None,
         nature_class: Optional[Type[N]] = None,
         run_id: Optional[int] = None,
+        seed: Optional[int] = None,
         outpath: Optional[Path] = None,
         experiment: Optional[Experiment] = None,
         **kwargs: Optional[Any],
@@ -122,7 +123,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         Raises:
             AssertionError: If human_class or nature_class are not valid subclasses.
         """
-        Model.__init__(self)
+        Model.__init__(self, seed=seed)
         _Notice.__init__(self)
         _States.__init__(self)
         self._exp = experiment

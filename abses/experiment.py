@@ -12,20 +12,22 @@ from __future__ import annotations
 import copy
 import itertools
 import os
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from copy import deepcopy
 from numbers import Number
 from pathlib import Path
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     Iterator,
-    List,
     Optional,
     Tuple,
     Type,
     cast,
 )
+
+import pandas as pd
 
 try:
     from typing import TypeAlias
@@ -33,16 +35,30 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 import numpy as np
-import pandas as pd
 from hydra import compose, initialize
 from hydra.core.global_hydra import GlobalHydra
 from hydra.core.hydra_config import HydraConfig
+from joblib import Parallel, delayed
 from omegaconf import DictConfig, OmegaConf
 from tqdm.auto import tqdm
 
-from abses.main import BaseHuman, BaseNature, MainModel, SubSystemType
+from abses.job_manager import ExperimentManager
+from abses.main import MainModel
 
 Configurations: TypeAlias = DictConfig | str | Dict[str, Any]
+
+
+def _parse_path(relative_path: str) -> Path:
+    """Parse the path of the configuration file.
+    Convert the relpath of current work space to the relpath of this script.
+    """
+    # 目标绝对路径
+    abs_config_file_path = (Path(os.getcwd()) / relative_path).resolve()
+    if not abs_config_file_path.is_file():
+        raise FileNotFoundError(f"File {abs_config_file_path} not found.")
+    # 返回相对于本脚本的路径
+    current_file_path = Path(__file__).parent.resolve()
+    return relative_path_from_to(current_file_path, abs_config_file_path)
 
 
 def convert_to_python_type(value: Any) -> Any:
@@ -88,65 +104,104 @@ def relative_path_from_to(from_path: Path, to_path: Path) -> Path:
     return relative_from / relative_to
 
 
+def run_single(
+    model_cls: Type[MainModel],
+    cfg: DictConfig,
+    repeat_id: int,
+    seed: Optional[int] = None,
+    # hooks: Optional[Dict[str, Callable[[MainModel], Any]]] = None,
+    **kwargs,
+) -> Tuple[int, Optional[int], pd.DataFrame]:
+    """运行模型一次"""
+    model = model_cls(
+        parameters=cfg,
+        run_id=repeat_id,
+        seed=seed,
+        **kwargs,
+    )
+    model.run_model()
+    results = model.datacollector.get_final_vars_report(model)
+    return repeat_id, seed, results
+
+
 class Experiment:
     """Repeated Experiment."""
-
-    _instance = None
-    folder: Path = Path(os.getcwd())
-    hydra_config: DictConfig = DictConfig({})
-    exp_config: DictConfig = DictConfig({})
-    name: str = "ABSESpyExp"
-    final_vars: List[Dict[str, Any]] = []
-    model_vars: List[pd.DataFrame] = []
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
 
     def __init__(
         self,
         model_cls: Type[MainModel],
-        nature_cls: Optional[Type[BaseNature]] = None,
-        human_cls: Optional[Type[BaseHuman]] = None,
+        cfg: Configurations,
+        seed: Optional[int] = None,
+        **kwargs,
     ):
-        self._n_runs = 0
-        self._types: Dict[SubSystemType, Type] = {
-            "model": model_cls,
-            "nature": nature_cls or BaseNature,
-            "human": human_cls or BaseHuman,
-        }
+        if not issubclass(model_cls, MainModel):
+            raise TypeError(f"Type {type(model_cls)} is invalid.")
+        self._model_type = model_cls
+        self._job_id = 0
+        self._extra_kwargs = kwargs
         self._overrides: Dict[str, Any] = {}
-        self._job_id: int = 0
-
-    @classmethod
-    def _update_config(
-        cls,
-        cfg: DictConfig,
-        repeats: Optional[int] = None,
-        number_process: Optional[int] = None,
-    ) -> Tuple[int, int]:
-        """Loading the configuration of this exp."""
-        exp_config = cfg.get("exp", DictConfig({}))
-        cls.exp_config = exp_config
-        if repeats is None:
-            repeats = exp_config.get("repeats", 1)
-        if number_process is None:
-            number_process = exp_config.get("num_process", 1)
-
-        cls.name = exp_config.get("name", "ABSESpyExp")
-        if cls.is_hydra_job():
-            cls.hydra_config: DictConfig = HydraConfig.get()
-            cls.folder = Path(HydraConfig.get().run.dir)
-        return repeats, number_process
+        self._base_seed = seed
+        self._manager = ExperimentManager().register(self, job_id=self._job_id)
+        self.cfg = cfg
 
     @property
-    def model(self) -> Optional[Type[MainModel]]:
-        """Model class."""
-        model = self._types["model"]
-        if not issubclass(model, MainModel):
-            raise TypeError(f"Type {type(model)} is invalid.")
-        return model
+    def cfg(self) -> DictConfig:
+        """Configuration"""
+        return self._cfg
+
+    @cfg.setter
+    def cfg(self, cfg: DictConfig):
+        # 如果配置是路径，则利用 Hydra API先清洗配置
+        if isinstance(cfg, str):
+            cfg = _parse_path(cast(str, cfg))
+        if isinstance(cfg, Path):
+            cfg = self._load_hydra_cfg(cfg)
+        assert isinstance(
+            cfg, (DictConfig, dict)
+        ), f"cfg must be a DictConfig, got {type(cfg)}."
+        self._cfg = cfg
+
+    def _is_hydra_parallel(self) -> bool:
+        """检查是否在 Hydra 并行环境中"""
+        if self.is_hydra_job():
+            return self.hydra_config.launcher is not None
+        return False
+
+    @classmethod
+    def new(
+        cls, model_cls: Type[MainModel], cfg: Configurations, **kwargs
+    ) -> "Experiment":
+        """Create a new experiment for the singleton class `Experiment`.
+        This method will delete all currently available exp results and settings.
+        Then, it initialize a new instance of experiment.
+
+        Parameters:
+            model_cls:
+                Using which model class to initialize the experiment.
+
+        Raises:
+            TypeError:
+                If the model class `model_cls` is not a valid `ABSESpy` model.
+
+        Returns:
+            An experiment.
+        """
+        ExperimentManager().clean()
+        return cls(model_cls, cfg, **kwargs)
+
+    @property
+    def hydra_config(self) -> DictConfig:
+        """Hydra config."""
+        if self.is_hydra_job():
+            return HydraConfig.get()
+        raise RuntimeError("Experiment is not running in Hydra.")
+
+    @property
+    def folder(self) -> Path:
+        """Output dir path."""
+        if self.is_hydra_job():
+            return Path(self.hydra_config.run.dir)
+        return Path(os.getcwd())
 
     @property
     def outpath(self) -> Path:
@@ -189,14 +244,11 @@ class Experiment:
         """Returns True if the experiment is running in Hydra."""
         return GlobalHydra().is_initialized()
 
-    def _is_config_path(self, cfg: Configurations) -> bool:
-        if isinstance(cfg, str):
-            return True
-        if isinstance(cfg, (DictConfig, dict)):
-            return False
-        raise TypeError(f"Unknown config type {type(cfg)}.")
+    def summary(self) -> pd.DataFrame:
+        """Summary of the experiment."""
+        return self._manager.get_datasets(seed=bool(self._base_seed))
 
-    def _overriding_config(
+    def _overriding(
         self,
         cfg: DictConfig | Dict[str, Any],
         overrides: Optional[Dict[str, str | Iterable[Number]]] = None,
@@ -228,266 +280,128 @@ class Experiment:
             cfg = compose(config_name=cfg_path.stem, overrides=overrides)
         return cfg
 
-    def _get_logging_mode(self, repeat_id: Optional[int] = None) -> str | bool:
-        log_mode = self.exp_config.get("logging", "once")
-        if log_mode == "once":
-            if repeat_id == 1:
-                logging: bool | str = self.name
-            else:
-                return False
-        elif bool(log_mode):
-            logging = f"{self.name}_{repeat_id}"
-        else:
-            logging = False
-        return logging
+    # def _get_logging_mode(self, repeat_id: Optional[int] = None) -> str | bool:
+    #     log_mode = self.exp_config.get("logging", "once")
+    #     if log_mode == "once":
+    #         if repeat_id == 1:
+    #             logging: bool | str = self.name
+    #         else:
+    #             return False
+    #     elif bool(log_mode):
+    #         logging = f"{self.name}_{repeat_id}"
+    #     else:
+    #         logging = False
+    #     return logging
 
-    def _update_log_config(
-        self, config, repeat_id: Optional[int] = None
-    ) -> bool:
-        """Update the log configuration."""
-        if isinstance(config, dict):
-            config = DictConfig(config)
-        OmegaConf.set_struct(config, False)
-        log_name = self._get_logging_mode(repeat_id=repeat_id)
-        if not log_name:
-            config["log"] = False
-            return config
-        logging_cfg = OmegaConf.create({"log": {"name": log_name}})
-        config = OmegaConf.merge(config, logging_cfg)
-        return config
+    # def _update_log_config(
+    #     self, config, repeat_id: Optional[int] = None
+    # ) -> bool:
+    #     """Update the log configuration."""
+    #     if isinstance(config, dict):
+    #         config = DictConfig(config)
+    #     OmegaConf.set_struct(config, False)
+    #     log_name = self._get_logging_mode(repeat_id=repeat_id)
+    #     if not log_name:
+    #         config["log"] = False
+    #         return config
+    #     logging_cfg = OmegaConf.create({"log": {"name": log_name}})
+    #     config = OmegaConf.merge(config, logging_cfg)
+    #     return config
 
-    def run(
-        self, cfg: DictConfig, repeat_id: int, outpath: Optional[Path] = None
-    ) -> Tuple[Dict[str, Any], pd.DataFrame]:
-        """运行模型一次"""
-        cfg = self._update_log_config(cfg, repeat_id)
-        # 获取日志
-        model = self.model(
-            parameters=cfg,
-            run_id=repeat_id,
-            outpath=outpath,
-            experiment=self,
-            nature_class=self._types["nature"],
-            human_class=self._types["human"],
-        )
-        model.run_model()
-        if model.datacollector.model_reporters:
-            df = model.datacollector.get_model_vars_dataframe()
-        else:
-            df = pd.DataFrame()
-        final_report = model.datacollector.get_final_vars_report(model)
-        return final_report, df
+    def _get_seed(self, repeat_id: int) -> Optional[int]:
+        if self._base_seed is None:
+            return None
+        return self._base_seed + self._job_id * repeat_id + repeat_id
 
-    def _update_result(
-        self,
-        repeat_id: int,
-        reports: Optional[Dict[str, Any]] = None,
-        model_df: Optional[pd.DataFrame] = None,
-    ) -> None:
-        """Updating in each run."""
-        if reports is None:
-            reports = {}
-        reports.update(
-            {
-                "job_id": self.job_id,
-                "repeat_id": repeat_id,
-            }
-        )
-        reports |= self.overrides
-        self.final_vars.append(reports)
-        if model_df is None:
-            return
-        model_df = model_df.reset_index()
-        model_df = model_df.rename({"index": "tick"}, axis=1)
-        model_df.insert(0, "repeat_id", repeat_id)
-        model_df.insert(0, "job_id", self.job_id)
-        self.model_vars.append(model_df)
-
-    def _batch_run_multi_processes(
+    def _batch_run_repeats(
         self,
         cfg: DictConfig,
-        repeats,
-        number_process: Optional[int] = 1,
+        repeats: int,
+        number_process: Optional[int] = None,
         display_progress: bool = True,
-    ):
-        # Multiple processes
-        with tqdm(total=repeats, disable=not display_progress) as pbar:
-            with ProcessPoolExecutor(max_workers=number_process) as executor:
-                # 提交所有任务
-                futures = [
-                    executor.submit(self.run, cfg, repeat_id, self.outpath)
-                    for repeat_id in range(1, repeats + 1)
-                ]
-                # 使用as_completed等待任务完成
-                for i, future in enumerate(as_completed(futures)):
-                    # 每完成一个任务，更新进度条和运行计数
-                    result, model_df = future.result()
-                    pbar.update()
-                    self._update_result(
-                        reports=result, model_df=model_df, repeat_id=i + 1
-                    )
+    ) -> None:
+        """运行重复实验"""
+        if self._is_hydra_parallel() or number_process == 1:
+            # Hydra 并行或指定单进程时，顺序执行
+            disable = repeats == 1 or not display_progress
+            for repeat_id in tqdm(
+                range(1, repeats + 1),
+                disable=disable,
+                desc=f"Job {self.job_id} repeats {repeats} times.",
+            ):
+                run_single(
+                    model_cls=self._model_type,
+                    cfg=cfg,
+                    repeat_id=repeat_id,
+                    outpath=self.outpath,
+                    seed=self._get_seed(repeat_id),
+                    **self._extra_kwargs,
+                )
+        else:
+            if number_process is None:
+                cpu_count = os.cpu_count()
+                number_process = max(1, cpu_count or 1 // 2)
+                number_process = min(number_process, repeats)
 
-    def _batch_run_repeats(self, cfg, repeats, display_progress) -> None:
-        disable = repeats == 1 or not display_progress
-        for repeat in tqdm(range(repeats), disable=disable):
-            result, model_df = self.run(
-                cfg, repeat_id=repeat + 1, outpath=self.outpath
+            results = Parallel(
+                n_jobs=number_process,
+                backend="loky",  # 改用 loky 后端
+                verbose=0,
+            )(
+                delayed(run_single)(
+                    model_cls=self._model_type,
+                    cfg=cfg,
+                    repeat_id=repeat_id,
+                    outpath=self.outpath,
+                    seed=self._get_seed(repeat_id),
+                    **self._extra_kwargs,
+                )
+                for repeat_id in tqdm(
+                    range(1, repeats + 1),
+                    disable=not display_progress,
+                    desc=f"Job {self.job_id} repeats {repeats} times, with {number_process} processes.",
+                )
             )
-            self._update_result(
-                reports=result, model_df=model_df, repeat_id=repeat + 1
-            )
-
-    def _parse_path(self, relative_path: str) -> Path:
-        """Parse the path of the configuration file.
-        Convert the relpath of current work space to the relpath of this script.
-        """
-        # 目标绝对路径
-        abs_config_file_path = (Path(os.getcwd()) / relative_path).resolve()
-        if not abs_config_file_path.is_file():
-            raise FileNotFoundError(f"File {abs_config_file_path} not found.")
-        # 返回相对于本脚本的路径
-        current_file_path = Path(__file__).parent.resolve()
-        return relative_path_from_to(current_file_path, abs_config_file_path)
+            # 在主进程中批量更新结果
+            for repeat_id, seed, dataset in results:
+                self._manager.update_result(
+                    key=(self.job_id, repeat_id),
+                    datasets=dataset,
+                    seed=seed,
+                    overrides=self.overrides,
+                )
 
     def batch_run(
         self,
-        cfg: Configurations,
-        repeats: Optional[int] = None,
+        repeats: int = 1,
         parallels: Optional[int] = None,
         display_progress: bool = True,
         overrides: Optional[Dict[str, str | Iterable[Number]]] = None,
     ) -> None:
-        """Run the experiment multiple times.
+        """Run the experiment multiple times."""
+        cfg = deepcopy(self._cfg)
 
-        Parameters:
-            cfg:
-                The configuration of the experiment.
-                It can be either a string of the config file path,
-                or a dictionary of the config.
-                For an example:
-                `cfg='config.yaml'` refers to the config file `config.yaml` saved in the current workspace.
-                `cfg={'exp': {'name': 'test', 'repeats': 2}}` refers to the config dictionary.
-            repeats:
-                The number of repeats for the experiment.
-                If not specified, it will use the default value 1 (No repeats).
-            parallels:
-                The number of processes running in parallel.
-                If not specified, it will use the default value 1 (No parallel).
-            display_progress:
-                Whether to display the progress bar, default True.
-            overrides:
-                The dictionary of overrides for the experiment.
-                If specified, the experiment will sweep all the possible values for the parameter.
-                For examples:
-                override = {model.key: ["cate1", "cate2"]}
-                override = {nature.key: np.arange(10, 2)}
-                The first override will lead to two different runs:
-                - model.key = cate1
-                - model.key = cate2
-                The second override will lead to a series runs:
-                - model.nature.key = 0.0
-                - model.nature.key = 2.0
-                - model.nature.key = 4.0
-                - model.nature.key = 6.0
-                - model.nature.key = 8.0
-
-        Example:
-            ```Python
-            # initialize the experiment.
-            exp = Experiment(MainModel)
-            # Loading the configuration file `config.yaml`.
-            exp.batch_run('config.yaml')
-            ```
-
-            ```Python
-            # A different way for initializing.
-            exp = Experiment.new(MainModel)
-            cfg = {'time': {'end': 25}}
-
-            # Nine runs with different ending ticks.
-            exp.batch_run(cfg=cfg, overrides={'time.end': range(10, 100, 10)})
-            ```
-        """
-        # 如果配置是路径，则利用 Hydra API先清洗配置
-        if self._is_config_path(cfg):
-            config_path = self._parse_path(cast(str, cfg))
-            cfg = self._load_hydra_cfg(config_path)
-        # 加载配置
-        repeats, parallels = self._update_config(cfg, repeats, parallels)
-        # 如果没有指定覆写，则直接运行程序
         if not overrides:
-            if parallels == 1 or repeats == 1:
-                self._batch_run_repeats(cfg, repeats, display_progress)
-            else:
-                self._batch_run_multi_processes(
-                    cfg,
-                    repeats,
-                    parallels,
-                    display_progress,
-                )
-        # 否则，对每一个复写的配置进行重复运行
-        for config, current_overrides in self._overriding_config(
-            cfg, overrides
+            # 如果没有覆写，直接运行
+            self._batch_run_repeats(cfg, repeats, parallels, display_progress)
+            return
+
+        # 获取所有配置组合
+        all_configs = list(self._overriding(cfg, overrides))
+        # 使用一个总进度条
+        for config, overrides_ in tqdm(
+            all_configs,
+            disable=not display_progress,
+            desc=f"{len(all_configs)} jobs (repeats {repeats} times each).",
+            position=0,
         ):
-            self.overrides = current_overrides
-            self.batch_run(
-                cfg=config,
-                repeats=repeats,
-                parallels=parallels,
-                display_progress=display_progress,
+            self.overrides = overrides_
+            # 内层任务只显示简单信息，不显示进度条
+            self._batch_run_repeats(
+                config,
+                repeats,
+                parallels,
+                display_progress=False,  # 关闭内层进度条
             )
             self._job_id += 1
-        # finally, clean up the overrides now.
         self.overrides = {}
-
-    @classmethod
-    def summary(cls, save: bool = False, **kwargs) -> None:
-        """Ending the experiment."""
-        df = pd.DataFrame(cls.final_vars)
-        if save:
-            df.to_csv(cls.folder / "summary.csv", index=False, **kwargs)
-        return df
-
-    @classmethod
-    def clean(cls, new_exp: bool = False) -> None:
-        """Clean the results.
-
-        Parameters:
-            new_exp:
-                Whether to create a new experiment.
-                If True, it will delete all the current settings.
-        """
-        cls.final_vars = []
-        cls.model_vars = []
-        if new_exp:
-            cls._instance = None
-            cls.folder = Path(os.getcwd())
-            cls.hydra_config = DictConfig({})
-            cls.name = "ABSESpyExp"
-
-    @classmethod
-    def new(cls, model_cls: Type[MainModel]) -> Experiment:
-        """Create a new experiment for the singleton class `Experiment`.
-        This method will delete all currently available exp results and settings.
-        Then, it initialize a new instance of experiment.
-
-        Parameters:
-            model_cls:
-                Using which model class to initialize the experiment.
-
-        Raises:
-            TypeError:
-                If the model class `model_cls` is not a valid `ABSESpy` model.
-
-        Returns:
-            An experiment.
-        """
-        cls.clean(new_exp=True)
-        return cls(model_cls=model_cls)
-
-    @classmethod
-    def get_model_vars_dataframe(cls) -> pd.DataFrame:
-        """Aggregation of model vars dataframe."""
-        if cls.model_vars:
-            return pd.concat(cls.model_vars, axis=0)
-        raise ValueError("No model vars found.")
