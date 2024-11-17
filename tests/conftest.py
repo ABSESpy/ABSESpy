@@ -63,7 +63,7 @@ class City(Actor):
 
 
 @pytest.fixture(name="testing_breeds")
-def testing_breeds() -> dict:
+def testing_breeds_fixture() -> dict:
     """一系列用于测试的主体类型。"""
     return {
         "Farmer": Farmer,

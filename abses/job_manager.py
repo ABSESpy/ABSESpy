@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type
 
 import pandas as pd
 
@@ -29,7 +29,10 @@ class ExperimentManager:
         return cls._instance
 
     def __init__(self, model_cls: Type[MainModel]):
-        assert self.model_cls is model_cls, "model_cls must be set in __new__"
+        if self.model_cls is not model_cls:
+            raise TypeError(
+                f"{self.__class__.__name__} is set, trying to initialize {model_cls.__name__} experiment."
+            )
         if not hasattr(self, "_datasets"):
             self._datasets: Dict[Tuple[int, int], pd.DataFrame] = {}
             self._seeds: Dict[Tuple[int, int], Optional[int]] = {}

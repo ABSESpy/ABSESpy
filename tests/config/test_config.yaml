@@ -13,3 +13,6 @@ reports:
             var2: 'test'
     final:
         var1: 'test'
+
+param1: 0
+param2: 'c'

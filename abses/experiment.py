@@ -13,6 +13,7 @@ import copy
 import inspect
 import itertools
 import os
+import random
 from copy import deepcopy
 from numbers import Number
 from pathlib import Path
@@ -334,10 +335,31 @@ class Experiment:
     #     config = OmegaConf.merge(config, logging_cfg)
     #     return config
 
-    def _get_seed(self, repeat_id: int) -> Optional[int]:
+    def _get_seed(
+        self, repeat_id: int, job_id: Optional[int] = None
+    ) -> Optional[int]:
+        """获取每次运行的随机种子
+
+        使用基础种子初始化随机数生成器，为每次运行生成唯一的随机种子。
+        这样可以保证：
+        1. 如果基础种子相同，生成的种子序列也相同
+        2. 不同的 job_id 和 repeat_id 组合会得到不同的种子
+        3. 种子序列具有更好的随机性
+
+        Args:
+            repeat_id: 重复实验的ID
+
+        Returns:
+            如果没有设置基础种子则返回 None，否则返回生成的随机种子
+        """
         if self._base_seed is None:
             return None
-        return self._base_seed + self._job_id * repeat_id + repeat_id
+
+        if job_id is None:
+            job_id = self.job_id
+        # 使用基础种子和 job_id 创建随机数生成器
+        r = random.Random(self._base_seed + job_id * 1000 + repeat_id)
+        return r.randrange(2**32)
 
     def _batch_run_repeats(
         self,
