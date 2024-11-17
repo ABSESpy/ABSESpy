@@ -7,12 +7,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type
 
 import pandas as pd
 
 if TYPE_CHECKING:
-    from .experiment import Experiment
+    from .experiment import HookFunc
     from .main import MainModel
 
 
@@ -20,20 +20,26 @@ class ExperimentManager:
     """管理所有实验结果的单例类"""
 
     _instance = None
+    model_cls: Type[MainModel]
 
-    def __new__(cls):
+    def __new__(cls, model_cls: Type[MainModel]):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._experiments = {}
-            cls._instance._current_exp = None
+            cls._instance.model_cls = model_cls
         return cls._instance
 
-    def __init__(self):
-        if not hasattr(self, "_results"):
-            self._experiments: Dict[int, "Experiment"] = {}
+    def __init__(self, model_cls: Type[MainModel]):
+        assert self.model_cls is model_cls, "model_cls must be set in __new__"
+        if not hasattr(self, "_datasets"):
             self._datasets: Dict[Tuple[int, int], pd.DataFrame] = {}
             self._seeds: Dict[Tuple[int, int], Optional[int]] = {}
             self._overrides: Dict[Tuple[int, int], Dict[str, Any]] = {}
+            self._hooks: Dict[str, HookFunc] = {}
+
+    @property
+    def hooks(self) -> Dict[str, HookFunc]:
+        """获取所有钩子"""
+        return self._hooks
 
     @property
     def index(self) -> pd.MultiIndex:
@@ -42,20 +48,11 @@ class ExperimentManager:
             self._datasets.keys(), names=["job_id", "repeat_id"]
         )
 
-    def register(self, exp: "Experiment", job_id: int) -> "ExperimentManager":
-        """注册一个新实验"""
-        self._experiments[job_id] = exp
-        return self
-
-    def get_experiment(
-        self, job_id: int, repeat_id: int
-    ) -> Optional["MainModel"]:
-        """获取指定 job_id 的实验"""
-        return self._datasets.get((job_id, repeat_id))
-
     def clean(self) -> None:
         """清理所有实验"""
         self._datasets.clear()
+        self._seeds.clear()
+        self._overrides.clear()
 
     def update_result(
         self,
@@ -92,3 +89,17 @@ class ExperimentManager:
             to_concat.append(seed)
         to_concat.append(self.dict_to_df(self._datasets))
         return pd.concat(to_concat, axis=1).reset_index()
+
+    def add_a_hook(
+        self,
+        hook_func: HookFunc,
+        hook_name: Optional[str] = None,
+    ) -> None:
+        """Add a hook to the experiment."""
+        if hook_name is None:
+            hook_name = hook_func.__name__
+        assert (
+            hook_name not in self._hooks
+        ), f"Hook {hook_name} already exists."
+        assert callable(hook_func), "hook_func must be a callable."
+        self._hooks[hook_name] = hook_func

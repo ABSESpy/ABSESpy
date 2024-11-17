@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import itertools
 import os
 from copy import deepcopy
@@ -21,13 +22,16 @@ from typing import (
     Dict,
     Iterable,
     Iterator,
+    List,
     Optional,
     Tuple,
     Type,
+    TypeVar,
     cast,
 )
 
 import pandas as pd
+from loguru import logger
 
 try:
     from typing import TypeAlias
@@ -46,6 +50,8 @@ from abses.job_manager import ExperimentManager
 from abses.main import MainModel
 
 Configurations: TypeAlias = DictConfig | str | Dict[str, Any]
+T = TypeVar("T")
+HookFunc: TypeAlias = Callable[[MainModel, Optional[int], Optional[int]], Any]
 
 
 def _parse_path(relative_path: str) -> Path:
@@ -69,7 +75,7 @@ def convert_to_python_type(value: Any) -> Any:
     if isinstance(value, np.generic):
         return value.item()
     # If array
-    elif isinstance(value, np.ndarray):
+    if isinstance(value, np.ndarray):
         # Optionally convert arrays to list if necessary
         return value.tolist()
     return value
@@ -107,12 +113,22 @@ def relative_path_from_to(from_path: Path, to_path: Path) -> Path:
 def run_single(
     model_cls: Type[MainModel],
     cfg: DictConfig,
-    repeat_id: int,
+    key: Tuple[int, int],
     seed: Optional[int] = None,
-    # hooks: Optional[Dict[str, Callable[[MainModel], Any]]] = None,
+    hooks: Optional[Dict[str, HookFunc]] = None,
     **kwargs,
-) -> Tuple[int, Optional[int], pd.DataFrame]:
-    """运行模型一次"""
+) -> Tuple[Tuple[int, int], Optional[int], pd.DataFrame]:
+    """Run model once, return the key, seed, and results.
+
+    Args:
+        key:
+            The key of the experiment.
+        seed:
+            The seed of the experiment.
+        hooks:
+            The hooks to run after the model is run.
+    """
+    job_id, repeat_id = key
     model = model_cls(
         parameters=cfg,
         run_id=repeat_id,
@@ -121,11 +137,17 @@ def run_single(
     )
     model.run_model()
     results = model.datacollector.get_final_vars_report(model)
-    return repeat_id, seed, results
+    if hooks is not None:
+        for hook_name, hook_func in hooks.items():
+            logger.info(f"Running hook {hook_name}.")
+            _call_hook_with_optional_args(
+                hook_func, model, job_id=job_id, repeat_id=repeat_id
+            )
+    return key, seed, results
 
 
 class Experiment:
-    """Repeated Experiment."""
+    """Experiment class."""
 
     def __init__(
         self,
@@ -136,13 +158,17 @@ class Experiment:
     ):
         if not issubclass(model_cls, MainModel):
             raise TypeError(f"Type {type(model_cls)} is invalid.")
-        self._model_type = model_cls
         self._job_id = 0
         self._extra_kwargs = kwargs
         self._overrides: Dict[str, Any] = {}
         self._base_seed = seed
-        self._manager = ExperimentManager().register(self, job_id=self._job_id)
+        self._manager = ExperimentManager(model_cls)
         self.cfg = cfg
+
+    @property
+    def model_cls(self) -> Type[MainModel]:
+        """Model class."""
+        return self._manager.model_cls
 
     @property
     def cfg(self) -> DictConfig:
@@ -186,7 +212,7 @@ class Experiment:
         Returns:
             An experiment.
         """
-        ExperimentManager().clean()
+        ExperimentManager(model_cls).clean()
         return cls(model_cls, cfg, **kwargs)
 
     @property
@@ -330,11 +356,12 @@ class Experiment:
                 desc=f"Job {self.job_id} repeats {repeats} times.",
             ):
                 run_single(
-                    model_cls=self._model_type,
+                    model_cls=self.model_cls,
                     cfg=cfg,
-                    repeat_id=repeat_id,
+                    key=(self.job_id, repeat_id),
                     outpath=self.outpath,
                     seed=self._get_seed(repeat_id),
+                    hooks=self._manager.hooks,
                     **self._extra_kwargs,
                 )
         else:
@@ -349,11 +376,12 @@ class Experiment:
                 verbose=0,
             )(
                 delayed(run_single)(
-                    model_cls=self._model_type,
+                    model_cls=self.model_cls,
                     cfg=cfg,
-                    repeat_id=repeat_id,
+                    key=(self.job_id, repeat_id),
                     outpath=self.outpath,
                     seed=self._get_seed(repeat_id),
+                    hooks=self._manager.hooks,
                     **self._extra_kwargs,
                 )
                 for repeat_id in tqdm(
@@ -363,9 +391,9 @@ class Experiment:
                 )
             )
             # 在主进程中批量更新结果
-            for repeat_id, seed, dataset in results:
+            for key, seed, dataset in results:
                 self._manager.update_result(
-                    key=(self.job_id, repeat_id),
+                    key=key,
                     datasets=dataset,
                     seed=seed,
                     overrides=self.overrides,
@@ -405,3 +433,46 @@ class Experiment:
             )
             self._job_id += 1
         self.overrides = {}
+
+    def add_hooks(
+        self,
+        hooks: List[HookFunc] | Dict[str, HookFunc] | HookFunc,
+    ) -> None:
+        """Add hooks to the experiment."""
+        if hasattr(hooks, "__call__"):
+            hooks = [cast(HookFunc, hooks)]
+        if isinstance(hooks, (list, tuple)):
+            for hook in hooks:
+                self._manager.add_a_hook(hook_func=hook)
+        elif isinstance(hooks, dict):
+            for hook_name, hook_func in hooks.items():
+                self._manager.add_a_hook(
+                    hook_func=hook_func, hook_name=hook_name
+                )
+        else:
+            raise TypeError(f"Invalid hooks type: {type(hooks)}.")
+
+
+def _call_hook_with_optional_args(
+    hook_func: Callable,
+    model: MainModel,
+    job_id: Optional[int] = None,
+    repeat_id: Optional[int] = None,
+) -> Any:
+    """根据钩子函数的参数签名动态调用函数
+
+    Args:
+        hook_func: 要调用的钩子函数
+        model: 模型实例
+        job_id: 可选的任务ID
+        repeat_id: 可选的重复实验ID
+    """
+    sig = inspect.signature(hook_func)
+    hook_args = {}
+
+    if "job_id" in sig.parameters:
+        hook_args["job_id"] = job_id
+    if "repeat_id" in sig.parameters:
+        hook_args["repeat_id"] = repeat_id
+
+    return hook_func(model, **hook_args)
