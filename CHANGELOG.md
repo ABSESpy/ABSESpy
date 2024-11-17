@@ -1,4 +1,17 @@
 
+<a id='changelog-0.7.0'></a>
+# 0.7.0 — 2024-11-17
+
+## Refactoring
+
+- [x] #refactor♻️ API compatible with Mesa 3.x version.
+- [x] #refactor♻️ Better experiment class
+
+## New Features
+
+- [x] #feat✨ Improve compatibility for visualisation with Mesa 3.x version
+- [x] #feat✨ Add Solara function for Mesa 3.x visualisation
+
 <a id='changelog-0.7.0.alpha'></a>
 # 0.7.0.alpha — 2024-11-08
 
