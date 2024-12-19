@@ -11,7 +11,7 @@ In no particular order, examples include:
 - Documentation improvements
 - Tutorials
 
-**submit a contribution**  
+**submit a contribution**
 
 - Find or create something you want to work on
 - Fork the ABSESpy repository
@@ -23,7 +23,7 @@ In no particular order, examples include:
 - Add your change file or added file by git `git add FILE_NAME`
 - Commit your changes with a message `git commit -m "Fix: DESCRIBE"`. The message should follow [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/)
 - Make sure that your submission works with a few of the examples in the examples repository. And if implementing a new feature, include some documentation in docs folder.
-- Check if your change passes the `pre-commit`. 
+- Check if your change passes the `pre-commit`.
 - Push your change to your fork repository `git push origin BRANCH_NAME`
 - Create a pull request and describe your change.
 
@@ -34,7 +34,7 @@ Maybe you are confused about where to start. It's OK! We provide some suggestion
 ### You are a modeller
 
 You already know how to build ABM model and want to build your own model by ABSESpy. You want to improve that and contribute your idea as an example. Awesome!
-Firstly you should get some tools and their knowledge. The code is based on `python` and manage the version by `git`. 
+Firstly you should get some tools and their knowledge. The code is based on `python` and manage the version by `git`.
 After that, talk to us about what you want to change, and open a small PR. Or update the [example](https://github.com/ABSESpy/ABSESpy/tree/master/examples)
 
 ### You are a developer
@@ -44,11 +44,11 @@ In this case, learn something about ABM (agent based model). And you can run a m
 
 ### You are both
 
-Wonderful! You can just start your work and read our workflow to prevent some error. 
+Wonderful! You can just start your work and read our workflow to prevent some error.
 
 ## Set environment
 
-We recommend to set environment by `poetry`, you can also use `venv` or `conda` but it need some work done yourself. 
+We recommend to set environment by `poetry`, you can also use `venv` or `conda` but it need some work done yourself.
 
 - `poetry` is a command tool that we recommend installing in a global environment by `pip install poetry`
 - Enter your `ABSESpy` folder and create an environment for `poetry` by `poetry env use python`.
