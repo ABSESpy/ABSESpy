@@ -64,6 +64,8 @@ fontawesome = ">=5"
 seaborn = ">=0.13"
 geocube = ">=0.5.0"
 solara = "*"
+numpy = "<2"
+urllib3 = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-clarity = "*"
@@ -114,10 +116,6 @@ pymdown-extensions = ">=10.7"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.scriv]
-version = "literal: pyproject.toml: tool.poetry.version"
-format = "md"
 
 [tool.mypy]
 ignore_missing_imports = true

@@ -14,15 +14,15 @@ repos:
     hooks:
     -   id: isort
         args: ['--profile=black']
-# - repo: https://github.com/kynan/nbstripout
-#   rev: 0.6.2
-#   hooks:
-#     - id: nbstripout
-# -   repo: https://github.com/pycqa/pydocstyle
-#     rev: '6.3.0'
-#     hooks:
-#     -   id: pydocstyle
-#         args: ['--convention=google', '--add-ignore=D100,D101,D102,D103,D104,D105,D106,D107']
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.8.1
+  hooks:
+    # Run the linter.
+    - id: ruff
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 'v4.4.0'
     hooks:
