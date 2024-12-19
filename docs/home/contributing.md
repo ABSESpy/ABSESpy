@@ -34,7 +34,7 @@ Maybe you are confused about where to start. It's OK! We provide some suggestion
 ### You are a modeller
 
 You already know how to build ABM model and want to build your own model by ABSESpy. You want to improve that and contribute your idea as an example. Awesome!
-Firstly you should get some tools and their knowledge. The code is based on `python` and manage the version by `git`.
+Firstly you should get some tools and their knowledge. The code is based on `python` and manage the version by `git`. 
 After that, talk to us about what you want to change, and open a small PR. Or update the [example](https://github.com/ABSESpy/ABSESpy/tree/master/examples)
 
 ### You are a developer
@@ -46,6 +46,16 @@ In this case, learn something about ABM (agent based model). And you can run a m
 
 Wonderful! You can just start your work and read our workflow to prevent some error. 
 
+## Set environment
+
+We recommend to set environment by `poetry`, you can also use `venv` or `conda` but it need some work done yourself. 
+
+- `poetry` is a command tool that we recommend installing in a global environment by `pip install poetry`
+- Enter your `ABSESpy` folder and create an environment for `poetry` by `poetry env use python`.
+- Activate the environment by `poetry shell`.
+- Install the required packages by `poetry install`
+- You can read this [file](https://python-poetry.org/) to learn more about `poetry`
+
 ## Test and code standard
 
 If you're changing previous features, please make sure of the following:
@@ -56,6 +66,20 @@ If you're changing previous features, please make sure of the following:
 - Additional features or rewrites of current features are accompanied by tests.
 - New features are demonstrated in a model, so folks can understand more easily.
 - New docs or changing docs better in `md` format and follow the `markdownlint`
+
+To ensure your code can implement adequate performance, we recommend `pytest`.
+
+- Create a file start with `test_`.
+- Create a class start with `Test`.
+- Create functions start with `test_`.
+- Call your code in test functions and check the result as expected. You can use `assert`.
+- Input `pytest` in terminal to start the test and read the outcome. There are some significations:
+	- `.`: passed
+	- `F`: failed
+	- `E`: error
+	- `s`: skipped
+	- `X`: unexpected pass
+	- `x`: unexpected fail
 
 To ensure your code exclude the style error, we recommend `mypy` .
 
