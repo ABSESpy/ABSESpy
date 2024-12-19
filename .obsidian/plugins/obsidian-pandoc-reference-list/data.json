@@ -1,8 +1,0 @@
-{
-  "pathToPandoc": "/Users/songshgeo/opt/anaconda3/bin/pandoc",
-  "tooltipDelay": 800,
-  "pathToBibliography": "/Users/songshgeo/Documents/Pycharm/ABSESpy/docs/refs.bib",
-  "cslStyle": "/Users/songshgeo/Library/Mobile Documents/iCloud~md~obsidian/Documents/MyNotebook/Resources/science-advances.csl",
-  "hideLinks": true,
-  "showCitekeyTooltips": true
-}
