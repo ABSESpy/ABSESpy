@@ -184,7 +184,7 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/ABSESpy/ABSESpy
+      link: https://github.com/SongshGeoLab/ABSESpy
     # - icon: fontawesome/brands/web
     #   link: https://cv.songshgeo.com/
-repo_url: https://github.com/absespy/ABSESpy
+repo_url: https://github.com/SongshGeoLab/ABSESpy
