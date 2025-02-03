@@ -5,8 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""PatchModule class
-"""
+"""PatchModule class"""
+
 from __future__ import annotations
 
 import functools
@@ -224,9 +224,9 @@ class _PatchModuleFactory(_ModuleFactory):
             gdf, attr_name = gdf.reset_index(), "index"
         if isinstance(resolution, float):
             resolution = (resolution, resolution)
-        xda = make_geocube(
-            gdf, measurements=[attr_name], resolution=resolution
-        )[attr_name]
+        xda = make_geocube(gdf, measurements=[attr_name], resolution=resolution)[
+            attr_name
+        ]
         return self.from_xarray(
             xda=xda,
             model=model,
@@ -325,14 +325,20 @@ class PatchModule(Module, RasterLayer):
         logger.info("Initializing a new Model Layer...")
         self._mask: np.ndarray = np.ones(self.shape2d).astype(bool)
 
-    def _setup_cells(self) -> None:
+    def _initialize_cells(
+        self,
+        model: MainModel[Any, Any],
+        cell_cls: type[PatchCell],
+    ) -> None:
+        if model is not self.model:
+            raise ValueError("Model mismatching.")
         self._cells = []
         for x in range(self.width):
             col: List = []
             for y in range(self.height):
                 row_idx, col_idx = self.height - y - 1, x
                 col.append(
-                    self.cell_cls(
+                    cell_cls(
                         self,
                         pos=(x, y),
                         indices=(row_idx, col_idx),
@@ -586,22 +592,16 @@ class PatchModule(Module, RasterLayer):
         """
         if isinstance(where, Geometry):
             mask_ = self._select_by_geometry(geometry=where)
-        elif (
-            isinstance(where, (np.ndarray, str, xr.DataArray)) or where is None
-        ):
+        elif isinstance(where, (np.ndarray, str, xr.DataArray)) or where is None:
             mask_ = self._attr_or_array(where).reshape(self.shape2d)
         else:
-            raise TypeError(
-                f"{type(where)} is not supported for selecting cells."
-            )
+            raise TypeError(f"{type(where)} is not supported for selecting cells.")
         mask_ = np.nan_to_num(mask_, nan=0.0).astype(bool)
         return ActorsList(self.model, self.array_cells[mask_])
 
     sel = select
 
-    def apply(
-        self, ufunc: Callable[..., Any], *args: Any, **kwargs: Any
-    ) -> np.ndarray:
+    def apply(self, ufunc: Callable[..., Any], *args: Any, **kwargs: Any) -> np.ndarray:
         """Apply a function to array cells.
 
         Parameters:
@@ -742,9 +742,7 @@ class PatchModule(Module, RasterLayer):
         """Reproject the xarray data to the same CRS as this layer."""
         if isinstance(resampling, str):
             resampling = getattr(Resampling, resampling)
-        return xda.rio.reproject_match(
-            self.xda, resampling=resampling, **kwargs
-        )
+        return xda.rio.reproject_match(self.xda, resampling=resampling, **kwargs)
 
     def get_neighboring_cells(
         self,
@@ -769,9 +767,7 @@ class PatchModule(Module, RasterLayer):
             >>> # Get Moore neighborhood with radius 2
             >>> neighbors = module.get_neighboring_cells((5,5), moore=True, radius=2)
         """
-        cells = super().get_neighboring_cells(
-            pos, moore, include_center, radius
-        )
+        cells = super().get_neighboring_cells(pos, moore, include_center, radius)
         return ActorsList(self.model, cells)
 
     @functools.lru_cache(maxsize=1000)
@@ -807,9 +803,7 @@ class PatchModule(Module, RasterLayer):
         row, col = indices
         mask_arr = np.zeros(self.shape2d, dtype=bool)
         mask_arr[row, col] = True
-        mask_arr = get_buffer(
-            mask_arr, radius=radius, moor=moore, annular=annular
-        )
+        mask_arr = get_buffer(mask_arr, radius=radius, moor=moore, annular=annular)
         mask_arr[row, col] = include_center
         return ActorsList(self.model, self.array_cells[mask_arr])
 

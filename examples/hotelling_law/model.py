@@ -10,7 +10,6 @@ Hotelling's Law model.
 """
 
 import numpy as np
-from mesa.time import SimultaneousActivation
 from scipy.spatial.distance import cdist
 
 from abses import Actor, ActorsList, MainModel, PatchCell
@@ -84,9 +83,7 @@ class Shop(Actor):
             self.next_price = self.price - 1
         # Otherwise, choose the price with the highest potential revenue
         else:
-            self.next_price = max(
-                _potential_revenues, key=_potential_revenues.get
-            )
+            self.next_price = max(_potential_revenues, key=_potential_revenues.get)
 
         # Reset price to initial price
         self.price = init_price
@@ -127,7 +124,6 @@ class Hotelling(MainModel):
     """
 
     def setup(self):
-        self.schedule = SimultaneousActivation(self)
         num_agents = self.params.get("n_agents", 3)
         # Initialize a grid
         layer = self.nature.create_module(
