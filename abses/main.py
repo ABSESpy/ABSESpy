@@ -72,7 +72,6 @@ SubSystem = Union[
     Tuple[SubSystemType, SubSystemType],
     Tuple[SubSystemType, SubSystemType, SubSystemType],
 ]
-BASIC_CONFIG = DictConfig({"model": {}})  # 基础配置结构
 
 
 class MainModel(Generic[H, N], Model, _Notice, _States):
@@ -129,7 +128,8 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._exp = experiment
         self._run_id: Optional[int] = run_id
         self.outpath = cast(Path, outpath)
-        self._settings = OmegaConf.merge(BASIC_CONFIG, {"model": kwargs}, parameters)
+        dotlist = [f"{k}={v}" for k, v in kwargs.items()]
+        self._settings = OmegaConf.merge(parameters, OmegaConf.from_dotlist(dotlist))
         self._setup_logger(parameters.get("log", {}))
         self.running: bool = True
         self._version: str = __version__
@@ -143,6 +143,9 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         )
         self._do_each("initialize", order=("nature", "human"))
         self._do_each("set_state", code=1)  # initial state
+
+    def __deepcopy__(self, memo):
+        return self
 
     def __repr__(self) -> str:
         version = self._version

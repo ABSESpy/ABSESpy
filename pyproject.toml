@@ -39,6 +39,7 @@ geocube = ">=0.5.0"
 solara = "*"
 numpy = "<2"
 urllib3 = "*"
+icons = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-clarity = "*"

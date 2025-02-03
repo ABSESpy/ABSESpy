@@ -51,7 +51,7 @@ class TestMain:
     def test_run_a_model(self, main_config):
         """测试运行模型"""
         # arrange
-        model = MainModel(parameters=main_config, logging="config.log")
+        model = MainModel(parameters=main_config)
         # act
         model.run_model()
 
