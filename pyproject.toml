@@ -1,30 +1,3 @@
-[tool.black]
-line-length = 79
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | __pycache__
-  | build
-  | dist
-)/
-'''
-
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.1.2"
-tag_format = "$version"
-[semantic_release]
-version_variable = 3.8 # or where your version is defined
-# repository_user_var = TWINE_USERNAME
-# repository_pass_var = TWINE_PASSWORD
-
 [tool.isort]
 profile = "black"
 line_length = 79
@@ -48,11 +21,11 @@ include = [
 abses = "hydra_plugins.abses_searchpath_plugin:ABSESpySearchPathPlugin"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.11,<3.12"
 netcdf4 = ">=1.6"
 hydra-core = "~1.3"
-mesa = {version = ">=3.0.0", allow-prereleases = true}
-mesa_geo = {git = "https://github.com/SongshGeo/mesa-geo.git", branch = "dev"}
+mesa = ">=3.1.0"
+mesa-geo = {git = "https://github.com/projectmesa/mesa-geo.git", branch = "main"}
 xarray = ">=2023"
 fiona = ">1.8"
 loguru = ">=0.7"

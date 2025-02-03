@@ -129,14 +129,11 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         self._exp = experiment
         self._run_id: Optional[int] = run_id
         self.outpath = cast(Path, outpath)
-        self._settings = OmegaConf.merge(
-            BASIC_CONFIG, {"model": kwargs}, parameters
-        )
+        self._settings = OmegaConf.merge(BASIC_CONFIG, {"model": kwargs}, parameters)
         self._setup_logger(parameters.get("log", {}))
         self.running: bool = True
         self._version: str = __version__
         self._check_subsystems(h_cls=human_class, n_cls=nature_class)
-        self._setup_agent_registration()
         self._agents_handler = _ModelAgentsContainer(
             model=self, max_len=kwargs.get("max_agents", None)
         )
@@ -169,11 +166,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         agents = self._agents_handler.select({"_birth_tick": self.time.tick})
         agents_dict = agents.to_dict()
         lst = [f"{len(lst)} {breed}" for breed, lst in agents_dict.items()]
-        msg = (
-            f"\nIn [tick {self.time.tick - 1}]:"
-            "\n"
-            "Created " + ", ".join(lst) + ""
-        )
+        msg = f"\nIn [tick {self.time.tick - 1}]:" "\n" "Created " + ", ".join(lst) + ""
         logger.bind(no_format=True).info(msg)
 
     def _check_subsystems(
