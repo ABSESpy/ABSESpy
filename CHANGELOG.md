@@ -1,6 +1,16 @@
+# Changelog
+
+## [0.7.1](https://github.com/SongshGeoLab/ABSESpy/compare/0.7.0...v0.7.1) (2025-02-03)
+
+
+### Bug Fixes
+
+* :green_heart: Only generate joss draft on main, using poetry instead of pip ([fb8dafc](https://github.com/SongshGeoLab/ABSESpy/commit/fb8dafc2126754545432e88130b03d13e5b54c5c))
+* **docs:** :memo: Moved contributing guideness to main repo and fixed it's docs style ([6601f3c](https://github.com/SongshGeoLab/ABSESpy/commit/6601f3c39c44480141e5014fa944b108a659e370))
+* **project:** :green_heart: remove griffle plugin from mkdocs-material ([9805663](https://github.com/SongshGeoLab/ABSESpy/commit/9805663a42a9d0ddf45871a1297275c198248f42))
 
 <a id='changelog-0.7.0'></a>
-# 0.7.0 — 2024-11-17
+## 0.7.0 — 2024-11-17
 
 ## Refactoring
 
@@ -13,7 +23,7 @@
 - [x] #feat✨ Add Solara function for Mesa 3.x visualisation
 
 <a id='changelog-0.7.0.alpha'></a>
-# 0.7.0.alpha — 2024-11-08
+## 0.7.0.alpha — 2024-11-08
 
 ## Refactoring
 
@@ -24,7 +34,7 @@
 - [x] #feat✨ Improve compatibility for visualisation with Mesa 3.x version
 
 <a id='changelog-0.6.10'></a>
-# 0.6.10 — 2024-07-12
+## 0.6.10 — 2024-07-12
 
 ## Documentation changes
 
@@ -39,7 +49,7 @@
 - [x] #refactor♻️ when single run in exp, no progress bar anymore
 
 <a id='changelog-0.6.9'></a>
-# 0.6.9 — 2024-06-08
+## 0.6.9 — 2024-06-08
 
 ## Refactoring
 
@@ -50,7 +60,7 @@
 - [x] #feat✨ `TimeDrive` included a new `expected_ticks` property
 
 <a id='changelog-0.6.8'></a>
-# 0.6.8 — 2024-06-04
+## 0.6.8 — 2024-06-04
 
 ## Refactoring
 
@@ -65,7 +75,7 @@
 - [x] #feat✨ Random assign a value to `ActorsList`
 
 <a id='changelog-0.6.7'></a>
-# 0.6.7 — 2024-05-29
+## 0.6.7 — 2024-05-29
 
 ## New Features
 
@@ -79,7 +89,7 @@
 - [x] #bug🐛  The arg `agent_cls` passed to `_new_one` method now
 
 <a id='changelog-0.6.6'></a>
-# 0.6.6 — 2024-05-19
+## 0.6.6 — 2024-05-19
 
 ## Fixed bugs
 
@@ -107,7 +117,7 @@
 - [x] #feat✨ Plotting `network` and `shapefile`
 
 <a id='changelog-0.6.5'></a>
-# 0.6.5 — 2024-05-17
+## 0.6.5 — 2024-05-17
 
 ## Fixed bugs
 
@@ -115,7 +125,7 @@
 - [x] #bug🐛  Fixed shape `(1, x)` natural patch squeezed bug
 
 <a id='changelog-0.6.4'></a>
-# 0.6.4 — 2024-05-16
+## 0.6.4 — 2024-05-16
 
 ## Fixed bugs
 
@@ -132,21 +142,21 @@
 - [x] #feat✨ counting the ages of the actors
 
 <a id='changelog-0.6.3'></a>
-# 0.6.3 — 2024-05-12
+## 0.6.3 — 2024-05-12
 
 ## New Features
 
 - [x] #feat✨ now experiment can record model's vars
 
 <a id='changelog-0.6.2'></a>
-# 0.6.2 — 2024-05-12
+## 0.6.2 — 2024-05-12
 
 ## Refactoring
 
 - [x] #refactor♻️ update dependencies.
 
 <a id='changelog-0.6.1'></a>
-# 0.6.1 — 2024-05-12
+## 0.6.1 — 2024-05-12
 
 ## New Features
 
@@ -157,7 +167,7 @@
 - [x] #bug🐛 include `__init__.py` for default config
 
 <a id='changelog-0.6.0'></a>
-# 0.6.0 — 2024-05-11
+## 0.6.0 — 2024-05-11
 
 ## Fixed bugs
 
@@ -183,7 +193,7 @@
 - [x] #docs📄 Added a completed tutorial of forest fire to demonstrate multiple runs.
 
 <a id='changelog-0.5.8'></a>
-# 0.5.8 — 2024-04-18
+## 0.5.8 — 2024-04-18
 
 ## Performance improvements
 
@@ -202,7 +212,7 @@
 - [x] #docs📄 update notebooks with cleaner descriptions on Nature
 
 <a id='changelog-0.5.7'></a>
-# 0.5.7 — 2024-04-10
+## 0.5.7 — 2024-04-10
 
 ## Fixed bugs
 
@@ -216,7 +226,7 @@
 - [x] #docs📄  fixing Mantilla Ibarra name and capitalizing refers
 
 <a id='changelog-0.5.6'></a>
-# 0.5.6 — 2024-04-06
+## 0.5.6 — 2024-04-06
 
 ## Refactoring
 
@@ -228,7 +238,7 @@
 - [x] #docs📄 updated README contributors
 
 <a id='changelog-0.5.5'></a>
-# 0.5.5 — 2024-04-06
+## 0.5.5 — 2024-04-06
 
 ## Refactoring
 
@@ -251,7 +261,7 @@
 - [x] **LINE 159**: Missing colon after "In" see [https://link.springer.com/chapter/10.1007/978-3-319-67217-5_2#citeas](https://link.springer.com/chapter/10.1007/978-3-319-67217-5_2#citeas)[](https://www.sci-hub.ee/10.1007/978-3-319-67217-5_2)
 
 <a id='changelog-0.5.4'></a>
-# 0.5.4 — 2024-03-28
+## 0.5.4 — 2024-03-28
 
 ## Documentation changes
 
@@ -275,7 +285,7 @@
 - [x] #docs📄 Improve JOSS paper overall.
 
 <a id='changelog-0.5.3'></a>
-# 0.5.3 — 2024-03-26
+## 0.5.3 — 2024-03-26
 
 ## Fixed bugs
 
@@ -285,7 +295,7 @@
 - [x] #bug🐛 fixing release drafter to the latest version
 
 <a id='changelog-0.5.2'></a>
-# 0.5.2 — 2024-03-26
+## 0.5.2 — 2024-03-26
 
 ## Performance improvements
 
@@ -300,7 +310,7 @@
 - [x] #feat✨  getting an item or None from `ActorsList` or container
 
 <a id='changelog-0.5.1'></a>
-# 0.5.1 — 2024-03-20
+## 0.5.1 — 2024-03-20
 
 ## Documentation changes
 
@@ -313,7 +323,7 @@
 - [x] #refactor♻️ Remove some died codes.
 
 <a id='changelog-0.5.0'></a>
-# 0.5.0 — 2024-03-12
+## 0.5.0 — 2024-03-12
 
 ## Performance improvements
 
@@ -349,7 +359,7 @@
 - [x] use `get`, `set` methods to control the actor's behaviors
 
 <a id='changelog-0.4.2'></a>
-# 0.4.2 — 2024-01-11
+## 0.4.2 — 2024-01-11
 
 ## Refactoring
 
@@ -360,7 +370,7 @@
 - [x] #bug🐛 Data collector strings are collected now.
 
 <a id='changelog-0.4.1'></a>
-# 0.4.1 — 2024-01-11
+## 0.4.1 — 2024-01-11
 
 ## Documentation changes
 
@@ -371,7 +381,7 @@
 - [x] #bug🐛 Fix `mkdocs` CI bug
 
 <a id='changelog-0.4.0'></a>
-# 0.4.0 — 2024-01-11
+## 0.4.0 — 2024-01-11
 
 ## New Features
 
@@ -385,14 +395,14 @@
 - [x] #docs📄 Actors' movement
 
 <a id='changelog-0.3.5rc'></a>
-# 0.3.5rc — 2023-12-05
+## 0.3.5rc — 2023-12-05
 
 ## Fixed bugs
 
 - [x] #bug🐛 fix `AttributeError: 'super' object has no attribute 'random'`
 
 <a id='changelog-0.3.5'></a>
-# 0.3.5 — 2023-12-05
+## 0.3.5 — 2023-12-05
 
 ## New Features
 
@@ -405,35 +415,35 @@
 - [x] #docs📄 Add a citation of `wang2022h`
 
 <a id='changelog-0.3.4'></a>
-# 0.3.4 — 2023-12-01
+## 0.3.4 — 2023-12-01
 
 ## Fixed bugs
 
 - [x] #bug🐛 (modules): :bug: fixed the geometry links behave not stably.
 
 <a id='changelog-0.3.3'></a>
-# 0.3.3 — 2023-11-29
+## 0.3.3 — 2023-11-29
 
 ## Fixed bugs
 
 - [x] #bug🐛 fixing `random.choice` triggered error : `'super' object has no attribute 'random'`
 
 <a id='changelog-0.3.2'></a>
-# 0.3.2 — 2023-11-29
+## 0.3.2 — 2023-11-29
 
 ## New Features
 
 - [ ] #feat✨ Generate random links between actors with the possibility
 
 <a id='changelog-0.3.1'></a>
-# 0.3.1 — 2023-11-28
+## 0.3.1 — 2023-11-28
 
 ## Performance improvements
 
 - [x] #build🏗 Un-pin the dependencies and upgrade
 
 <a id='changelog-0.3.0'></a>
-# 0.3.0 — 2023-11-11
+## 0.3.0 — 2023-11-11
 
 ## Documentation changes
 
@@ -451,7 +461,7 @@
 - [x] #refactor♻️ Some small refactoring when polishing api documents
 
 <a id='changelog-0.2.1.alpha'></a>
-# 0.2.1.alpha — 2023-11-07
+## 0.2.1.alpha — 2023-11-07
 
 ## Documentation changes
 
@@ -470,7 +480,7 @@
 - [x] #bug🐛 hot-fix infinitely model runing
 - [x] #bug🐛 Twice logging.
 
-# v-0.1.0 🎉
+## v-0.1.0 🎉
 
 ## New Features
 
@@ -485,19 +495,19 @@
 - [x] #docs📄  #project🎉 Logging.
 - [x] #docs📄 #project🎉 Basic introduction of `ABSESpy`
 
-# v-0.1.1 🎉
+## v-0.1.1 🎉
 
 ## Documentation changes
 
 - [x] #docs📄 update README document
 
-# v-0.1.2 🎉
+## v-0.1.2 🎉
 
 ## Fixed bugs
 
 - [x] #bug🐛 fixed log setup twice
 
-# v-0.2.0.alpha 🎉
+## v-0.2.0.alpha 🎉
 
 - [x] #refactor♻️ Remove `variable` class and replace it with `DynamicVariable`.
 - [x] #refactor♻️ Remove `TimeDriverManager` and adding type hint to `TimeDriver`
