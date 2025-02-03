@@ -28,7 +28,7 @@ repository into a subfolder of your project root which might be useful if you
 want to use the very latest version:
 
 ```sh
-git clone https://github.com/ABSESpy/ABSESpy abses
+git clone https://github.com/SongshGeoLab/ABSESpy abses
 ```
 
 Next, install the theme and its dependencies with:
@@ -42,4 +42,4 @@ pip install -e abses
   [virtual environment]: https://realpython.com/what-is-pip/#using-pip-in-a-python-virtual-environment
   [Using Python's pip to Manage Your Projects' Dependencies]: https://realpython.com/what-is-pip/
   [all dependencies]: ../home/dependencies.md
-  [GitHub]: https://github.com/ABSESpy/ABSESpy
+  [GitHub]: https://github.com/SongshGeoLab/ABSESpy

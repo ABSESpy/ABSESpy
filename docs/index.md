@@ -9,7 +9,7 @@ description: "Agent-Based Social-ecological systems Modelling Framework in Pytho
 
 **Date**: January. 11, 2024, **Version**: 0.6.10
 
-**Useful links**: [Install](home/Installation.md) | [Source Repository](https://github.com/ABSESpy/ABSESpy) | [Issues & Ideas](https://github.com/ABSESpy/ABSESpy/issues) | [Q&A Support](https://github.com/ABSESpy/ABSESpy/discussions)
+**Useful links**: [Install](home/Installation.md) | [Source Repository](https://github.com/SongshGeoLab/ABSESpy) | [Issues & Ideas](https://github.com/SongshGeoLab/ABSESpy/issues) | [Q&A Support](https://github.com/SongshGeoLab/ABSESpy/discussions)
 
 `ABSESpy` is an agent-based framework that makes modeling social-ecological systems easier.
 

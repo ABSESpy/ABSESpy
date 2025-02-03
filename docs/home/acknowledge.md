@@ -10,6 +10,6 @@ date: 2023-01-10
 
 ## Thanks to all contributors
 
-<a href="https://github.com/ABSESpy/ABSESpy/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ABSESpy/ABSESpy" />
+<a href="https://github.com/SongshGeoLab/ABSESpy/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=SongshGeoLab/ABSESpy" />
 </a>
