@@ -1,5 +1,5 @@
 
-As an open source project, ABSESpy welcomes contributions of many forms, and from beginners to experts. If you are curious or just want to see what is happening, we post our development session agendas and development session notes on [discussions](https://github.com/ABSESpy/ABSESpy/discussions)
+As an open source project, ABSESpy welcomes contributions of many forms, and from beginners to experts. If you are curious or just want to see what is happening, we post our development session agendas and development session notes on [discussions](https://github.com/SongshGeoLab/ABSESpy/discussions)
 In no particular order, examples include:
 - Code patches
 - Bug reports and patch reviews
@@ -17,7 +17,7 @@ In no particular order, examples include:
 - Add your change file or added file by git `git add FILE_NAME`
 - Commit your changes with a message `git commit -m "Fix: DESCRIBE"`. The message should follow [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/)
 - Make sure that your submission works with a few of the examples in the examples repository. And if implementing a new feature, include some documentation in docs folder.
-- Check if your change passes the `pre-commit`. 
+- Check if your change passes the `pre-commit`.
 - Push your change to your fork repository `git push origin BRANCH_NAME`
 - Create a pull request and describe your change.
 ## How to start
@@ -25,12 +25,12 @@ Maybe you are confused about where to start. It's OK! We provide some suggestion
 ### You are a modeller
 You already know how to build ABM model and want to build your own model by ABSESpy. You want to improve that and contribute your idea as an example. Awesome!
 Firstly you should get some tools and their knowledge. The code is based on `python` and manage the version by `git`.
-After that, talk to us about what you want to change, and open a small PR. Or update the [example](https://github.com/ABSESpy/ABSESpy/tree/master/examples)
+After that, talk to us about what you want to change, and open a small PR. Or update the [example](https://github.com/SongshGeoLab/ABSESpy/tree/master/examples)
 ### You are a developer
 Great! You have the basics of open-source software development, but not much modelling experience.
 In this case, learn something about ABM (agent based model). And you can run a model in [mesa-example](https://mesa.readthedocs.io/latest/tutorials/visualization_tutorial.html) which is a important ABM python package.
 ### You are both
-Wonderful! You can just start your work and read our workflow to prevent some error. 
+Wonderful! You can just start your work and read our workflow to prevent some error.
 ## Test and code standard
 If you're changing previous features, please make sure of the following:
 
@@ -70,7 +70,7 @@ Some notes useful for ABSESpy maintainers.
 ### Releases
 To create a new release, follow these steps:
 1. Ensure all pull requests (PRs) have a clear title and are labeled with at least one label.
-2. Navigate to the [Release](https://github.com/ABSESpy/ABSESpy/releases) section in the Github UI and click the *Draft a new release* button.
+2. Navigate to the [Release](https://github.com/SongshGeoLab/ABSESpy/releases) section in the Github UI and click the *Draft a new release* button.
 3. Use the _Generate release notes_ button to automatically create release notes. Review them carefully for accuracy, and update labels and edit PR titles if necessary (step 1).
 4. Write a _Highlights_ section summarizing the most important features or changes in this release.
 5. Copy the release notes and save them by clicking the grey _Save draft_ button.

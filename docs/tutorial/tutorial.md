@@ -5,7 +5,7 @@
 Here, we provide a series of tutorials based on [Jupyter Notebook], demonstrating the potential needs and solutions when developing with `ABSESpy` in practice. We expect you to have read through [Quick Start] guide and that you have assessed whether `ABSESpy` is [the right software for you]. Three levels of tutorials are available below:
 
 > [!INFO]In Progress
-> This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/absespy/ABSESpy/issues).
+> This document is a work in progress if you see any errors, or exclusions or have any problems, please [get in touch with us](https://github.com/SongshGeoLab/ABSESpy/issues).
 
 ## :hatching_chick: Beginner level
 

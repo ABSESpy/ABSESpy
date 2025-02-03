@@ -11,7 +11,7 @@ Copyright (c) 2021-2023 Shuang Song
 
 Documentation: https://absespy.github.io/ABSESpy
 Examples: https://absespy.github.io/ABSESpy/tutorial/user_guide/
-Source: https://github.com/absespy/ABSESpy
+Source: https://github.com/SongshGeoLab/ABSESpy
 """
 
 __all__ = [

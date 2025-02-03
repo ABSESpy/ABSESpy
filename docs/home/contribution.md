@@ -14,5 +14,5 @@
 
 <!-- Links -->
   [mailing list]: https://groups.google.com/g/absespy
-  [GitHub Discussions]: https://github.com/absespy/ABSESpy/discussions
-  [GitHub issues]: https://github.com/absespy/ABSESpy/issues
+  [GitHub Discussions]: https://github.com/SongshGeoLab/ABSESpy/discussions
+  [GitHub issues]: https://github.com/SongshGeoLab/ABSESpy/issues

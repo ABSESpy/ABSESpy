@@ -9,7 +9,7 @@ To illustrate why `ABSESpy` combines these two, or to help scholars interested i
 <!-- 我们更希望相关领域的学者愿意参与到本百科页的共建中，如果发现任何错误，请及时与我们联系。 -->
 
 > [!INFO]In Progress
-> The author team refers to publicly published, peer-reviewed papers, striving for simplicity and factual accuracy. We sincerely hope that scholars in related fields are willing to participate in the co-construction of this encyclopedia page. If any errors are found, please [contact us promptly](https://github.com/absespy/ABSESpy/issues).
+> The author team refers to publicly published, peer-reviewed papers, striving for simplicity and factual accuracy. We sincerely hope that scholars in related fields are willing to participate in the co-construction of this encyclopedia page. If any errors are found, please [contact us promptly](https://github.com/SongshGeoLab/ABSESpy/issues).
 
 
 <div class="grid" markdown>
