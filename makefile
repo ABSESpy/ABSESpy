@@ -65,4 +65,6 @@ clean_logs:
 	./remove-logs.sh
 
 rm_log:
-	rm *.log
+	echo "Removing .coverage and *.log files..."
+	ls .coverage* 1>/dev/null 2>&1 && rm .coverage* || true
+	ls *.log 1>/dev/null 2>&1 && rm *.log || true
