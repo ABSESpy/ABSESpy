@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.4](https://github.com/SongshGeoLab/ABSESpy/compare/v0.7.3...v0.7.4) (2025-02-06)
+
+
+### Bug Fixes
+
+* :green_heart: Fix python version update in release please ([365df5c](https://github.com/SongshGeoLab/ABSESpy/commit/365df5c9f70089b5da7c48aec810fbef727aa7cd))
+
 ## [0.7.3](https://github.com/SongshGeoLab/ABSESpy/compare/v0.7.2...v0.7.3) (2025-02-06)
 
 
