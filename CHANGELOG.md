@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/SongshGeoLab/ABSESpy/compare/v0.7.1...v0.7.2) (2025-02-06)
+
+
+### Bug Fixes
+
+* **src:** :bug: Fix bug in visualizing empty agent sets ([96abff1](https://github.com/SongshGeoLab/ABSESpy/commit/96abff1244412d149f89ddce25cf988dc5f94019))
+* **src:** :bug: Parse parameters in correct order now ([cd648c7](https://github.com/SongshGeoLab/ABSESpy/commit/cd648c7ac6ded2bbd23268577cfa0345d7d89df8))
+
 ## [0.7.1](https://github.com/SongshGeoLab/ABSESpy/compare/0.7.0...v0.7.1) (2025-02-03)
 
 
