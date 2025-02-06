@@ -1,17 +1,17 @@
 repos:
 -   repo: https://github.com/PyCQA/flake8
-    rev: '6.0.0'
+    rev: '7.1.1'
     hooks:
     -   id: flake8
         args: ['--max-line-length=88', '--extend-ignore=E203,E501,W503', '--exclude=.venv']
 -   repo: https://github.com/PyCQA/isort
-    rev: '5.12.0'
+    rev: '6.0.0'
     hooks:
     -   id: isort
         args: ['--profile=black']
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
-  rev: v0.8.1
+  rev: v0.9.4
   hooks:
     # Run the linter.
     - id: ruff
@@ -19,7 +19,7 @@ repos:
     # Run the formatter.
     - id: ruff-format
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 'v4.4.0'
+    rev: 'v5.0.0'
     hooks:
     -   id: check-ast
     -   id: trailing-whitespace
@@ -31,7 +31,7 @@ repos:
         - id: poetry-export
           args: ["-f", "requirements.txt", "--without-hashes", "-o", "requirements.txt"]
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.6.1'  # Use the sha / tag you want to point at
+    rev: 'v1.15.0'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
-        args: [--ignore-missing-imports]
+        args: [--ignore-missing-imports, --follow-imports=skip]

@@ -1498,6 +1498,20 @@ omegaconf = ">=2.2,<2.4"
 packaging = "*"
 
 [[package]]
+name = "icons"
+version = "1.1"
+description = "generate icons of all sizes and config file (e.g. Contents.json) required by iOS or Android app, inspired by http://makeappicon.com"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "icons-1.1.tar.gz", hash = "sha256:143872e29f9e031b20ce6f355e702bdf3615df0efb64c5a356e106f7af38af57"},
+]
+
+[package.dependencies]
+pillow = ">=2.6.1"
+
+[[package]]
 name = "identify"
 version = "2.6.6"
 description = "File identification library for Python"
@@ -2784,14 +2798,16 @@ rec = ["matplotlib", "networkx", "solara"]
 viz = ["matplotlib", "solara"]
 
 [[package]]
-name = "Mesa-Geo"
-version = "0.9.0"
+name = "mesa-geo"
+version = "0.9.1"
 description = "GIS Agent-based modeling (ABM) in Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "mesa_geo-0.9.1-py3-none-any.whl", hash = "sha256:5678d06f0d8d8e8f1ac5f7bb5526a23a583188025aa75e3d3f84d434bfb3a0b4"},
+    {file = "mesa_geo-0.9.1.tar.gz", hash = "sha256:d0e6cc596c9178ac7b341f6d7ae415d867c37cc157d19f1f3fa4e7ddb36ac23a"},
+]
 
 [package.dependencies]
 folium = "*"
@@ -2809,12 +2825,6 @@ xyzservices = ">=2022.9.0"
 dev = ["coverage", "pytest (>=4.6)", "pytest-cov", "pytest-mock", "ruff", "sphinx"]
 docs = ["ipython", "myst-nb", "myst-parser", "pydata-sphinx-theme", "seaborn", "sphinx"]
 examples = ["momepy", "pytest"]
-
-[package.source]
-type = "git"
-url = "https://github.com/projectmesa/mesa-geo.git"
-reference = "main"
-resolved_reference = "fc59e1da3c6a7c5e975fd00e1a612c1d3dac2b7e"
 
 [[package]]
 name = "mike"
@@ -6415,4 +6425,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "7eb4e98e7864635e096e8af6b25acd75e0aefb908a1b7b4df34d5966a457a634"
+content-hash = "f24a61a9785cdae558ddc250a2cbf9114df2eb41f40f7db4dfe6e8f2a8e5e5d2"
