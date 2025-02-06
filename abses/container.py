@@ -104,7 +104,7 @@ class _AgentsContainer:
             agents = []
             for breed in breeds:
                 breed_type = self._get_breed_type(breed)
-                agents.extend(self._model.agents_by_type[breed_type])
+                agents.extend(self._model.agents_by_type.get(breed_type, []))
             return ActorsList(model=self.model, objs=agents)
 
         # 单个 breed 的情况
@@ -144,11 +144,7 @@ class _AgentsContainer:
     @property
     def is_full(self) -> bool:
         """Whether the container is full."""
-        return (
-            False
-            if self._max_length is None
-            else len(self) >= self._max_length
-        )
+        return False if self._max_length is None else len(self) >= self._max_length
 
     @property
     def is_empty(self) -> bool:
@@ -258,15 +254,9 @@ class _AgentsContainer:
             agent = self._new_one(agent_cls=breed_cls, **kwargs)
             objs.append(agent)
         # return the created actor(s).
-        actors_list: ActorsList[Actor] = ActorsList(
-            model=self.model, objs=objs
-        )
+        actors_list: ActorsList[Actor] = ActorsList(model=self.model, objs=objs)
         logger.debug(f"{self} created {num} {breed_cls.__name__}.")
-        return (
-            cast(Actor, actors_list.item())
-            if singleton is True
-            else actors_list
-        )
+        return cast(Actor, actors_list.item()) if singleton is True else actors_list
 
     def remove(self, agent: Actor) -> None:
         """Remove the given agent from the container."""
@@ -354,9 +344,7 @@ class _AgentsContainer:
             agents_set = self._agents
             for attr, value in selection.items():
                 filter_func = partial(check_attr, attr=attr, value=value)
-                agents_set = agents_set.select(
-                    filter_func=filter_func, **kwargs
-                )
+                agents_set = agents_set.select(filter_func=filter_func, **kwargs)
         else:
             raise TypeError(f"{selection} is not valid selection criteria.")
         return ActorsList(model=self.model, objs=agents_set)

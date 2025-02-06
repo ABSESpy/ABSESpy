@@ -5,27 +5,23 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
+import contextlib
+import warnings
 from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
+import solara
 from matplotlib.axes import Axes
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LinearSegmentedColormap, Normalize, to_rgba
 from matplotlib.figure import Figure
-from mesa.visualization.mpl_space_drawing import draw_orthogonal_grid
+from mesa.visualization.mpl_space_drawing import _scatter
 from mesa.visualization.utils import update_counter
 from xarray import DataArray
 
 from abses.main import MainModel
 from abses.patch import PatchModule
-
-try:
-    import solara
-except ImportError as e:
-    raise ImportError(
-        "`solara` is not installed, please install it via `pip install solara`"
-    ) from e
 
 
 def draw_property_layers(
@@ -49,11 +45,7 @@ def draw_property_layers(
     for layer_name, portrayal in propertylayer_portrayal.items():
         layer: DataArray = space.get_xarray(layer_name)
 
-        data = (
-            layer.data.astype(float)
-            if layer.data.dtype == bool
-            else layer.data
-        )
+        data = layer.data.astype(float) if layer.data.dtype == bool else layer.data
 
         # Get portrayal properties, or use defaults
         alpha = portrayal.get("alpha", 1)
@@ -99,6 +91,109 @@ def draw_property_layers(
             raise ValueError(
                 f"PropertyLayer {layer_name} portrayal must include 'color' or 'colormap'."
             )
+
+
+def collect_agent_data(
+    space: PatchModule,
+    agent_portrayal: Callable,
+    color="tab:blue",
+    size=25,
+    marker="o",
+    zorder: int = 1,
+):
+    """Collect the plotting data for all agents in the space.
+
+    Args:
+        space: The space containing the Agents.
+        agent_portrayal: A callable that is called with the agent and returns a dict
+        color: default color
+        size: default size
+        marker: default marker
+        zorder: default zorder
+
+    agent_portrayal should return a dict, limited to size (size of marker), color (color of marker), zorder (z-order),
+    marker (marker style), alpha, linewidths, and edgecolors
+
+    """
+    arguments: dict[str, list[Any]] = {
+        "s": [],
+        "c": [],
+        "marker": [],
+        "zorder": [],
+        "alpha": [],
+        "edgecolors": [],
+        "linewidths": [],
+    }
+
+    for agent in space.agents:
+        portray = agent_portrayal(agent)
+        arguments["s"].append(portray.pop("size", size))
+        arguments["c"].append(portray.pop("color", color))
+        arguments["marker"].append(portray.pop("marker", marker))
+        arguments["zorder"].append(portray.pop("zorder", zorder))
+
+        for entry in ["alpha", "edgecolors", "linewidths"]:
+            with contextlib.suppress(KeyError):
+                arguments[entry].append(portray.pop(entry))
+
+        if len(portray) > 0:
+            ignored_fields = list(portray.keys())
+            msg = ", ".join(ignored_fields)
+            warnings.warn(
+                f"the following fields are not used in agent portrayal and thus ignored: {msg}.",
+                stacklevel=2,
+            )
+    # ensure loc is always a shape of (n, 2) array, even if n=0
+    result = {k: np.asarray(v) for k, v in arguments.items()}
+    result["loc"] = space.agents.array("indices")
+    return result
+
+
+def draw_orthogonal_grid(
+    space: PatchModule,
+    agent_portrayal: Callable,
+    ax: Axes | None = None,
+    draw_grid: bool = True,
+    **kwargs,
+):
+    """Visualize a orthogonal grid.
+
+    Args:
+        space: the space to visualize
+        agent_portrayal: a callable that is called with the agent and returns a dict
+        ax: a Matplotlib Axes instance. If none is provided a new figure and ax will be created using plt.subplots
+        draw_grid: whether to draw the grid
+        kwargs: additional keyword arguments passed to ax.scatter
+
+    Returns:
+        Returns the Axes object with the plot drawn onto it.
+
+    ``agent_portrayal`` is called with an agent and should return a dict. Valid fields in this dict are "color",
+    "size", "marker", and "zorder". Other field are ignored and will result in a user warning.
+
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    # gather agent data
+    s_default = (180 / max(space.width, space.height)) ** 2
+    arguments = collect_agent_data(space, agent_portrayal, size=s_default)
+
+    # plot the agents
+    _scatter(ax, arguments, **kwargs)
+
+    # further styling
+    ax.set_xlim(-0.5, space.width - 0.5)
+    ax.set_ylim(-0.5, space.height - 0.5)
+
+    if draw_grid:
+        # Draw grid lines
+        for x in np.arange(-0.5, space.width - 0.5, 1):
+            ax.axvline(x, color="gray", linestyle=":")
+        for y in np.arange(-0.5, space.height - 0.5, 1):
+            ax.axhline(y, color="gray", linestyle=":")
+
+    return ax
 
 
 @solara.component
