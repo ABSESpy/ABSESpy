@@ -19,7 +19,7 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         id: release
         with:
-          release-type: node
+          release-type: python
           package-name: abses
           token: ${{ secrets.GITHUB_TOKEN }}
 
