@@ -10,7 +10,7 @@ authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
 readme = "README.md"
 include = [
-  "icons/fa-regular-400.otf",
+  "icons/*.otf",
   "abses/conf/**/*.yaml",
   "abses/conf/*.py",
   "data/*",
@@ -70,7 +70,6 @@ lxml = ">=5.2.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.5.3"
-mkdocs-material = ">=9.4.2"
 mkdocs-git-revision-date-localized-plugin = ">=1.2.0"
 mkdocs-minify-plugin = ">=0.7.1"
 mkdocs-redirects = ">=1.2.1"
