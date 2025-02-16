@@ -37,10 +37,10 @@ jobs:
           virtualenvs-in-project: true
       - name: Install dependencies
         run: |
-          poetry config http-basic.mkdocs-material-insiders username "${{ secrets.MKDOCS_INSIDER }}"
-          poetry install
           poetry run pip install --upgrade pip
-          poetry run pip install git+https://x-access-token:${{ secrets.MKDOCS_INSIDER }}@github.com/squidfunk/mkdocs-material-insiders.git
+          set -e
+          poetry run pip install git+https://${{ secrets.GH_TOKEN }}@github.com/squidfunk/mkdocs-material-insiders.git
+          poetry install
       - name: Deploy documentation
         run: poetry run mkdocs gh-deploy --force
 env:
