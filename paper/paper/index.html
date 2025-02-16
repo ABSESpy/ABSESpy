@@ -1,0 +1,2258 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../../wiki/concepts/">
+      
+      
+        <link rel="next" href="../../tutorial/tutorial/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.1">
+    
+    
+      
+        <title>ABSESpy: An agent-based modeling framework for social-ecological systems - ABSESpy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#summary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="ABSESpy" class="md-header__button md-logo" aria-label="ABSESpy" data-md-component="logo">
+      
+  <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/logo_abses.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ABSESpy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ABSESpy: An agent-based modeling framework for social-ecological systems
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SongshGeoLab/ABSESpy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../wiki/wiki/" class="md-tabs__link">
+          
+  
+  Wiki
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorial/tutorial/" class="md-tabs__link">
+          
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/official/" class="md-tabs__link">
+          
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/api/" class="md-tabs__link">
+          
+  
+  API references
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="ABSESpy" class="md-nav__button md-logo" aria-label="ABSESpy" data-md-component="logo">
+      
+  <img src="https://songshgeo-picgo-1302043007.cos.ap-beijing.myqcloud.com/uPic/logo_abses.svg" alt="logo">
+
+    </a>
+    ABSESpy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SongshGeoLab/ABSESpy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AB-SESpy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/Installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/guide_checklist/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guide Checklist
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/get_started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/dependencies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dependencies
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/license/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    License
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/contribution/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/acknowledge/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Acknowledge
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Wiki
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Wiki
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../wiki/wiki/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wiki
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../wiki/about/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Refers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../wiki/materials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Materials
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../wiki/concepts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Paper
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Paper
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="Page contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statement-of-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statement of need
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design structures
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-actors-and-their-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling actors and their interactions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enhancing-the-reality-and-manageability-of-abms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhancing the reality and manageability of ABMs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#positioning-and-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positioning and comparison
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Acknowledgment
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/tutorial_guide_from_ABM/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Start from ABM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/tutorial_guide_from_SES/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Start from SES
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Beginner Level
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Beginner Level
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/get_started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Get started in 5 minutes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/organize_model_structure/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The Basic Structure of your Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/time_control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Real-world SES modeling enhancements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/manage_parameters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manage parameters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/actors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Actors' operation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/movement/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Movement of actors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/predation_tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Predator-Prey Dynamics Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/beginner/hotelling_tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Hotelling Law Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Advanced Level
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Level
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/advanced/geodata/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Setup Nature Modules
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/advanced/human_behavior_simulation.ipynb" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    A02
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Competing Level
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Competing Level
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/completing/fire_tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fire Spread Simulation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/completing/linking_actors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network of links between actors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/official/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Official Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/community/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Community Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API references
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API references
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model structure
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Model structure
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/model/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Main Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/nature/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Natural Modules
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/layer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PatchModule (layer)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/human/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Human Modules
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/cells/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cells
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Actors' Operation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Actors' Operation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/agents/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Actor (Agent)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/container/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Actors Container
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/sequences/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Actors List
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/move/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Movements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/links/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interlinks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Workflow Control
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflow Control
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/time/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/random/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Random
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/experiment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Experiment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="Page contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statement-of-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statement of need
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design structures
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-actors-and-their-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling actors and their interactions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enhancing-the-reality-and-manageability-of-abms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhancing the reality and manageability of ABMs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#positioning-and-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positioning and comparison
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Acknowledgment
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  <nav class="md-tags" >
+    
+      
+      
+      
+        <span class="md-tag">Agent-based model</span>
+      
+    
+      
+      
+      
+        <span class="md-tag">Geography</span>
+      
+    
+      
+      
+      
+        <span class="md-tag">Python</span>
+      
+    
+      
+      
+      
+        <span class="md-tag">Social science</span>
+      
+    
+      
+      
+      
+        <span class="md-tag">Social-ecological system</span>
+      
+    
+  </nav>
+
+
+  
+  
+
+
+  <h1>Paper</h1>
+
+<h3 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h3>
+<p><code>ABSESpy</code> is a novel agent-based modeling (<abbr title="Agent-based model">ABM</abbr>) framework that facilitates socio-ecological systems (<abbr title="Socio-ecological system">SES</abbr>) research. It serves as an extension package of <code>Mesa</code>, the most popular <abbr title="Agent-based model">ABM</abbr> framework, and further enhances agents' interactions with other components, especially grid-like spaces. With a configuration file for managing parameters and an improved data Input/Output system, <code>ABSESpy</code>'s modularity and low-coupling design enable elegant maintenance of large modeling projects. In addition, <code>ABSESpy</code> includes a schedule that aligns models' tick with the calendar time. These innovations position <code>ABSESpy</code> as a valuable tool in fostering more ABMs for real-world <abbr title="Socio-ecological system">SES</abbr> issues. Its ultimate aim is to become the go-to choice for <abbr title="Agent-based model">ABM</abbr> when working with a human-involved changing world.</p>
+<h3 id="statement-of-need">Statement of need<a class="headerlink" href="#statement-of-need" title="Permanent link">&para;</a></h3>
+<p>Social-ecological systems (<abbr title="Socio-ecological system">SES</abbr>) are integrated concepts recognizing the complex and interdependent dynamics between human societies and ecological systems <sup id="fnref:folke2010"><a class="footnote-ref" href="#fn:folke2010">1</a></sup>. <abbr title="Socio-ecological system">SES</abbr> consists of decision-making actors (i.e., agents representing people, communities, organizations, and environmental components) capable of following heterogeneous objectives (i.e., agents) <sup id="fnref:levin2013"><a class="footnote-ref" href="#fn:levin2013">2</a></sup>. As such, <abbr title="Socio-ecological system">SES</abbr> has specific needs for research support from agent-based modeling (<abbr title="Agent-based model">ABM</abbr>).</p>
+<p>However, since few models can effectively represent the real-world <abbr title="Socio-ecological system">SES</abbr> problem, the potential of ABMs has yet to be fully realized in <abbr title="Socio-ecological system">SES</abbr> research <sup id="fnref:schulze2017"><a class="footnote-ref" href="#fn:schulze2017">3</a></sup>. One reason is the variability of actors' interaction with each other or geographic spaces, including learning, decision-making, and contagion across social networks <sup id="fnref:reyers2018"><a class="footnote-ref" href="#fn:reyers2018">4</a></sup>. Another reason is the complexity of managing data, parameters, and social and natural processes <sup id="fnref:davidson2024"><a class="footnote-ref" href="#fn:davidson2024">5</a></sup>, which makes it hard to maintain large projects. Therefore, facilitating <abbr title="Socio-ecological system">SES</abbr> research with <abbr title="Agent-based model">ABM</abbr> requires novel tools <sup id="fnref:schluter2023"><a class="footnote-ref" href="#fn:schluter2023">6</a></sup> to implement the interactions between actors and real-world-like natural processes with manageability and reproducibility.</p>
+<p>The popular programming language <code>Python</code> is among the first choices for scientists who care about <abbr title="Agent-based model">ABM</abbr>, and <code>Mesa</code> <sup id="fnref:kazil2020a"><a class="footnote-ref" href="#fn:kazil2020a">7</a></sup> is the most widely used implementation framework. It remains extensible for different domains while providing the core functionality of <abbr title="Agent-based model">ABM</abbr>. Therefore, customizing <code>Mesa</code> by enhancing real-world representation could be a good start for specializing in <abbr title="Socio-ecological system">SES</abbr> research. It includes expressing decision-making actors' interactions, social-ecological networks, calendar time, raster data, and extensible sub-systems. To this end, <code>ABSESpy</code> is a <code>Mesa</code> package and an advanced framework that fills gaps in <abbr title="Socio-ecological system">SES</abbr> modeling with these features.</p>
+<h3 id="design-structures">Design structures<a class="headerlink" href="#design-structures" title="Permanent link">&para;</a></h3>
+<p><code>ABSESpy</code>'s low-coupling design enables the implementation of maintainable projects by separating the human and natural subsystems within <abbr title="Socio-ecological systems">SESs</abbr> (\autoref{fig:1}). While the human subsystem manages actors (i.e., agents) and their interactions, the natural submodule typically handles how actors live in, move through, and interact with grid-like patch layers. This architecture also supports adding specialized submodules in each subsystem to represent varying processes with modularity.</p>
+<p><code>ABSESpy</code> includes the default schedule, data collector, and batch runner utilities, available as a <code>Mesa</code> package but with enhanced functionality. It also introduces a calendar-like time driver and supports configuration management using YAML configuration files. In addition, the packages <code>Xarray</code> <sup id="fnref:hoyer2017xarray"><a class="footnote-ref" href="#fn:hoyer2017xarray">8</a></sup> and <code>Mesa-Geo</code> <sup id="fnref:wang_mesa-geo_2022"><a class="footnote-ref" href="#fn:wang_mesa-geo_2022">9</a></sup> are embedded to implement an Input/Output driver for different geographic datasets (<code>.tif</code>, <code>.nc</code>, <code>.json</code>, <code>.shp</code>, and others). The design focuses on two core improvements: (1) handling actors and their interactions and (2) enhancing the reality and manageability of ABMs.</p>
+<p><a class="glightbox" href="../api_diagram.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Diagram of the designed structures and included utilities of ABSESpy. \label{fig:1}" src="../api_diagram.png" /></a></p>
+<h3 id="handling-actors-and-their-interactions">Handling actors and their interactions<a class="headerlink" href="#handling-actors-and-their-interactions" title="Permanent link">&para;</a></h3>
+<p>Under the context of <abbr title="Socio-ecological system">SES</abbr>, <code>ABSESpy</code> conceptualizes "agents" as <code>Actor</code>s managed within a global <code>ActorsContainer</code> which can be manipulated in batches through any <code>ActorsList</code>. Users can also query, select, or apply a function to a subset of actors by <code>ActorsList</code>. Furthermore, whenever users link some <code>Actor</code>s with others or some <code>PatchCell</code>s, <code>Networkx</code> can automatically convert these linkages into a graph. Thus, it enables actors to interact through social networks or implement a social-ecological network analysis.</p>
+<p>Since <code>ABSESpy</code> recognizes the centrality of human behavior in <abbr title="Socio-ecological system">SES</abbr> studies, it also provides a standard workflow based on a popular theoretical framework for decision-making (\autoref{fig:2}) <sup id="fnref:schluter2017"><a class="footnote-ref" href="#fn:schluter2017">10</a></sup><sup id="fnref:beckage2022"><a class="footnote-ref" href="#fn:beckage2022">11</a></sup>. The following main steps can be implemented seamlessly when working with <code>ABSESpy</code>:</p>
+<ol>
+<li><strong>Perceptions</strong>:  An <code>Actor</code> holds perceptions of natural and human subsystems by observing global/environmental variables (cognition) or learning from links with others (contagion). <code>ABSESpy</code> helps users dynamically define an expression to update perceptions as <code>Actor</code>s' attributes.</li>
+<li><strong>Decision-making</strong>: <code>Actor</code>s evaluate potential options to determine how to act in the current situation. <code>ABSESpy</code> includes utilities for pre-defined options, thus enabling auto-triggering actions by passing an evaluating function.</li>
+<li><strong>Response</strong>: Some actions may lead to feedback towards human or natural subsystems as a response. Besides many available actions, such as spatial relocation and setting attributes, <code>ABSESpy</code> also includes tools to avoid the feedback that causes a nested loop.</li>
+</ol>
+<p><a class="glightbox" href="../decision-making.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Decision-making workflow for simulating human behavior.\label{fig:2}" src="../decision-making.png" width="80%" /></a></p>
+<h3 id="enhancing-the-reality-and-manageability-of-abms">Enhancing the reality and manageability of ABMs<a class="headerlink" href="#enhancing-the-reality-and-manageability-of-abms" title="Permanent link">&para;</a></h3>
+<p>To enhance reality, <code>ABSESpy</code> provides an innovative time control mechanism to bridge the gap between the association of <abbr title="Agent-based model">ABM</abbr> and real-world time (\autoref{fig:3}). In addition to <code>Mesa</code>'s standard tick-based time advancement, users can implement calendar temporal modes to match the diverse scales of <abbr title="Socio-ecological system">SES</abbr> phenomena with <code>ABSESpy</code>. The model can represent time intervals from minutes to years by defining the calendar time for each simulation step. This flexibility is crucial when modeling real-world events like natural cycles or periodic human activities.</p>
+<p><a class="glightbox" href="../real-world.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Calendar time module enhances real-world social-ecological system modeling approaches.\label{fig:3}" src="../real-world.png" /></a></p>
+<p><code>ABSESpy</code> includes utilities for manageability purposes based on the above time control mechanism. The commonly used one is automatically importing and updating temporal time series datasets like monthly or daily weather. Users can also specify time conditions to apply or not apply any model method, such as customizing a "<code>get_up()</code>" method to <code>Actor</code> and only calling it at 8:00 am in a one-hour-per-step model. Finally, all parameters can be stored in YAML configuration files with readable expressions. For example, passing parameters <code>{"start": '2022-12-31', "end": '2024-01-01', "years": 1}</code> to the <code>time</code> module means the simulation starts at the end of 2022 and ends when the beginning of 2024 is reached. Since each step represents a year, the model only goes one step.</p>
+<h3 id="positioning-and-comparison">Positioning and comparison<a class="headerlink" href="#positioning-and-comparison" title="Permanent link">&para;</a></h3>
+<p>By translating theoretical constructs into user-friendly, operational components, <code>ABSESpy</code> empowers researchers to bridge the gap between conceptual models and their tangible application in <abbr title="Socio-ecological system">SES</abbr>. As a specialized <code>Mesa</code> package for the emerging <abbr title="Socio-ecological system">SES</abbr> field, <code>ABSESpy</code> can take advantage of most of the benefits from the related projects (e.g., model visualization from <code>Mesa</code> and geo-data processing from <code>Mesa-Geo</code>). <code>ABSESpy</code> aims to become the go-to choice for <abbr title="Agent-based model">ABM</abbr> when working with a human-involved, changing world. This vision is similar to the existing <code>ABCE</code> <sup id="fnref:taghawi-nejad2017"><a class="footnote-ref" href="#fn:taghawi-nejad2017">12</a></sup>, which aims to provide an economic problem modeling framework (also a <code>Mesa</code> package), but it targets real-world <abbr title="Socio-ecological system">SES</abbr> problems.</p>
+<p>Many open-source <abbr title="Socio-ecological system">SES</abbr> models are published on <code>CoMSES</code> <sup id="fnref:janssen2008"><a class="footnote-ref" href="#fn:janssen2008">13</a></sup> and use <code>NetLogo</code> <sup id="fnref:tisue2004netlogo"><a class="footnote-ref" href="#fn:tisue2004netlogo">14</a></sup> software. However, users might struggle to maintain its all-in-one structure when data Input/Output and parameters become extensive. The visible advantage of <code>ABSESpy</code> lies in its modularity and low-coupling design, which is suitable for large-scale <abbr title="Socio-ecological system">SES</abbr> modeling projects. It calls upon vast amounts of actual data for real-world problem modeling. With a separate configuration file, <code>ABSESpy</code> makes it easier to maintain a large project, allowing users to couple sub-modules and maximize <code>Python</code>'s advantages as a "glue language." In <code>Python</code>, another possible competitor is <code>AgentPy</code> <sup id="fnref:foramitti2021"><a class="footnote-ref" href="#fn:foramitti2021">15</a></sup>, whose goal is a general <abbr title="Agent-based model">ABM</abbr> framework and is thus more concerned with agents (in other words, the "human" part). Due to more geographic data processing extensions like <code>Mesa-Geo</code>, <code>ABSESpy</code> allows users to handle grid-like spaces and calendar-like schedules more efficiently. Thus, facing real-world <abbr title="Socio-ecological system">SES</abbr> problems, building on <code>ABSESpy</code> will require less coding effort to simulate interactions between humans and nature.</p>
+<h3 id="acknowledgment">Acknowledgment<a class="headerlink" href="#acknowledgment" title="Permanent link">&para;</a></h3>
+<p>This research has been supported by the National Natural Science Foundation of China (grant no. 42041007) and the National Natural Science Foundation of China (grant no. U2243601).</p>
+<h3 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h3>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:folke2010">
+<p>Carl Folke, Stephen R. Carpenter, Brian Walker, Marten Scheffer, Terry Chapin, and Johan Rockstrom. Resilience thinking: integrating resilience, adaptability and transformability. <em>Ecology and Society</em>, 15(4):20, 2010. <a href="https://doi.org/10.5751/es-03610-150420">doi:10.5751/es-03610-150420</a>.&#160;<a class="footnote-backref" href="#fnref:folke2010" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:levin2013">
+<p>Simon Levin, Tasos Xepapadeas, Anne-Sophie Crépin, Jon Norberg, Aart de Zeeuw, Carl Folke, Terry Hughes, Kenneth Arrow, Scott Barrett, Gretchen Daily, Paul Ehrlich, Nils Kautsky, Karl-Göran Mäler, Steve Polasky, Max Troell, Jeffrey R. Vincent, and Brian Walker. Social-ecological systems as complex adaptive systems: modeling and policy implications. <em>Environment and Development Economics</em>, 18(02):111–132, April 2013. <a href="https://doi.org/10.1017/S1355770X12000460">doi:10.1017/S1355770X12000460</a>.&#160;<a class="footnote-backref" href="#fnref:levin2013" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:schulze2017">
+<p>Jule Schulze, Birgit Müller, Jürgen Groeneveld, and Volker Grimm. Agent-based modelling of social-ecological systems: achievements, challenges, and a way forward. <em>Journal of Artificial Societies and Social Simulation</em>, 20(2):8, 2017. <a href="https://doi.org/10.18564/jasss.3423">doi:10.18564/jasss.3423</a>.&#160;<a class="footnote-backref" href="#fnref:schulze2017" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:reyers2018">
+<p>Belinda Reyers, Carl Folke, Michele-Lee Moore, Reinette Biggs, and Victor Galaz. Social-ecological systems insights for navigating the dynamics of the Anthropocene. <em>Annual Review of Environment and Resources</em>, October 2018. <a href="https://doi.org/10.1146/annurev-environ-110615-085349">doi:10.1146/annurev-environ-110615-085349</a>.&#160;<a class="footnote-backref" href="#fnref:reyers2018" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:davidson2024">
+<p>Michael R. Davidson, Tatiana Filatova, Wei Peng, Liz Verbeek, and Fikri Kucuksayacigil. Simulating institutional heterogeneity in sustainability science. <em>Proceedings of the National Academy of Sciences</em>, 121(8):e2215674121, February 2024. <a href="https://doi.org/10.1073/pnas.2215674121">doi:10.1073/pnas.2215674121</a>.&#160;<a class="footnote-backref" href="#fnref:davidson2024" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+<li id="fn:schluter2023">
+<p>Maja Schlüter, Christa Brelsford, Paul J. Ferraro, Kirill Orach, Minghao Qiu, and Martin D. Smith. Unraveling complex causal processes that affect sustainability requires more integration between empirical and modeling approaches. <em>Proceedings of the National Academy of Sciences</em>, 120(41):e2215676120, October 2023. <a href="https://doi.org/10.1073/pnas.2215676120">doi:10.1073/pnas.2215676120</a>.&#160;<a class="footnote-backref" href="#fnref:schluter2023" title="Jump back to footnote 6 in the text">&#8617;</a></p>
+</li>
+<li id="fn:kazil2020a">
+<p>Jackie Kazil, David Masad, and Andrew Crooks. <em>Utilizing Python for agent-based modeling: The Mesa framework</em>. Springer International Publishing, Cham, 2020. ISBN 978-3-030-61255-9.&#160;<a class="footnote-backref" href="#fnref:kazil2020a" title="Jump back to footnote 7 in the text">&#8617;</a></p>
+</li>
+<li id="fn:hoyer2017xarray">
+<p>S. Hoyer and J. Hamman. Xarray: N-D labeled arrays and datasets in Python. <em>Journal of Open Research Software</em>, 2017. URL: <a href="https://doi.org/10.5334/jors.148">https://doi.org/10.5334/jors.148</a>, <a href="https://doi.org/10.5334/jors.148">doi:10.5334/jors.148</a>.&#160;<a class="footnote-backref" href="#fnref:hoyer2017xarray" title="Jump back to footnote 8 in the text">&#8617;</a></p>
+</li>
+<li id="fn:wang_mesa-geo_2022">
+<p>Boyu Wang, Vincent Hess, and Andrew Crooks. Mesa-Geo: a gis extension for the Mesa agent-based modeling framework in Python. In <em>Proceedings of the 5th ACM SIGSPATIAL international workshop on GeoSpatial simulation</em>, GeoSim '22, 1–10. New York, NY, USA, 2022. Association for Computing Machinery. <a href="https://doi.org/10.1145/3557989.3566157">doi:10.1145/3557989.3566157</a>.&#160;<a class="footnote-backref" href="#fnref:wang_mesa-geo_2022" title="Jump back to footnote 9 in the text">&#8617;</a></p>
+</li>
+<li id="fn:schluter2017">
+<p>Maja Schlüter, Andres Baeza, Gunnar Dressler, Karin Frank, Jürgen Groeneveld, Wander Jager, Marco A. Janssen, Ryan R. J. McAllister, Birgit Müller, Kirill Orach, Nina Schwarz, and Nanda Wijermans. A framework for mapping and comparing behavioural theories in models of social-ecological systems. <em>Ecological Economics</em>, January 2017. <a href="https://doi.org/10.1016/j.ecolecon.2016.08.008">doi:10.1016/j.ecolecon.2016.08.008</a>.&#160;<a class="footnote-backref" href="#fnref:schluter2017" title="Jump back to footnote 10 in the text">&#8617;</a></p>
+</li>
+<li id="fn:beckage2022">
+<p>Brian Beckage, Frances C. Moore, and Katherine Lacasse. Incorporating human behaviour into Earth system modelling. <em>Nature Human Behaviour</em>, 6(11):1493–1502, November 2022. <a href="https://doi.org/10.1038/s41562-022-01478-5">doi:10.1038/s41562-022-01478-5</a>.&#160;<a class="footnote-backref" href="#fnref:beckage2022" title="Jump back to footnote 11 in the text">&#8617;</a></p>
+</li>
+<li id="fn:taghawi-nejad2017">
+<p>Davoud Taghawi-Nejad, Rudy H. Tanin, R. Maria Del Rio Chanona, Adrián Carro, J. Doyne Farmer, Torsten Heinrich, Juan Sabuco, and Mika J. Straka. <em>ABCE: A Python library for economic agent-based modeling</em>. Springer International Publishing, Cham, 2017. ISBN 978-3-319-67217-5.&#160;<a class="footnote-backref" href="#fnref:taghawi-nejad2017" title="Jump back to footnote 12 in the text">&#8617;</a></p>
+</li>
+<li id="fn:janssen2008">
+<p>Marco A. Janssen, Lilian Na'ia Alessa, Michael Barton, Sean Bergin, and Allen Lee. Towards a community framework for agent-based modelling. <em>Journal of Artificial Societies and Social Simulation</em>, 11(2):6, 2008. URL: <a href="https://www.jasss.org/11/2/6.html">https://www.jasss.org/11/2/6.html</a>.&#160;<a class="footnote-backref" href="#fnref:janssen2008" title="Jump back to footnote 13 in the text">&#8617;</a></p>
+</li>
+<li id="fn:tisue2004netlogo">
+<p>Seth Tisue and Uri Wilensky. NetLogo: a simple environment for modeling complexity. In <em>International conference on complex systems</em>, volume 21, 16–21. Citeseer, 2004.&#160;<a class="footnote-backref" href="#fnref:tisue2004netlogo" title="Jump back to footnote 14 in the text">&#8617;</a></p>
+</li>
+<li id="fn:foramitti2021">
+<p>Joël Foramitti. AgentPy: a package for agent-based modeling in Python. <em>Journal of Open Source Software</em>, 6(62):3065, June 2021. <a href="https://doi.org/10.21105/joss.03065">doi:10.21105/joss.03065</a>.&#160;<a class="footnote-backref" href="#fnref:foramitti2021" title="Jump back to footnote 15 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/SongshGeoLab/ABSESpy" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["header.autohide", "navigation.tabs", "navigation.tracking", "toc.follow", "content.tooltips", "content.code.copy", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.5090c770.min.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>
