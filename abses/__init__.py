@@ -21,7 +21,6 @@ __all__ = [
     "BaseNature",
     "PatchModule",
     "Actor",
-    "Decision",
     "ActorsList",
     "PatchCell",
     "perception",
@@ -30,10 +29,13 @@ __all__ = [
     "Experiment",
     "load_data",
 ]
-__version__ = "v0.7.0"
+
+from importlib.metadata import version
+
+__version__ = f"v{version('abses')}"
+
 
 from .actor import Actor, alive_required, perception
-from .decision import Decision
 from .experiment import Experiment
 from .human import BaseHuman
 from .main import MainModel

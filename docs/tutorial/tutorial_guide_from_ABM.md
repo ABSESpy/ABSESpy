@@ -30,5 +30,3 @@ Besides the above specific features, an overall implementation of ABM by using `
   <!-- [wiki pages]: ../wiki/about.md -->
   <!-- [Spatial data]: ../ -->
   [Time control]: ../tutorial/beginner/time_control.ipynb
-  <!-- [Data management]: ../ -->
-  [Human behavior framework]: ../tutorial/advanced/human_behavior_simulation.ipynb

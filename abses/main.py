@@ -169,7 +169,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         agents = self._agents_handler.select({"_birth_tick": self.time.tick})
         agents_dict = agents.to_dict()
         lst = [f"{len(lst)} {breed}" for breed, lst in agents_dict.items()]
-        msg = f"\nIn [tick {self.time.tick - 1}]:" "\n" "Created " + ", ".join(lst) + ""
+        msg = f"\nIn [tick {self.time.tick - 1}]:\nCreated " + ", ".join(lst) + ""
         logger.bind(no_format=True).info(msg)
 
     def _check_subsystems(
@@ -190,10 +190,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         logger.info(f"Natural subsystem: {n_cls.__name__}.")
 
     def _do_each(
-        self,
-        _func: str,
-        order: SubSystem = ("model", "nature", "human"),
-        **kwargs: Any,
+        self, _func: str, order: SubSystem = ("model", "nature", "human"), **kwargs: Any
     ) -> None:
         _obj = {"model": self, "nature": self.nature, "human": self.human}
         for name in order:
@@ -276,7 +273,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """Container managing all agents in the model.
 
         Provides methods for:
-        - Accessing agents: agents.get()
+        - Accessing agents: agents.select()
         - Creating agents: agents.new(Actor, num=3)
         - Registering agent types: agents.register(Actor)
         - Triggering events: agents.trigger()
@@ -380,10 +377,7 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """
         self._do_each("setup", order=("model", "nature", "human"))
         self._do_each("set_state", code=2)
-        msg = (
-            f"Nature: {str(self.nature.modules)}\n"
-            f"Human: {str(self.human.modules)}\n"
-        )
+        msg = f"Nature: {str(self.nature.modules)}\nHuman: {str(self.human.modules)}\n"
         log_session(title="Setting-up", msg=msg)
 
     def _step(self) -> None:
@@ -428,12 +422,8 @@ class MainModel(Generic[H, N], Model, _Notice, _States):
         """
         print(f"Using ABSESpy version: {self.version}")
         # Basic reports
-        to_report = {
-            "name": self.name,
-            "state": self.state,
-            "tick": self.time.tick,
-        }
-        for breed in self.agents:
+        to_report = {"name": self.name, "state": self.state, "tick": self.time.tick}
+        for breed in self.agents_by_type:
             to_report[breed] = self.agents.has(breed)
         if verbose:
             to_report["model_vars"] = self.datacollector.model_reporters.keys()

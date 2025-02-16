@@ -5,8 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""Viz natural module.
-"""
+"""Viz natural module."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 from matplotlib.axes import Axes
 
 from abses.tools.func import with_axes
-from abses.tools.viz import COLOR_BAR
+
+COLOR_BAR = {"fraction": 0.03, "pad": 0.04}
 
 if TYPE_CHECKING:
-    from abses.actor import Actor
     from abses.nature import PatchModule
 
 
@@ -50,9 +50,8 @@ class _VizNature:
         else:
             xda = self.module.get_xarray(attr)
             xda.plot(ax=ax, cbar_kwargs=COLOR_BAR, alpha=0.8)
-        if self.model.breeds and with_actors:
-            self.model.actors.plot.show(ax=ax, **scatter_kwargs)
         ax.axes.set_aspect("equal")
-        if self.model.breeds:
+        if with_actors:
+            self.model.actors.plot.show(ax=ax, **scatter_kwargs)
             ax.legend(**legend_kwargs)
         return ax

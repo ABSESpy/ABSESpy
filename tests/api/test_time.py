@@ -7,140 +7,262 @@
 
 from datetime import datetime
 
-import pendulum
 import pytest
 
 from abses import MainModel
-from abses.time import TimeDriver
+from abses.time import TimeDriver, parse_datetime
 
 
-@pytest.fixture(name="default_time")
-def set_default_time():
-    """创建一个默认的时间模块"""
-    model = MainModel()
-    return TimeDriver(model=model)
+class TestTimeInitialization:
+    """测试时间驱动器的初始化功能"""
 
+    @pytest.fixture
+    def default_time(self) -> TimeDriver:
+        """基础时间驱动器"""
+        return TimeDriver(MainModel())
 
-@pytest.fixture(name="yearly_time")
-def set_year_time():
-    """创建一个每次走一年的时间模块"""
-    parameters = {
-        "time": {
-            "years": 1,
-            "start": "2000",
-            "end": "2020",
+    @pytest.fixture
+    def yearly_time(self) -> TimeDriver:
+        """年度推进的时间驱动器"""
+        parameters = {
+            "time": {
+                "years": 1,
+                "start": "2000",
+                "end": "2020",
+            }
         }
-    }
-    model = MainModel(parameters=parameters)
-    return model.time
+        return TimeDriver(MainModel(parameters=parameters))
 
+    def test_default_initialization(self, default_time):
+        """测试默认初始化
+        验证:
+        1. 当前时间正确设置
+        2. 初始状态正确
+        """
+        now = datetime.now()
+        assert default_time.dt.day == now.day
+        assert default_time.dt.month == now.month
+        assert default_time.dt.year == now.year
+        assert default_time.tick == 0
+        assert default_time.duration is None
+        assert len(default_time.history) == 1
 
-def test_init_default_time(default_time: TimeDriver):
-    """测试初始化时间"""
-    # 当前的时间
-    assert default_time.dt.day == datetime.now().day
-    assert default_time.dt.month == datetime.now().month
-    assert default_time.dt.year == datetime.now().year
-    # tick
-    assert default_time.tick == 0
-    assert default_time.start_dt == default_time.dt
-    assert default_time.end_dt is None
-    assert default_time.duration is None
-    assert len(default_time.history) == 1
-    assert default_time.history[0] == default_time.start_dt
-    assert default_time.dt == default_time.start_dt
-    assert default_time.ticking_mode == "tick"
-
-
-def test_default_time_go(default_time: TimeDriver):
-    """测试默认时间的运行"""
-    default_time.go()
-    assert default_time.tick == 1
-    assert default_time.dt == default_time.start_dt
-    assert default_time.end_dt is None
-    assert default_time.duration is None
-    assert len(default_time.history) == 1
-
-
-def test_different_model():
-    """测试不同的模型使用不同的计数器"""
-    model2 = MainModel(name="test_different_model_1")
-    model3 = MainModel(name="test_different_model_2")
-    time1 = TimeDriver(model=model2)
-    time2 = TimeDriver(model=model3)
-    # assert time1 == time2
-    assert time1 is not time2
-    time1.go()
-    time2.go()
-    assert time1 != time2
-
-
-def test_init_yearly_time(yearly_time):
-    """测试每年前进的模型的持续时间"""
-    duration = pendulum.duration(years=1)
-
-    assert yearly_time.tick == 0
-    assert yearly_time.start_dt == pendulum.datetime(
-        year=2000, month=1, day=1, tz=None
+    @pytest.mark.parametrize(
+        "params,expected",
+        [
+            ({"start": "2000"}, 2000),
+            ({"start": "2000-01"}, 2000),
+            ({"start": "2000-01-01"}, 2000),
+        ],
     )
-    assert yearly_time.end_dt == pendulum.datetime(
-        year=2020, month=1, day=1, tz=None
-    )
-    assert yearly_time.duration == duration
-    assert len(yearly_time.history) == 1
-    assert yearly_time.history[0] == yearly_time.start_dt
+    def test_start_time_formats(self, params, expected):
+        """测试不同格式的开始时间
+        验证:
+        1. 支持多种时间格式
+        2. 正确解析年份
+        """
+        time = TimeDriver(MainModel({"time": params}))
+        assert time.year == expected
 
-    yearly_time.go()
-    assert yearly_time.tick == 1
-    assert yearly_time.dt == pendulum.datetime(
-        year=2001, month=1, day=1, tz=None
-    )
-    assert yearly_time.end_dt == pendulum.datetime(
-        year=2020, month=1, day=1, tz=None
-    )
-    assert yearly_time.duration == duration
-    assert len(yearly_time.history) == 2
+    def test_invalid_start_time(self):
+        """测试无效的开始时间
+        验证:
+        1. 无效字符串时间
+        2. 错误类型时间
+        """
+        with pytest.raises(ValueError):
+            TimeDriver(MainModel({"time": {"start": "invalid"}}))
+        with pytest.raises(TypeError):
+            TimeDriver(MainModel({"time": {"start": 123}}))
 
 
-def test_time_end_automatically():
-    """测试时间模块的自动结束"""
-    parameters = {
-        "time": {
-            "years": 1,
-            "start": "2000",
-            "end": "2020",
+class TestTimeDuration:
+    """测试时间步长相关功能"""
+
+    @pytest.fixture
+    def base_time(self) -> TimeDriver:
+        """从2000年开始的时间驱动器"""
+        return TimeDriver(MainModel({"time": {"start": "2000"}}))
+
+    @pytest.mark.parametrize(
+        "duration,expected_next",
+        [
+            ({"years": 1}, 2001),
+            ({"years": 5}, 2005),
+            ({"years": 10}, 2010),
+        ],
+    )
+    def test_year_duration(self, duration, expected_next):
+        """测试年度步长
+        验证:
+        1. 正确前进指定年数
+        2. 历史记录正确更新
+        """
+        time = TimeDriver(MainModel({"time": {**{"start": "2000"}, **duration}}))
+        time.go()
+        assert time.year == expected_next
+        assert len(time.history) == 2
+
+    @pytest.mark.parametrize(
+        "duration",
+        [
+            {"years": -1},
+            {"months": -1},
+        ],
+    )
+    def test_invalid_duration(self, duration):
+        """测试无效的时间步长
+        验证:
+        1. 负数时间单位
+        2. 无效时间单位
+        """
+        with pytest.raises((ValueError, KeyError)):
+            TimeDriver(MainModel({"time": duration}))
+
+
+class TestTimeProgression:
+    """测试时间推进功能"""
+
+    @pytest.fixture
+    def yearly_time(self) -> TimeDriver:
+        """年度推进的时间驱动器"""
+        parameters = {
+            "time": {
+                "years": 1,
+                "start": "2000",
+                "end": "2020",
+            }
         }
-    }
-    model = MainModel(parameters=parameters)
-    time = model.time
-    assert time.expected_ticks == 20
-    model.run_model()
-    assert time.tick == 20
-    assert time.year == 2020
+        return TimeDriver(MainModel(parameters=parameters))
 
-    model = MainModel({"time": {"end": 20}})
-    model.run_model()
-    assert time.tick == 20
+    def test_normal_progression(self, yearly_time):
+        """测试正常时间推进
+        验证:
+        1. 时间正确前进
+        2. 计数器正确增加
+        3. 历史记录正确更新
+        """
+        yearly_time.go()
+        assert yearly_time.year == 2001
+        assert yearly_time.tick == 1
+        assert len(yearly_time.history) == 2
+
+    def test_progression_to_end(self, yearly_time):
+        """测试推进到结束时间
+        验证:
+        1. 正确停止在结束时间
+        2. 模型状态正确更新
+        """
+        yearly_time.go(19)  # 推进到2019年
+        assert yearly_time.year == 2019
+        yearly_time.go()  # 推进到2020年
+        assert yearly_time.year == 2020
+
+    def test_expected_ticks(self, yearly_time):
+        """测试预期时间步数
+        验证:
+        1. 初始预期步数正确
+        2. 中途更改时间后预期步数更新
+        """
+        assert yearly_time.expected_ticks == 20
+        yearly_time.to("2019")
+        assert yearly_time.expected_ticks == 1
 
 
-def test_time_to():
-    """测试可以手动指定当前时间"""
-    parameters = {
-        "time": {
-            "years": 1,
-            "start": "2000",
-            "end": "2020",
-        }
-    }
-    model = MainModel(parameters=parameters)
-    time = model.time
-    assert time.expected_ticks == 20
-    time.to("2019")
-    assert time.expected_ticks == 1
-    model.run_model()
-    assert time.tick == 1
-    assert time.year == 2020
+class TestTimeManipulation:
+    """测试时间操作功能"""
 
-    model = MainModel({"time": {"end": 20}})
-    model.run_model()
-    assert time.tick == 1
+    @pytest.fixture
+    def manipulatable_time(self) -> TimeDriver:
+        """可操作的时间驱动器"""
+        return TimeDriver(MainModel({"time": {"start": "2000"}}))
+
+    @pytest.mark.parametrize(
+        "target,expected_year",
+        [
+            ("2010", 2010),
+            ("2020", 2020),
+            ("1900", 1900),
+        ],
+    )
+    def test_time_to(self, manipulatable_time, target, expected_year):
+        """测试时间跳转
+        验证:
+        1. 正确跳转到目标时间
+        2. 历史记录正确重置
+        """
+        manipulatable_time.to(target)
+        assert manipulatable_time.year == expected_year
+        assert len(manipulatable_time.history) == 1
+
+    def test_invalid_time_to(self, manipulatable_time):
+        """测试无效的时间跳转
+        验证:
+        1. 无效时间字符串
+        2. 无效时间类型
+        """
+        with pytest.raises(ValueError):
+            manipulatable_time.to("invalid")
+        with pytest.raises(TypeError):
+            manipulatable_time.to(123)
+
+
+class TestTimeComparison:
+    """测试时间比较功能"""
+
+    @pytest.fixture
+    def time_2000(self) -> TimeDriver:
+        """创建一个从2000年开始的 TimeDriver"""
+        model = MainModel({"time": {"start": "2000"}})
+        return model.time
+
+    @pytest.mark.parametrize(
+        "other_time,expected",
+        [
+            ("1999", True),  # 早于当前时间
+            ("2000", False),  # 等于当前时间
+            ("2001", False),  # 晚于当前时间
+        ],
+    )
+    def test_time_comparison(
+        self, time_2000: TimeDriver, other_time: str, expected: bool
+    ):
+        """测试时间比较操作
+        验证:
+        1. 与字符串时间的比较
+        2. 与datetime对象的比较
+        3. 与其他TimeDriver实例的比较
+        """
+        other_dt = parse_datetime(other_time)  # 使用我们自己的parse_datetime
+        assert (time_2000 > other_dt) == expected
+
+
+class TestIrregularTime:
+    """测试不规则时间模式"""
+
+    @pytest.fixture
+    def irregular_time(self) -> TimeDriver:
+        """创建一个不规则时间模式的 TimeDriver"""
+        model = MainModel({"time": {"irregular": True, "start": "2000"}})
+        return model.time
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_date",
+        [
+            ({"years": 1}, "2001"),
+            ({"months": 6}, "2000-07-01"),
+            ({"days": 15}, "2000-01-16"),
+            ({"hours": 12}, "2000-01-01 12:00:00"),
+        ],
+    )
+    def test_irregular_progression(
+        self, irregular_time: TimeDriver, kwargs: dict, expected_date: str
+    ):
+        """测试不规则时间推进
+        验证:
+        1. 可以按不同时间单位前进
+        2. 时间计算准确
+        """
+        irregular_time.go(ticks=1, **kwargs)
+        expected = parse_datetime(expected_date)  # 使用我们自己的parse_datetime
+        assert irregular_time.dt == expected

@@ -22,6 +22,7 @@ from mesa.space import Coordinate
 from mesa_geo import RasterLayer
 
 from abses._bases.errors import ABSESpyError
+from abses.actor import alive_required
 from abses.cells import PatchCell
 
 if TYPE_CHECKING:
@@ -29,14 +30,7 @@ if TYPE_CHECKING:
     from abses.nature import PatchModule
 
 MovingDirection: TypeAlias = Literal[
-    "left",
-    "right",
-    "up",
-    "down",
-    "up left",
-    "up right",
-    "down left",
-    "down right",
+    "left", "right", "up", "down", "up left", "up right", "down left", "down right"
 ]
 
 
@@ -94,6 +88,14 @@ class _Movements:
         self.model = actor.model
         self.seed = actor.unique_id
 
+    def __call__(
+        self, how: MovingDirection | Literal["random"] = "random", **kwargs: Any
+    ) -> None:
+        if how == "random":
+            self.random(**kwargs)
+        else:
+            self.by(how, **kwargs)
+
     @property
     def layer(self) -> Optional[PatchModule]:
         """The current layer of the operating actor."""
@@ -103,14 +105,9 @@ class _Movements:
         if self.layer is None:
             return
         if self.layer is not layer:
-            raise ABSESpyError(
-                f"Layer {layer} inconsistent with the {self.layer}."
-            )
+            raise ABSESpyError(f"Layer {layer} inconsistent with the {self.layer}.")
 
-    def _operating_layer(
-        self,
-        layer: Optional[PatchModule],
-    ) -> PatchModule:
+    def _operating_layer(self, layer: Optional[PatchModule]) -> PatchModule:
         """
         This method is used to check if the input layer is consistent with the actor's layer.
         """
@@ -191,6 +188,7 @@ class _Movements:
             self.actor.at.agents.remove(self.actor)
         del self.actor.at
 
+    @alive_required
     def by(self, direction: MovingDirection, distance: int = 1) -> None:
         """Move the actor by a specific distance.
 
@@ -209,9 +207,7 @@ class _Movements:
                 If the direction is invalid.
         """
         if (self.actor.at is None) or (self.layer is None):
-            raise ABSESpyError(
-                "The actor is not located on a cell, thus cannot move."
-            )
+            raise ABSESpyError("The actor is not located on a cell, thus cannot move.")
         old_row, old_col = self.actor.at.indices
         if direction == "left":
             new_indices = (old_row, old_col - distance)
@@ -234,6 +230,7 @@ class _Movements:
         cell = self.layer.array_cells[new_indices[0], new_indices[1]]
         self.actor.move.to(cell, indices=True)
 
+    @alive_required
     def random(self, prob: Optional[str] = None, **kwargs: Any) -> None:
         """Move the actor to a random location nearby.
 

@@ -5,9 +5,7 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""Actor, PatchCell can be used to create links.
-"""
-
+"""Actor, PatchCell can be used to create links."""
 
 from __future__ import annotations
 
@@ -43,13 +41,12 @@ except ImportError:
 from abses._bases.errors import ABSESpyError
 from abses.sequences import ActorsList
 from abses.tools.func import make_list
-from abses.tools.viz import get_marker
 
 if TYPE_CHECKING:
     from abses import MainModel
     from abses.actor import Actor
     from abses.cells import PatchCell
-    from abses.container import UniqueID, _CellAgentsContainer
+    from abses.container import UniqueID
     from abses.sequences import Link
 
 LinkingNode: TypeAlias = "Actor | PatchCell"
@@ -72,9 +69,7 @@ def get_node_unique_id(node: Any) -> UniqueID:
         Warning: If using repr() for non-string/int node types.
     """
     if not isinstance(node, (str, int)):
-        logger.warning(
-            f"Using repr for '{type(node)}' unique ID to create actor."
-        )
+        logger.warning(f"Using repr for '{type(node)}' unique ID to create actor.")
         return repr(node)
     return node
 
@@ -135,16 +130,10 @@ class _LinkContainer:
         return tuple(links)
 
     @overload
-    def get_graph(
-        self, link_name: str, directions: bool = False
-    ) -> "nx.Graph":
-        ...
+    def get_graph(self, link_name: str, directions: bool = False) -> "nx.Graph": ...
 
     @overload
-    def get_graph(
-        self, link_name: str, directions: bool = True
-    ) -> "nx.DiGraph":
-        ...
+    def get_graph(self, link_name: str, directions: bool = True) -> "nx.DiGraph": ...
 
     def get_graph(
         self, link_name: str, directions: bool = False
@@ -162,9 +151,7 @@ class _LinkContainer:
             ImportError: If networkx is not installed.
         """
         if "nx" not in globals():
-            raise ImportError(
-                "You need to install networkx to use this function."
-            )
+            raise ImportError("You need to install networkx to use this function.")
         creating_using = nx.DiGraph if directions else nx.Graph
         graph = nx.from_dict_of_lists(self._links[link_name], creating_using)
         self._cached_networks[link_name] = graph
@@ -225,9 +212,7 @@ class _LinkContainer:
         self._links[link_name][source].add(target)
         self._back_links[link_name][target].add(source)
         if mutual:
-            self.add_a_link(
-                link_name, target=source, source=target, mutual=False
-            )
+            self.add_a_link(link_name, target=source, source=target, mutual=False)
 
     def remove_a_link(
         self,
@@ -257,13 +242,9 @@ class _LinkContainer:
         self._links[link_name].get(source, set()).remove(target)
         self._back_links[link_name].get(target, set()).remove(source)
         if mutual:
-            self.remove_a_link(
-                link_name, target=source, source=target, mutual=False
-            )
+            self.remove_a_link(link_name, target=source, source=target, mutual=False)
 
-    def _clean_link_name(
-        self, link_name: Optional[str | Iterable[str]]
-    ) -> List[str]:
+    def _clean_link_name(self, link_name: Optional[str | Iterable[str]]) -> List[str]:
         """Clean the link name."""
         if link_name is None:
             link_name = self.links
@@ -363,9 +344,7 @@ class _LinkContainer:
             unique_id = get_node_unique_id(node)
             node = mapping_dict[unique_id]
         if not isinstance(node, _LinkNode):
-            raise TypeError(
-                f"Invalid node type {type(node)}, mapping: {mapping_dict}."
-            )
+            raise TypeError(f"Invalid node type {type(node)}, mapping: {mapping_dict}.")
         return node
 
     def add_links_from_graph(
@@ -480,9 +459,7 @@ class _LinkProxy:
             return has_out, has_in
         return self.human.has_link(link_name, self.node, node)
 
-    def to(
-        self, node: LinkingNode, link_name: str, mutual: bool = False
-    ) -> None:
+    def to(self, node: LinkingNode, link_name: str, mutual: bool = False) -> None:
         """Creates an outgoing link to another node.
 
         Args:
@@ -494,9 +471,7 @@ class _LinkProxy:
             link_name=link_name, source=self.node, target=node, mutual=mutual
         )
 
-    def by(
-        self, node: LinkingNode, link_name: str, mutual: bool = False
-    ) -> None:
+    def by(self, node: LinkingNode, link_name: str, mutual: bool = False) -> None:
         """Make this node linked by another node.
 
         Parameters:
@@ -530,9 +505,7 @@ class _LinkProxy:
             link_name=link_name, source=self.node, target=node, mutual=mutual
         )
 
-    def clean(
-        self, link_name: Optional[str] = None, direction: Direction = None
-    ):
+    def clean(self, link_name: Optional[str] = None, direction: Direction = None):
         """Clean all the related links from this node.
 
         Parameters:
@@ -547,9 +520,7 @@ class _LinkProxy:
             ValueError:
                 If the direction is not 'in' or 'out'.
         """
-        self.human.clean_links_of(
-            self.node, link_name=link_name, direction=direction
-        )
+        self.human.clean_links_of(self.node, link_name=link_name, direction=direction)
 
 
 class _BreedDescriptor:
@@ -578,13 +549,11 @@ class _LinkNode:
         """Check if the target is me."""
 
     @classmethod
-    def viz_attrs(
-        cls, render_marker: bool = False, **kwargs
-    ) -> Dict[str, Any]:
+    def viz_attrs(cls, **kwargs) -> Dict[str, Any]:
         """Return the attributes for viz."""
         maker = getattr(cls, "marker", "o")
         return {
-            "marker": get_marker(maker) if render_marker else maker,
+            "marker": maker,
             "color": getattr(cls, "color", "black"),
             "alpha": getattr(cls, "alpha", 1.0),
         } | kwargs
@@ -646,11 +615,7 @@ class _LinkNode:
         raise ABSESpyError(f"Unknown target {target}.")
 
     def _setattr(
-        self,
-        attr: str,
-        value: Any,
-        target: Optional[TargetName],
-        new: bool = False,
+        self, attr: str, value: Any, target: Optional[TargetName], new: bool = False
     ) -> None:
         """Set the attribute on the current node."""
         if attr.startswith("_"):
@@ -670,10 +635,7 @@ class _LinkNode:
         )
 
     def get(
-        self,
-        attr: str,
-        target: Optional[TargetName] = None,
-        default: Any = ...,
+        self, attr: str, target: Optional[TargetName] = None, default: Any = ...
     ) -> Any:
         """Gets an attribute value from this node or a target.
 
@@ -740,9 +702,7 @@ class _LinkNode:
             self._setattr(attr, value, target="self", new=new)
             return
         if target is not None:
-            self._redirect(target=target).set(
-                attr, value, target="self", new=new
-            )
+            self._redirect(target=target).set(attr, value, target="self", new=new)
             return
         if self.has(attr):
             self._setattr(attr, value, target="self")
@@ -751,14 +711,10 @@ class _LinkNode:
         if hasattr(target_obj, attr):
             target_obj.set(attr, value, target="self", new=new)
             return
-        raise AttributeError(
-            f"Neither {self} nor {target_obj} has attribute '{attr}'."
-        )
+        raise AttributeError(f"Neither {self} nor {target_obj} has attribute '{attr}'.")
 
     def summary(
-        self,
-        coords: bool = False,
-        attrs: Optional[Iterable[str] | str] = None,
+        self, coords: bool = False, attrs: Optional[Iterable[str] | str] = None
     ) -> pd.Series:
         """Returns a summary of the object."""
         geo_type = self.get("geo_type")

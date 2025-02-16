@@ -50,9 +50,6 @@ You have gained a thorough understanding of the agent-based model. Now, you are 
 [:material-book: __A01__](advanced/geodata.ipynb) Including real-world geographic datasets for natural modules.
 { .card }
 
-[:material-book: __A02__](advanced/human_behavior_simulation.ipynb) Implement an advanced [human behavior simulation framework].
-{ .card }
-
 > :material-book: __Huh__ ... More tutorials in this level are coming soon.
 
 </div>
@@ -78,4 +75,3 @@ You have already established your own model and confirmed that it does not have 
   [Quick Start]: ../home/get_started.md
   [the right software for you]: ../home/guide_checklist.md
   [NetLogo model repository]: https://ccl.northwestern.edu/netlogo/models/
-  [human behavior simulation framework]: ../wiki/concepts/CCR.md
