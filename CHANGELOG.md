@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.5](https://github.com/SongshGeoLab/ABSESpy/compare/v0.7.4...v0.7.5) (2025-02-16)
+
+
+### Bug Fixes
+
+* **api:** :bug: Fix agent select by time incorrectly in Container ([fabaa35](https://github.com/SongshGeoLab/ABSESpy/commit/fabaa35e1d06b9b383c1e950d956ee96abfad003))
+* **api:** :bug: fix draw actors methods ([fff471b](https://github.com/SongshGeoLab/ABSESpy/commit/fff471b90a4423c5d0365efb7ae4d82118d3a3be))
+* **docs:** :bug: Fix all the outdated notebook docs ([a3667ab](https://github.com/SongshGeoLab/ABSESpy/commit/a3667aba54bd5c18380bcfd2bac00366051c2953))
+* **docs:** :memo: Remove docs for decision, deprecated feature ([a87bf6a](https://github.com/SongshGeoLab/ABSESpy/commit/a87bf6a316f56dbf0ba5dc42db45d60c3d837ac0))
+
 ## [0.7.4](https://github.com/SongshGeoLab/ABSESpy/compare/v0.7.3...v0.7.4) (2025-02-06)
 
 
