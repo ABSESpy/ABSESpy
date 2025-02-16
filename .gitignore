@@ -145,14 +145,12 @@ img/resources
 analysis/notebooks/**.ipynb
 data/source
 .virtual_documents
-*.nc
 # model ouput data
 analysis/**/results
 docs/assets
 docs/design
 *.canvas
 img/**/*.pdf
-data
 
 changelog.d
 .obsidian/workspace

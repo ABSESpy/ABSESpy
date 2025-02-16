@@ -10,10 +10,10 @@ authors = ["Shuang Song <songshgeo@gmail.com>"]
 license = "Apache 2.0 License"
 readme = "README.md"
 include = [
-  "icons/*.otf",
+  "abses/icons/*.otf",
   "abses/conf/**/*.yaml",
   "abses/conf/*.py",
-  "data/*",
+  "abses/data/*",
   "hydra_plugins.abses_searchpath_plugin"
 ]
 
