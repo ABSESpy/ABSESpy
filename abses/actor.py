@@ -36,9 +36,7 @@ from shapely.geometry.base import BaseGeometry
 
 from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
-from abses.decision import _DecisionFactory
 from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
-from abses.tools.func import make_list
 
 if TYPE_CHECKING:
     from abses.cells import PatchCell, Pos
@@ -163,18 +161,12 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
         mg.GeoAgent.__init__(self, model=model, geometry=geometry, crs=crs)
         _LinkNodeActor.__init__(self)
         self._cell: Optional[PatchCell] = None
-        self._decisions: _DecisionFactory = self._setup_decisions()
         self._alive: bool = True
         self._birth_tick: int = self.time.tick
         self._setup()
 
     def __repr__(self) -> str:
         return f"<{self.breed} [{self.unique_id}]>"
-
-    def _setup_decisions(self) -> _DecisionFactory:
-        """Decisions that this actor makes."""
-        decisions = make_list(getattr(self, "__decisions__", None))
-        return _DecisionFactory(self, decisions)
 
     @property
     def geo_type(self) -> Optional[GeoType]:
@@ -202,14 +194,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     def alive(self) -> bool:
         """Whether the actor is alive."""
         return self._alive
-
-    @property
-    def decisions(self) -> _DecisionFactory:
-        """The decisions that this actor makes."""
-        return self._decisions
-
-    # alias of decisions
-    d = decisions
 
     @property
     def layer(self) -> Optional[PatchModule]:
