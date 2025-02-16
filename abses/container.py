@@ -61,16 +61,20 @@ UniqueIDs: TypeAlias = List[Optional[UniqueID]]
 class _AgentsContainer:
     """AgentsContainer for the main model."""
 
-    def __init__(
-        self,
-        model: MainModel[Any, Any],
-        max_len: None | int = None,
-    ):
+    def __init__(self, model: MainModel[Any, Any], max_len: None | int = None):
         if not isinstance(model, Model):
             raise TypeError(f"{model} is not a Mesa Model.")
         self._model: MainModel = model
         self._agents = model._all_agents
         self._max_length = max_len
+
+    def __getattr__(self, name: str) -> Any:
+        """Get an attribute from the container."""
+        if not name.startswith("_") and hasattr(self._agents, name):
+            return getattr(self._agents, name)
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
 
     def __len__(self) -> int:
         return len(self._agents)
@@ -117,14 +121,6 @@ class _AgentsContainer:
             )
         except KeyError:
             return ActorsList(model=self.model, objs=[])
-
-    def __getattr__(self, name: str) -> Any:
-        """Get an attribute from the container."""
-        if not name.startswith("_") and hasattr(self._agents, name):
-            return getattr(self._agents, name)
-        raise AttributeError(
-            f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        )
 
     @property
     def crs(self) -> pyproj.CRS:
@@ -189,10 +185,7 @@ class _AgentsContainer:
             raise TypeError(f"{agent_cls} is not a subclass of Actor.")
         self._check_full()
         agent = agent_cls(
-            model=self.model,
-            geometry=geometry,
-            crs=self.model.nature.crs,
-            **kwargs,
+            model=self.model, geometry=geometry, crs=self.model.nature.crs, **kwargs
         )
         self._add_one(agent)
         return agent
@@ -372,7 +365,7 @@ class _ModelAgentsContainer(_AgentsContainer):
         mapping = {}
         for node, attr in graph.nodes(data=True):
             unique_id = get_node_unique_id(node=node)
-            actor = self._new_one(unique_id, agent_cls=actor_cls, **attr)
+            actor = self._new_one(unique_id=unique_id, agent_cls=actor_cls, **attr)
             actors.append(actor)
             mapping[unique_id] = actor
         self.model.human.add_links_from_graph(
@@ -417,11 +410,7 @@ class _ModelAgentsContainer(_AgentsContainer):
         agents = []
         for _, row in gdf.iterrows():
             geometry = row[geo_col]
-            new_agent = self._new_one(
-                geometry=geometry,
-                agent_cls=agent_cls,
-                **kwargs,
-            )
+            new_agent = self._new_one(geometry=geometry, agent_cls=agent_cls, **kwargs)
             new_agent.crs = self.crs
 
             for col, name in set_attributes.items():
@@ -435,10 +424,7 @@ class _CellAgentsContainer(_AgentsContainer):
     """Container for agents located at cells."""
 
     def __init__(
-        self,
-        model: MainModel[Any, Any],
-        cell: PatchCell,
-        max_len: int | None = None,
+        self, model: MainModel[Any, Any], cell: PatchCell, max_len: int | None = None
     ):
         super().__init__(model, max_len)
         self._agents = AgentSet([], random=model.random)

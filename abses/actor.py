@@ -36,7 +36,7 @@ from shapely.geometry.base import BaseGeometry
 
 from abses._bases.errors import ABSESpyError
 from abses._bases.objects import _BaseObj
-from abses.links import TargetName, _LinkNodeActor, _LinkNodeCell
+from abses.links import TargetName, _LinkNodeActor
 
 if TYPE_CHECKING:
     from abses.cells import PatchCell, Pos
@@ -64,7 +64,9 @@ def alive_required(method):
 
     @wraps(method)
     def wrapper(self, *args, **kwargs) -> Any:
-        return method(self, *args, **kwargs) if self.alive else None
+        actor = self if isinstance(self, Actor) else getattr(self, "actor")
+        alive = actor.alive
+        return method(self, *args, **kwargs) if alive else None
 
     return wrapper
 
@@ -92,9 +94,7 @@ def perception_result(name, result, nodata: Any = 0.0) -> Any:
 
 
 def perception(
-    decorated_func: Optional[Callable[..., Any]] = None,
-    *,
-    nodata: Optional[Any] = None,
+    decorated_func: Optional[Callable[..., Any]] = None, *, nodata: Optional[Any] = None
 ) -> Callable[..., Any]:
     """
     Change the decorated function into a perception attribute.
@@ -146,14 +146,8 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
             Kills the actor.
     """
 
-    # when checking the rules
-    __decisions__ = None
-
     def __init__(
-        self,
-        model: MainModel[Any, Any],
-        observer: bool = True,
-        **kwargs,
+        self, model: MainModel[Any, Any], observer: bool = True, **kwargs
     ) -> None:
         _BaseObj.__init__(self, model, observer=observer)
         crs = kwargs.pop("crs", model.nature.crs)
@@ -213,8 +207,6 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
     @at.setter
     def at(self, cell: PatchCell) -> None:
         """Set the cell where the actor is located."""
-        if not isinstance(cell, _LinkNodeCell):
-            raise TypeError(f"{cell} is not a cell.")
         if self not in cell.agents:
             raise ABSESpyError(
                 "Cannot set location directly because the actor is not added to the cell."
@@ -265,10 +257,7 @@ class Actor(mg.GeoAgent, _BaseObj, _LinkNodeActor):
 
     @alive_required
     def get(
-        self,
-        attr: str,
-        target: Optional[TargetName] = None,
-        default: Any = ...,
+        self, attr: str, target: Optional[TargetName] = None, default: Any = ...
     ) -> Any:
         """
         Gets attribute value from target.
