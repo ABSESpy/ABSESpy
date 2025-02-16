@@ -5,8 +5,8 @@
 # GitHub   : https://github.com/SongshGeo
 # Website: https://cv.songshgeo.com/
 
-"""Visualize ActorsList
-"""
+"""Visualize ActorsList"""
+
 from __future__ import annotations
 
 import contextlib
@@ -28,7 +28,6 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 if TYPE_CHECKING:
-    from abses.actor import Actor, GeoType
     from abses.main import MainModel
     from abses.sequences import ActorsList
 
@@ -51,7 +50,7 @@ class _VizNodeList:
         """Plot hist."""
         df = self.actors.summary(attrs=attr)
         if palette is None:
-            palette = self._style_dict("color", "blue")
+            palette = self._style_dict(request="color", default="blue")
         sns.histplot(df, x=attr, ax=ax, hue="breed", palette=palette)
         if savefig:
             plt.savefig(savefig)
@@ -60,11 +59,9 @@ class _VizNodeList:
 
     def _style_dict(self, request: str, default: Any, **kwargs) -> StyleDict:
         styles = {}
-        for breed in self.actors.to_dict().keys():
-            # TODO: 这里需要改成 agent_types
-            breed_cls = self.model.breeds[breed]
-            style_dict = breed_cls.viz_attrs(render_marker=True, **kwargs)
-            styles[breed] = style_dict.get(request, default)
+        for breed_cls in self.model.agents_by_type.keys():
+            style_dict = breed_cls.viz_attrs(**kwargs)
+            styles[breed_cls.__name__] = style_dict.get(request, default)
         return styles
 
     @with_axes
@@ -83,9 +80,7 @@ class _VizNodeList:
         subset = self.actors.select(geo_type="Shape")
         if not subset:
             return ax
-        data = gpd.GeoSeries(
-            subset.array("geometry"), crs=self.model.nature.crs
-        )
+        data = gpd.GeoSeries(subset.array("geometry"), crs=self.model.nature.crs)
         obj = data.boundary if boundary else data
         obj.plot(ax=ax, alpha=alpha, **kwargs)
         return ax
@@ -108,9 +103,7 @@ class _VizNodeList:
         y_axis = "y" if coords else "row"
         x_axis = "x" if coords else "col"
         count_data = (
-            data.groupby([y_axis, x_axis, "breed"])
-            .size()
-            .reset_index(name="count")
+            data.groupby([y_axis, x_axis, "breed"]).size().reset_index(name="count")
         )
         if hue == "breed":
             palette = self._style_dict("color", "blue")
