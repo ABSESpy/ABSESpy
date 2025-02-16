@@ -23,7 +23,6 @@ from typing import (
 )
 
 import pendulum
-from loguru import logger
 from omegaconf import DictConfig
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
@@ -100,8 +99,7 @@ def time_condition(condition: dict, when_run: bool = True) -> Callable:
                 raise TypeError("The `TimeDriver` must be existing.")
 
             satisfied = all(
-                getattr(time.dt, key, None) == value
-                for key, value in condition.items()
+                getattr(time.dt, key, None) == value for key, value in condition.items()
             )
 
             if (satisfied and when_run) or (not satisfied and not when_run):
@@ -116,24 +114,8 @@ def time_condition(condition: dict, when_run: bool = True) -> Callable:
 class TimeDriver(_Component):
     """TimeDriver provides the functionality to manage time.
 
-    This class is responsible for managing the time of a simulation model. It keeps track of the current time period, updates it according to a given frequency, and provides properties to access different components of the current time period (e.g., day, hour, etc.). The `TimeDriver` class is a singleton, meaning that there can be only one instance of it per simulation model.
-
-    When init a `TimeDriver`, it accepts below parameters:
-
-    | Parameter Name | Expected Data Type | Default Value | Description |
-    |----------------|--------------------|---------------|-------------|
-    | start          | str, None                | None          | If None: use the current time, else: should be a string which can be parsed by `pendulum.parse()`. |
-    | end            | str, int, None         | None          | If it's a string that can be parsed into datetime the model should end until achieving this time; if int: the model should end in that tick; if None no auto-end. |
-    | irregular         | bool               | False         | If False: not dive into an irregular mode (tick-mode); if True, the model will solve as an irregular mode. |
-    | years          | int                | 0             | Time duration in years for the duration mode. |
-    | months         | int                | 0             | Time duration in months for the duration mode. |
-    | weeks          | int                | 0             | Time duration in weeks for the duration mode. |
-    | days           | int                | 0             | Time duration in days for the duration mode. |
-    | hours          | int                | 0             | Time duration in hours for the duration mode. |
-    | minutes        | int                | 0             | Time duration in minutes for the duration mode. |
-    | seconds        | int                | 0             | Time duration in seconds for the duration mode. |
-
-    See tutorial to see more.
+    A wrapper around datetime that adds simulation-specific functionality while
+    providing access to all datetime attributes and methods.
     """
 
     _instances: Dict[MainModel[Any, Any], TimeDriver] = {}
@@ -150,29 +132,40 @@ class TimeDriver(_Component):
 
     def __init__(self, model: MainModel):
         super().__init__(model=model, name="time")
-        self._model: MainModel[Any, Any] = model
-        self._tick: int = 0
-        self._start_dt: DateTime = pendulum.instance(datetime.now(), tz=None)
-        self._end_dt: Optional[Union[DateTime, int]] = None
-        self._duration: Optional[Duration] = None
-        self._history: deque = deque()
+        self._model = model
+        self._tick = 0
+        self._dt = datetime.now()
+        self._start_dt = self._dt
+        self._end_dt: Optional[Union[datetime, int]] = None
+        self._history: deque[DateTime] = deque()
+        self._irregular = False
+        self._duration: Duration | None = None
         self._parse_time_settings()
+        self._history.append(self._dt)
         self._logging_setup()
+
+    def __getattr__(self, name: str):
+        """Redirect all undefined attributes to the datetime object."""
+        return getattr(self._dt, name)
 
     def __repr__(self) -> str:
         if self.ticking_mode == "tick":
             return f"<TimeDriver: tick[{self.tick}]>"
         if self.ticking_mode == "duration":
             return f"<TimeDriver: {self.strftime('%Y-%m-%d %H:%M:%S')}>"
-        return f"<TimeDriver: irregular[{self.tick}] {self.strftime('%Y-%m-%d %H:%M:%S')}>"
+        return (
+            f"<TimeDriver: irregular[{self.tick}] {self.strftime('%Y-%m-%d %H:%M:%S')}>"
+        )
 
-    def __eq__(self, other: object) -> bool:
-        return self.dt.__eq__(other)
+    def __eq__(self, other) -> bool:
+        if isinstance(other, (datetime, TimeDriver)):
+            return self.dt == (other.dt if isinstance(other, TimeDriver) else other)
+        return NotImplemented
 
-    def __lt__(self, other: object) -> bool:
-        if isinstance(other, (DateTime, datetime)):
-            return self.dt < other
-        raise NotImplementedError(f"Cannot compare with {other}.")
+    def __lt__(self, other) -> bool:
+        if isinstance(other, (datetime, TimeDriver)):
+            return self.dt < (other.dt if isinstance(other, TimeDriver) else other)
+        return NotImplemented
 
     def __deepcopy__(self, memo):
         return self
@@ -188,15 +181,18 @@ class TimeDriver(_Component):
     @property
     def expected_ticks(self) -> Optional[int]:
         """Returns the expected ticks."""
-        if not self.end_dt:
-            return None
+        # If the end_dt is an integer or None, return the end_dt
+        if isinstance(self.end_dt, int) or self.end_dt is None:
+            return self.end_dt
+        # If the end_dt is a datetime object, calculate the expected ticks
         if isinstance(self.end_dt, datetime):
             if self.duration is None:
                 raise RuntimeError("No duration settings.")
-            duration = self.dt.diff(self.end_dt)
-            steps = duration.total_seconds() / self.duration.total_seconds()
-            return int(steps)
-        return self.end_dt
+            duration = self.end_dt - self.dt
+            duration_seconds = duration.total_seconds()
+            step_seconds = self.duration.total_seconds()
+            return int(duration_seconds / step_seconds)
+        raise TypeError("End time must be an integer or a datetime object.")
 
     @property
     def should_end(self) -> bool:
@@ -214,8 +210,8 @@ class TimeDriver(_Component):
 
     @property
     def ticking_mode(self) -> str:
-        """Returns the ticking mode of the time driver."""
-        if self.duration:
+        """Current time advancement mode"""
+        if self._duration:
             return "duration"
         return "irregular" if self._irregular else "tick"
 
@@ -224,45 +220,32 @@ class TimeDriver(_Component):
         """Returns the history of the time driver."""
         return list(self._history)
 
-    def to(self, time: str | datetime | DateTime) -> None:
+    def to(self, time: str | datetime) -> None:
         """Specific the current time."""
-        self.dt = parse_datetime(time)
+        if isinstance(time, str):
+            time = datetime.strptime(time, "%Y")
+        self.dt = time
+        self._history.clear()
+        self._history.append(self.dt)
 
     def go(self, ticks: int = 1, **kwargs) -> None:
-        """Increments the tick.
-
-        Parameters:
-            ticks:
-                How many ticks to increase.
-        """
+        """Advance simulation time"""
         if ticks < 0:
-            raise ValueError("Ticks cannot be negative.")
-        if ticks == 0 and self.ticking_mode != "irregular":
-            raise ValueError(
-                "Ticks cannot be zero unless the ticking mode is 'irregular'."
-            )
-        if ticks > 1:
-            for _ in range(ticks):
-                self.go(ticks=1, **kwargs)
-            return
-        # tick = 1
-        dt_msg = f" {self.strftime()}" if self.duration else ""
-        tick_msg = f" [tick {self.tick}] "
-        logger.bind(no_format=True).info(
-            "\n" + f"{dt_msg}{tick_msg}".center(30, "-")
-        )
-        self._tick += ticks
-        if self.ticking_mode == "duration":
-            self.dt += self.duration
-            self._history.append(self.dt)
-        elif self.ticking_mode == "irregular":
-            self.dt += pendulum.duration(**kwargs)
-            self._history.append(self.dt)
-        elif self.ticking_mode != "tick":
-            raise ValueError(f"Invalid ticking mode: {self.ticking_mode}")
-        # end going
-        if self.should_end:
-            self._model.running = False
+            raise ValueError("Ticks cannot be negative")
+
+        for _ in range(ticks):
+            self._tick += 1
+
+            if self.ticking_mode == "duration" and self._duration:
+                self.dt += self._duration
+                self._history.append(self.dt)
+            elif self.ticking_mode == "irregular":
+                delta = pendulum.duration(**kwargs)
+                self.dt += delta
+                self._history.append(self.dt)
+            if self.should_end:
+                self._model.running = False
+                break
 
     def _parse_time_settings(self) -> None:
         """Setup the time driver."""
@@ -279,7 +262,6 @@ class TimeDriver(_Component):
         self.irregular: bool = self.params.get("irregular", False)
 
         self.dt = self.start_dt
-        self._history.append(self.dt)
 
     def _logging_setup(self) -> None:
         if self.ticking_mode == "duration":
@@ -320,14 +302,29 @@ class TimeDriver(_Component):
         return self._duration
 
     def parse_duration(self, duration: DictConfig) -> None:
-        """Set the duration of the time driver."""
-        valid_attributes = VALID_DT_ATTRS
-        valid_dict = {}
-        for attribute in valid_attributes:
-            value = duration.get(attribute, 0)
+        """Set the duration using pendulum.Duration.
+
+        Args:
+            duration: Duration configuration containing time units
+
+        Raises:
+            ValueError: If any time unit is negative
+            KeyError: If any time unit is invalid
+        """
+        # 检查时间单位是否为负数
+        for unit, value in duration.items():
             if not isinstance(value, int):
-                raise TypeError(f"{attribute} must be an integer.")
-            valid_dict[attribute] = value
+                continue
+            if value < 0:
+                raise ValueError(f"Time unit {unit} cannot be negative")
+
+        # 构建有效的时间步长
+        valid_dict = {
+            attr: duration.get(attr, 0)
+            for attr in VALID_DT_ATTRS
+            if isinstance(duration.get(attr, 0), int)
+        }
+
         if all(value == 0 for value in valid_dict.values()):
             self._duration = None
         else:
@@ -348,7 +345,12 @@ class TimeDriver(_Component):
 
     @property
     def end_dt(self) -> Optional[Union[datetime, int]]:
-        """The real-world time or the ticks when the model should be end."""
+        """
+        The real-world time or the ticks when the model should be end.
+
+        If the end time is a datetime object, it will be converted to a DateTime object.
+        If the end time is an integer, it will be interpreted as a number of ticks.
+        """
         return self._end_dt
 
     @end_dt.setter
@@ -368,95 +370,11 @@ class TimeDriver(_Component):
 
     @property
     def dt(self) -> DateTime:
-        """The current real-world time for the model without timezone information."""
+        """Current simulation time"""
         return self._dt
 
     @dt.setter
-    def dt(self, dt: DateTime) -> None:
-        """Set the current real-world time."""
-        if not isinstance(dt, DateTime):
-            raise TypeError("dt must be a datetime object.")
-        self._dt = dt
-
-    @property
-    def day(self) -> int:
-        """Returns the current day for the model."""
-        return self.dt.day
-
-    @property
-    def day_of_week(self) -> int:
-        """Returns the number for the day of the week for the model."""
-        return self.dt.day_of_week
-
-    @property
-    def day_of_year(self) -> int:
-        """Returns the day of the year for the model."""
-        return self.dt.day_of_year
-
-    @property
-    def days_in_month(self) -> int:
-        """Get the total number of days of the month that this period falls on for the model."""
-        return self.dt.days_in_month
-
-    @property
-    def hour(self) -> int:
-        """Get the hour of the day component of the Period."""
-        return self.dt.hour
-
-    @property
-    def minute(self) -> int:
-        """Get minute of the hour component of the Period."""
-        return self.dt.minute
-
-    @property
-    def month(self) -> int:
-        """Return the month the current model's Period falls on."""
-        return self.dt.month
-
-    @property
-    def quarter(self) -> int:
-        """Return the quarter the current model's Period falls on."""
-        return self.dt.quarter
-
-    @property
-    def second(self) -> int:
-        """Get the second component of a model's Period."""
-        return self.dt.second
-
-    @property
-    def is_leap_year(self) -> bool:
-        """Return True if the period's year is in a leap year."""
-        return self.dt.is_leap_year()
-
-    @property
-    def week_of_year(self) -> int:
-        """Get the week of the year on the given Period."""
-        return self.dt.week_of_year
-
-    @property
-    def week_of_month(self) -> int:
-        """Get the week of the month on the given Period."""
-        return self.dt.week_of_month
-
-    @property
-    def weekday(self) -> int:
-        """Day of the week the period lies in, with Monday=0 and Sunday=6."""
-        return self.dt.weekday()
-
-    @property
-    def year(self) -> int:
-        """Return the year this Period falls on."""
-        return self.dt.year
-
-    def strftime(self, fmt: Optional[str] = None) -> str:
-        """Returns a string representing the current time.
-
-        Parameters:
-            fmt:
-                An explicit format string of datetime.
-        """
-        return (
-            self.dt.strftime(self.fmt)
-            if fmt is None
-            else self.dt.strftime(fmt)
-        )
+    def dt(self, value: datetime) -> None:
+        if not isinstance(value, datetime):
+            raise TypeError("dt must be a datetime object")
+        self._dt = value
