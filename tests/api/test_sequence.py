@@ -18,6 +18,23 @@ from tests.helper import create_actors_with_metric
 class TestSequences:
     """Test Sequence"""
 
+    @pytest.mark.parametrize(
+        "selection",
+        [
+            pytest.param("enabled", id="string"),
+            pytest.param({"enabled": True}, id="dict"),
+            pytest.param(lambda actor: actor.enabled, id="callable"),
+        ],
+    )
+    def test_select_filter_forms(self, model: MainModel, selection):
+        """Select actors with every documented filter form."""
+        actors = model.agents.new(Actor, 3)
+        actors.update("enabled", [True, False, True])
+
+        selected = actors.select(selection)
+
+        assert list(selected) == [actors[0], actors[2]]
+
     def test_sequences_attributes(self, model, farmer_cls):
         """测试容器的属性"""
         # arrange

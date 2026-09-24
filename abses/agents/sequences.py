@@ -213,7 +213,7 @@ class ActorsList(AgentSet, Generic[A]):
 
     def select(
         self,
-        filter_func: Callable[[A], bool] | None = None,
+        filter_func: Callable[[A], bool] | dict[str, Any] | str | None = None,
         at_most: int | float = float("inf"),
         inplace: bool = False,
         agent_type: Agent | None = None,
@@ -253,16 +253,17 @@ class ActorsList(AgentSet, Generic[A]):
             ```
         """
         if isinstance(filter_func, dict):
-            key_value_paris = filter_func
+            key_value_pairs = filter_func
 
             def filter_func(agent: Agent) -> bool:
-                return all(getattr(agent, k) == v for k, v in key_value_paris.items())
+                return all(getattr(agent, k) == v for k, v in key_value_pairs.items())
 
         if isinstance(filter_func, str):
+            attr_name = filter_func
 
             def filter_func(agent: Agent) -> bool:
-                # 如果 filter_func 是字符串，则使用该字符串作为过滤条件
-                return getattr(agent, filter_func)
+                # Preserve the name before rebinding filter_func to this closure.
+                return getattr(agent, attr_name)
 
         objects = super().select(filter_func, at_most, inplace, agent_type)
         return ActorsList(self._model, objects)

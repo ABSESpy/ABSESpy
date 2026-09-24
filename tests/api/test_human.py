@@ -22,6 +22,16 @@ class TestHumanAttributes:
         assert len(human.agents) == 10
 
 
+def test_human_module_actors(farmer_cls, cell_0_0):
+    """HumanModule.actors returns only its actors placed on earth."""
+    model = cell_0_0.model
+    on_earth = cell_0_0.agents.new(farmer_cls, 2)
+    model.agents.new(farmer_cls, 1)
+    module = model.human.create_module("farmers", agent_type=farmer_cls)
+
+    assert list(module.actors) == list(on_earth)
+
+
 def test_human_define(model, farmer_cls, admin_cls):
     """测试人口的定义"""
     human = model.human
